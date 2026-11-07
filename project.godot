@@ -1,0 +1,45 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="SpriteBonk 3D"
+config/icon="res://icon.png"
+config/description="SpriteBonk 3D remake — milestone 1: 3D arena + altar/guardian/portal stage flow (PokéBonk structure)."
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.3", "GL Compatibility")
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/handheld/orientation="landscape"
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+
+[physics]
+
+; Game feel: physics-stepped movement rendered smoothly at any refresh
+; rate (camera follows the interpolated transform). Teleports/spawns
+; call reset_physics_interpolation() (world.start_game/debug_teleport).
+common/physics_interpolation=true
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/vram_compression/import_etc2_astc=true
+environment/defaults/default_clear_color=Color(0.53, 0.81, 0.98, 1)
+; Android perf pass (see PHASES): one directional light only; 2048
+; shadow map is plenty at this camera distance; MSAA explicitly off
+; (the Compatibility renderer + outline style gains nothing from it).
+lights_and_shadows/directional_shadow/size=2048
+lights_and_shadows/positional_shadow/atlas_size=1024
+anti_aliasing/quality/msaa_3d=0

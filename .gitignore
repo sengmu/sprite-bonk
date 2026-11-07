@@ -1,0 +1,15 @@
+# 第三方 IP 镜像：永不入库、永不入包
+reference/
+# 构建产物
+build/
+*.apk
+# 测试输出与日志
+Test/out/
+# Godot 导入缓存
+.godot/
+# 签名密钥
+*.keystore
+*.jks
+# 临时派单文件
+.tmp/
+android/keystore_credentials.txt

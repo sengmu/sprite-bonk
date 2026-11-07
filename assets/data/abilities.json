@@ -1,0 +1,1845 @@
+{
+ "photosynthesis": {
+  "name": "Fotosíntesis",
+  "desc": "+1.5 regeneración y +25% curación. Tus ataques Planta te curan un poco (0,4% de PS por golpe, hasta 5 veces por segundo).",
+  "mods": [
+   {
+    "stat": "regen",
+    "add": 1.5
+   },
+   {
+    "stat": "healing",
+    "mul": 1.25
+   }
+  ]
+ },
+ "torrent-shell": {
+  "name": "Caparazón Torrente",
+  "desc": "+15 armadura y +20 escudo. Con menos del 40% de PS, +40% de daño.",
+  "mods": [
+   {
+    "stat": "armor",
+    "add": 15
+   },
+   {
+    "stat": "shieldMax",
+    "add": 20
+   }
+  ],
+  "hooks": {
+   "lowHp": 1.4
+  }
+ },
+ "phantom": {
+  "name": "Fantasma",
+  "desc": "Atraviesas a la horda: -20% daño recibido y +10% evasión.",
+  "mods": [
+   {
+    "stat": "evasion",
+    "add": 0.1
+   }
+  ],
+  "hooks": {
+   "dmgTaken": 0.8
+  }
+ },
+ "persevere": {
+  "name": "Perseverancia",
+  "desc": "+60% de experiencia. Con ella llega antes que nadie a evolucionar en un Pokémon temible (Nv. 40).",
+  "mods": [
+   {
+    "stat": "xpGain",
+    "mul": 1.6
+   }
+  ]
+ },
+ "vampire": {
+  "name": "Vampiro",
+  "desc": "+8% robo de vida y +20% curación.",
+  "mods": [
+   {
+    "stat": "lifesteal",
+    "add": 0.08
+   },
+   {
+    "stat": "healing",
+    "mul": 1.2
+   }
+  ]
+ },
+ "steadfast-aura": {
+  "name": "Aura Impasible",
+  "desc": "+12% evasión. Cada esquiva te da +6% de daño durante 4 s (acumulable).",
+  "mods": [
+   {
+    "stat": "evasion",
+    "add": 0.12
+   }
+  ]
+ },
+ "mew": {
+  "name": "Gen Ancestral",
+  "desc": "+10% daño, velocidad, área y PS. Puede aprender ataques de cualquier tipo.",
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.1
+   },
+   {
+    "stat": "moveSpeed",
+    "mul": 1.1
+   },
+   {
+    "stat": "area",
+    "mul": 1.1
+   },
+   {
+    "stat": "maxHp",
+    "mul": 1.1
+   }
+  ]
+ },
+ "loyal-guard": {
+  "name": "Guardián Leal",
+  "desc": "+10% velocidad. Cada 3 s, los enemigos cercanos quedan intimidados (hacen -40% de daño).",
+  "mods": [
+   {
+    "stat": "moveSpeed",
+    "mul": 1.1
+   }
+  ],
+  "hooks": {
+   "tick": true
+  }
+ },
+ "beacon": {
+  "name": "Faro",
+  "desc": "+3 rango de recogida. Los paralizados reciben +25% de daño. Cada 5 s, tu lana suelta chispas que paralizan a los cercanos.",
+  "mods": [
+   {
+    "stat": "pickupRange",
+    "add": 3
+   }
+  ],
+  "hooks": {
+   "tick": true
+  }
+ },
+ "mud-trail": {
+  "name": "Fango",
+  "desc": "+10% PS. Al moverte dejas un rastro de barro que daña y enraiza a los enemigos.",
+  "mods": [
+   {
+    "stat": "maxHp",
+    "mul": 1.1
+   }
+  ]
+ },
+ "bone-keeper": {
+  "name": "Hueso Guardián",
+  "desc": "+10 armadura. Tus ataques de hueso hacen +20% de daño. Con menos del 40% de PS, +35% de daño.",
+  "mods": [
+   {
+    "stat": "armor",
+    "add": 10
+   }
+  ],
+  "hooks": {
+   "lowHp": 1.35
+  }
+ },
+ "blessing": {
+  "name": "Dicha",
+  "desc": "+50% probabilidad de estados y +25 suerte (mejores objetos y ofertas).",
+  "mods": [
+   {
+    "stat": "statusChance",
+    "mul": 1.5
+   },
+   {
+    "stat": "luck",
+    "add": 25
+   }
+  ]
+ },
+ "gem-hoarder": {
+  "name": "Joyero",
+  "desc": "+30% Pokédólares y +2 rango de recogida. +1% de daño por cada 25 ₽ que lleves encima (hasta +25%).",
+  "mods": [
+   {
+    "stat": "gold",
+    "mul": 1.3
+   },
+   {
+    "stat": "pickupRange",
+    "add": 2
+   }
+  ]
+ },
+ "horn-pride": {
+  "name": "Cornamenta",
+  "desc": "+15% daño físico. Cada baja te potencia: más daño y velocidad (hasta +30%).",
+  "mods": [
+   {
+    "stat": "physical",
+    "mul": 1.15
+   }
+  ]
+ },
+ "presage": {
+  "name": "Presagio",
+  "desc": "+8% crítico. Tus críticos rematan a los enemigos con menos del 12% de PS (no a jefes).",
+  "mods": [
+   {
+    "stat": "critChance",
+    "add": 0.08
+   }
+  ]
+ },
+ "dragon-dream": {
+  "name": "Sueño de Volar",
+  "desc": "+1 salto y +10% daño físico. Al caer desde lo alto aterrizas con una onda de choque. Como Salamence, por fin vuela.",
+  "mods": [
+   {
+    "stat": "extraJumps",
+    "add": 1
+   },
+   {
+    "stat": "physical",
+    "mul": 1.1
+   }
+  ]
+ },
+ "iron-body": {
+  "name": "Cuerpo Férreo",
+  "desc": "+18 armadura. Levita con magnetismo: mantén Saltar para planear y puedes subir paredes.",
+  "mods": [
+   {
+    "stat": "armor",
+    "add": 18
+   }
+  ]
+ },
+ "metamorph": {
+  "name": "Metamorfosis",
+  "desc": "+15% experiencia y +20 escudo. Evoluciona pronto (Metapod al Nv. 8, Butterfree al Nv. 36). Como Metapod, el capullo te da +30 armadura.",
+  "mods": [
+   {
+    "stat": "xpGain",
+    "mul": 1.15
+   },
+   {
+    "stat": "shieldMax",
+    "add": 20
+   }
+  ]
+ },
+ "venom-sting": {
+  "name": "Aguijón Venenoso",
+  "desc": "+10% velocidad de ataque. Tus críticos envenenan y los envenenados reciben +20% de daño. Evoluciona pronto (Kakuna al Nv. 8, Beedrill al Nv. 36); como Kakuna, +30 armadura.",
+  "mods": [
+   {
+    "stat": "attackSpeed",
+    "mul": 1.1
+   }
+  ]
+ },
+ "tailwind": {
+  "name": "Viento Afín",
+  "desc": "+12% velocidad, +20% velocidad de proyectiles y +1 salto. Como buen Volador, planeas manteniendo Saltar.",
+  "mods": [
+   {
+    "stat": "moveSpeed",
+    "mul": 1.12
+   },
+   {
+    "stat": "projSpeed",
+    "mul": 1.2
+   },
+   {
+    "stat": "extraJumps",
+    "add": 1
+   }
+  ]
+ },
+ "serpent-glare": {
+  "name": "Mirada Serpiente",
+  "desc": "+1 regeneración (Mudar). Cada 4 s tu mirada paraliza a los enemigos que tienes delante (7 m).",
+  "mods": [
+   {
+    "stat": "regen",
+    "add": 1
+   }
+  ],
+  "hooks": {
+   "tick": true
+  }
+ },
+ "sand-rush": {
+  "name": "Ímpetu Arena",
+  "desc": "+10 armadura y +6% crítico. Con tormenta de arena, +30% velocidad.",
+  "mods": [
+   {
+    "stat": "armor",
+    "add": 10
+   },
+   {
+    "stat": "critChance",
+    "add": 0.06
+   }
+  ]
+ },
+ "lunar-blessing": {
+  "name": "Bendición Lunar",
+  "desc": "+20 suerte y +1 regeneración. Tu Ultimate se carga un 30% más rápido y al lanzarla recuperas un 15% de PS.",
+  "mods": [
+   {
+    "stat": "luck",
+    "add": 20
+   },
+   {
+    "stat": "regen",
+    "add": 1
+   }
+  ]
+ },
+ "chlorophyll": {
+  "name": "Clorofila",
+  "desc": "+10% velocidad y +1 regeneración. Con sol, +30% velocidad y +20% de daño. Cada 6 s sueltas una nube de polen (4,5 m) que envenena.",
+  "mods": [
+   {
+    "stat": "moveSpeed",
+    "mul": 1.1
+   },
+   {
+    "stat": "regen",
+    "add": 1
+   }
+  ],
+  "hooks": {
+   "tick": true
+  }
+ },
+ "effect-spore": {
+  "name": "Efecto Espora",
+  "desc": "+20% probabilidad de estados. Quien te toca se duerme, se paraliza o se envenena. Como Parasect, el hongo manda: +20% de daño contra enemigos con algún estado.",
+  "mods": [
+   {
+    "stat": "statusChance",
+    "mul": 1.2
+   }
+  ]
+ },
+ "compound-eyes": {
+  "name": "Ojos Compuestos",
+  "desc": "+8% crítico y +15% probabilidad de estados. Los enemigos confundidos reciben +25% de daño. Como Venomoth, +12% velocidad de ataque.",
+  "mods": [
+   {
+    "stat": "critChance",
+    "add": 0.08
+   },
+   {
+    "stat": "statusChance",
+    "mul": 1.15
+   }
+  ]
+ },
+ "arena-trap": {
+  "name": "Trampa Arena",
+  "desc": "+10 armadura. Cada 2 s el suelo tiembla a tu alrededor (4,5 m): daña y atrapa en la arena a los enemigos (enraizar). Como Dugtrio, 6 m.",
+  "mods": [
+   {
+    "stat": "armor",
+    "add": 10
+   }
+  ],
+  "hooks": {
+   "tick": true
+  }
+ },
+ "pickup": {
+  "name": "Recogida",
+  "desc": "+40% Pokédólares y +2 de recogida. Cada 100 ₽ que consigues en la partida te dan +1% de crítico (hasta +15%). Como Persian, +10% velocidad.",
+  "mods": [
+   {
+    "stat": "gold",
+    "mul": 1.4
+   },
+   {
+    "stat": "pickupRange",
+    "add": 2
+   }
+  ]
+ },
+ "headache": {
+  "name": "Jaqueca",
+  "desc": "+10% PS. Los golpes que recibes y el paso del tiempo cargan tu jaqueca; llena, estalla en una onda psíquica (7 m) que daña y confunde. Como Golduck, la onda es de 10 m y te cura un 8%.",
+  "mods": [
+   {
+    "stat": "maxHp",
+    "mul": 1.1
+   }
+  ],
+  "hooks": {
+   "tick": true
+  }
+ },
+ "anger-point": {
+  "name": "Irascible",
+  "desc": "+8 armadura. Cada golpe que recibes te enfurece: +6% de daño por carga (hasta 6; como Primeape, hasta 8). La furia se va tras 5 s sin recibir daño.",
+  "mods": [
+   {
+    "stat": "armor",
+    "add": 8
+   }
+  ]
+ },
+ "swift-swim": {
+  "name": "Nado Rápido",
+  "desc": "+10% PS y +20% velocidad de proyectiles. Con lluvia, +30% velocidad y +20% de daño. Como Poliwrath, +15% daño físico.",
+  "mods": [
+   {
+    "stat": "maxHp",
+    "mul": 1.1
+   },
+   {
+    "stat": "projSpeed",
+    "mul": 1.2
+   }
+  ]
+ },
+ "carnivore": {
+  "name": "Boca Voraz",
+  "desc": "+10% PS. Tus Golpes y Giros hacen +15% de daño y pueden enraizar (20%). Las bajas de enemigos enraizados te curan un 2% de PS.",
+  "mods": [
+   {
+    "stat": "maxHp",
+    "mul": 1.1
+   }
+  ]
+ },
+ "tentacles": {
+  "name": "Tentáculos",
+  "desc": "+10 armadura. Cada 2 s tus tentáculos azotan a los 2 enemigos más cercanos en 7 m (envenenan); Tentacruel azota a 4.",
+  "mods": [
+   {
+    "stat": "armor",
+    "add": 10
+   }
+  ],
+  "hooks": {
+   "tick": true
+  }
+ },
+ "overgrow": {
+  "name": "Espesura",
+  "desc": "Con menos del 40% de PS, +40% de daño. +10% daño Planta.",
+  "mods": [],
+  "hooks": {
+   "lowHp": 1.4,
+   "typeBoost": {
+    "grass": 0.1
+   }
+  }
+ },
+ "blaze": {
+  "name": "Mar Llamas",
+  "desc": "Con menos del 40% de PS, +40% de daño. +10% daño Fuego.",
+  "mods": [],
+  "hooks": {
+   "lowHp": 1.4,
+   "typeBoost": {
+    "fire": 0.1
+   }
+  }
+ },
+ "torrent": {
+  "name": "Torrente",
+  "desc": "Con menos del 40% de PS, +40% de daño. +10% daño Agua.",
+  "mods": [],
+  "hooks": {
+   "lowHp": 1.4,
+   "typeBoost": {
+    "water": 0.1
+   }
+  }
+ },
+ "swarm": {
+  "desc": "Con menos del 40% de PS, +40% de daño. +10% velocidad de ataque.",
+  "mods": [
+   {
+    "stat": "attackSpeed",
+    "mul": 1.1
+   }
+  ],
+  "hooks": {
+   "lowHp": 1.4
+  }
+ },
+ "levitate": {
+  "name": "Levitación",
+  "desc": "Flotas: mantén Saltar para planear y puedes subir paredes. +6% evasión.",
+  "mods": [
+   {
+    "stat": "evasion",
+    "add": 0.06
+   }
+  ]
+ },
+ "keen-eye": {
+  "desc": "+8% crítico y +2 rango de recogida.",
+  "mods": [
+   {
+    "stat": "critChance",
+    "add": 0.08
+   },
+   {
+    "stat": "pickupRange",
+    "add": 2
+   }
+  ]
+ },
+ "intimidate": {
+  "name": "Intimidación",
+  "desc": "Cada 3 s, los enemigos cercanos quedan encantados (hacen -40% daño).",
+  "mods": [],
+  "hooks": {
+   "tick": true
+  }
+ },
+ "pressure": {
+  "desc": "+25% daño a élites, Alfa y jefes.",
+  "mods": [
+   {
+    "stat": "eliteDamage",
+    "mul": 1.25
+   }
+  ]
+ },
+ "sturdy": {
+  "name": "Robustez",
+  "desc": "Sobrevives a un golpe letal con 1 PS una vez por partida. +10 armadura.",
+  "mods": [
+   {
+    "stat": "armor",
+    "add": 10
+   }
+  ]
+ },
+ "run-away": {
+  "desc": "+12% velocidad de movimiento y +1 salto.",
+  "mods": [
+   {
+    "stat": "moveSpeed",
+    "mul": 1.12
+   },
+   {
+    "stat": "extraJumps",
+    "add": 1
+   }
+  ]
+ },
+ "thick-fat": {
+  "desc": "+12 armadura y +15% PS máximos.",
+  "mods": [
+   {
+    "stat": "armor",
+    "add": 12
+   },
+   {
+    "stat": "maxHp",
+    "mul": 1.15
+   }
+  ]
+ },
+ "poison-point": {
+  "name": "Punto Tóxico",
+  "desc": "+15% PS y +10 armadura. Quien te toca se envenena y los envenenados contagian al morir.",
+  "mods": [
+   {
+    "stat": "maxHp",
+    "mul": 1.15
+   },
+   {
+    "stat": "armor",
+    "add": 10
+   }
+  ],
+  "hooks": {
+   "contact": "poison"
+  }
+ },
+ "shed-skin": {
+  "desc": "+1.5 regeneración de PS.",
+  "mods": [
+   {
+    "stat": "regen",
+    "add": 1.5
+   }
+  ]
+ },
+ "static": {
+  "name": "Electricidad Estática",
+  "desc": "Quien te toca queda paralizado. Cada 4 s lanzas una descarga a un enemigo.",
+  "mods": [],
+  "hooks": {
+   "contact": "paralysis",
+   "tick": true
+  }
+ },
+ "cute-charm": {
+  "name": "Gran Encanto",
+  "desc": "Quien te toca queda encantado. +5% evasión.",
+  "mods": [
+   {
+    "stat": "evasion",
+    "add": 0.05
+   }
+  ],
+  "hooks": {
+   "contact": "charm"
+  }
+ },
+ "inner-focus": {
+  "desc": "+10% daño y no te pueden hacer retroceder.",
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.1
+   }
+  ]
+ },
+ "guts": {
+  "name": "Agallas",
+  "desc": "+25% daño físico.",
+  "mods": [
+   {
+    "stat": "physical",
+    "mul": 1.25
+   }
+  ]
+ },
+ "clear-body": {
+  "desc": "+10 armadura y +10% PS.",
+  "mods": [
+   {
+    "stat": "armor",
+    "add": 10
+   },
+   {
+    "stat": "maxHp",
+    "mul": 1.1
+   }
+  ]
+ },
+ "flash-fire": {
+  "name": "Absorbe Fuego",
+  "desc": "+20% daño de Fuego y +15% daño de estados.",
+  "mods": [
+   {
+    "stat": "statusDamage",
+    "mul": 1.15
+   }
+  ]
+ },
+ "water-absorb": {
+  "name": "Absorbe Agua",
+  "desc": "Recibes -15% daño. +0.5 regeneración.",
+  "mods": [
+   {
+    "stat": "regen",
+    "add": 0.5
+   }
+  ],
+  "hooks": {
+   "dmgTaken": 0.85
+  }
+ },
+ "volt-absorb": {
+  "desc": "Recibes -15% daño. +0.5 regeneración.",
+  "mods": [
+   {
+    "stat": "regen",
+    "add": 0.5
+   }
+  ],
+  "hooks": {
+   "dmgTaken": 0.85
+  }
+ },
+ "synchronize": {
+  "name": "Sincronía",
+  "desc": "+20% probabilidad de estados.",
+  "mods": [
+   {
+    "stat": "statusChance",
+    "mul": 1.2
+   }
+  ]
+ },
+ "oblivious": {
+  "name": "Despistado",
+  "desc": "+25% PS, +1,5 regeneración y -10% velocidad. Cada 6 s bostezas: los enemigos a 6 m pueden dormirse. Como Slowbro, el Shellder de la cola te da +20 armadura.",
+  "mods": [
+   {
+    "stat": "maxHp",
+    "mul": 1.25
+   },
+   {
+    "stat": "regen",
+    "add": 1.5
+   },
+   {
+    "stat": "moveSpeed",
+    "mul": 0.9
+   }
+  ],
+  "hooks": {
+   "tick": true
+  }
+ },
+ "natural-cure": {
+  "name": "Huevo Suerte",
+  "desc": "+40% PS y +40% curación. Cada 10 s pones un huevo a tu lado que te cura un 10% al recogerlo.",
+  "mods": [
+   {
+    "stat": "maxHp",
+    "mul": 1.4
+   },
+   {
+    "stat": "healing",
+    "mul": 1.4
+   }
+  ],
+  "hooks": {
+   "tick": true
+  }
+ },
+ "hyper-cutter": {
+  "name": "Pinza Gigante",
+  "desc": "+6 armadura. Tus Golpes hacen +20% de daño. Cada 5.º golpe de un Golpe es una pinza que hace el doble y aturde (Kingler, cada 4.º).",
+  "mods": [
+   {
+    "stat": "armor",
+    "add": 6
+   }
+  ]
+ },
+ "beast-boost": {
+  "desc": "Cada baja te hace más rápido y fuerte (hasta +30%).",
+  "mods": []
+ },
+ "rock-head": {
+  "name": "Cabeza Roca",
+  "desc": "+25 armadura y +15% PS, a cambio de -8% velocidad. Tus Embestidas hacen +30% de daño. Cada 6 s se desprenden rocas sobre los 3 enemigos más cercanos.",
+  "mods": [
+   {
+    "stat": "armor",
+    "add": 25
+   },
+   {
+    "stat": "maxHp",
+    "mul": 1.15
+   },
+   {
+    "stat": "moveSpeed",
+    "mul": 0.92
+   }
+  ],
+  "hooks": {
+   "tick": true
+  }
+ },
+ "insomnia": {
+  "desc": "+10% velocidad de ataque.",
+  "mods": [
+   {
+    "stat": "attackSpeed",
+    "mul": 1.1
+   }
+  ]
+ },
+ "own-tempo": {
+  "desc": "+10% velocidad de ataque y +5% velocidad.",
+  "mods": [
+   {
+    "stat": "attackSpeed",
+    "mul": 1.1
+   },
+   {
+    "stat": "moveSpeed",
+    "mul": 1.05
+   }
+  ]
+ },
+ "protosynthesis": {
+  "desc": "+15% daño. Con sol, otro +15%.",
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.15
+   }
+  ]
+ },
+ "quark-drive": {
+  "desc": "+15% daño y +10% velocidad.",
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.15
+   },
+   {
+    "stat": "moveSpeed",
+    "mul": 1.1
+   }
+  ]
+ },
+ "shield-dust": {
+  "desc": "+20 escudo regenerable.",
+  "mods": [
+   {
+    "stat": "shieldMax",
+    "add": 20
+   }
+  ]
+ },
+ "sand-veil": {
+  "name": "Velo Arena",
+  "desc": "+10% evasión.",
+  "mods": [
+   {
+    "stat": "evasion",
+    "add": 0.1
+   }
+  ]
+ },
+ "snow-cloak": {
+  "desc": "+10% evasión.",
+  "mods": [
+   {
+    "stat": "evasion",
+    "add": 0.1
+   }
+  ]
+ },
+ "limber": {
+  "desc": "+1 salto extra y +10% velocidad.",
+  "mods": [
+   {
+    "stat": "extraJumps",
+    "add": 1
+   },
+   {
+    "stat": "moveSpeed",
+    "mul": 1.1
+   }
+  ]
+ },
+ "hustle": {
+  "name": "Entusiasmo",
+  "desc": "+25% daño físico y +10% velocidad de ataque, a cambio de -8% PS.",
+  "mods": [
+   {
+    "stat": "physical",
+    "mul": 1.25
+   },
+   {
+    "stat": "attackSpeed",
+    "mul": 1.1
+   },
+   {
+    "stat": "maxHp",
+    "mul": 0.92
+   }
+  ]
+ },
+ "rivalry": {
+  "name": "Rivalidad",
+  "desc": "+10% daño y +25% contra élites, Alfas y jefes.",
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.1
+   },
+   {
+    "stat": "eliteDamage",
+    "mul": 1.25
+   }
+  ]
+ },
+ "leaf-guard": {
+  "desc": "+15 escudo y +0.5 regeneración.",
+  "mods": [
+   {
+    "stat": "shieldMax",
+    "add": 15
+   },
+   {
+    "stat": "regen",
+    "add": 0.5
+   }
+  ]
+ },
+ "prankster": {
+  "desc": "+15% velocidad de ataque.",
+  "mods": [
+   {
+    "stat": "attackSpeed",
+    "mul": 1.15
+   }
+  ]
+ },
+ "soundproof": {
+  "desc": "+15 armadura.",
+  "mods": [
+   {
+    "stat": "armor",
+    "add": 15
+   }
+  ]
+ },
+ "flame-body": {
+  "name": "Cuerpo Llama",
+  "desc": "Quien te toca se quema. Los enemigos quemados que derrotas estallan en llamas (3 m) y queman a los de alrededor.",
+  "mods": [
+   {
+    "stat": "statusDamage",
+    "mul": 1.1
+   }
+  ],
+  "hooks": {
+   "contact": "burn"
+  }
+ },
+ "battle-armor": {
+  "name": "Armadura Fósil",
+  "desc": "+15 armadura. Cada golpe que recibes se reduce en 3 + 0,3 por nivel. Como Kabutops, tus Golpes y Bumeranes hacen +20% de daño.",
+  "mods": [
+   {
+    "stat": "armor",
+    "add": 15
+   }
+  ]
+ },
+ "shell-armor": {
+  "desc": "+12 armadura.",
+  "mods": [
+   {
+    "stat": "armor",
+    "add": 12
+   }
+  ]
+ },
+ "gluttony": {
+  "name": "Gula",
+  "desc": "+30% curación.",
+  "mods": [
+   {
+    "stat": "healing",
+    "mul": 1.3
+   }
+  ]
+ },
+ "big-pecks": {
+  "desc": "+10 armadura y +5% velocidad.",
+  "mods": [
+   {
+    "stat": "armor",
+    "add": 10
+   },
+   {
+    "stat": "moveSpeed",
+    "mul": 1.05
+   }
+  ]
+ },
+ "healer": {
+  "desc": "Cada 6 s recuperas un 5% de PS. +20% curación.",
+  "mods": [
+   {
+    "stat": "healing",
+    "mul": 1.2
+   }
+  ],
+  "hooks": {
+   "tick": true
+  }
+ },
+ "vital-spirit": {
+  "desc": "+10% velocidad de ataque y +10% PS.",
+  "mods": [
+   {
+    "stat": "attackSpeed",
+    "mul": 1.1
+   },
+   {
+    "stat": "maxHp",
+    "mul": 1.1
+   }
+  ]
+ },
+ "stench": {
+  "desc": "+6% probabilidad de hacer retroceder.",
+  "mods": [
+   {
+    "stat": "flinch",
+    "add": 0.06
+   }
+  ]
+ },
+ "lightning-rod": {
+  "desc": "+20% daño especial.",
+  "mods": [
+   {
+    "stat": "special",
+    "mul": 1.2
+   }
+  ]
+ },
+ "illuminate": {
+  "desc": "+20 suerte.",
+  "mods": [
+   {
+    "stat": "luck",
+    "add": 20
+   }
+  ]
+ },
+ "mold-breaker": {
+  "name": "Rompemoldes",
+  "desc": "+15% daño. Ignoras los escudos enemigos (como los ataques de Lucha) y haces +20% a jefes y minijefes. Llave Corsé siempre es crítico.",
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.15
+   }
+  ]
+ },
+ "early-bird": {
+  "desc": "+10% velocidad de ataque y experiencia.",
+  "mods": [
+   {
+    "stat": "attackSpeed",
+    "mul": 1.1
+   },
+   {
+    "stat": "xpGain",
+    "mul": 1.1
+   }
+  ]
+ },
+ "frisk": {
+  "desc": "+25 suerte.",
+  "mods": [
+   {
+    "stat": "luck",
+    "add": 25
+   }
+  ]
+ },
+ "overcoat": {
+  "desc": "+10 armadura y +10 escudo.",
+  "mods": [
+   {
+    "stat": "armor",
+    "add": 10
+   },
+   {
+    "stat": "shieldMax",
+    "add": 10
+   }
+  ]
+ },
+ "iron-fist": {
+  "name": "Puño Férreo",
+  "desc": "+5% daño físico. Tus puñetazos (los ataques con «puño») hacen +20% de daño. Cada 3 s das un puñetazo automático al enemigo más cercano a menos de 4 m.",
+  "mods": [
+   {
+    "stat": "physical",
+    "mul": 1.05
+   }
+  ],
+  "hooks": {
+   "tick": true
+  }
+ },
+ "sap-sipper": {
+  "desc": "+1 regeneración y +10% PS.",
+  "mods": [
+   {
+    "stat": "regen",
+    "add": 1
+   },
+   {
+    "stat": "maxHp",
+    "mul": 1.1
+   }
+  ]
+ },
+ "strong-jaw": {
+  "desc": "+25% daño físico.",
+  "mods": [
+   {
+    "stat": "physical",
+    "mul": 1.25
+   }
+  ]
+ },
+ "magnet-pull": {
+  "name": "Imán",
+  "desc": "+4 rango de recogida. Cada 4 s un pulso magnético atrae a los enemigos a 9 m y puede paralizarlos. Como Magneton, el pulso además los daña.",
+  "mods": [
+   {
+    "stat": "pickupRange",
+    "add": 4
+   }
+  ],
+  "hooks": {
+   "tick": true
+  }
+ },
+ "serene-grace": {
+  "desc": "Duplicas la probabilidad de estados.",
+  "mods": [
+   {
+    "stat": "statusChance",
+    "mul": 2
+   }
+  ]
+ },
+ "speed-boost": {
+  "name": "Impulso",
+  "desc": "Tu velocidad y daño aumentan con el tiempo (hasta +30%).",
+  "mods": []
+ },
+ "sand-stream": {
+  "desc": "Invocas una tormenta de arena permanente.",
+  "mods": [],
+  "hooks": {
+   "weather": "sand"
+  }
+ },
+ "drizzle": {
+  "desc": "Invocas lluvia permanente.",
+  "mods": [],
+  "hooks": {
+   "weather": "rain"
+  }
+ },
+ "drought": {
+  "desc": "Invocas sol permanente.",
+  "mods": [],
+  "hooks": {
+   "weather": "sun"
+  }
+ },
+ "snow-warning": {
+  "desc": "Invocas granizo permanente.",
+  "mods": [],
+  "hooks": {
+   "weather": "hail"
+  }
+ },
+ "rough-skin": {
+  "desc": "Quien te toca recibe daño (espinas +30).",
+  "mods": [
+   {
+    "stat": "thorns",
+    "add": 30
+   }
+  ]
+ },
+ "iron-barbs": {
+  "desc": "Quien te toca recibe daño (espinas +30).",
+  "mods": [
+   {
+    "stat": "thorns",
+    "add": 30
+   }
+  ]
+ },
+ "sheer-force": {
+  "desc": "+30% daño, pero sin estados.",
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.3
+   },
+   {
+    "stat": "statusChance",
+    "mul": 0.2
+   }
+  ]
+ },
+ "huge-power": {
+  "desc": "Duplicas tu daño físico.",
+  "mods": [
+   {
+    "stat": "physical",
+    "mul": 1.7
+   }
+  ]
+ },
+ "pure-power": {
+  "desc": "Duplicas tu daño físico.",
+  "mods": [
+   {
+    "stat": "physical",
+    "mul": 1.7
+   }
+  ]
+ },
+ "technician": {
+  "name": "Experto",
+  "desc": "+15% velocidad de ataque y +10% daño.",
+  "mods": [
+   {
+    "stat": "attackSpeed",
+    "mul": 1.15
+   },
+   {
+    "stat": "damage",
+    "mul": 1.1
+   }
+  ]
+ },
+ "adaptability": {
+  "name": "Adaptable",
+  "desc": "+25% daño con movimientos de tu tipo (la bonificación por tipo pasa de ×1,25 a ×1,56).",
+  "mods": []
+ },
+ "skill-link": {
+  "name": "Encadenado",
+  "desc": "+20 armadura y +1 proyectil. Como Cloyster, +1 proyectil y +10 armadura más.",
+  "mods": [
+   {
+    "stat": "armor",
+    "add": 20
+   },
+   {
+    "stat": "projectiles",
+    "add": 1
+   }
+  ]
+ },
+ "multiscale": {
+  "name": "Multiescamas",
+  "desc": "Con los PS al máximo recibes -50% daño.",
+  "mods": [],
+  "hooks": {
+   "fullHp": 1
+  }
+ },
+ "magic-guard": {
+  "name": "Muro Mágico",
+  "desc": "Inmune al daño del suelo (lava, charcos de fuego, grietas, nubes de esporas). -30% daño de proyectiles y ataques de área.",
+  "mods": [
+   {
+    "stat": "special",
+    "mul": 1.1
+   }
+  ]
+ },
+ "moxie": {
+  "desc": "Cada baja te potencia (hasta +30% daño).",
+  "mods": []
+ },
+ "super-luck": {
+  "desc": "+12% crítico.",
+  "mods": [
+   {
+    "stat": "critChance",
+    "add": 0.12
+   }
+  ]
+ },
+ "sniper": {
+  "name": "Francotirador",
+  "desc": "+8% crítico y +50% daño crítico.",
+  "mods": [
+   {
+    "stat": "critChance",
+    "add": 0.08
+   },
+   {
+    "stat": "critDamage",
+    "add": 0.5
+   }
+  ]
+ },
+ "shadow-tag": {
+  "desc": "Al esquivar, el atacante recibe daño Fantasma.",
+  "mods": [
+   {
+    "stat": "evasion",
+    "add": 0.06
+   }
+  ]
+ },
+ "tough-claws": {
+  "desc": "+25% daño físico.",
+  "mods": [
+   {
+    "stat": "physical",
+    "mul": 1.25
+   }
+  ]
+ },
+ "pixilate": {
+  "desc": "+20% daño especial.",
+  "mods": [
+   {
+    "stat": "special",
+    "mul": 1.2
+   }
+  ]
+ },
+ "water-veil": {
+  "name": "Velo Agua",
+  "desc": "+10% evasión. Cada esquiva te envuelve en agua: escudo del 6% de tus PS. Como Seaking, +5% evasión.",
+  "mods": [
+   {
+    "stat": "evasion",
+    "add": 0.1
+   }
+  ]
+ },
+ "magma-armor": {
+  "desc": "+12 armadura.",
+  "mods": [
+   {
+    "stat": "armor",
+    "add": 12
+   }
+  ]
+ },
+ "ice-body": {
+  "name": "Sebo Polar",
+  "desc": "+15% PS y +10 armadura. Cada 4 s estallan esquirlas de hielo a tu alrededor (5 m) que congelan poco a poco. Como Dewgong, 6,5 m.",
+  "mods": [
+   {
+    "stat": "maxHp",
+    "mul": 1.15
+   },
+   {
+    "stat": "armor",
+    "add": 10
+   }
+  ],
+  "hooks": {
+   "tick": true
+  }
+ },
+ "suction-cups": {
+  "desc": "+12 armadura.",
+  "mods": [
+   {
+    "stat": "armor",
+    "add": 12
+   }
+  ]
+ },
+ "honey-gather": {
+  "desc": "+30% Pokédólares.",
+  "mods": [
+   {
+    "stat": "gold",
+    "mul": 1.3
+   }
+  ]
+ },
+ "cheek-pouch": {
+  "desc": "+30% curación.",
+  "mods": [
+   {
+    "stat": "healing",
+    "mul": 1.3
+   }
+  ]
+ },
+ "reckless": {
+  "desc": "+20% daño físico.",
+  "mods": [
+   {
+    "stat": "physical",
+    "mul": 1.2
+   }
+  ]
+ },
+ "steam-engine": {
+  "desc": "+15% velocidad.",
+  "mods": [
+   {
+    "stat": "moveSpeed",
+    "mul": 1.15
+   }
+  ]
+ },
+ "fluffy": {
+  "desc": "-20% daño recibido.",
+  "mods": [],
+  "hooks": {
+   "dmgTaken": 0.8
+  }
+ },
+ "unaware": {
+  "desc": "+15% PS y +8 armadura.",
+  "mods": [
+   {
+    "stat": "maxHp",
+    "mul": 1.15
+   },
+   {
+    "stat": "armor",
+    "add": 8
+   }
+  ]
+ },
+ "defiant": {
+  "desc": "Con menos del 40% de PS, +40% de daño.",
+  "mods": [],
+  "hooks": {
+   "lowHp": 1.4
+  }
+ },
+ "justified": {
+  "desc": "+20% daño a élites y +5% daño.",
+  "mods": [
+   {
+    "stat": "eliteDamage",
+    "mul": 1.2
+   },
+   {
+    "stat": "damage",
+    "mul": 1.05
+   }
+  ]
+ },
+ "steadfast": {
+  "desc": "+10% velocidad.",
+  "mods": [
+   {
+    "stat": "moveSpeed",
+    "mul": 1.1
+   }
+  ]
+ },
+ "hydration": {
+  "desc": "Con lluvia te curas. +1 regeneración.",
+  "mods": [
+   {
+    "stat": "regen",
+    "add": 1
+   }
+  ]
+ },
+ "anticipation": {
+  "desc": "+8% evasión.",
+  "mods": [
+   {
+    "stat": "evasion",
+    "add": 0.08
+   }
+  ]
+ },
+ "plus": {
+  "desc": "+15% daño especial.",
+  "mods": [
+   {
+    "stat": "special",
+    "mul": 1.15
+   }
+  ]
+ },
+ "minus": {
+  "desc": "+15% daño especial.",
+  "mods": [
+   {
+    "stat": "special",
+    "mul": 1.15
+   }
+  ]
+ },
+ "flower-veil": {
+  "desc": "+15 escudo.",
+  "mods": [
+   {
+    "stat": "shieldMax",
+    "add": 15
+   }
+  ]
+ },
+ "sweet-veil": {
+  "desc": "+15 escudo.",
+  "mods": [
+   {
+    "stat": "shieldMax",
+    "add": 15
+   }
+  ]
+ },
+ "damp": {
+  "desc": "+10% área.",
+  "mods": [
+   {
+    "stat": "area",
+    "mul": 1.1
+   }
+  ]
+ },
+ "bulletproof": {
+  "desc": "-15% daño recibido.",
+  "mods": [],
+  "hooks": {
+   "dmgTaken": 0.85
+  }
+ },
+ "blazing-hooves": {
+  "name": "Cascos Ígneos",
+  "desc": "+15% velocidad. Al moverte dejas huellas de fuego que queman a los enemigos. Como Rapidash, +10% velocidad y huellas más grandes.",
+  "mods": [
+   {
+    "stat": "moveSpeed",
+    "mul": 1.15
+   }
+  ]
+ },
+ "leek-master": {
+  "name": "Puerro Afilado",
+  "desc": "+10% crítico. Siempre llevas un puerro: un 4% de tus golpes son un «¡Bonk!» de ×8 (se suma al objeto Puerro).",
+  "mods": [
+   {
+    "stat": "critChance",
+    "add": 0.1
+   }
+  ]
+ },
+ "twin-heads": {
+  "name": "Cabezas Gemelas",
+  "desc": "+10% velocidad. Cada ataque tiene un 25% de repetirse al instante con la otra cabeza. Como Dodrio, un 35%.",
+  "mods": [
+   {
+    "stat": "moveSpeed",
+    "mul": 1.1
+   }
+  ]
+ },
+ "sludge-body": {
+  "name": "Cuerpo de Lodo",
+  "desc": "-15% daño recibido. Al recibir un golpe dejas un charco tóxico 4 s que envenena y atrapa a quien lo pisa. Como Muk, los charcos son mayores.",
+  "mods": [],
+  "hooks": {
+   "dmgTaken": 0.85
+  }
+ },
+ "pendulum": {
+  "name": "Péndulo",
+  "desc": "+10% probabilidad de estados. Cada 7 s tu péndulo duerme a los 3 enemigos más cercanos (Hypno, a 5). Los enemigos dormidos a menos de 6 m te curan un 0,5% de PS por segundo cada uno (hasta 5).",
+  "mods": [
+   {
+    "stat": "statusChance",
+    "mul": 1.1
+   }
+  ],
+  "hooks": {
+   "tick": true
+  }
+ },
+ "aftermath": {
+  "name": "Detonación",
+  "desc": "+15% velocidad. Los enemigos que derrotas tienen un 12% de explotar (3 m, daño Eléctrico que paraliza); con Electrode, un 20%.",
+  "mods": [
+   {
+    "stat": "moveSpeed",
+    "mul": 1.15
+   }
+  ]
+ },
+ "harvest": {
+  "name": "Cosecha",
+  "desc": "+20% curación. Cada 15 s aparece una baya a tu lado. Como Exeggutor, +10% de área.",
+  "mods": [
+   {
+    "stat": "healing",
+    "mul": 1.2
+   }
+  ],
+  "hooks": {
+   "tick": true
+  }
+ },
+ "limber-kicks": {
+  "name": "Patadas Elásticas",
+  "desc": "+20% de área y +1 salto. Tus patadas (los ataques con «patada») hacen +20% de daño.",
+  "mods": [
+   {
+    "stat": "area",
+    "mul": 1.2
+   },
+   {
+    "stat": "extraJumps",
+    "add": 1
+   }
+  ]
+ },
+ "long-tongue": {
+  "name": "Lengua Larga",
+  "desc": "+4 rango de recogida y +20% PS. Cada 4 s tu lengua atrapa al enemigo más cercano a menos de 8 m, lo trae hacia ti y lo paraliza.",
+  "mods": [
+   {
+    "stat": "pickupRange",
+    "add": 4
+   },
+   {
+    "stat": "maxHp",
+    "mul": 1.2
+   }
+  ],
+  "hooks": {
+   "tick": true
+  }
+ },
+ "toxic-cloud": {
+  "name": "Nube Tóxica",
+  "desc": "Levitas: mantén Saltar para planear y puedes subir paredes. Una nube de gas de 4 m te rodea y envenena cada segundo. Como Weezing, 5,5 m.",
+  "mods": [],
+  "hooks": {
+   "tick": true
+  }
+ },
+ "rhino-charge": {
+  "name": "Embestida Imparable",
+  "desc": "+15 armadura. Tras 1,5 s corriendo sin parar, arrollas: los enemigos que tocas reciben daño y salen volando.",
+  "mods": [
+   {
+    "stat": "armor",
+    "add": 15
+   }
+  ]
+ },
+ "regenerator": {
+  "name": "Lianas",
+  "desc": "+2 regeneración. Cada 5 s tus lianas atrapan (enraizar) y dañan a los 4 enemigos más cercanos en 7 m.",
+  "mods": [
+   {
+    "stat": "regen",
+    "add": 2
+   }
+  ],
+  "hooks": {
+   "tick": true
+  }
+ },
+ "parental-bond": {
+  "name": "Amor Filial",
+  "desc": "Tu cría pelea contigo: cada golpe de tus ataques lo repite al 25% de su daño.",
+  "mods": []
+ },
+ "ink-sniper": {
+  "name": "Tinta",
+  "desc": "+10% crítico y +25% daño crítico. Tus críticos llenan de tinta al enemigo y lo ciegan: hace -40% de daño y los comunes dejan de atacar.",
+  "mods": [
+   {
+    "stat": "critChance",
+    "add": 0.1
+   },
+   {
+    "stat": "critDamage",
+    "add": 0.25
+   }
+  ]
+ },
+ "star-core": {
+  "name": "Núcleo",
+  "desc": "+20% velocidad de proyectiles. Cada 8 s tu núcleo te cura un 5%. Como Starmie, +10% daño especial.",
+  "mods": [
+   {
+    "stat": "projSpeed",
+    "mul": 1.2
+   }
+  ],
+  "hooks": {
+   "tick": true
+  }
+ },
+ "barrier-wall": {
+  "name": "Pared Invisible",
+  "desc": "Cada 6 s levantas una barrera invisible: un escudo del 10% de tus PS y una pared que aparta a los enemigos a menos de 4 m.",
+  "mods": [],
+  "hooks": {
+   "tick": true
+  }
+ },
+ "frost-kiss": {
+  "name": "Beso Gélido",
+  "desc": "Quien te toca queda encantado. Tus golpes a enemigos encantados los congelan poco a poco.",
+  "mods": [],
+  "hooks": {
+   "contact": "charm"
+  }
+ },
+ "motor-drive": {
+  "name": "Electromotor",
+  "desc": "Cada vez que paralizas a un enemigo ganas +2% de daño durante 4 s (hasta 15 cargas).",
+  "mods": []
+ },
+ "stampede": {
+  "name": "Estampida",
+  "desc": "+15% velocidad. Mientras corres, cada 0,5 s embistes a los enemigos que tienes delante (2,5 m): daño y un buen empujón.",
+  "mods": [
+   {
+    "stat": "moveSpeed",
+    "mul": 1.15
+   }
+  ]
+ },
+ "imposter": {
+  "name": "Transformación",
+  "desc": "+10% daño, PS y velocidad. Cada 30 s copias los tipos del enemigo más cercano: cambian tu bonificación de tipo y tus debilidades.",
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.1
+   },
+   {
+    "stat": "maxHp",
+    "mul": 1.1
+   },
+   {
+    "stat": "moveSpeed",
+    "mul": 1.1
+   }
+  ],
+  "hooks": {
+   "tick": true
+  }
+ },
+ "download": {
+  "name": "Descarga",
+  "desc": "+12% daño especial y velocidad de proyectiles. Cada 10 s descargas datos: tus 5 próximos golpes son críticos.",
+  "mods": [
+   {
+    "stat": "special",
+    "mul": 1.12
+   },
+   {
+    "stat": "projSpeed",
+    "mul": 1.12
+   }
+  ],
+  "hooks": {
+   "tick": true
+  }
+ },
+ "spiral-shell": {
+  "name": "Concha Espiral",
+  "desc": "+20 armadura. Tus ataques de Roca y Agua hacen +15% de daño. Cada 5 s, un anillo de rocas sale de tu concha (5 m; Omastar 6,5 m).",
+  "mods": [
+   {
+    "stat": "armor",
+    "add": 20
+   }
+  ],
+  "hooks": {
+   "tick": true
+  }
+ },
+ "ancient-wings": {
+  "name": "Alas Prehistóricas",
+  "desc": "+15% velocidad y +1 salto; planeas manteniendo Saltar. En el aire, tus ataques hacen +25% de daño.",
+  "mods": [
+   {
+    "stat": "moveSpeed",
+    "mul": 1.15
+   },
+   {
+    "stat": "extraJumps",
+    "add": 1
+   }
+  ]
+ },
+ "ice-pressure": {
+  "name": "Presión Gélida",
+  "desc": "Legendario: +10% daño, PS y velocidad. Cada segundo, los enemigos a menos de 6 m se van congelando.",
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.1
+   },
+   {
+    "stat": "maxHp",
+    "mul": 1.1
+   },
+   {
+    "stat": "moveSpeed",
+    "mul": 1.1
+   }
+  ],
+  "hooks": {
+   "tick": true
+  }
+ },
+ "volt-pressure": {
+  "name": "Presión Eléctrica",
+  "desc": "Legendario: +10% daño, PS y velocidad. Cada 5 s caen tres rayos sobre enemigos cercanos y los paralizan.",
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.1
+   },
+   {
+    "stat": "maxHp",
+    "mul": 1.1
+   },
+   {
+    "stat": "moveSpeed",
+    "mul": 1.1
+   }
+  ],
+  "hooks": {
+   "tick": true
+  }
+ },
+ "flame-pressure": {
+  "name": "Presión Ígnea",
+  "desc": "Legendario: +10% daño, PS y velocidad. Cada 6 s un anillo de llamas de 6 m quema a los enemigos.",
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.1
+   },
+   {
+    "stat": "maxHp",
+    "mul": 1.1
+   },
+   {
+    "stat": "moveSpeed",
+    "mul": 1.1
+   }
+  ],
+  "hooks": {
+   "tick": true
+  }
+ },
+ "genome": {
+  "name": "Genoma",
+  "desc": "+15% daño, área y velocidad. Cada 8 s una barrera psíquica te da un escudo del 15% de tus PS. Tus críticos aturden.",
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.15
+   },
+   {
+    "stat": "area",
+    "mul": 1.15
+   },
+   {
+    "stat": "moveSpeed",
+    "mul": 1.15
+   }
+  ],
+  "hooks": {
+   "tick": true
+  }
+ }
+}

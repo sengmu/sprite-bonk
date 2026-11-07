@@ -1,0 +1,37 @@
+[remap]
+
+importer="texture"
+type="CompressedTexture2D"
+uid="uid://pfb4j533vpyw"
+path="res://.godot/imported/graveler_pm0075_00_BodyB1.png-7dbb3c2ae0f5babe361aafa657abd0ec.ctex"
+metadata={
+"vram_texture": false
+}
+generator_parameters={
+"md5": "af4ad9b6ca49329365b3fcd7999144b3"
+}
+
+[deps]
+
+source_file="res://assets/models/graveler_pm0075_00_BodyB1.png"
+dest_files=["res://.godot/imported/graveler_pm0075_00_BodyB1.png-7dbb3c2ae0f5babe361aafa657abd0ec.ctex"]
+
+[params]
+
+compress/mode=0
+compress/high_quality=false
+compress/lossy_quality=0.7
+compress/hdr_compression=1
+compress/normal_map=0
+compress/channel_pack=0
+mipmaps/generate=true
+mipmaps/limit=-1
+roughness/mode=0
+roughness/src_normal=""
+process/fix_alpha_border=true
+process/premult_alpha=false
+process/normal_map_invert_y=false
+process/hdr_as_srgb=false
+process/hdr_clamp_exposure=false
+process/size_limit=0
+detect_3d/compress_to=1

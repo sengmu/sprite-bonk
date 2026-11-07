@@ -1,0 +1,1728 @@
+{
+ "charcoal": {
+  "rarity": 0,
+  "max": 10,
+  "tags": [
+   "type:fire"
+  ],
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.03
+   }
+  ],
+  "desc_es": "+30% daño de movimientos tipo Fuego y +3% daño total.",
+  "name_es": "Carbón",
+  "name": "Carbón"
+ },
+ "mystic-water": {
+  "rarity": 0,
+  "max": 10,
+  "tags": [
+   "type:water"
+  ],
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.03
+   }
+  ],
+  "desc_es": "+30% daño de movimientos tipo Agua y +3% daño total.",
+  "name_es": "Agua Mística",
+  "name": "Agua Mística"
+ },
+ "miracle-seed": {
+  "rarity": 0,
+  "max": 10,
+  "tags": [
+   "type:grass"
+  ],
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.03
+   }
+  ],
+  "desc_es": "+30% daño de movimientos tipo Planta y +3% daño total.",
+  "name_es": "Semilla Milagro",
+  "name": "Semilla Milagro"
+ },
+ "magnet": {
+  "rarity": 0,
+  "max": 10,
+  "tags": [
+   "type:electric"
+  ],
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.03
+   }
+  ],
+  "desc_es": "+30% daño de movimientos tipo Eléctrico y +3% daño total.",
+  "name_es": "Imán",
+  "name": "Imán"
+ },
+ "never-melt-ice": {
+  "rarity": 0,
+  "max": 10,
+  "tags": [
+   "type:ice"
+  ],
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.03
+   }
+  ],
+  "desc_es": "+30% daño de movimientos tipo Hielo y +3% daño total.",
+  "name_es": "Hielo Perpetuo",
+  "name": "Hielo Perpetuo"
+ },
+ "black-belt": {
+  "rarity": 0,
+  "max": 10,
+  "tags": [
+   "type:fighting"
+  ],
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.03
+   }
+  ],
+  "desc_es": "+30% daño de movimientos tipo Lucha y +3% daño total.",
+  "name_es": "Cinturón Negro",
+  "name": "Cinturón Negro"
+ },
+ "poison-barb": {
+  "rarity": 0,
+  "max": 10,
+  "tags": [
+   "type:poison"
+  ],
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.03
+   }
+  ],
+  "desc_es": "+30% daño de movimientos tipo Veneno y +3% daño total.",
+  "name_es": "Flecha Venenosa",
+  "name": "Flecha Venenosa"
+ },
+ "soft-sand": {
+  "rarity": 0,
+  "max": 10,
+  "tags": [
+   "type:ground"
+  ],
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.03
+   }
+  ],
+  "desc_es": "+30% daño de movimientos tipo Tierra y +3% daño total.",
+  "name_es": "Arena Fina",
+  "name": "Arena Fina"
+ },
+ "sharp-beak": {
+  "rarity": 0,
+  "max": 10,
+  "tags": [
+   "type:flying"
+  ],
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.03
+   }
+  ],
+  "desc_es": "+30% daño de movimientos tipo Volador y +3% daño total.",
+  "name_es": "Pico Afilado",
+  "name": "Pico Afilado"
+ },
+ "twisted-spoon": {
+  "rarity": 0,
+  "max": 10,
+  "tags": [
+   "type:psychic"
+  ],
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.03
+   }
+  ],
+  "desc_es": "+30% daño de movimientos tipo Psíquico y +3% daño total.",
+  "name_es": "Cuchara Torcida",
+  "name": "Cuchara Torcida"
+ },
+ "silver-powder": {
+  "rarity": 0,
+  "max": 10,
+  "tags": [
+   "type:bug"
+  ],
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.03
+   }
+  ],
+  "desc_es": "+30% daño de movimientos tipo Bicho y +3% daño total.",
+  "name_es": "Polvo Plata",
+  "name": "Polvo Plata"
+ },
+ "hard-stone": {
+  "rarity": 0,
+  "max": 10,
+  "tags": [
+   "type:rock"
+  ],
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.03
+   }
+  ],
+  "desc_es": "+30% daño de movimientos tipo Roca y +3% daño total.",
+  "name_es": "Piedra Dura",
+  "name": "Piedra Dura"
+ },
+ "spell-tag": {
+  "rarity": 0,
+  "max": 10,
+  "tags": [
+   "type:ghost"
+  ],
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.03
+   }
+  ],
+  "desc_es": "+30% daño de movimientos tipo Fantasma y +3% daño total.",
+  "name_es": "Hechizo",
+  "name": "Hechizo"
+ },
+ "dragon-fang": {
+  "rarity": 0,
+  "max": 10,
+  "tags": [
+   "type:dragon"
+  ],
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.03
+   }
+  ],
+  "desc_es": "+30% daño de movimientos tipo Dragón y +3% daño total.",
+  "name_es": "Colmillo de Dragón",
+  "name": "Colmillo de Dragón"
+ },
+ "black-glasses": {
+  "rarity": 0,
+  "max": 10,
+  "tags": [
+   "type:dark"
+  ],
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.03
+   }
+  ],
+  "desc_es": "+30% daño de movimientos tipo Siniestro y +3% daño total.",
+  "name_es": "Gafas de Sol",
+  "name": "Gafas de Sol"
+ },
+ "metal-coat": {
+  "rarity": 0,
+  "max": 10,
+  "tags": [
+   "type:steel"
+  ],
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.03
+   }
+  ],
+  "desc_es": "+30% daño de movimientos tipo Acero y +3% daño total.",
+  "name_es": "Revest. Metálico",
+  "name": "Revest. Metálico"
+ },
+ "silk-scarf": {
+  "rarity": 0,
+  "max": 10,
+  "tags": [
+   "type:normal"
+  ],
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.03
+   }
+  ],
+  "desc_es": "+30% daño de movimientos tipo Normal y +3% daño total.",
+  "name_es": "Pañuelo de Seda",
+  "name": "Pañuelo de Seda"
+ },
+ "fairy-feather": {
+  "rarity": 0,
+  "max": 10,
+  "tags": [
+   "type:fairy"
+  ],
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.03
+   }
+  ],
+  "desc_es": "+30% daño de movimientos tipo Hada y +3% daño total.",
+  "name_es": "Pluma Feérica",
+  "name": "Pluma Feérica"
+ },
+ "oran-berry": {
+  "rarity": 0,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "maxHp",
+    "add": 15
+   }
+  ],
+  "desc_es": "+15 PS máximos.",
+  "name_es": "Baya Aranja",
+  "name": "Baya Aranja"
+ },
+ "quick-powder": {
+  "rarity": 0,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "moveSpeed",
+    "mul": 1.07
+   }
+  ],
+  "desc_es": "+7% velocidad de movimiento.",
+  "name_es": "Polvo Veloz",
+  "name": "Polvo Veloz"
+ },
+ "bright-powder": {
+  "rarity": 0,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "evasion",
+    "add": 0.04
+   }
+  ],
+  "desc_es": "+4% evasión.",
+  "name_es": "Polvo Brillo",
+  "name": "Polvo Brillo"
+ },
+ "amulet-coin": {
+  "rarity": 0,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "gold",
+    "mul": 1.2
+   }
+  ],
+  "desc_es": "+20% Pokédólares.",
+  "name_es": "Moneda Amuleto",
+  "name": "Moneda Amuleto"
+ },
+ "scope-lens": {
+  "rarity": 0,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "critChance",
+    "add": 0.06
+   }
+  ],
+  "desc_es": "+6% probabilidad de crítico.",
+  "name_es": "Periscopio",
+  "name": "Periscopio"
+ },
+ "wide-lens": {
+  "rarity": 0,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "area",
+    "mul": 1.1
+   }
+  ],
+  "desc_es": "+10% área de los movimientos.",
+  "name_es": "Lupa",
+  "name": "Lupa"
+ },
+ "zoom-lens": {
+  "rarity": 0,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "projSpeed",
+    "mul": 1.15
+   },
+   {
+    "stat": "critChance",
+    "add": 0.03
+   }
+  ],
+  "desc_es": "+15% velocidad de proyectil y +3% crítico.",
+  "name_es": "Telescopio",
+  "name": "Telescopio"
+ },
+ "soothe-bell": {
+  "rarity": 0,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "healing",
+    "mul": 1.15
+   },
+   {
+    "stat": "regen",
+    "add": 0.3
+   }
+  ],
+  "desc_es": "+15% curación recibida y +0.3 regeneración.",
+  "name_es": "Cascabel Alivio",
+  "name": "Cascabel Alivio"
+ },
+ "lax-incense": {
+  "rarity": 0,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "armor",
+    "add": 5
+   }
+  ],
+  "desc_es": "+5 armadura.",
+  "name_es": "Incienso Suave",
+  "name": "Incienso Suave"
+ },
+ "honey": {
+  "rarity": 0,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "pickupRange",
+    "add": 1.5
+   }
+  ],
+  "desc_es": "+1.5 rango de recogida.",
+  "name_es": "Miel",
+  "name": "Miel"
+ },
+ "cleanse-tag": {
+  "rarity": 0,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "eliteDamage",
+    "mul": 1.15
+   }
+  ],
+  "desc_es": "+15% daño a élites, Alfa y jefes.",
+  "name_es": "Amuleto",
+  "name": "Amuleto"
+ },
+ "potion": {
+  "rarity": 0,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "regen",
+    "add": 0.6
+   }
+  ],
+  "desc_es": "+0.6 regeneración de PS por segundo.",
+  "name_es": "Poción",
+  "name": "Poción"
+ },
+ "lucky-punch": {
+  "rarity": 0,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "luck",
+    "add": 10
+   },
+   {
+    "stat": "critChance",
+    "add": 0.03
+   }
+  ],
+  "desc_es": "+10 suerte y +3% crítico.",
+  "name_es": "Puño Suerte",
+  "name": "Puño Suerte"
+ },
+ "big-nugget": {
+  "rarity": 0,
+  "max": 5,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "gold",
+    "mul": 1.05
+   }
+  ],
+  "desc_es": "Las Poké Balls cuestan un 8% menos (hasta -40%) y +5% Pokédólares.",
+  "name_es": "Maxipepita",
+  "name": "Maxipepita"
+ },
+ "grip-claw": {
+  "rarity": 0,
+  "max": 5,
+  "tags": [],
+  "mods": [],
+  "desc_es": "Tus golpes tienen un 4% de enraizar al enemigo.",
+  "name_es": "Garra Garfio",
+  "name": "Garra Garfio"
+ },
+ "berry-juice": {
+  "rarity": 0,
+  "max": 8,
+  "tags": [],
+  "mods": [],
+  "desc_es": "Cada baja tiene un 5% de curarte un 2% de tus PS máximos.",
+  "name_es": "Zumo de Baya",
+  "name": "Zumo de Baya"
+ },
+ "soda-pop": {
+  "rarity": 0,
+  "max": 5,
+  "tags": [],
+  "mods": [],
+  "desc_es": "Al deslizarte estalla una ola de burbujas a tu alrededor que daña y moja.",
+  "name_es": "Refresco",
+  "name": "Refresco"
+ },
+ "muscle-band": {
+  "rarity": 1,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "physical",
+    "mul": 1.15
+   }
+  ],
+  "desc_es": "+15% daño físico.",
+  "name_es": "Cinta Fuerte",
+  "name": "Cinta Fuerte"
+ },
+ "wise-glasses": {
+  "rarity": 1,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "special",
+    "mul": 1.15
+   }
+  ],
+  "desc_es": "+15% daño especial.",
+  "name_es": "Gafas Especiales",
+  "name": "Gafas Especiales"
+ },
+ "quick-claw": {
+  "rarity": 1,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "attackSpeed",
+    "mul": 1.1
+   }
+  ],
+  "desc_es": "+10% velocidad de ataque.",
+  "name_es": "Garra Rápida",
+  "name": "Garra Rápida"
+ },
+ "razor-claw": {
+  "rarity": 1,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "critDamage",
+    "add": 0.3
+   }
+  ],
+  "desc_es": "+30% daño crítico.",
+  "name_es": "Garra Afilada",
+  "name": "Garra Afilada"
+ },
+ "shell-bell": {
+  "rarity": 1,
+  "max": 10,
+  "tags": [],
+  "mods": [],
+  "desc_es": "Recuperas un 0.8% del daño que infliges.",
+  "name_es": "Cascabel Concha",
+  "name": "Cascabel Concha"
+ },
+ "leftovers": {
+  "rarity": 1,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "regen",
+    "add": 1.2
+   }
+  ],
+  "desc_es": "+1.2 regeneración de PS por segundo.",
+  "name_es": "Restos",
+  "name": "Restos"
+ },
+ "rocky-helmet": {
+  "rarity": 1,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "thorns",
+    "add": 25
+   }
+  ],
+  "desc_es": "Los enemigos que te tocan reciben 25 de daño (espinas).",
+  "name_es": "Casco Dentado",
+  "name": "Casco Dentado"
+ },
+ "light-clay": {
+  "rarity": 1,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "duration",
+    "mul": 1.2
+   }
+  ],
+  "desc_es": "+20% duración de movimientos y estados.",
+  "name_es": "Refleluz",
+  "name": "Refleluz"
+ },
+ "air-balloon": {
+  "rarity": 1,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "extraJumps",
+    "add": 1
+   },
+   {
+    "stat": "jumpHeight",
+    "mul": 1.15
+   }
+  ],
+  "desc_es": "+1 salto extra y +15% altura de salto.",
+  "name_es": "Globo Helio",
+  "name": "Globo Helio"
+ },
+ "white-herb": {
+  "rarity": 1,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "statusChance",
+    "mul": 1.25
+   }
+  ],
+  "desc_es": "+25% probabilidad de estados alterados.",
+  "name_es": "Hierba Blanca",
+  "name": "Hierba Blanca"
+ },
+ "power-herb": {
+  "rarity": 1,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "statusDamage",
+    "mul": 1.3
+   }
+  ],
+  "desc_es": "+30% daño de quemaduras, venenos y similares.",
+  "name_es": "Hierba Única",
+  "name": "Hierba Única"
+ },
+ "sitrus-berry": {
+  "rarity": 1,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "maxHp",
+    "add": 10
+   }
+  ],
+  "desc_es": "Al bajar del 30% de PS recuperas un 35% (cada 45 s).",
+  "name_es": "Baya Zidra",
+  "name": "Baya Zidra"
+ },
+ "lucky-egg": {
+  "rarity": 1,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "xpGain",
+    "mul": 1.15
+   }
+  ],
+  "desc_es": "+15% experiencia.",
+  "name_es": "Huevo Suerte",
+  "name": "Huevo Suerte"
+ },
+ "big-root": {
+  "rarity": 1,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "lifesteal",
+    "add": 0.03
+   },
+   {
+    "stat": "healing",
+    "mul": 1.15
+   }
+  ],
+  "desc_es": "+3% robo de vida y +15% curación.",
+  "name_es": "Raíz Grande",
+  "name": "Raíz Grande"
+ },
+ "smoke-ball": {
+  "rarity": 1,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "evasion",
+    "add": 0.03
+   }
+  ],
+  "desc_es": "Al recibir daño: 25% de volverte invisible 1.5 s. +3% evasión.",
+  "name_es": "Bola de Humo",
+  "name": "Bola de Humo"
+ },
+ "metronome": {
+  "rarity": 1,
+  "max": 10,
+  "tags": [],
+  "mods": [],
+  "desc_es": "Ganas daño mientras no recibas golpes (hasta +40%).",
+  "name_es": "Metrónomo",
+  "name": "Metrónomo"
+ },
+ "flame-orb": {
+  "rarity": 1,
+  "max": 5,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "statusDamage",
+    "mul": 1.1
+   }
+  ],
+  "desc_es": "Tus golpes tienen un 5% de quemar y +10% daño de estados.",
+  "name_es": "Llamasfera",
+  "name": "Llamasfera"
+ },
+ "toxic-orb": {
+  "rarity": 1,
+  "max": 5,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "statusChance",
+    "mul": 1.1
+   }
+  ],
+  "desc_es": "Tus golpes tienen un 6% de envenenar y +10% probabilidad de estados.",
+  "name_es": "Toxisfera",
+  "name": "Toxisfera"
+ },
+ "snowball": {
+  "rarity": 1,
+  "max": 5,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "armor",
+    "add": 3
+   }
+  ],
+  "desc_es": "Tus golpes tienen un 6% de enfriar (tres enfriamientos congelan) y +3 armadura.",
+  "name_es": "Bola de Nieve",
+  "name": "Bola de Nieve"
+ },
+ "binding-band": {
+  "rarity": 1,
+  "max": 5,
+  "tags": [],
+  "mods": [],
+  "desc_es": "+20% daño a enemigos aturdidos, enraizados, paralizados, congelados o dormidos.",
+  "name_es": "Banda Atadura",
+  "name": "Banda Atadura"
+ },
+ "smooth-rock": {
+  "rarity": 1,
+  "max": 3,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "bounces",
+    "add": 1
+   },
+   {
+    "stat": "projSpeed",
+    "mul": 1.1
+   }
+  ],
+  "desc_es": "+1 rebote a los proyectiles simples (Proyectil y Ráfaga) y +10% velocidad de proyectil.",
+  "name_es": "Roca Suave",
+  "name": "Roca Suave"
+ },
+ "white-flute": {
+  "rarity": 1,
+  "max": 5,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "enemyAmount",
+    "mul": 1.12
+   },
+   {
+    "stat": "xpGain",
+    "mul": 1.1
+   },
+   {
+    "stat": "luck",
+    "add": 5
+   }
+  ],
+  "desc_es": "+12% enemigos, pero +10% experiencia y +5 suerte.",
+  "name_es": "Flauta Blanca",
+  "name": "Flauta Blanca"
+ },
+ "adrenaline-orb": {
+  "rarity": 1,
+  "max": 3,
+  "tags": [],
+  "mods": [],
+  "desc_es": "Al recibir un golpe: +20% velocidad y +12% velocidad de ataque durante 3 s.",
+  "name_es": "Nerviosfera",
+  "name": "Nerviosfera"
+ },
+ "repel": {
+  "rarity": 1,
+  "max": 3,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "enemyAmount",
+    "mul": 0.92
+   },
+   {
+    "stat": "moveSpeed",
+    "mul": 1.06
+   }
+  ],
+  "desc_es": "-8% enemigos y +6% velocidad. Para cuando la horda aprieta.",
+  "name_es": "Repelente",
+  "name": "Repelente"
+ },
+ "metal-powder": {
+  "rarity": 1,
+  "max": 3,
+  "tags": [],
+  "mods": [],
+  "desc_es": "Si te quedas quieto un momento: +30% armadura y +8% velocidad de ataque hasta que te muevas.",
+  "name_es": "Polvo Metálico",
+  "name": "Polvo Metálico"
+ },
+ "burn-heal": {
+  "rarity": 1,
+  "max": 3,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "statusDamage",
+    "mul": 1.05
+   }
+  ],
+  "desc_es": "Las quemaduras se contagian a los Pokémon que están al lado de un enemigo quemado.",
+  "name_es": "Antiquemar",
+  "name": "Antiquemar"
+ },
+ "ice-heal": {
+  "rarity": 1,
+  "max": 3,
+  "tags": [],
+  "mods": [],
+  "desc_es": "Golpear a un enemigo congelado rompe el hielo: +60% de daño y esquirlas que enfrían a los de alrededor.",
+  "name_es": "Antihielo",
+  "name": "Antihielo"
+ },
+ "awakening": {
+  "rarity": 1,
+  "max": 3,
+  "tags": [],
+  "mods": [],
+  "desc_es": "Tus golpes tienen un 2.5% de dormir, y los dormidos pueden seguir durmiendo al recibir un golpe.",
+  "name_es": "Despertar",
+  "name": "Despertar"
+ },
+ "lemonade": {
+  "rarity": 1,
+  "max": 3,
+  "tags": [],
+  "mods": [],
+  "desc_es": "Tus Alfas de apoyo hacen un 25% más de daño y atacan un 15% más rápido.",
+  "name_es": "Limonada",
+  "name": "Limonada"
+ },
+ "secret-key": {
+  "rarity": 1,
+  "max": 2,
+  "tags": [],
+  "mods": [],
+  "desc_es": "Los altares Unown se cargan un 30% más rápido y se vacían la mitad de rápido al salir.",
+  "name_es": "Llave Secreta",
+  "name": "Llave Secreta"
+ },
+ "gold-teeth": {
+  "rarity": 1,
+  "max": 3,
+  "tags": [],
+  "mods": [],
+  "desc_es": "Meowth, sus renovaciones y la tragaperras te cobran un 8% menos (hasta -24%).",
+  "name_es": "Dentadura de Oro",
+  "name": "Dentadura de Oro"
+ },
+ "old-rod": {
+  "rarity": 1,
+  "max": 3,
+  "tags": [],
+  "mods": [],
+  "desc_es": "Cada 9 s pescas: un Magikarp salta sobre un enemigo y lo moja. A veces pica un Gyarados...",
+  "name_es": "Caña Vieja",
+  "name": "Caña Vieja"
+ },
+ "life-orb": {
+  "rarity": 2,
+  "max": 5,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.3
+   },
+   {
+    "stat": "maxHp",
+    "mul": 0.9
+   }
+  ],
+  "desc_es": "+30% daño total, pero -10% PS máximos.",
+  "name_es": "Vidasfera",
+  "name": "Vidasfera"
+ },
+ "choice-band": {
+  "rarity": 2,
+  "max": 5,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "physical",
+    "mul": 1.35
+   },
+   {
+    "stat": "attackSpeed",
+    "mul": 0.92
+   }
+  ],
+  "desc_es": "+35% daño físico, -8% velocidad de ataque.",
+  "name_es": "Cinta Elección",
+  "name": "Cinta Elección"
+ },
+ "choice-specs": {
+  "rarity": 2,
+  "max": 5,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "special",
+    "mul": 1.35
+   },
+   {
+    "stat": "attackSpeed",
+    "mul": 0.92
+   }
+  ],
+  "desc_es": "+35% daño especial, -8% velocidad de ataque.",
+  "name_es": "Gafas Elección",
+  "name": "Gafas Elección"
+ },
+ "choice-scarf": {
+  "rarity": 2,
+  "max": 5,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "moveSpeed",
+    "mul": 1.2
+   },
+   {
+    "stat": "attackSpeed",
+    "mul": 1.1
+   }
+  ],
+  "desc_es": "+20% velocidad y +10% velocidad de ataque.",
+  "name_es": "Pañuelo Elección",
+  "name": "Pañuelo Elección"
+ },
+ "expert-belt": {
+  "rarity": 2,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "superEffective",
+    "mul": 1.3
+   }
+  ],
+  "desc_es": "+30% daño con ataques muy eficaces.",
+  "name_es": "Cinta Experto",
+  "name": "Cinta Experto"
+ },
+ "focus-band": {
+  "rarity": 2,
+  "max": 4,
+  "tags": [],
+  "mods": [],
+  "desc_es": "15% de sobrevivir a un golpe letal con 1 PS (una vez cada 20 s).",
+  "name_es": "Cinta Aguante",
+  "name": "Cinta Aguante"
+ },
+ "kings-rock": {
+  "rarity": 2,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "flinch",
+    "add": 0.06
+   }
+  ],
+  "desc_es": "+6% probabilidad de hacer retroceder (aturdir).",
+  "name_es": "Roca del Rey",
+  "name": "Roca del Rey"
+ },
+ "assault-vest": {
+  "rarity": 2,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "armor",
+    "add": 12
+   },
+   {
+    "stat": "maxHp",
+    "mul": 1.12
+   }
+  ],
+  "desc_es": "+12 armadura y +12% PS máximos.",
+  "name_es": "Chaleco Asalto",
+  "name": "Chaleco Asalto"
+ },
+ "eviolite": {
+  "rarity": 2,
+  "max": 1,
+  "tags": [],
+  "mods": [],
+  "desc_es": "Si aún puedes evolucionar: +50% armadura y +25% PS.",
+  "name_es": "Mineral Evol",
+  "name": "Mineral Evol"
+ },
+ "exp-share": {
+  "rarity": 2,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "xpGain",
+    "mul": 1.25
+   },
+   {
+    "stat": "pickupRange",
+    "add": 2
+   }
+  ],
+  "desc_es": "+25% experiencia y +2 rango de recogida.",
+  "name_es": "Repartir Exp",
+  "name": "Repartir Exp"
+ },
+ "macho-brace": {
+  "rarity": 2,
+  "max": 3,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "xpGain",
+    "mul": 1.5
+   },
+   {
+    "stat": "moveSpeed",
+    "mul": 0.9
+   }
+  ],
+  "desc_es": "+50% experiencia, -10% velocidad.",
+  "name_es": "Brazal Firme",
+  "name": "Brazal Firme"
+ },
+ "black-sludge": {
+  "rarity": 2,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "regen",
+    "add": 2
+   },
+   {
+    "stat": "statusDamage",
+    "mul": 1.2
+   }
+  ],
+  "desc_es": "+2 regeneración. Tus venenos duran un 25% más y dañan +20%.",
+  "name_es": "Lodo Negro",
+  "name": "Lodo Negro"
+ },
+ "star-piece": {
+  "rarity": 2,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "luck",
+    "add": 20
+   }
+  ],
+  "desc_es": "+20 suerte: mejores rarezas y más botín.",
+  "name_es": "Trozo Estrella",
+  "name": "Trozo Estrella"
+ },
+ "stick": {
+  "rarity": 2,
+  "max": 4,
+  "tags": [],
+  "mods": [],
+  "desc_es": "3% de probabilidad de que un golpe haga ×8 de daño: ¡Bonk!",
+  "name_es": "Puerro",
+  "name": "Puerro"
+ },
+ "razor-fang": {
+  "rarity": 2,
+  "max": 4,
+  "tags": [],
+  "mods": [],
+  "desc_es": "Rematas al instante a los enemigos (no jefes) por debajo del 8% de PS (+4% por unidad extra).",
+  "name_es": "Colmillo Agudo",
+  "name": "Colmillo Agudo"
+ },
+ "shed-shell": {
+  "rarity": 2,
+  "max": 1,
+  "tags": [],
+  "mods": [],
+  "desc_es": "Eres invulnerable durante el primer tramo del deslizamiento y se recarga un 10% más rápido.",
+  "name_es": "Muda Concha",
+  "name": "Muda Concha"
+ },
+ "cell-battery": {
+  "rarity": 2,
+  "max": 2,
+  "tags": [],
+  "mods": [],
+  "desc_es": "+1.5% velocidad de ataque por cada 10 bajas de racha (hasta +25%).",
+  "name_es": "Pila",
+  "name": "Pila"
+ },
+ "lum-berry": {
+  "rarity": 2,
+  "max": 3,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "healing",
+    "mul": 1.1
+   }
+  ],
+  "desc_es": "Cada 30 s, si te falta vida, te cura un 12% de PS. +10% curación recibida.",
+  "name_es": "Baya Ziuela",
+  "name": "Baya Ziuela"
+ },
+ "poke-doll": {
+  "rarity": 2,
+  "max": 2,
+  "tags": [],
+  "mods": [],
+  "desc_es": "Las pasivas de tus Alfas de apoyo valen un 50% más.",
+  "name_es": "Poké Muñeco",
+  "name": "Poké Muñeco"
+ },
+ "dowsing-machine": {
+  "rarity": 2,
+  "max": 2,
+  "tags": [],
+  "mods": [],
+  "desc_es": "Desde la zona siguiente, cada zona trae 1 altar Unown y 2 Poké Balls más.",
+  "name_es": "Zahorí",
+  "name": "Zahorí"
+ },
+ "bicycle": {
+  "rarity": 2,
+  "max": 2,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "moveSpeed",
+    "mul": 1.06
+   }
+  ],
+  "desc_es": "+6% velocidad. Ganas +1% de daño por cada 2% de velocidad extra (hasta +35%).",
+  "name_es": "Bici",
+  "name": "Bici"
+ },
+ "iron-ball": {
+  "rarity": 2,
+  "max": 3,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "armor",
+    "add": 8
+   },
+   {
+    "stat": "moveSpeed",
+    "mul": 0.93
+   }
+  ],
+  "desc_es": "+8 armadura y -7% velocidad. Al caer de un salto provocas una onda sísmica que crece con tu armadura.",
+  "name_es": "Bola Férrea",
+  "name": "Bola Férrea"
+ },
+ "fresh-water": {
+  "rarity": 2,
+  "max": 3,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "healing",
+    "mul": 1.05
+   }
+  ],
+  "desc_es": "La curación que te sobra con los PS llenos se guarda y sale disparada como un chorro de agua.",
+  "name_es": "Agua Fresca",
+  "name": "Agua Fresca"
+ },
+ "full-heal": {
+  "rarity": 2,
+  "max": 3,
+  "tags": [],
+  "mods": [],
+  "desc_es": "+6% de daño por cada estado distinto que tenga el enemigo (hasta +30%).",
+  "name_es": "Cura Total",
+  "name": "Cura Total"
+ },
+ "guard-spec": {
+  "rarity": 2,
+  "max": 2,
+  "tags": [],
+  "mods": [],
+  "desc_es": "Cada 14 s te protege del siguiente golpe por completo.",
+  "name_es": "Protección X",
+  "name": "Protección X"
+ },
+ "coin-case": {
+  "rarity": 2,
+  "max": 1,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "gold",
+    "mul": 1.1
+   }
+  ],
+  "desc_es": "+10% Pokédólares. Ganas +1% de daño por cada 300 ₽ que gastes en la partida (hasta +30%).",
+  "name_es": "Monedero",
+  "name": "Monedero"
+ },
+ "focus-sash": {
+  "rarity": 3,
+  "max": 1,
+  "tags": [],
+  "mods": [],
+  "desc_es": "Sobrevives a un golpe letal una vez por fase.",
+  "name_es": "Banda Aguante",
+  "name": "Banda Aguante"
+ },
+ "pp-max": {
+  "rarity": 3,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "projectiles",
+    "add": 1
+   }
+  ],
+  "desc_es": "+1 proyectil a todos los movimientos.",
+  "name_es": "PP Máximos",
+  "name": "PP Máximos"
+ },
+ "max-elixir": {
+  "rarity": 3,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "attackSpeed",
+    "mul": 1.2
+   }
+  ],
+  "desc_es": "+20% velocidad de ataque.",
+  "name_es": "Elixir Máximo",
+  "name": "Elixir Máximo"
+ },
+ "shiny-stone": {
+  "rarity": 3,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.15
+   },
+   {
+    "stat": "area",
+    "mul": 1.15
+   }
+  ],
+  "desc_es": "+15% daño total y +15% área.",
+  "name_es": "Piedra Día",
+  "name": "Piedra Día"
+ },
+ "dusk-stone": {
+  "rarity": 3,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "critDamage",
+    "add": 0.4
+   },
+   {
+    "stat": "critChance",
+    "add": 0.08
+   }
+  ],
+  "desc_es": "+40% daño crítico y +8% crítico.",
+  "name_es": "Piedra Noche",
+  "name": "Piedra Noche"
+ },
+ "comet-shard": {
+  "rarity": 3,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "gold",
+    "mul": 1.4
+   },
+   {
+    "stat": "luck",
+    "add": 30
+   }
+  ],
+  "desc_es": "+40% Pokédólares y +30 suerte.",
+  "name_es": "Fragmento Cometa",
+  "name": "Fragmento Cometa"
+ },
+ "thunder-stone": {
+  "rarity": 3,
+  "max": 5,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "critChance",
+    "add": 0.04
+   }
+  ],
+  "desc_es": "Tus golpes críticos lanzan un rayo a un enemigo cercano.",
+  "name_es": "Piedra Trueno",
+  "name": "Piedra Trueno"
+ },
+ "fire-stone": {
+  "rarity": 3,
+  "max": 3,
+  "tags": [],
+  "mods": [],
+  "desc_es": "Los enemigos quemados explotan al morir.",
+  "name_es": "Piedra Fuego",
+  "name": "Piedra Fuego"
+ },
+ "protector": {
+  "rarity": 3,
+  "max": 3,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "armor",
+    "add": 20
+   },
+   {
+    "stat": "maxHp",
+    "mul": 1.15
+   },
+   {
+    "stat": "thorns",
+    "add": 40
+   },
+   {
+    "stat": "moveSpeed",
+    "mul": 0.95
+   }
+  ],
+  "desc_es": "+20 armadura, +15% PS máximos y +40 espinas, pero -5% velocidad.",
+  "name_es": "Protector",
+  "name": "Protector"
+ },
+ "griseous-orb": {
+  "rarity": 3,
+  "max": 2,
+  "tags": [],
+  "mods": [],
+  "desc_es": "Cada enemigo derrotado tiene un 12% de dejar una sombra que estalla al momento y maldice a los de alrededor.",
+  "name_es": "Griseosfera",
+  "name": "Griseosfera"
+ },
+ "reaper-cloth": {
+  "rarity": 3,
+  "max": 2,
+  "tags": [],
+  "mods": [],
+  "desc_es": "Cada 100 bajas en la partida: +1% daño (hasta +30%).",
+  "name_es": "Tela Terrible",
+  "name": "Tela Terrible"
+ },
+ "electirizer": {
+  "rarity": 3,
+  "max": 3,
+  "tags": [],
+  "mods": [],
+  "desc_es": "Cada 2.5 s cae un rayo sobre 3 enemigos cercanos y los puede paralizar (+1 rayo por unidad).",
+  "name_es": "Electrizador",
+  "name": "Electrizador"
+ },
+ "ice-stone": {
+  "rarity": 3,
+  "max": 3,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "statusChance",
+    "mul": 1.1
+   }
+  ],
+  "desc_es": "Los enemigos congelados o enfriados estallan en esquirlas de hielo al morir y enfrían a los de alrededor.",
+  "name_es": "Piedra Hielo",
+  "name": "Piedra Hielo"
+ },
+ "leaf-stone": {
+  "rarity": 3,
+  "max": 3,
+  "tags": [],
+  "mods": [],
+  "desc_es": "Cada baja tiene un 10% de soltar un remolino de hojas que corta a los cercanos y te cura un 1% de PS.",
+  "name_es": "Piedra Hoja",
+  "name": "Piedra Hoja"
+ },
+ "revive": {
+  "rarity": 3,
+  "max": 2,
+  "tags": [],
+  "mods": [],
+  "desc_es": "Revives una vez con el 35% de PS.",
+  "name_es": "Revivir",
+  "name": "Revivir"
+ },
+ "ss-ticket": {
+  "rarity": 3,
+  "max": 1,
+  "tags": [],
+  "mods": [],
+  "desc_es": "+1 hueco para Alfas de apoyo en esta partida.",
+  "name_es": "Ticket Barco",
+  "name": "Ticket Barco"
+ },
+ "max-ether": {
+  "rarity": 3,
+  "max": 1,
+  "tags": [],
+  "mods": [],
+  "desc_es": "Tus vitaminas pueden subir 2 niveles más (hasta el 12).",
+  "name_es": "Éter Máximo",
+  "name": "Éter Máximo"
+ },
+ "thick-club": {
+  "rarity": 3,
+  "max": 2,
+  "tags": [],
+  "mods": [],
+  "desc_es": "Tu daño físico sube un 1% por cada 2 de armadura (hasta +50%).",
+  "name_es": "Hueso Grueso",
+  "name": "Hueso Grueso"
+ },
+ "rage-candy-bar": {
+  "rarity": 3,
+  "max": 1,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "healing",
+    "mul": 0.75
+   }
+  ],
+  "desc_es": "Cuantos menos PS te quedan, más daño: hasta +60% con un 25% de PS o menos. -25% curación recibida.",
+  "name_es": "Caramelo Furia",
+  "name": "Caramelo Furia"
+ },
+ "silph-scope": {
+  "rarity": 3,
+  "max": 2,
+  "tags": [],
+  "mods": [],
+  "desc_es": "Cada 6 s marca al enemigo más fuerte cercano: recibe un 40% más de daño de todo. Si cae, marcas otro al momento.",
+  "name_es": "Visor Silph",
+  "name": "Visor Silph"
+ },
+ "max-revive": {
+  "rarity": 4,
+  "max": 3,
+  "tags": [],
+  "mods": [],
+  "desc_es": "Revives una vez con el 60% de PS.",
+  "name_es": "Revivir Máximo",
+  "name": "Revivir Máximo"
+ },
+ "rare-candy": {
+  "rarity": 4,
+  "max": 10,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.05
+   }
+  ],
+  "desc_es": "Subes 2 niveles al instante y +5% daño.",
+  "name_es": "Caramelo Raro",
+  "name": "Caramelo Raro"
+ },
+ "master-ball": {
+  "rarity": 4,
+  "max": 1,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.25
+   }
+  ],
+  "desc_es": "+25% daño a todo. Garantiza la captura en los Encuentros Salvajes.",
+  "name_es": "Master Ball",
+  "name": "Master Ball"
+ },
+ "moon-stone": {
+  "rarity": 4,
+  "max": 2,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "projectiles",
+    "add": 2
+   },
+   {
+    "stat": "area",
+    "mul": 1.25
+   }
+  ],
+  "desc_es": "+2 proyectiles y +25% área.",
+  "name_es": "Piedra Lunar",
+  "name": "Piedra Lunar"
+ },
+ "lustrous-orb": {
+  "rarity": 4,
+  "max": 1,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "area",
+    "mul": 1.2
+   },
+   {
+    "stat": "projectiles",
+    "add": 1
+   }
+  ],
+  "desc_es": "+20% área y +1 proyectil. Cada 8 s abres una grieta que atrae a los enemigos cercanos y estalla.",
+  "name_es": "Lustresfera",
+  "name": "Lustresfera"
+ },
+ "adamant-orb": {
+  "rarity": 4,
+  "max": 1,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.15
+   }
+  ],
+  "desc_es": "+15% daño. Al recibir un golpe detienes el tiempo: los enemigos cercanos se quedan quietos 3 s (cada 20 s).",
+  "name_es": "Diamansfera",
+  "name": "Diamansfera"
+ },
+ "dawn-stone": {
+  "rarity": 4,
+  "max": 2,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.3
+   },
+   {
+    "stat": "attackSpeed",
+    "mul": 1.2
+   }
+  ],
+  "desc_es": "+30% a todo el daño y +20% velocidad de ataque.",
+  "name_es": "Piedra Alba",
+  "name": "Piedra Alba"
+ },
+ "sun-stone": {
+  "rarity": 4,
+  "max": 2,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "damage",
+    "mul": 1.1
+   }
+  ],
+  "desc_es": "+10% daño. Cada 6 s cae un rayo solar sobre el enemigo más fuerte cercano: gran explosión de Fuego que quema.",
+  "name_es": "Piedra Solar",
+  "name": "Piedra Solar"
+ },
+ "soul-dew": {
+  "rarity": 4,
+  "max": 1,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "special",
+    "mul": 1.2
+   },
+   {
+    "stat": "area",
+    "mul": 1.15
+   }
+  ],
+  "desc_es": "+20% daño especial y +15% área. Tu Ultimate se carga un 40% más rápido.",
+  "name_es": "Rocío Bondad",
+  "name": "Rocío Bondad"
+ },
+ "silver-wing": {
+  "rarity": 4,
+  "max": 1,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "extraJumps",
+    "add": 1
+   },
+   {
+    "stat": "moveSpeed",
+    "mul": 1.12
+   }
+  ],
+  "desc_es": "+1 salto extra y +12% velocidad. Cada 5 s una ráfaga de viento golpea y aparta a los enemigos que te rodean.",
+  "name_es": "Ala Plateada",
+  "name": "Ala Plateada"
+ },
+ "rainbow-wing": {
+  "rarity": 4,
+  "max": 1,
+  "tags": [],
+  "mods": [
+   {
+    "stat": "healing",
+    "mul": 1.15
+   }
+  ],
+  "desc_es": "Una vez por zona, al caer debilitado renaces en llamas con el 50% de PS y abrasas todo a tu alrededor.",
+  "name_es": "Ala Arcoíris",
+  "name": "Ala Arcoíris"
+ },
+ "tm-case": {
+  "rarity": 4,
+  "max": 1,
+  "tags": [],
+  "mods": [],
+  "desc_es": "Tus movimientos pueden subir 2 niveles más (hasta el 10) y las fusiones 1 estrella más (hasta ★6).",
+  "name_es": "Estuche de MT",
+  "name": "Estuche de MT"
+ },
+ "poke-flute": {
+  "rarity": 4,
+  "max": 1,
+  "tags": [],
+  "mods": [],
+  "desc_es": "Tu Ultimate se carga un 25% más rápido. Al lanzarla, todos tus movimientos se recargan y ganas +30% velocidad de ataque 6 s.",
+  "name_es": "Poké Flauta",
+  "name": "Poké Flauta"
+ }
+}

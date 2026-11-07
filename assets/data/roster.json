@@ -1,0 +1,1382 @@
+{
+ "1": {
+  "passive": "photosynthesis",
+  "kit": [
+   "vine-whip",
+   "razor-leaf",
+   "sleep-powder",
+   "solar-beam"
+  ],
+  "rank": "common",
+  "challenge": [
+   {
+    "counter": "runs",
+    "goal": 2
+   }
+  ]
+ },
+ "4": {
+  "passive": "blaze",
+  "kit": [
+   "ember",
+   "fire-spin",
+   "flamethrower",
+   "fire-blast"
+  ],
+  "rank": "common",
+  "challenge": [
+   {
+    "counter": "runs",
+    "goal": 2
+   }
+  ]
+ },
+ "7": {
+  "passive": "torrent-shell",
+  "kit": [
+   "water-gun",
+   "bubble",
+   "rapid-spin",
+   "hydro-pump"
+  ],
+  "rank": "common",
+  "challenge": [
+   {
+    "counter": "runs",
+    "goal": 2
+   }
+  ]
+ },
+ "10": {
+  "passive": "metamorph",
+  "kit": [
+   "string-shot",
+   "bug-bite",
+   "gust",
+   "bug-buzz"
+  ],
+  "rank": "common",
+  "challenge": [
+   {
+    "counter": "evolutions",
+    "goal": 3
+   }
+  ]
+ },
+ "13": {
+  "passive": "venom-sting",
+  "kit": [
+   "poison-sting",
+   "twineedle",
+   "toxic-spikes",
+   "poison-jab"
+  ],
+  "rank": "common",
+  "challenge": [
+   {
+    "counter": "kills",
+    "goal": 5000
+   }
+  ]
+ },
+ "16": {
+  "passive": "tailwind",
+  "kit": [
+   "quick-attack",
+   "feather-dance",
+   "wing-attack",
+   "hurricane"
+  ],
+  "rank": "common",
+  "challenge": [
+   {
+    "counter": "runs",
+    "goal": 4
+   }
+  ]
+ },
+ "19": {
+  "passive": "hustle",
+  "kit": [
+   "hyper-fang",
+   "pursuit",
+   "double-edge",
+   "super-fang"
+  ],
+  "rank": "common",
+  "challenge": [
+   {
+    "counter": "kills",
+    "goal": 20000
+   }
+  ]
+ },
+ "21": {
+  "passive": "sniper",
+  "kit": [
+   "peck",
+   "fury-attack",
+   "drill-run",
+   "drill-peck"
+  ],
+  "rank": "common",
+  "challenge": [
+   {
+    "counter": "crits",
+    "goal": 30000
+   }
+  ]
+ },
+ "23": {
+  "passive": "serpent-glare",
+  "kit": [
+   "wrap",
+   "acid",
+   "sludge-bomb",
+   "gunk-shot"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "paralyzed",
+    "goal": 2500
+   }
+  ]
+ },
+ "25": {
+  "passive": "static",
+  "kit": [
+   "thunder-shock",
+   "electro-ball",
+   "thunderbolt",
+   "thunder"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "rainKills",
+    "goal": 10000
+   }
+  ]
+ },
+ "27": {
+  "passive": "sand-rush",
+  "kit": [
+   "fury-swipes",
+   "rollout",
+   "crush-claw",
+   "bulldoze"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "dodges",
+    "goal": 120
+   }
+  ]
+ },
+ "29": {
+  "passive": "poison-point",
+  "kit": [
+   "toxic",
+   "double-kick",
+   "body-press",
+   "sludge-wave"
+  ],
+  "rank": "common",
+  "challenge": [
+   {
+    "counter": "healed",
+    "goal": 6000
+   }
+  ]
+ },
+ "32": {
+  "passive": "rivalry",
+  "kit": [
+   "horn-attack",
+   "thrash",
+   "horn-drill",
+   "earth-power"
+  ],
+  "rank": "common",
+  "challenge": [
+   {
+    "counter": "alphas",
+    "goal": 6
+   }
+  ]
+ },
+ "35": {
+  "passive": "lunar-blessing",
+  "kit": [
+   "draining-kiss",
+   "stored-power",
+   "gravity",
+   "moonblast"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "ultimates",
+    "goal": 80
+   }
+  ]
+ },
+ "37": {
+  "passive": "flash-fire",
+  "kit": [
+   "will-o-wisp",
+   "flame-burst",
+   "extrasensory",
+   "heat-wave"
+  ],
+  "rank": "common",
+  "challenge": [
+   {
+    "counter": "burned",
+    "goal": 6000
+   }
+  ]
+ },
+ "39": {
+  "passive": "cute-charm",
+  "kit": [
+   "pound",
+   "sing",
+   "round",
+   "hyper-voice"
+  ],
+  "rank": "common",
+  "challenge": [
+   {
+    "counter": "slept",
+    "goal": 1500
+   }
+  ]
+ },
+ "41": {
+  "passive": "vampire",
+  "kit": [
+   "leech-life",
+   "wing-attack",
+   "poison-fang",
+   "air-cutter"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "best_healed",
+    "goal": 4000
+   }
+  ]
+ },
+ "43": {
+  "passive": "chlorophyll",
+  "kit": [
+   "mega-drain",
+   "poison-powder",
+   "petal-blizzard",
+   "petal-dance"
+  ],
+  "rank": "common",
+  "challenge": [
+   {
+    "counter": "poisoned",
+    "goal": 4000
+   }
+  ]
+ },
+ "46": {
+  "passive": "effect-spore",
+  "kit": [
+   "slash",
+   "stun-spore",
+   "spore",
+   "energy-ball"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "paralyzed",
+    "goal": 6000
+   }
+  ]
+ },
+ "48": {
+  "passive": "compound-eyes",
+  "kit": [
+   "supersonic",
+   "u-turn",
+   "silver-wind",
+   "signal-beam"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "confused",
+    "goal": 1500
+   }
+  ]
+ },
+ "50": {
+  "passive": "arena-trap",
+  "kit": [
+   "scratch",
+   "mud-shot",
+   "tri-attack",
+   "fissure"
+  ],
+  "rank": "common",
+  "challenge": [
+   {
+    "counter": "rocks",
+    "goal": 15
+   }
+  ]
+ },
+ "52": {
+  "passive": "pickup",
+  "kit": [
+   "pay-day",
+   "fake-out",
+   "assurance",
+   "play-rough"
+  ],
+  "rank": "common",
+  "challenge": [
+   {
+    "counter": "gold",
+    "goal": 8000
+   }
+  ]
+ },
+ "54": {
+  "passive": "headache",
+  "kit": [
+   "soak",
+   "zen-headbutt",
+   "aqua-tail",
+   "psyshock"
+  ],
+  "rank": "common",
+  "challenge": [
+   {
+    "counter": "soaked",
+    "goal": 3000
+   }
+  ]
+ },
+ "56": {
+  "passive": "anger-point",
+  "kit": [
+   "seismic-toss",
+   "rage-fist",
+   "stomping-tantrum",
+   "final-gambit"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "bosses",
+    "goal": 10
+   }
+  ]
+ },
+ "58": {
+  "passive": "loyal-guard",
+  "kit": [
+   "fire-fang",
+   "flame-wheel",
+   "extreme-speed",
+   "flare-blitz"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "runs",
+    "goal": 20
+   }
+  ]
+ },
+ "60": {
+  "passive": "swift-swim",
+  "kit": [
+   "bubble-beam",
+   "hypnosis",
+   "circle-throw",
+   "submission"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "slept",
+    "goal": 4000
+   }
+  ]
+ },
+ "63": {
+  "passive": "magic-guard",
+  "kit": [
+   "confusion",
+   "psybeam",
+   "psychic",
+   "future-sight"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "maxLevel",
+    "goal": 30
+   }
+  ]
+ },
+ "66": {
+  "passive": "guts",
+  "kit": [
+   "karate-chop",
+   "low-kick",
+   "cross-chop",
+   "dynamic-punch"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "alphas",
+    "goal": 20
+   }
+  ]
+ },
+ "69": {
+  "passive": "carnivore",
+  "kit": [
+   "slam",
+   "gastro-acid",
+   "knock-off",
+   "power-whip"
+  ],
+  "rank": "common",
+  "challenge": [
+   {
+    "counter": "maxLevel",
+    "goal": 20
+   }
+  ]
+ },
+ "72": {
+  "passive": "tentacles",
+  "kit": [
+   "brine",
+   "acid-spray",
+   "venoshock",
+   "whirlpool"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "best_poisoned",
+    "goal": 2500
+   }
+  ]
+ },
+ "74": {
+  "passive": "sturdy",
+  "kit": [
+   "rock-throw",
+   "rollout",
+   "magnitude",
+   "rock-slide"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "rocks",
+    "goal": 50
+   }
+  ]
+ },
+ "77": {
+  "passive": "blazing-hooves",
+  "kit": [
+   "flame-charge",
+   "bounce",
+   "inferno",
+   "sacred-fire"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "maxTime",
+    "goal": 900
+   }
+  ]
+ },
+ "79": {
+  "passive": "oblivious",
+  "kit": [
+   "yawn",
+   "scald",
+   "psychic-noise",
+   "expanding-force"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "slept",
+    "goal": 8000
+   }
+  ]
+ },
+ "81": {
+  "passive": "magnet-pull",
+  "kit": [
+   "thunder-wave",
+   "gyro-ball",
+   "magnet-bomb",
+   "flash-cannon"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "best_paralyzed",
+    "goal": 1500
+   }
+  ]
+ },
+ "83": {
+  "passive": "leek-master",
+  "kit": [
+   "cut",
+   "false-swipe",
+   "brave-bird",
+   "meteor-assault"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "best_crits",
+    "goal": 50000
+   }
+  ]
+ },
+ "84": {
+  "passive": "twin-heads",
+  "kit": [
+   "pluck",
+   "double-hit",
+   "uproar",
+   "acrobatics"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "runs",
+    "goal": 15
+   }
+  ]
+ },
+ "86": {
+  "passive": "ice-body",
+  "kit": [
+   "icy-wind",
+   "dive",
+   "aurora-beam",
+   "sheer-cold"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "frozen",
+    "goal": 4000
+   }
+  ]
+ },
+ "88": {
+  "passive": "sludge-body",
+  "kit": [
+   "poison-gas",
+   "sludge",
+   "shadow-sneak",
+   "belch"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "poisoned",
+    "goal": 20000
+   }
+  ]
+ },
+ "90": {
+  "passive": "skill-link",
+  "kit": [
+   "clamp",
+   "icicle-spear",
+   "ice-spinner",
+   "icicle-crash"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "best_dodges",
+    "goal": 25
+   }
+  ]
+ },
+ "92": {
+  "passive": "phantom",
+  "kit": [
+   "lick",
+   "night-shade",
+   "shadow-ball",
+   "hex"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "best_reactions",
+    "goal": 600
+   }
+  ]
+ },
+ "95": {
+  "passive": "rock-head",
+  "kit": [
+   "rock-tomb",
+   "stealth-rock",
+   "iron-tail",
+   "head-smash"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "win_forest",
+    "goal": 1
+   }
+  ]
+ },
+ "96": {
+  "passive": "pendulum",
+  "kit": [
+   "psywave",
+   "nightmare",
+   "dream-eater",
+   "focus-blast"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "best_slept",
+    "goal": 1500
+   }
+  ]
+ },
+ "98": {
+  "passive": "hyper-cutter",
+  "kit": [
+   "vice-grip",
+   "liquidation",
+   "crabhammer",
+   "guillotine"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "best_kills",
+    "goal": 15000
+   }
+  ]
+ },
+ "100": {
+  "passive": "aftermath",
+  "kit": [
+   "spark",
+   "electroweb",
+   "rising-voltage",
+   "discharge"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "chests",
+    "goal": 120
+   }
+  ]
+ },
+ "102": {
+  "passive": "harvest",
+  "kit": [
+   "barrage",
+   "leech-seed",
+   "seed-bomb",
+   "wood-hammer"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "berries",
+    "goal": 250
+   }
+  ]
+ },
+ "104": {
+  "passive": "bone-keeper",
+  "kit": [
+   "bone-club",
+   "bonemerang",
+   "bone-rush",
+   "shadow-bone"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "boss_desert",
+    "goal": 4
+   }
+  ]
+ },
+ "106": {
+  "passive": "limber-kicks",
+  "kit": [
+   "rolling-kick",
+   "blaze-kick",
+   "jump-kick",
+   "high-jump-kick"
+  ],
+  "rank": "rare",
+  "challenge": [
+   {
+    "counter": "league",
+    "goal": 20
+   },
+   {
+    "counter": "alphas",
+    "goal": 30
+   }
+  ]
+ },
+ "107": {
+  "passive": "iron-fist",
+  "kit": [
+   "comet-punch",
+   "ice-punch",
+   "drain-punch",
+   "focus-punch"
+  ],
+  "rank": "rare",
+  "challenge": [
+   {
+    "counter": "league",
+    "goal": 20
+   },
+   {
+    "counter": "bosses",
+    "goal": 25
+   }
+  ]
+ },
+ "108": {
+  "passive": "long-tongue",
+  "kit": [
+   "wring-out",
+   "snore",
+   "strength",
+   "heavy-slam"
+  ],
+  "rank": "rare",
+  "challenge": [
+   {
+    "counter": "league",
+    "goal": 15
+   },
+   {
+    "counter": "best_healed",
+    "goal": 8000
+   }
+  ]
+ },
+ "109": {
+  "passive": "toxic-cloud",
+  "kit": [
+   "smog",
+   "clear-smog",
+   "self-destruct",
+   "explosion"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "reactions",
+    "goal": 5000
+   }
+  ]
+ },
+ "111": {
+  "passive": "rhino-charge",
+  "kit": [
+   "smack-down",
+   "rock-blast",
+   "high-horsepower",
+   "rock-wrecker"
+  ],
+  "rank": "rare",
+  "challenge": [
+   {
+    "counter": "league",
+    "goal": 20
+   },
+   {
+    "counter": "rocks",
+    "goal": 100
+   }
+  ]
+ },
+ "113": {
+  "passive": "natural-cure",
+  "kit": [
+   "sweet-kiss",
+   "echoed-voice",
+   "egg-bomb",
+   "boomburst"
+  ],
+  "rank": "rare",
+  "challenge": [
+   {
+    "counter": "league",
+    "goal": 25
+   },
+   {
+    "counter": "healed",
+    "goal": 60000
+   }
+  ]
+ },
+ "114": {
+  "passive": "regenerator",
+  "kit": [
+   "bind",
+   "giga-drain",
+   "grass-knot",
+   "solar-blade"
+  ],
+  "rank": "rare",
+  "challenge": [
+   {
+    "counter": "league",
+    "goal": 20
+   },
+   {
+    "counter": "maxLevel",
+    "goal": 35
+   }
+  ]
+ },
+ "115": {
+  "passive": "parental-bond",
+  "kit": [
+   "dizzy-punch",
+   "mega-kick",
+   "reversal",
+   "mega-punch"
+  ],
+  "rank": "rare",
+  "challenge": [
+   {
+    "counter": "league",
+    "goal": 25
+   },
+   {
+    "counter": "runs",
+    "goal": 35
+   }
+  ]
+ },
+ "116": {
+  "passive": "ink-sniper",
+  "kit": [
+   "snipe-shot",
+   "octazooka",
+   "scale-shot",
+   "hydro-cannon"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "soaked",
+    "goal": 12000
+   }
+  ]
+ },
+ "118": {
+  "passive": "water-veil",
+  "kit": [
+   "aqua-cutter",
+   "smart-strike",
+   "horn-leech",
+   "fishious-rend"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "dodges",
+    "goal": 350
+   }
+  ]
+ },
+ "120": {
+  "passive": "star-core",
+  "kit": [
+   "water-shuriken",
+   "confuse-ray",
+   "mirror-shot",
+   "photon-geyser"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "ultimates",
+    "goal": 150
+   }
+  ]
+ },
+ "122": {
+  "passive": "barrier-wall",
+  "kit": [
+   "barrier",
+   "light-screen",
+   "trick-room",
+   "misty-explosion"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "speciesPlayed",
+    "goal": 6
+   }
+  ]
+ },
+ "123": {
+  "passive": "technician",
+  "kit": [
+   "fury-cutter",
+   "aerial-ace",
+   "air-slash",
+   "x-scissor"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "kills",
+    "goal": 150000
+   }
+  ]
+ },
+ "124": {
+  "passive": "frost-kiss",
+  "kit": [
+   "lovely-kiss",
+   "frost-breath",
+   "heart-stamp",
+   "perish-song"
+  ],
+  "rank": "rare",
+  "challenge": [
+   {
+    "counter": "league",
+    "goal": 25
+   },
+   {
+    "counter": "best_frozen",
+    "goal": 1500
+   }
+  ]
+ },
+ "125": {
+  "passive": "motor-drive",
+  "kit": [
+   "thunder-punch",
+   "wild-charge",
+   "thunder-cage",
+   "bolt-strike"
+  ],
+  "rank": "rare",
+  "challenge": [
+   {
+    "counter": "league",
+    "goal": 25
+   },
+   {
+    "counter": "best_paralyzed",
+    "goal": 3000
+   }
+  ]
+ },
+ "126": {
+  "passive": "flame-body",
+  "kit": [
+   "fire-punch",
+   "mystical-fire",
+   "lava-plume",
+   "eruption"
+  ],
+  "rank": "rare",
+  "challenge": [
+   {
+    "counter": "league",
+    "goal": 25
+   },
+   {
+    "counter": "best_burned",
+    "goal": 6000
+   }
+  ]
+ },
+ "127": {
+  "passive": "mold-breaker",
+  "kit": [
+   "storm-throw",
+   "lunge",
+   "vital-throw",
+   "superpower"
+  ],
+  "rank": "rare",
+  "challenge": [
+   {
+    "counter": "league",
+    "goal": 20
+   },
+   {
+    "counter": "best_alphas",
+    "goal": 4
+   }
+  ]
+ },
+ "128": {
+  "passive": "stampede",
+  "kit": [
+   "payback",
+   "rock-climb",
+   "raging-bull",
+   "headlong-rush"
+  ],
+  "rank": "rare",
+  "challenge": [
+   {
+    "counter": "league",
+    "goal": 20
+   },
+   {
+    "counter": "kills",
+    "goal": 300000
+   }
+  ]
+ },
+ "129": {
+  "passive": "persevere",
+  "kit": [
+   "tackle",
+   "flail",
+   "waterfall",
+   "hyper-beam"
+  ],
+  "rank": "uncommon",
+  "challenge": [
+   {
+    "counter": "runs",
+    "goal": 25
+   }
+  ]
+ },
+ "131": {
+  "passive": "water-absorb",
+  "kit": [
+   "water-pulse",
+   "ice-beam",
+   "surf",
+   "blizzard"
+  ],
+  "rank": "rare",
+  "challenge": [
+   {
+    "counter": "league",
+    "goal": 30
+   },
+   {
+    "counter": "evolutions",
+    "goal": 20
+   }
+  ]
+ },
+ "132": {
+  "passive": "imposter",
+  "kit": [
+   "transform",
+   "mimic",
+   "copycat",
+   "sketch"
+  ],
+  "rank": "rare",
+  "challenge": [
+   {
+    "counter": "league",
+    "goal": 25
+   },
+   {
+    "counter": "alphaCaught",
+    "goal": 25
+   }
+  ]
+ },
+ "133": {
+  "passive": "adaptability",
+  "kit": [
+   "swift",
+   "quick-attack",
+   "bite",
+   "last-resort"
+  ],
+  "rank": "rare",
+  "challenge": [
+   {
+    "counter": "league",
+    "goal": 15
+   },
+   {
+    "counter": "speciesPlayed",
+    "goal": 10
+   }
+  ]
+ },
+ "137": {
+  "passive": "download",
+  "kit": [
+   "lock-on",
+   "parabolic-charge",
+   "fusion-bolt",
+   "techno-blast"
+  ],
+  "rank": "rare",
+  "challenge": [
+   {
+    "counter": "league",
+    "goal": 30
+   },
+   {
+    "counter": "best_reactions",
+    "goal": 1200
+   }
+  ]
+ },
+ "138": {
+  "passive": "spiral-shell",
+  "kit": [
+   "constrict",
+   "spike-cannon",
+   "water-spout",
+   "meteor-beam"
+  ],
+  "rank": "rare",
+  "challenge": [
+   {
+    "counter": "league",
+    "goal": 25
+   },
+   {
+    "counter": "kills_desert",
+    "goal": 50000
+   }
+  ]
+ },
+ "140": {
+  "passive": "battle-armor",
+  "kit": [
+   "aqua-jet",
+   "sacred-sword",
+   "stone-axe",
+   "razor-shell"
+  ],
+  "rank": "rare",
+  "challenge": [
+   {
+    "counter": "league",
+    "goal": 25
+   },
+   {
+    "counter": "boss_desert",
+    "goal": 8
+   }
+  ]
+ },
+ "142": {
+  "passive": "ancient-wings",
+  "kit": [
+   "thunder-fang",
+   "dual-wingbeat",
+   "iron-head",
+   "dragon-ascent"
+  ],
+  "rank": "rare",
+  "challenge": [
+   {
+    "counter": "league",
+    "goal": 35
+   },
+   {
+    "counter": "tier_desert",
+    "goal": 1
+   }
+  ]
+ },
+ "143": {
+  "passive": "gluttony",
+  "kit": [
+   "tackle",
+   "body-slam",
+   "stomp",
+   "giga-impact"
+  ],
+  "rank": "rare",
+  "challenge": [
+   {
+    "counter": "league",
+    "goal": 30
+   },
+   {
+    "counter": "berries",
+    "goal": 500
+   }
+  ]
+ },
+ "144": {
+  "passive": "ice-pressure",
+  "kit": [
+   "freeze-dry",
+   "mist",
+   "bleakwind-storm",
+   "glaciate"
+  ],
+  "rank": "legendary",
+  "challenge": [
+   {
+    "counter": "league",
+    "goal": 45
+   },
+   {
+    "counter": "tier_forest",
+    "goal": 2
+   },
+   {
+    "counter": "best_frozen",
+    "goal": 2500
+   }
+  ]
+ },
+ "145": {
+  "passive": "volt-pressure",
+  "kit": [
+   "bolt-beak",
+   "wildbolt-storm",
+   "thunderclap",
+   "electro-shot"
+  ],
+  "rank": "legendary",
+  "challenge": [
+   {
+    "counter": "league",
+    "goal": 50
+   },
+   {
+    "counter": "tier_desert",
+    "goal": 1
+   },
+   {
+    "counter": "best_rainKills",
+    "goal": 3000
+   }
+  ]
+ },
+ "146": {
+  "passive": "flame-pressure",
+  "kit": [
+   "incinerate",
+   "fly",
+   "searing-shot",
+   "overheat"
+  ],
+  "rank": "legendary",
+  "challenge": [
+   {
+    "counter": "league",
+    "goal": 55
+   },
+   {
+    "counter": "tier_desert",
+    "goal": 2
+   },
+   {
+    "counter": "best_burned",
+    "goal": 8000
+   }
+  ]
+ },
+ "147": {
+  "passive": "multiscale",
+  "kit": [
+   "twister",
+   "dragon-rage",
+   "dragon-pulse",
+   "draco-meteor"
+  ],
+  "rank": "rare",
+  "challenge": [
+   {
+    "counter": "league",
+    "goal": 40
+   },
+   {
+    "counter": "legendaries",
+    "goal": 3
+   }
+  ]
+ },
+ "150": {
+  "passive": "genome",
+  "kit": [
+   "psycho-cut",
+   "psystrike",
+   "prismatic-laser",
+   "psycho-boost"
+  ],
+  "rank": "legendary",
+  "challenge": [
+   {
+    "counter": "league",
+    "goal": 60
+   },
+   {
+    "counter": "birds",
+    "goal": 3
+   },
+   {
+    "counter": "tier_desert",
+    "goal": 2
+   }
+  ]
+ },
+ "151": {
+  "passive": "mew",
+  "kit": [
+   "psychic",
+   "aura-sphere",
+   "ancient-power",
+   "moonblast"
+  ],
+  "rank": "legendary",
+  "challenge": [
+   {
+    "counter": "league",
+    "goal": 78
+   }
+  ]
+ }
+}

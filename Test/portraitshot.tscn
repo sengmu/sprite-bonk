@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://sbportrait17"]
+
+[ext_resource type="Script" path="res://Test/portraitshot.gd" id="1"]
+
+[node name="PortraitShot" type="Node"]
+process_mode = 3
+script = ExtResource("1")

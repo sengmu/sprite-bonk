@@ -1,0 +1,103 @@
+# Solana dApp Store — dapp-store CLI config (DRAFT, Phase D)
+# Prepared up to the publisher-wallet step. Items marked TODO_PUBLISHER
+# require the user's dedicated publisher wallet (never a main/trading
+# wallet) plus a small SOL balance for the publisher/app/release NFT mint
+# fees. Flow once the wallet exists:
+#   npx dapp-store validate -k <publisher-keypair.json> -b <build-tools dir>
+#   npx dapp-store create publisher -k ...   (writes publisher.address)
+#   npx dapp-store create app -k ...         (writes app.address)
+#   npx dapp-store create release -k ... -b <build-tools>  (writes release.address)
+#   npx dapp-store publish submit -k ... -u <mainnet rpc> \
+#       --requestor-is-authorized --complies-with-solana-dapp-store-policies
+publisher:
+  name: SpriteBonk
+  # TODO_PUBLISHER: contact email for the publisher entity
+  email: ""
+  # TODO_PUBLISHER: publisher website (must NOT be changed without user approval if a business domain is used)
+  website: ""
+  address: "" # TODO_PUBLISHER: dedicated publisher wallet address (filled by `create publisher`)
+  media:
+    - purpose: icon
+      uri: ./media/publisher-icon-512.png
+      width: 512
+      height: 512
+app:
+  name: SpriteBonk
+  address: "" # filled by `create app`
+  android_package: com.spritebonk.game
+  urls:
+    license_url: ""
+    copyright_url: ""
+    privacy_policy_url: "" # TODO: publish a privacy policy page before submission
+    website: ""
+  media:
+    - purpose: icon
+      uri: ./media/icon-512.png
+      width: 512
+      height: 512
+release:
+  version: 1.0.0
+  address: "" # filled by `create release`
+  media:
+    - purpose: screenshot
+      uri: ./screenshots/01_spawn.png
+      width: 1280
+      height: 720
+    - purpose: screenshot
+      uri: ./screenshots/02_combat.png
+      width: 1280
+      height: 720
+    - purpose: screenshot
+      uri: ./screenshots/03_guardian.png
+      width: 1280
+      height: 720
+    - purpose: screenshot
+      uri: ./screenshots/04_portal.png
+      width: 1280
+      height: 720
+  files:
+    - purpose: install
+      uri: ../build/android/SpriteBonk.apk
+  catalog:
+    en-US:
+      name: SpriteBonk
+      short_description: "Survive the Viridian Forest, summon the guardian, and clear the portal — a 3D monster-taming survival arena."
+      long_description: |
+        SpriteBonk is a 3D survival arena set in the Viridian Forest. Pick your
+        starter partner, roam a terraced forest arena, fight off waves of wild
+        monsters, then activate the Boss Altar to face a guardian trio —
+        Scyther, Pinsir or Nidoking — and escape through the portal before the
+        10-minute zone timer runs out and the Final Swarm begins.
+
+        Features:
+        - Three starters with distinct moves (Vine Whip, Ember, Water Gun)
+        - Stage flow: roam -> altar -> guardian -> portal -> next zone
+        - Optional Solana wallet connect (read-only): play as a guest with no
+          wallet, or connect to show your address and SOL balance
+        - No account, no ads, no in-app purchases in this release
+
+        On-chain features ($SPRT token and Genesis NFT eligibility) are
+        planned for a later season update and are not part of this release.
+      new_in_version: "Initial release: Zone 1 — Viridian Forest, 3 starters, guardian trio, optional read-only wallet connect."
+    zh-CN:
+      name: SpriteBonk
+      short_description: "在常磐森林求生、召唤守护者、冲进传送门——3D 怪物生存竞技场。"
+      long_description: |
+        《SpriteBonk》是一款以常磐森林为舞台的 3D 生存竞技场游戏。选择你的初始
+        伙伴，在梯田状的森林竞技场中漫游，击退一波波野生怪物，然后激活 Boss
+        祭坛，直面守护者三巨头——飞天螳螂、凯罗斯或尼多王——并在 10 分钟区域
+        倒计时结束、终局兽潮降临之前，从传送门逃出生天。
+
+        特色：
+        - 三只初始伙伴，招式各异（藤鞭、火花、水枪）
+        - 关卡流程：漫游 -> 祭坛 -> 守护者 -> 传送门 -> 下一区域
+        - 可选 Solana 钱包连接（只读）：游客无需钱包即可游玩；连接后可显示
+          地址与 SOL 余额
+        - 本版本无账号、无广告、无内购
+
+        链上功能（$SPRT 代币与 Genesis NFT 资格）将在后续赛季更新中推出，
+        不属于本版本内容。
+      new_in_version: "首发版本：第 1 区·常磐森林、3 只初始伙伴、守护者三巨头、可选只读钱包连接。"
+solana_mobile_dapp_publisher_portal:
+  google_store_package: ""
+  testing_instructions: "Guest play needs no account or wallet: launch the app, pick any starter, play. Wallet connect (optional, read-only) is on the main menu — use 'Connect Wallet', paste any Solana address, and the menu shows the address and its SOL balance. No transactions are possible in this build."

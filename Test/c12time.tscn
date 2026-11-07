@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://sbc12time1"]
+
+[ext_resource type="Script" path="res://Test/c12time.gd" id="1"]
+
+[node name="C12Time" type="Node"]
+process_mode = 3
+script = ExtResource("1")
