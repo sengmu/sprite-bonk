@@ -731,3 +731,9 @@ a4265c3065cdbb3628257d3a9a17a2d15c56c30a43a4dc7eedb41463650c4ddc  Test/harness.g
 
 - 最终完整证据拉回：`c23b_close_pull.done` **RC=0 files=33 bytes=3488659**；已核验最终DONE、两个phonehud及保留的首轮失败日志。最终12个代码/检查文件SHA逐个再核12/12 OK。
 - 收尾既有同步脚本`c23b_close_sync.log`成功：2026-11-09 02:06:53 CST，**TREE PARITY OK（111文件，local=111/nuc=111/diffs=0）**。最终`git diff --check`通过，DIFF.md哈希再次与原值一致。
+
+## C23A+B1 验收包构建记录（2026-11-09，主控）
+
+- 构建：NUC 上 `android/build_apk.sh` rc=0（树 = 提交 f7314a1，TREE PARITY 111 文件 diffs=0）。
+- 产物：57,745,641 B，sha256 `99ec69678c2e9dc3339b8a8440107bf0aae24e89c9b65a7c64803a150e525b17`；签名证书 b05b80e1…a232；内容审计 706 条目、reference/=0、Test/=0。
+- 定位：C23A+B1 验收包（非上架包，占位 IP 未换皮）；已交付用户下载试玩。
