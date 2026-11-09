@@ -8262,7 +8262,7 @@ func _boss_mech_cast() -> float:
 			_later(5.0, func() -> void: _boss_lapras_surf())
 			return 7.5
 		"hypno":
-			# Pendulum field (drowsy payoff unported, DIFF §21).
+			# Pendulum field; landed sleep triggers dream eater (Cycle 22).
 			_boss_mech_data["swing"] = {"t": 6.5 if enr else 5.0,
 				"base": atan2(_boss_to_player().y, _boss_to_player().x), "rage": enr}
 			_boss_hold_t = maxf(_boss_hold_t, 6.5 if enr else 5.0)
@@ -8931,9 +8931,9 @@ func _boss_mech_tick(delta: float) -> void:
 ## own (updateSpawns: a batch of 3 + stage every 4 s at
 ## dist 20-27, 30 spawned cap, stops when < 6 s remain;
 ## fog spawns earn xp x2; the eclipse's first-of-batch
-## after 90 s is Elite). The fog Flying flag has no
-## counterpart system in this port (the pool species
-## hover visually already; DIFF §22).
+## after 90 s is Elite). C23B2 preserves Flying=16. The
+## separate map-ground hazard system is not yet ported;
+## this does not change the event-wide map blind getter.
 const EVENT_DEFS := {
 	"fog": {"name": "幽灵迷雾", "sub": "冰冷的雾笼罩一切……雾里有东西在动", "dur": 45.0,
 		"pool": [[92, 41, 96], [93, 42, 96], [94, 93, 97]],
@@ -9165,13 +9165,15 @@ func _event_tick(delta: float) -> void:
 		var keys := _event_pool_keys()
 		if not keys.is_empty() and _event_spawned_n < 30 and _event_left >= 6.0 and player:
 			for bi in range(int(ceil(float(3 + zone) * tier_value("events")))):
+				var elite := _event_kind == "eclipse" and bi == 0 and elapsed > 90.0
 				var e := _spawn_enemy_at(String(keys[_rng.randi_range(0, keys.size() - 1)]),
-					_ring_pos(20.0, 27.0), _spawn_mult(), false, 1.0)
+					_ring_pos(20.0, 27.0), _spawn_mult(), false, 1.35 if elite else 1.0)
 				_event_spawned_n += 1
 				_event_spawned.append(e)
 				if _event_kind == "fog":
+					e.flag |= 16  # R.Flying; independent of the species' type
 					e.xp_mult = 2.0
-				if _event_kind == "eclipse" and bi == 0 and elapsed > 90.0:
+				if elite:
 					e.flag = 1
 					e.dmg *= 1.4
 					e.max_hp *= 4.5
@@ -9346,7 +9348,8 @@ func _ptick_fire(u: Node3D, sp: String, pid: String, is_pl: bool) -> void:
 			# Cycle 22: the bundle tick (@711560) — every
 			# 30 s copy the NEAREST enemy's types (within
 			# 25 u); the copy drives the unit's type bonus
-			# and weaknesses until the next copy.
+			# channels until the next copy. DIFF C22 recorded offensive-only
+			# scope; C23B1 also added typed incoming hurt (player.take_damage).
 			var cands := _ptick_enemies_within(pos, 25.0)
 			if cands.is_empty():
 				return

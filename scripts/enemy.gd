@@ -55,7 +55,7 @@ var xp_mult := 1.0
 var boss_hold := false  # cycle 21: the world boss brain
 	# holds the guardian (casts / charges) — hostile AI off
 var mode := MODE_WILD
-var flag := 0  # 0 normal, 1 elite, 2 alpha, 4 boss (§附录 B)
+var flag := 0  # bit flags: Elite=1, Alpha=2, Boss=4, Flying=16 (§附录 B)
 var bst := 0.0
 var capture_rate := 255
 var types: Array = []

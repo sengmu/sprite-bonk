@@ -737,3 +737,88 @@ a4265c3065cdbb3628257d3a9a17a2d15c56c30a43a4dc7eedb41463650c4ddc  Test/harness.g
 - 构建：NUC 上 `android/build_apk.sh` rc=0（树 = 提交 f7314a1，TREE PARITY 111 文件 diffs=0）。
 - 产物：57,745,641 B，sha256 `99ec69678c2e9dc3339b8a8440107bf0aae24e89c9b65a7c64803a150e525b17`；签名证书 b05b80e1…a232；内容审计 706 条目、reference/=0、Test/=0。
 - 定位：C23A+B1 验收包（非上架包，占位 IP 未换皮）；已交付用户下载试玩。
+
+## B2 施工（2026-11-09）
+
+派单九项：Flying、eclipse 1.35、C22 F2–F8；F1 已在 A 关账。基线 f7314a1，开工 git status 干净。审计原文已完整读取。仅 F2/F7 可修 DIFF；无 APK、无 reference 入树。
+
+### 证据与口径
+
+- 原料：沿用 addendum 中 main-CkI7dQhz-mvml8e65.js，本机只读 SHA256 `4b4a76ddd47d60167f4a330250cee58f036dc68d2efa692aaecd9638249d2d7e`。偏移为 Unicode 字符，从0计。查询摘录留 `Test/out/c23b2_bundle_queries.log`。
+- Flying：任务“地图致盲豁免”与 pack §7b 冲突。main @1034963 的 blind getter 仅 kind=fog && k>.5，与单位旗标无关；@1037640 为 fog spawn Flying；@1346039 才是地面 hazard slow/pull/bite 跳过 Flying。已向主控发出口径问题。当前树没有该地图地面 hazard 系统（检索 hazard/bramble/quicksand/hazSlow/mud；仅天气 rain/sand/hail 与另一个 Hv ultimate zone）。不能把 Hv ultimate zone 或天气伤害当作该系统加免疫。
+- F6 **坐实保留参与，不加排除**：Object=32768 @322108；boss obj() @938958 用普通 enemies.spawn(...,R.Object)，会存活并拥有 species/types。grid.build @320301 只按 alive 入格，调用点 @329555 不传 flags；nearest @340733 排除 dead/dying/parked，不排 Object；within @341140 排除 dead/dying，不排 Object。imposter @711626 直接 nearest(...,25)，随后 typesOf；typesOf @324931 无 Object 特例。另有招式在调用 within 后明确排 Object（@947290/@977965），反证查询本身不应全局排除。移植版 _ptick_enemies_within 不改行为；冰柱可参与复制是原作查询语义。
+- F7 搜索方法：全 main 文本逐字搜 ditto（11命中）、imposter（2）、transform（72）、Transformación、132、case`ditto`；复核 JC物件species映射 @1234241、populate @1239743 的stage/endless分派、label @1246822、interact @1251293 → openDitto @1478663 → showDitto；复核 enemies.spawn、事件spawner、boss kit/mech分派 @996446。否定结论只能限定为“本次这些分派中未发现独立 Ditto 敌方变身遭遇”。不能说整个 bundle 没有战斗 transform：Mew 的 eb kit attack @896506 / transform() @901827 确有6s mimic；Ditto玩家 ultimate 132 @590343 也复制随机 Liga ultimate。DIFF将对此缩限，不新增玩法。
+
+### ① 游戏代码变更（独立列明；共5个差异块）
+
+- `scripts/world.gd:9168`（同一spawn差异块）：先计算既有日蚀elite条件，setup入参对该只传1.35，其他仍1.0；保留既有Elite HP×4.5/dmg×1.4。fog生成 e.flag |=16，保留XP×2。
+- `scripts/world.gd:8265`：F5仅注释，hypno摆锤已接睡眠与梦食，不再写unported。
+- `scripts/world.gd:9351`：F5仅注释，imposter影响类型进攻通道；明确DIFF C22的offensive-only为当时历史口径，C23B1已新增typed incoming hurt。
+- `scripts/world.gd:8934`：仅更新本批Flying状态注释，注明地图地面hazard系统未移植，地图blind getter不变。
+- `scripts/enemy.gd:58`：仅注释，现有flag字段列Flying=16，无新增Enemy行为。
+- world共4个差异块（其中spawn块同时含Flying和体型）+enemy1个；未动player/ult/minimap/big_map或F6查询行为。drowzee未有ModelRig配置，当前事件池会滤除，不新增缺模型单位或无意义hover分支。
+
+
+### ② 检查 / 记录变更（独立列明）
+
+- `Test/harness.gd`：先加 fog每单位Flying位、eclipse首只elite半径/身高1.35与非elite半径不变；F4先伤boss至50%再让真实摆锤睡眠触发梦食，去掉三选一并单独严格断言4%回血；F8在第二区实际召唤的Gengar上固定随机选择ring，真实脑派发后等延迟14枚hostile；F3先加settle前后opened/valid与Profile.chests诊断。先跑改前对照，再施工，不将解析成功当行为证据。
+- `Test/c23b2_batch.sh`：新B2脱离会话批处理，red对照、定向、c21/glare四轮、复用B1全量与成品/HUD门禁；每阶段rc落.done，只有最终ALLDONE代表结束。
+- DIFF逐处修正清单待F2四轮日志落地后填写。
+
+### 中间断点（未交付）
+
+- 本地 harness check-only rc0，`c23b2_check_red.log`。NUC改前同步 TREE PARITY OK（111文件；随后加入batch再次同步），`c23b2_red_sync.log`。NUC setsid `Test/c23b2_batch.sh red` 正在跑，等 `c23b2_red.done` ALLDONE后才同步游戏施工树。两次本地setsid同步尝试未产生.done，未计作成功；实际用前台既有同步脚本完成，NUC长跑已脱离。
+
+- 改前NUC已结束：`c23b2_red.done` ALLDONE 2026-11-09T16:18:18+08:00；c22 55/3（Flying位缺失、eclipse半径.55、F4回血未发生），guardian9/0（自然位置未复现race），c21 70/1（新增F8真实ring 0→14通过；旧dowsing随机取得额外一层使7/18而非6/16）。全部证据既有脚本拉回：`c23b2_red_pull.done` RC=0 files=8 bytes=79320。
+- 检查补正：eclipse要固定的是 `elapsed` 而非 `_zone_t`，改前首轮未证明首只Elite身份，后续需重跑改前。F4玩家HP仅200000→199974.95，boss近身触碰先占用了无敌帧；冻结该boss自身physics（world摆锤与later照常跑）、清玩家evasion/shield/overheal/旧iframe，仅隔离梦食腿，不改游戏。F8新增块保存恢复moves/passive/位置与RNG state。dowsing检查先保存原层数、移除后严格测一层6/16，再恢复；断言不改。
+- 本地受控probe采用setsid前台保留工具会话（异步Popen离开工具沙箱会被清理，未完成的零字节日志不算运行证据），`c23b2_probe.done`将明确落rc与ALLDONE。
+
+- 本地probe已等到ALLDONE，日志改名保留为 `c23b2_local_probe*`：c22 55/3（两游戏缺失+自然梦食回调受环境干扰），guardian9/0。把玩家移到箱旁后立刻结清draft仍未复现自动开箱（count0、opened=false），不可声称证明了C22那次历史失败的同一原因。B1已将XP改为实体，和C22当时的14级直接draft序列也不同；历史同因 **UNPROVEN**。当前walk-over机制可由最终“opened与counter同时变化”直接坐实。
+- F3最终harness：致死take_damage同步调用内先取该次新增箱记录与坐标，首个await前把玩家移到8u外；settle前后诊断保留，并硬断言该箱仍未开；再真实走近，保留原counter上涨断言，新增该箱opened=true独立断言。
+- F4最终独立腿：保留自然摆锤致眠与传送/玩家掉血检查；额外真实 `_boss_hypno_dream_eat` + `_timers_tick(.81)`，隔离旧timers、iframe、闪避、guard、盾、overheal；boss非满血，独立要求玩家HP下降、boss精确+4% maxHP。并不手写/模拟heal。
+- F6最终检查实际冰柱可被within找到，imposter真实查询可复制其ice类型。F8迁入单独 `--only=c23b2` 阶段（全量也跑），避免扰动c21原有物品流程；NUC改前3/0，ring弹体0→14。
+- 本地最终改动的world/enemy/harness逐个check-only rc0，`c23b2_local_check_*.log`；bash -n与git diff --check均过。NUC第二轮改前probe从独立冻结树运行，TREE PARITY112/diffs0；结束前不覆盖NUC运行树。
+
+- NUC第二轮改前c22已结束 **59/3**：只剩Flying位、elite半径/身高、实际模型缩放三红（zubat实际scale .6045137=0.9/1.4888，未×1.35）。F4独立腿玩家受伤通过，boss2116.03→2285.3124、max4232.06，精确4%；F6实际冰柱query与复制ice通过。该轮冻结游戏代码仍是f7314a1，未把尚未同步的本地修后树冒充改前。
+
+- NUC改前probe已ALLDONE（2026-11-09T16:26:47+08:00）：三个脚本check0、F8 3/0、c22 59/3（上述三条预期红）、guardian9/0。近箱后立刻settle依旧count258/opened=false，进一步说明不能把C22历史分诊当已证事实。核验拉回 `c23b2_probe_pull.done` RC=0 files=8 bytes=23529。
+- 最终验收树同步 `c23b2_final_sync.log` TREE PARITY OK（112文件，diffs0；2026-11-09 16:28:05 CST）。NUC `setsid -f bash Test/c23b2_batch.sh final`，launcher `c23b2_final_launcher.log`；先c23b2/c22/guardian定向，再glare x4，再复用B1九脚本解析、damage/pickups/stats/mutation、全量suite、新Linux bootsmoke、中立冒烟、phonehud a+s070_i0。等待`c23b2_final.done`与`c23b2_full_batch.done`最终ALLDONE。四代码/检查文件冻结哈希在 `Test/out/c23b2_final_code.sha256`。
+
+- 最终定向：c23b2 **3/0**、c22 **59/0**、guardian **11/0**，均rc0；三个改动脚本NUC check-only均0。Flying每只含16；elite radius .7425；Zubat rig scale .81609350442886=0.9×1.35/1.4888（红基线.6045137）。F4 hp2101.4→2269.512、max4202.8。F3 settle前后counter259/opened=false，真实走近后counter260、同一箱opened=true/valid=false。当前自动开箱机制坐实；历史同因保持UNPROVEN，不把这份新证据倒推成历史证明。
+- 最终定向既有脚本核验拉回 `c23b2_target_pull.done` RC=0 files=6 bytes=23703。glare第1轮直接判定已通过（390/390，2/2，paralyze），同时出现既有 `c21 passive static: discharge hits the nearest` 红；这是DIFF C22已记录的ambient-target吸收签名，尚待整轮SUMMARY，不把glare通过记为整轮69/0。未改该断言、未扩改非本批passive玩法。
+
+- F7补充交叉核对：kit factory @925701 的 `case 151:return new eb(e,t)` 直接证明上述 eb transform 属于 Mew；非凭名称推断。原料摘录追加在bundle_queries.log。
+
+- F5复核补记：B1的player.take_damage已加 `GameData.type_mult(attack_type, types())`，world的hostile_hurt/miniboss_strike传attack_type。因此不能将DIFF C22历史“type-neutral”写成当前事实。最终仅把imposter注释改为“DIFF C22 recorded offensive-only scope; C23B1 also added typed incoming hurt”，不改DIFF本项（本单不授权F5改DIFF）、不改行为。此注释补正发生于glare3开始后、全量suite之前；先两轮与第三轮已加载的游戏行为完全相同，后续全量重新逐脚本check-only。该次同步仅world注释、记录；harness与batch及行为代码冻结不变。
+- F5注释修后本地world check-only rc0，`c23b2_f5_check_world.log`。`c23b2_f5_sync.log`、`...sync2.log`均rc255 Connection closed，未计同步成功；NUC已脱离的批处理继续，等连接恢复核对.done与补同步。
+
+- F5第三次同步成功：`c23b2_f5_sync3.log` TREE PARITY112/diffs0，16:37:59 CST；两次失败日志保留。
+- glare首组实测为69/1、69/0、69/3、69/0。第3轮不是“in-cone miss”：@rt23.58已paralyze；f199后rig方向改变（dot1→-.584），最终过期，且rt已超过下一tick却无第二tick。B1的recalc会重设临时实验passive（player.gd:243），升级/物品选择也可重新给moves并改变朝向。此是有效新红，不把第一组冒充x4全绿。
+- F2检查补强（不改游戏、不放宽断言）：`_c211_wait_disarmed`在真实modal picks之后恢复窗口入口指定的lab passive，moves仍清；`_c212_glare_wait`同样保留lab passive并固定入口rig yaw，与原有位置/速度固定一起防止无关recalc/auto-fire改变fixture。新增PTICKFIX/GLAREDBG recalc日志；游戏tick、锥形判定、状态施加及最终paralyze硬断言均不动。
+- 新harness本地check-only0 `c23b2_glarefix_check.log`；同步 `c23b2_glarefix_sync.log` TREE PARITY112/diffs0（16:40:11）。NUC harness mtime16:39:53，full_suite.log创建16:40:40，**全量suite已加载补强后的harness**；先前九文件check中的harness是旧版本，补强后另安排NUCcheck-only，不混淆。
+- `Test/c23b2_glare_replay.sh`：新独立补证脚本，先等本轮full batch最终ALLDONE再跑，避免resident Profile并发；重验harness解析，重新四轮c21，日志前缀 `c23b2_glare_fixed_*`，保留首组。shell语法通过。脚本不改当前运行的batch文件。
+- 首组glare四份完整日志核验拉回：`c23b2_glare_initial_pull.done` RC=0 files=4 bytes=87824；单独第3轮拉回也保留 `c23b2_glare3_pull.done` RC=0 files=1 bytes=19030。第三轮原始GLAREDBG明确先成功施加、后方向转走，不是游戏在锥内拒绝施加。
+- 重跑脚本同步 `c23b2_replay_sync.log` TREE PARITY113/diffs0，16:41:35 CST；NUC setsid重跑脚本已启动并等待原批ALLDONE，不与Profile测试并发。最终冻结SHA现在包含world、enemy、harness及两个B2批处理脚本，5/5核验通过。
+
+### ② 最终检查改动范围补充（上述中间履历的最终形态）
+
+- harness调度全量加入 `_c23b2_phase`（单独可选），实际第二区召唤Gengar、走真实脑tick并断言14枚ring；保存恢复RNG/角色实验状态，完成后清理run/Profile。
+- `_c22_phase`：保留原51项检查；梦食去掉三选一、补非满血的精确4%与实际受伤两项；实际冰柱within/复制两项；fog位一项；eclipse半径/身高、实际rig、非elite三项。总59项。
+- `_c9_guardian_phase`：同步捕获真实奖励、远离后settle、三处counter/opened诊断、原walk-over断言与额外两项同箱状态硬断言；新增 `_c23b2_chest_marks` 只读诊断辅助。总11项，原计数/奖励/击杀断言不放宽。
+- `_c21_phase`：dowsing只在测量窗口固定为一层并恢复旧层数，6/16断言原样；原69项不删不减。F8最终不在该phase里。
+- `_c211_wait_disarmed` 与 `_c212_glare_wait`：只固定实验输入（passive/位置/速度/朝向）并增加recalc诊断；不改游戏tick或paralyze/hp硬断言。
+- 新 `Test/c23b2_batch.sh` 与 `Test/c23b2_glare_replay.sh`；旧B1 batch、phonehud及断言没有修改。新shell均bash -n通过。
+- 记录文件仅 `design/c23-changes.md` 续写B2，以及DIFF的F2/F7指定段；F2逐处清单将在四轮补证结束时填写。
+- 最终全量运行中已看到补强后的GLAREDBG为390/390帧、2/2 tick、final paralyze；此为全量内直接证据，四轮独立补证仍等待，不混记成x4完成。尚无C9 FAIL或SCRIPT ERROR，继续等SUMMARY与.done。
+
+### DIFF 记录类修正逐处清单（仅 F2 / F7）
+
+1. F2：C22开头Verification的glare x4句，撤回无原日志支撑且与pre-fix flakes矛盾的“四次69/0”，写明原证据缺失与B2首组真实69/1、69/0、69/3、69/0。
+2. F2：同段末“every scoped phase green standalone/c21 x4 69/0”改为已能核对的c22两全量51/0与props46/0；c21转指§6，不再夹带未经证明的全绿。
+3. F2：§6 `Proof: <FILL glare x4 result>`整处替换为首组四日志、逐轮锥内帧/tick/状态、第三轮先落状态后转向过期、拉回大小核验、fixture补强与全量内直接证据；独立补强后四轮在.done结束后追加，不预填成功数字。
+4. F2：末尾两passive-lab flake的“passed in every run since”限定为C22当时报告，补B2重现与§6引用，避免把历史时间界限写成永久全绿。
+5. F7：§3“bundle无战斗变身遭遇”缩限为本次检查分派里未发现独立Ditto敌方变身遭遇，列字符串/分派搜索方法与Mew/玩家Ditto ultimate两个反例，指向本B2记录。其余DIFF历史玩法/偏差（包括F3历史分诊原文）未改。
+
+- 最终全量已结束 `c23b2_full_suite.log` **658/0、rc0**；未见SCRIPT ERROR，尾部有既有退出资源泄漏诊断。新Linux bootsmoke **rc0**；后续中立与HUD继续等.done。此前“运行中”条目均为中间履历，不冒充最终ALLDONE。
+- 全量核心证据已核验拉回 `c23b2_fullcore_pull.done` RC=0 files=16 bytes=219815。damage169/0、pickups38/0、pickup_stats50/0、mutation cases9/missed0；bootsmoke日志含EXPORT_DONE rc0与ALIVE_AT_75S。
+- 中立成品 `c23_neutral_smoke.done` 已结束：rc0/alive1/script_errors0/ALLDONE；phonehud a当前进入P5尾段，继续等两档DONE。补强后四轮重跑仍在等待，未提前拉取增长中的日志当完成证据。

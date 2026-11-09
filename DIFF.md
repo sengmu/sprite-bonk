@@ -6438,10 +6438,12 @@ mobile-UI plan (design/ui-mobile-plan-v1.md) — no HUD
 layout, panel or phonehud assertion was touched.
 Verification: NUC station, tree parity 86 files /
 0 diffs, .godot purge + import. c22 phase standalone:
-51 checks / 0 fails. Glare proof (c21 standalone
-x4): 69 checks / 0 fails in all four runs (the
-serpent-glare assertion itself passed in every run,
-including the pre-fix loop). Phonehud matrix: rc=0
+51 checks / 0 fails. Glare evidence correction (C23B2 F2):
+the original C22 x4 logs were absent from the audit package;
+pre-fix passive flakes also contradict an all-four-69/0 claim.
+B2's first reproduced c21 x4: 69/1, 69/0, 69/3, 69/0
+(full details and fixture correction in section 6 below).
+Phonehud matrix: rc=0
 (all combos, assertions unchanged). Full suite,
 first pass: 514 checks / 1 fail — the props census
 (its 51-prop / 14-kind premise predates the ditto
@@ -6458,8 +6460,9 @@ player's proximity — auto-opened (the bundle's
 walk-over channel), leaving chests_positions()
 empty. A pre-existing fixture race in code this
 cycle did not touch; the two passes' reds are
-disjoint, and every C22-scoped phase is green
-standalone (c22 51/0, c21 x4 69/0, props 46/0).
+disjoint. c22 was 51/0 in both full suites; props was
+46/0 standalone. The c21/glare x4 claim is corrected in
+section 6; it must not imply all pre-fix phases were green.
 Bootsmoke: OK (rc=0, run against the rebuilt APK).
 APK: 57,663,572 B, sha256 938dcef0…,
 cert b05b80e1…a232, reference/ entries 0.
@@ -6589,9 +6592,16 @@ Populate: the bundle places ditto as a utility prop
 stage play (2 in endless — the port's shared plan
 uses 1; the endless count is recorded as an open
 deviation, endless sharing the stage plan). No
-combat-transform encounter exists in the bundle:
-"transform" is (a) the item-clone modal and (b) the
-imposter passive. Port: PROP_PLAN gains
+independent Ditto enemy-transform encounter was found in
+this pass's encounter dispatches (C23B2 F7 qualification).
+Search: full main chunk ditto/imposter/transform/Transformación/
+132; inspected JC mapping, populate/label/interact -> openDitto
+-> showDitto, enemies.spawn, event spawner and boss kit/mech
+routing. Ditto prop cloning and imposter are distinct from
+Ditto's player ultimate (132 @590343); Mew's combat transform
+also exists (eb kit @896506, transform @901827). This is a
+bounded search result, not a bundle-wide absence of combat
+transformation. Reproduction details: design/c23-changes.md B2. Port: PROP_PLAN gains
 ["ditto", 1, 2.6, 2]; the body is a primitive glossy
 purple blob on a #c88aff ring (no ditto GLB exists;
 the snorlax/porygon primitive precedent). Interact:
@@ -6672,7 +6682,20 @@ zeroed, the player re-pinned with _vel zeroed
 held at 5.0. The GLAREDBG instrumentation is
 untouched — it still recomputes the game's cone
 every frame, so an in-cone miss would still be
-caught. Proof: <FILL glare x4 result>.
+caught. C23B2 F2 proof, first reproduced group:
+Test/out/c23b2_glare_{1,2,3,4}.log = 69/1, 69/0, 69/3, 69/0.
+Runs 1/2/4: 390/390 in-cone frames, 2/2 in-cone ticks,
+final paralyze. Run 3 first landed paralyze, then facing
+turned away at frame 199 and the final status expired;
+199/390 in-cone frames, 1/1 ticks. Other reds were the
+previously recorded tentacles/static fixture family. Logs
+were pulled and size-verified (4 files, 87,824 bytes).
+B2 therefore also pins the lab passive across recalc and
+the entry rig yaw; the game's cone/tick/status code and
+final paralyze assertion stay unchanged. The corrected
+full-suite glare window is 390/390, 2/2, final paralyze.
+The separate corrected x4 proof is recorded in the B2
+construction log once its detached batch ends.
 
 ### Game-code changes (this cycle)
 - scripts/world.gd: _chest_cost luck clamp;
@@ -6736,12 +6759,14 @@ caught. Proof: <FILL glare x4 result>.
   predates ditto and now reads 52 / 15.
 - Two c21 passive-lab blocks (tentacles, static)
   flaked in the first two pre-fix glare-proof runs
-  and passed in every run since (0 script errors
-  throughout; in the same red runs the arena, glare,
+  and were reported green at the C22 close. B2 re-observed
+  this family (see section 6); this is not an all-runs-green
+  claim. The C22 report recorded 0 script errors
+  throughout; in those same red runs the arena, glare,
   intimidate and beacon ticks all landed, and the
   tentacles window showed 2 ambient enemies inside
   the whip's 7 u — the fixture's known ambient-
-  absorption family, cf. the 21.1 static note). The
+  absorption family, cf. the 21.1 static note. The
   blocks carry C21DBG/C22DBG prints for pid /
   pending_levels / _ptick_next now. No game-code
   fault was found; recorded as fixture pacing, not

@@ -374,12 +374,16 @@ func _c211_dbg(tag: String) -> void:
 ## once more at the end) keeps the passive tick the only
 ## writer of the subject's status and HP during the window.
 func _c211_wait_disarmed(w, p, secs: float) -> void:
+	var lab_passive: String = p.passive_id
 	var left := secs
 	while left > 0.0:
 		if bool(w.get("_choice_open")):
 			w.call("_choice_pick", 0)
 		if String(w.get("state")) == "draft":
 			w._apply_draft_option(0)
+		if p.passive_id != lab_passive:
+			print("PTICKFIX recalc changed passive ", p.passive_id, " -> ", lab_passive)
+		p.passive_id = lab_passive
 		p.moves.clear()
 		var step: float = minf(0.5, left)
 		await _wait_sim(w, step)
@@ -413,11 +417,14 @@ func _c212_glare_wait(w, p, s1, secs: float) -> void:
 	# every frame, zero the subject's knockback and the
 	# player's velocity (so the facing source stays the
 	# rig), and hold the ambient spawner shut. Positions
+	# and facing (B2 also pins the selected lab passive across recalc)
 	# only — the game's tick, cone predicate and status
 	# application all run untouched, and the GLAREDBG
 	# instrumentation below still recomputes the cone
 	# from the live positions every frame: an in-cone
 	# tick that fails to land would still be caught.
+	var lab_passive: String = p.passive_id
+	var yaw_anchor: float = p.rig.rotation.y if p.rig else 0.0
 	var p_anchor: Vector3 = p.global_position
 	var s_anchor: Vector3 = s1.global_position
 	# _ptick_next holds ONE entry per unit across passives,
@@ -434,6 +441,11 @@ func _c212_glare_wait(w, p, s1, secs: float) -> void:
 			w.call("_choice_pick", 0)
 		if String(w.get("state")) == "draft":
 			w._apply_draft_option(0)
+		if p.passive_id != lab_passive:
+			print("GLAREDBG recalc changed passive ", p.passive_id, " -> ", lab_passive)
+		p.passive_id = lab_passive
+		if p.rig:
+			p.rig.rotation.y = yaw_anchor
 		p.moves.clear()
 		await get_tree().physics_frame
 		if not is_instance_valid(s1) or not is_instance_valid(p):
@@ -445,6 +457,8 @@ func _c212_glare_wait(w, p, s1, secs: float) -> void:
 		s1.set("_kb_vel", Vector3.ZERO)
 		p.global_position = p_anchor
 		p.set("_vel", Vector3.ZERO)
+		if p.rig:
+			p.rig.rotation.y = yaw_anchor
 		# Facing, exactly as the game computes it.
 		var rig: Node3D = p.get("rig")
 		var fy := 0.0
@@ -613,6 +627,8 @@ func _run_cycle9() -> void:
 		await _c212_reset_phase()
 	if _c9_only in ["all", "c22"]:
 		await _c22_phase()
+	if _c9_only in ["all", "c23b2"]:
+		await _c23b2_phase()
 	if _c9_only in ["all", "c23"]:
 		await _c23_phase()
 	print("C9 SUMMARY checks=", _c9_checks, " fails=", _c9_fails)
@@ -701,6 +717,62 @@ func _c212_reset_phase() -> void:
 ## casts, the event tick); forced state is limited to
 ## the same seams the c21 phase uses (mech forcing,
 ## event kind/clock sets, _boss_t quieting).
+
+func _c23b2_phase() -> void:
+	var snap: Dictionary = Profile.data.duplicate(true)
+	var w = _world
+	var ok := await _c9_start_run("bulbasaur")
+	_c9_check("c23b2: isolated run boots", ok)
+	if not ok:
+		return
+	var p = w.get("player")
+	p.invulnerable = true
+	w.set("zone", 2)
+	w.set("state", "playing")
+	w.set("boss_spawned", false)
+	w.summon_guardian()
+	var g2 = w.get("guardian")
+	_c9_check("c23b2 F8: actual zone2 guardian is gengar", g2 != null and g2.species_id == "gengar")
+	if g2:
+		# F8: seeded RNG chooses ring; run the real brain dispatch,
+		# then require its delayed hostile projectiles, not only a label.
+		var f8_moves: Array = p.moves.duplicate(true)
+		var f8_passive: String = p.passive_id
+		var f8_pos: Vector3 = p.global_position
+		p.moves.clear()
+		p.passive_id = ""
+		p.global_position = g2.global_position + Vector3(8, 0, 0)
+		w.set("_boss_t", 0.0)
+		w.set("_boss_last", "")
+		w.set("_boss_hold_t", 0.0)
+		var brng: RandomNumberGenerator = w.get("_bless_rng")
+		var f8_rng_state := brng.state
+		var seed_ring := 0
+		for candidate in range(100):
+			brng.seed = candidate
+			if brng.randi_range(0, 4) == 1:
+				seed_ring = candidate
+				break
+		brng.seed = seed_ring
+		w.call("_boss_tick", 0.02)
+		var dispatched := String(w.get("_boss_last")) == "ring" and float(w.get("_boss_t")) > 0.0
+		var shots_before: int = (w.get("_hostiles") as Array).size()
+		await _c211_wait_disarmed(w, p, 0.6)
+		var shots_after: int = (w.get("_hostiles") as Array).size()
+		_c9_check("c23b2 F8: zone2 gengar brain dispatches generic ring and fires",
+			dispatched and shots_after >= shots_before + 14,
+			"move=%s shots=%s->%s" % [w.get("_boss_last"), shots_before, shots_after])
+		brng.state = f8_rng_state
+		p.moves = f8_moves
+		p.passive_id = f8_passive
+		p.global_position = f8_pos
+		g2.queue_free()
+
+	w.set("guardian", null)
+	await _c9_cleanup_run()
+	Profile.data = snap
+	Profile.save_profile()
+
 func _c22_phase() -> void:
 	var snap: Dictionary = JSON.parse_string(JSON.stringify(Profile.data))
 	var w = _world
@@ -907,6 +979,16 @@ func _c22_phase() -> void:
 		_c9_check("c22 lapras: a pillar is a real hp body (1.2% of boss maxHp)",
 			bool(pe.get("is_object")) and absf(float(pe.max_hp) - g.max_hp * 0.012) < 2.0,
 			"hp=" + str(pe.max_hp) + " boss=" + str(g.max_hp))
+		var object_pos: Vector3 = pe.global_position
+		var object_types: Array = p.types_override.duplicate()
+		pe.global_position = p.global_position + Vector3(0.5, 0, 0)
+		_c9_check("c23b2 F6: actual ice pillar participates in within query",
+			(w.call("_ptick_enemies_within", p.global_position, 1.0) as Array).has(pe))
+		w.call("_ptick_fire", p, p.species_id, "imposter", true)
+		_c9_check("c23b2 F6: imposter can copy actual ice pillar types",
+			not pe.types.is_empty() and p.types() == pe.types, "types=" + str(p.types()))
+		p.types_override = object_types
+		pe.global_position = object_pos
 		# Move pillar 0 onto the boss->player line: the pump
 		# must be blocked by it.
 		var line_mid: Vector3 = g.global_position.lerp(p.global_position, 0.5)
@@ -942,6 +1024,13 @@ func _c22_phase() -> void:
 	w.set("_boss_mech_data", {"swing": {}, "drowsy": 0.0, "dtick": 0.0})
 	p.global_position = g.global_position + Vector3(8, 0, 0)
 	p.hp = p.max_hp
+	g.set_physics_process(false)  # isolate dream strike from contact iframes
+	p.invulnerable = false
+	p.evasion = 0.0
+	p.shield = 0.0
+	p.overheal = 0.0
+	p.set("_invuln_t", 0.0)
+	g.hp = g.max_hp * 0.5  # F4: leave room for the full 4% heal.
 	var ghp_cast: float = g.hp
 	var php_cast: float = p.hp
 	w.set("_boss_t", 99.0)
@@ -960,11 +1049,31 @@ func _c22_phase() -> void:
 		await _c211_wait_disarmed(w, p, 1.2)
 		_c9_check("c22 hypno: dream eater teleports in and feeds",
 			g.global_position.distance_to(p.global_position) < 5.0
-			and (g.hp > ghp_cast or p.hp < php_cast
-				or (w.get("_boss_mech_data") as Dictionary).get("swing", {}).is_empty()),
+			and p.hp < php_cast,
 			"gdist=" + str(g.global_position.distance_to(p.global_position))
 			+ " ghp " + str(ghp_cast) + "->" + str(g.hp)
 			+ " php " + str(php_cast) + "->" + str(p.hp))
+	# F4: isolate the delayed strike from ambient contact/defense rolls.
+	# Keep the real helper and timer callback; no simulated heal.
+	var dream_timers: Array = (w.get("_timers") as Array).duplicate()
+	w.set("_timers", [])
+	g.hp = g.max_hp * 0.5
+	var dream_hp: float = g.hp
+	p.hp = p.max_hp
+	p.invulnerable = false
+	p.evasion = 0.0
+	p.guard_t = 99.0
+	p.shield = 0.0
+	p.overheal = 0.0
+	p.set("_invuln_t", 0.0)
+	w.call("_boss_hypno_dream_eat")
+	w.call("_timers_tick", 0.81)
+	_c9_check("c23b2 F4: isolated dream strike actually damages player", p.hp < p.max_hp)
+	_c9_check("c23b2 F4: dream eater heals exactly 4% independently",
+		absf(g.hp - dream_hp - g.max_hp * 0.04) < 0.01,
+		"hp=%s->%s max=%s" % [dream_hp, g.hp, g.max_hp])
+	w.set("_timers", dream_timers)
+	g.set_physics_process(true)
 	# ---- cloyster: the shell snap binds ----
 	w.set("_boss_mech", "cloyster")
 	w.set("_boss_mech_data", {"open": true, "phase": 0.05})
@@ -1064,6 +1173,11 @@ func _c22_phase() -> void:
 		if is_instance_valid(fe):
 			fog_xp = fog_xp and absf(float(fe.get("xp_mult")) - 2.0) < 0.01
 	_c9_check("c22 fog: fog spawns carry double XP", fog_xp)
+	var flying_ok := not (w.get("_event_spawned") as Array).is_empty()
+	for fe in (w.get("_event_spawned") as Array):
+		flying_ok = flying_ok and is_instance_valid(fe) and (int(fe.flag) & 16) != 0
+	_c9_check("c23b2 fog: every event spawn carries Flying=16", flying_ok)
+
 	w.set("_event_spawned_n", 30)
 	w.set("_event_spawn_t", 0.01)
 	await _c211_wait_disarmed(w, p, 0.4)
@@ -1071,6 +1185,32 @@ func _c22_phase() -> void:
 	for fe in (w.get("_event_spawned") as Array):
 		if is_instance_valid(fe):
 			(fe as Node).queue_free()
+	w.set("_event_kind", "eclipse")
+	w.set("_event_left", 35.0)
+	w.set("_event_spawned", [])
+	w.set("_event_spawned_n", 0)
+	w.set("_event_spawn_t", 0.0)
+	w.set("elapsed", 120.0)
+	w.call("_event_tick", 0.02)
+	var elites: Array = w.get("_event_spawned")
+	_c9_check("c23b2 eclipse: first spawn elite radius and body scale 1.35",
+		not elites.is_empty() and int(elites[0].flag) == 1
+		and absf(elites[0].radius - 0.55 * 1.35) < 0.0001
+		and absf(elites[0].body_height - float(ModelRig.SPECIES.get(elites[0].species_id, {}).get("height", 1.0)) * 1.35) < 0.0001,
+		"radius=" + str(elites[0].radius if not elites.is_empty() else -1))
+	if not elites.is_empty():
+		var er = elites[0].rig
+		await _c9_wait(func() -> bool: return is_instance_valid(er) and er.fitted, 600)
+		var ecfg: Dictionary = ModelRig.SPECIES[elites[0].species_id]
+		_c9_check("c23b2 eclipse: fitted model itself has scale 1.35",
+			er.fitted and ecfg.has("native")
+			and absf(er._base_scale.x - float(ecfg["height"]) * 1.35 / float(ecfg["native"])) < 0.0001,
+			"species=%s scale=%s" % [elites[0].species_id, er._base_scale.x])
+	_c9_check("c23b2 eclipse: other event spawns keep normal radius",
+		elites.size() == 4 and absf(elites[1].radius - 0.55) < 0.0001)
+	for ee in elites:
+		if is_instance_valid(ee):
+			ee.queue_free()
 	w.set("_event_kind", "")
 	w.set("_event_k", 0.0)
 	await _c9_frames(2)
@@ -1177,6 +1317,8 @@ func _c9_guardian_phase() -> void:
 	# capRate/s, so no single blow can one-shot the guardian — the
 	# kill flows THROUGH the cap in a bounded hit-until-dead loop
 	# (the cycle-9 assertion intent is unchanged).
+	var guardian_chest: Dictionary = {}
+	var guardian_chest_pos: Variant = null
 	var guard_frames := 0
 	var gold_blow := 0.0
 	var chest_blow := 0
@@ -1194,6 +1336,15 @@ func _c9_guardian_phase() -> void:
 		if g.hp <= 0.0:
 			gold_blow = _c23_pickup_value(w, 1) - pre_gold
 			chest_blow = (w.get("_chests") as Array).size() - pre_chests
+			# F3: capture before ANY awaited frame can auto-open it.
+			if chest_blow > 0:
+				guardian_chest = (w.get("_chests") as Array)[pre_chests]
+				guardian_chest_pos = guardian_chest["node"].global_position
+				p.global_position = guardian_chest_pos + Vector3(8, 0, 0)
+				p.global_position.y = w.height_at(p.global_position.x, p.global_position.z)
+				p.set("_vel", Vector3.ZERO)
+				p.reset_physics_interpolation()
+
 		await _c9_frames(1)
 		# Cycle 19 harness pacing (root-caused in cycle 18):
 		# XP earned mid-loop (the player's auto-fire clears
@@ -1224,9 +1375,13 @@ func _c9_guardian_phase() -> void:
 	_c9_check("guardian: candy entity waits for pickup",
 		_c23_pickup_value(w, 6) >= 1.0,
 		"lvl delta=" + str((p.level + p.pending_levels) - lvl0))
+	print("F3DBG before settle count=", Profile.counter_value("chests"), " boxes=", _c23b2_chest_marks(w))
 	await _c9_settle_drafts()
-	# Open a chest by walking onto it (real proximity path).
-	var cps: Array = w.chests_positions()
+	print("F3DBG after settle count=", Profile.counter_value("chests"), " boxes=", _c23b2_chest_marks(w))
+	_c9_check("c23b2 F3: captured guardian chest survives draft settle unopened",
+		guardian_chest_pos != null and not bool(guardian_chest.get("opened", true)))
+	# Open the captured reward by walking onto it (real proximity path).
+	var cps: Array = [guardian_chest_pos] if guardian_chest_pos != null else []
 	if not cps.is_empty():
 		var cp: Vector3 = cps[0]
 		var chests_before := int(Profile.counter_value("chests"))
@@ -1242,7 +1397,9 @@ func _c9_guardian_phase() -> void:
 			if int(Profile.counter_value("chests")) > chests_before:
 				opened = true
 				break
+		print("F3DBG after walk count=", Profile.counter_value("chests"), " boxes=", _c23b2_chest_marks(w))
 		_c9_check("guardian: chest opens on walk-over + counts", opened)
+		_c9_check("c23b2 F3: captured reward itself is marked opened", bool(guardian_chest.get("opened", false)))
 	else:
 		_c9_check("guardian: chest exists to open", false)
 	# End the run: lifetime flush must carry 'burned' across.
@@ -1260,6 +1417,12 @@ func _c9_guardian_phase() -> void:
 		int(Profile.counter_value("burned")) >= 1,
 		"burned=" + str(Profile.counter_value("burned")))
 	await _c9_cleanup_run()
+
+func _c23b2_chest_marks(w: Node) -> Array:
+	var result: Array = []
+	for c in (w.get("_chests") as Array):
+		result.append({"opened": c.get("opened"), "valid": is_instance_valid(c.get("node"))})
+	return result
 
 ## P1.1 + P2 ally: slam through combat.hit (STAB x1.25, damage and
 ## physical multipliers, slamStat) with crit pinned off as a
@@ -4408,6 +4571,10 @@ func _c21_phase() -> void:
 	print("C21DBG post-shop: running=", w.get("running"), " rt=", w.get("run_time"))
 	_c211_dbg("c21 post-shop")
 	# --- dowsing-machine populate (spare zone, then restore) ---
+	# Earlier genuine random item rolls may already have granted this item.
+	var dowsing_before: int = p.item_count("dowsing-machine")
+	while p.item_count("dowsing-machine") > 0:
+		p.remove_item("dowsing-machine")
 	p.add_item("dowsing-machine")
 	w.call("_build_interactables", 3)
 	var st3: Dictionary = (w.get("_inter_state") as Dictionary).get(3, {})
@@ -4419,6 +4586,8 @@ func _c21_phase() -> void:
 		(st3.get("altars", []) as Array).size() == 6 and fc == 16,
 		"altars=" + str((st3.get("altars", []) as Array).size()) + " chest=" + str(fc))
 	p.remove_item("dowsing-machine")
+	for di in range(dowsing_before):
+		p.add_item("dowsing-machine")
 	w.call("_build_interactables", 3)
 	# ---- boss brain (item 5): the phase never leaves zone 1,
 	# whose trio is scyther/pinsir (signature kits) + nidoking
