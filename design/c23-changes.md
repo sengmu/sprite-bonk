@@ -554,3 +554,180 @@ DIFF.md收尾前对照sha256：`30d976ea328b84c616b843a49c741fd60a09a60045180a13
 - 待核 2/3/4 三项经对照 pack 原文复核，**裁定为真规格缺口、非施工停早**：wound 在 pack 中唯一实证作用点位于 §5 护盾公式（`woundT > 0` 时回盾减半），其施加点未证；strike 仅有两处 floor 偏移与倍率；alphaCap1 只有上限、无基础概率公式。施工方保留精确表值、不发明消费者的处置正确，本批按「已证部分全落地」关账。
 - 处置：三项并入 C23B 前置补证挖掘（已知偏移定点提取 woundT 施加点、strike 两处分派全公式与 hurt() caps、director stage-1 alpha 基础概率）；wound 随护盾系统同批施工（其天然归属）。
 - 本批验收数字（00:35 ALLDONE）：定向 129/0、全量 suite 643/0、bootsmoke rc=0、成品冒烟 rc=0、phonehud a 1651/0 / s070 i0 1626/0、TREE PARITY 105 文件。
+
+# C23B 施工子批 B1（2026-11-09）
+
+规格前置：完整读取 pack 与 addendum；本段续写，不改 C23A 关账裁定。addendum 纠正 alphaCap1 为伤害上限，原A关于生成概率的历史描述仅为历史记录。禁止新增 alpha 概率门；逐招 mul/n/out_dmg 上游等价仍 UNPROVEN。
+
+## B1 进度与红基线
+
+**B1 已完成实现与最终验收**：13种拾取物、shield/wound、strike完整管线、alphaCap1伤害cap均落地。最终suite645/0、bootsmoke rc0，全部长跑已等到ALLDONE；详细数字与边界见本段末尾。此前按工作区协作约定进行的实现/检查与同池只读复审为施工履历，不冒充官方 Claude 审计。
+
+- 拾取改前：`c23b_pickups_red.log` 1/1（缺 manager，后续扩展确定性数值检查）。
+- 伤害改前：`c23b_damage_red.log` 12/12，API 守卫后才进入行为检查，缺实现不会以解析错误冒充行为红。
+- 首轮伤害 79/1：water-veil 缺少 pack 已证 shieldMax15，补数据后扩展至143/0。
+- 复审新增记账检查改前：`c23b_bookkeeping_red.log`145/2，命中睡眠未清/缺独立来源归因；`c23b_contact_red.log`146/3 含缺 contact_reaches。随后修复，等待最终定向重验。
+
+## B1 游戏代码变更（与检查分列，持续补全）
+
+- `scripts/player.gd`：8种被动 shieldMax 的公共 recalc 消费者，shield/overheal/wound/guard 与 noHit 计时；alive simulated tick中 wound/pop可递减为负，回盾严格 noHit>3，.25 shieldMax/s，wound有效时减半。heal与leech共用 healing×wound，fresh-water存储及overheal基于减半后的有效治疗；直接赋HP不扩推wound。HUD纯getter按maxHp分母、shield+overheal>1时追加+round。
+- `scripts/player.gd`：take_damage返回命中布尔；type clamp→armor→ability dmgTaken→magic-guard非接触.7→multiscale满血.5容差→可选hurtMod→折算floor→cap→TM iron.4→overheal→shield→HP。全吸收仍清sleep/重置noHit/iframes并成功；guard-spec全挡/闪避/无敌为false。独立source与attacker字段，HP损伤才更新last_hit，接触反伤只source>=0。
+- `assets/data/abilities.json`：补 pack指定 water-veil +15 shieldMax，保留其他已存在数据。
+- `scripts/world.gd`：Sp alpha_hurt_cap用于主体碰与Alpha hostile；Capped优先.15/.02*S；主体碰Boss floor.05*S、Alpha优先cap；qy floor>=.3不乘tier，其余乘strike，evade.5。_boss_strike对接Nb/ix结构，经miniboss_strike成功施wound4/5/6并成功才shove；独立legendary_hurt保留Yy负frac关闭floor/wound与>=.3 cap.6规则，Nb/ix维持.34。_boss_shot带Capped及来源。honey时间事件经early提前。
+- `scripts/world.gd`：新增shield HUD层与wound数值颜色；新层随phone布局高度调整。
+- `scripts/enemy.gd`：主体碰接独立hurt分派，Capture/Treasure/Object/不可行动门、radius+Player.RADIUS与高度严格门、成功才shove。body_height按现有3D模型height×scale适配，未宣称sprite atlas尺寸等价。
+
+## B1 检查代码变更（与游戏代码分列，持续补全）
+
+- `Test/c23_damage.gd`：独立SceneTree数值回归，所有防御与伤害公式、8来源实际recalc、三tier分派与三wrapper、全盾/false返回、HUD口径、归因与几何边界；详见后续最终数字。
+- `Test/c23_pickups.gd`：独立拾取实体/生命周期/合并/分派/范围效果检查，详见后续最终数字。
+- `Test/c23b_batch.sh`：新NUC脱离批处理，逐改动脚本check-only、两新定向、既有完整suite、bootsmoke与中立成品冒烟、phonehud a与s070 i0；ALLDONE前不算交付。
+
+## B1 规格边界 / 待核
+
+- `_boss_strike`仅集中管线与Nb结构对应。既有每招mul/n、guardian.out_dmg上游倍率未逐招重审，不宣称数值等价，不按看似接近的倍率猜原作n。
+- 当前无原作Yy传奇类/ix敌人系统、co-op proxy、tower/endless玩法。提供已证wrapper数据路径，不伪造新模式或把新增Yy helper声称既有招式全接。endless布尔只为Sp cap情境，不新增玩法；未实现模式的来源不冒充已运行验证。
+- 直接赋HP的恢复、既有hurt_fixed固定路径未证可等价改入本hurt链，保留原路径，不无证推广wound或shield规则。
+- DIFF.md保持原SHA256 `30d976ea328b84c616b843a49c741fd60a09a60045180a13cffcccc3b6affad4`；不建APK，不入reference。
+
+- 弹体补充红基线 `c23b_hostile_red.log`161/1（缺几何API）；修后伤害独立检查 `c23b_damage_final.log`166/0、rc=0，check-only rc=0。新增`hostile_reaches`并接实际boss shot：半径和严格高度门、保持弹道高度、先terrain挡；当前无sanctuary cover系统，不虚构消费者。
+- 实际隔离mutation：复制player与测试至.tmp（不改原实现），floor折扣系数.35→0，核心66项中2项准确失败（HP92而非94.52/94.8），`c23b_damage_mutant.done`rc=1，证明检查对公式变异敏感。
+- 工作区约定的Claude独立审计已尝试，`c23b_claude_audit.done`rc=1 ALLDONE；CLI返回“Failed to authenticate. API Error: 403 Insufficient account balance”。未充值/改信任配置；此轮只能计同池只读复审，不能声称官方Claude审计通过。此为审计通道欠账，不是suite成功证据。
+
+## B1 拾取物完整变更补记（游戏代码）
+
+- 新` scripts/pickups.gd`：13种、2500容量、共享网格实体；寿命60/120/无限、末8秒闪烁；随机水平1–3.5/vy4–7，落地+0.6、静止/激活；age>.35后range吸引、16+age×6速度及9/s lerp、dist<.9收集；xp>500/coin>200同种近4u合并、总量>1800或远距dist²>3600回收并重置速度/age/rest；总量>260时每1.2s按3.5格、格内xp>240/coin>100合并。
+- manager分派：xp及.45声音链、coin记账及.4s浮字批次、heal计berries并heal25%maxHp、magnet4×powerup、bomb28u普通1e9/特殊8%maxHp/Object跳过/knock6、repel20u knock40×resist及stun1.5×resist、candy整级、chestkey仅counter；swords伤害1.5×10s、agility移动1.35/攻速1.3×10s、iron8s、payday金币2×15s，时长×powerup；thunder40u stun4×powerup。
+- manager来源：击杀XP实体；goldFrac .2×gold×weight、floor后落coin；heal .006×powerup×weight；powerUp .0018×luckMult×powerup×weight，间隔max(18,40/powerup)，bomb冷却120；Alpha糖果；预留4096/8192敌人旗标糖果+金币bundle；harvest每15秒heal；sky首次55–75s/后续70–95s，22–38u且距玩家≥15，65%+22胸箱（15%super_ball标记）/35%+16 pickup池，mewtwo事件门。
+- `scripts/world.gd`：lazy manager、spawn/count入口、run keys及开局清池；仅running&&!hitstop时tick；击杀改落实体，streak≥25magnet4；guardian20×ceil(5×stage×gold) coins+candy，Meowth命中/死亡金币实体、rock15%luck三选实体；PROP_PLAN增加magnet×2、primitive外观/提示/交互used并magnet5；supply宝箱落地前禁交互，保留super_ball标记而不猜不同奖励算法。
+- `scripts/player.gd`：pickup_range6、powerup_mult1、timed_buffs及激活/到期recalc；已证passive/item pickupRange/powerup消费者、Lab magnet .6/level与已有bug level字段+1；按pack修正beacon2/static-wool3/magneton pickup4。未虚构当前缺失的bug维生素producer。
+- `scripts/enemy.gd`：weight1（当前无swarm聚合），pickup_fixed_damage绕过普通combat倍率/cap而保留lethal/capture路由；并行pickup_stun_t，无自主行动；为repel修正pickup-only stun仍立刻积分knockback并衰减。重叠旧root/sleep/freeze保留旧门控，本批未扩改其他状态政策。
+- `scripts/profile.gd`：Lab magnet fx=true，已有live消费者。
+
+## B1 检查变更补记
+
+- 新`Test/c23_pickups_mutations.py`：隔离.tmp源变异，heal/bomb/repel/thunder/magnet/expiry/gold/motion/merge九类变异逐一要求rc1且断言FAIL且无SCRIPT ERROR；不修改游戏原实现。9/9检出，日志`c23b_pickups_mutations.log`。
+- `Test/c23_pickups.gd`：最终本地38/0，含真实Enemy physics；repel位移/衰减检查先跑`c23b_pickups_impulse_red.log`37/2，再修后38/0。逐enemy/test check-only rc0。
+- `Test/c23_damage.gd`：追加真实_hostile_process驱动追逐检查，改前`c23b_chase_red.log`169/2；游戏只把追逐停止阈值从1.35改为radius+Player.RADIUS，修后`c23b_chase_green.log`169/0、enemy/test check-only均0，ALLDONE。
+- `Test/harness.gd`：guardian/c20金币检查改核pending实体金额，仍精确20×ceil；candy检查实体等待收集；c22 Meowth检查pending实体并精确包含goldFrac floor滴落；音频检查由击杀后将XP实体放入收集半径验证拾取声，pop/streak保留；props预期54/16、magnet2及真实交互used/magnetAll5；新增实体求和/收集fixture helpers。
+- `Test/c23b_batch.sh`：完整逐脚本解析加入profile与新测试；新增隔离pickup mutation gate；bootsmoke前删除指定旧Linux产物，必须重新导出，不能让旧成品冒充本树。无APK步骤。
+
+## B1 新发现的原料冲突（待主控裁定，未替换派单口径）
+
+以pack/addendum为施工权威。施工代理定点复核同哈希原料时发现下述摘要差异，本次保持pack口径，不擅自扩大授权：
+
+1. spawnMerged main @504099附近原文`if(this.count>(e===0?500:200))`为全池数量门；pack写同种数量，本次按同种。
+2. consolidate @511750原文先全池alive&&!attract计xp/coin，`let n=e>240,r=t>100`后格合并；pack写in cell，本次按格内数量门。
+3. update @505600附近到期为`age>dh && !attract`；pack未列已吸引豁免，本次按有限寿命。
+4. repel @1455400 knock的i为Boss|Summoner?.05:flags12290?.2:1，但stun另用combat.resist；@731082该值为Boss .35 / flags12290 .6 / else1。pack写统一resist，本次统一.05/.2/1。
+5. pack给thunder的secs但未写常量；其明确引用tp表 @314400补得secs=4（实现必需值）。原料同段另有status resist/para+1，pack未要求，不接。
+6. pack给miniboss金币bundle但省数量，所引用main @1032925–1033450连续原文补得totem10/summoner8 coins，each=ceil((3+stage×3)×gold)，仅预留flags分派；现无对应敌人身体，不虚构运行覆盖。
+7. tower/sanctuary与proxy不存在，未造新模式；super_ball仅分类标记，pack未证单独奖励消费者，保留现通用宝箱策略；chestkey保持reserved。
+
+## B1 冻结树逐处清单（游戏/检查分开）
+
+### 游戏代码
+- `scripts/pickups.gd:1`：新增完整文件，276行。
+- `scripts/player.gd`：全部22个差异块的新树起始行 136, 248, 255, 282, 286, 398, 406, 606, 622, 627, 652, 666, 688, 719, 1058, 1060, 1071, 1087, 1091, 1116, 1126, 1146。各块功能列于上方分项，无遗漏脚本。
+- `scripts/enemy.gd`：全部14个差异块的新树起始行 42, 53, 78, 168, 383, 428, 460, 466, 470, 532, 557, 564, 566, 687。各块功能列于上方分项，无遗漏脚本。
+- `scripts/world.gd`：全部28个差异块的新树起始行 479, 2892, 5525, 5585, 5628, 6018, 6026, 6028, 6155, 6317, 6546, 7788, 7790, 7795, 7826, 8502, 9099, 9108, 9398, 9458, 9474, 10262, 10317, 11874, 12300, 12408, 12507, 13693。各块功能列于上方分项，无遗漏脚本。
+- `scripts/profile.gd`：全部1个差异块的新树起始行 31。各块功能列于上方分项，无遗漏脚本。
+- `assets/data/abilities.json`：全部1个差异块的新树起始行 1301。各块功能列于上方分项，无遗漏脚本。
+
+### 检查代码
+- `Test/harness.gd`：全部22个差异块的新树起始行 1007, 1009, 1014, 1017, 1019, 1024, 1187, 1190, 1212, 1218, 2772, 2774, 2778, 2781, 3338, 3349, 3354, 3356, 5247, 5250, 5256, 5703。各块功能列于上方分项，无遗漏脚本。
+- `Test/c23_damage.gd:1`：新增完整文件，410行。
+- `Test/c23_pickups.gd:1`：新增完整文件，241行。
+- `Test/c23_pickups_mutations.py:1`：新增完整文件，36行。
+- `Test/c23b_batch.sh:1`：新增完整文件，37行。
+
+### 冻结SHA-256
+
+```text
+68e76adc03b29a36338549eeab7d9f23b77243f9f10fd01066bfd3059cdfa043  scripts/pickups.gd
+ee5e5bdcdeb4bfaa012638511e82dbceac05e86eab9385fbc0c3f7646122f41e  scripts/player.gd
+eaf905ce4b41e51767e31b092d56004e94fa223e749d38599028cc432ff02928  scripts/enemy.gd
+223b0cec773817276c23f9d5291061a6cc1470de57b00ee39a7f6e8a55420be0  scripts/world.gd
+92aa30c2ac9b569923849993e5c756878d80e50860943fd4f5aa4e3153e630e1  scripts/profile.gd
+2d65019db7ca0ce9e86dc719c7f1cf822abf16bb65fbfa567bdfb136bbbbf691  assets/data/abilities.json
+333863bc2c2d3937d76765b9ddbb21702ae97303262a46eec459271153d4ce36  Test/harness.gd
+9c4a5cb96ace6ac5c3925a6f12ace718a0a5191632c5d96cc1bd103455aea0bf  Test/c23_damage.gd
+91a110df512d9c8b3389c51b6651e44178b7c2f4e05e30dcecacd9d6bae44a36  Test/c23_pickups.gd
+562373b3075fd824b075facd5d74fe0b10ace5f33e921c7f698006f02936ac87  Test/c23_pickups_mutations.py
+7a191eab27358a2345b72dc6819067f76ad4a29f78227b596c03f32f160b8ffb  Test/c23b_batch.sh
+```
+
+- 冻结同步 `c23b_sync1.log`：TREE PARITY OK (110 files)，local=110 nuc=110 diffs=0；随后NUC通过setsid脱离启动`Test/c23b_batch.sh`，launcher日志`c23b_launcher.log`。八文件check-only各0，damage/pickups及九类mutation gate均0，已进入全量suite。正在等`.done`最终ALLDONE，不以启动器rc代替结束。
+- 11个冻结代码/检查文件SHA256逐个再核均OK；DIFF.md仍为原哈希。
+
+## B1 全量首轮发现 / 检查补强
+
+- NUC首轮suite运行中捕获 `shrine: chests == 1 + roars after the kill :: spawned=5`：新增合法55–75s天空补给在长战斗期间增加一箱，旧fixture把整场新增箱数当守护者同步奖励。已据真实红签名修harness两处guardian/shrine为致死take_damage调用前后同步delta，仍精确要求1+roars/4，不禁补给、不放宽断言。`c23b_chest_check_harness.log`及`...world.log`均check-only0（world只更新失实的旧直接付金币注释）。首轮未中断，继续等ALLDONE收齐签名后重跑。
+- 额外检查源码：新`Test/c23_pickup_stats.gd`，真实Player.recalc 50/0，新增脚本check-only0，`.done`check=0/run=0/ALLDONE。覆盖基础range6、7种passive、honey/exp-share与叠加、Lab .6/level、bug level字段+1、三TM真实倍率/重算不累加/精确到期/分批共存到期恢复；不启动world/rig，不写profile，临时cache和内存均恢复。
+- 隔离stat mutation：Lab .6→.5，50/4（Lab1/3/5与叠加检查红）；swords1.5→1.4，50/3（live/recalc/到期前红），`c23b_pickup_stats_mutants.done`lab=1/swords=1/ALLDONE，原游戏未改。
+- NUC核心证据已核验拉回：`c23bcore_pull.done` RC=0 files=11 bytes=1035；八解析日志+damage169/0+pickups38/0+九类mutation9/9全部落盘，未拉取尚在增长的suite/done冒充最终证据。
+
+- 首轮第二个红签名：`audio: guardian death plays boom + coin :: boom=38/37 coin=2/2 frames=1`，旧断言把拾取声要求在死亡时响。harness已拆成死亡即时boom与真实金币实体收集后的coin严格增量，走manager.tick收集，不直接调audio.coin伪造。检查数因此+1。`c23b_coin_audio_check_harness.log`check-only0；首轮其他阶段继续等ALLDONE。
+
+- 首轮第三个红签名：`c19: banner + backing show in play :: state=choice ... modals=choice scrim=true`。新增落地奖励使真实宝箱choice可在长fixture期间出现，旧banner探针只结清draft。检查改用现有`_c21_settle_modals`真实选项路径，在探针前/重试时结清choice+draft；原≥2渲染帧后的banner/backing alpha1、无modal且scrim隐藏等所有合取断言保持。`c23b_banner_check_harness.log`解析rc0。
+
+## B1 接续验收（2026-11-09）
+
+- 接续时工作区已有上述实现与首轮NUC批处理；保留原改动与证据，不重置工作树。首轮suite实际结束644/4、rc=1，四签名为shrine箱数、guardian coin音效、c19 banner modal、c22 meowth逃离。前三项检查修正见上文。
+- 检查代码补充：`Test/harness.gd` meowth逃离探针固定起点为玩家旁6u，再走真实1秒模拟并保留原`d1>d0+1.5`断言。首轮随机起点17.6934u在18u处按既有游戏规则转为切向，不能要求继续径向远离1.5u；游戏逃离代码未改。改后harness check-only rc=0，日志`c23b_meowth_check.log`。
+- 检查代码补充：`Test/c23b_batch.sh` 加入`Test/c23_pickup_stats.gd`逐脚本check-only与50项实际recalc检查；bash -n rc=0。此接续段无新增游戏代码改动。
+- 首轮bootsmoke rc=0、中立成品冒烟rc=0已结束，phonehud仍在运行；待ALLDONE后保存完整首轮证据再同步最终树。不将首轮结果算作最终通过。
+
+## B1 最终验收树补记
+
+- 检查代码：批处理支持 `C23B_PREFIX` 独立日志前缀，最终轮为 `c23b_final`；首轮日志不覆盖。shell语法检查通过。
+- 本地C22定向 `c23b_meowth_target.done` rc=0 ALLDONE；51/0，逃离距离6.00099→12.49776u。
+- 最终同步 `c23b_final_sync.log` TREE PARITY OK（111文件，diffs=0）。NUC setsid最终轮九文件check-only全部0；damage169/0、pickups38/0、pickup_stats50/0、mutation9/9，完整suite及后续门禁运行中。
+- 接续同步与首轮phonehud存在时间重叠：游戏行为文件与首轮冻结树相同（world仅注释变动），其余变化为harness、批处理与记录；首轮已加载的phonehud未被中断，最终轮独立重复全部门禁。
+
+最终12个代码/检查文件SHA-256（后续不再改动这些文件）：
+
+```text
+68e76adc03b29a36338549eeab7d9f23b77243f9f10fd01066bfd3059cdfa043  scripts/pickups.gd
+ee5e5bdcdeb4bfaa012638511e82dbceac05e86eab9385fbc0c3f7646122f41e  scripts/player.gd
+eaf905ce4b41e51767e31b092d56004e94fa223e749d38599028cc432ff02928  scripts/enemy.gd
+4984370f7dffaddef5c1aa7756ddd59247c0000c74222ee4b1f62a404a156312  scripts/world.gd
+92aa30c2ac9b569923849993e5c756878d80e50860943fd4f5aa4e3153e630e1  scripts/profile.gd
+2d65019db7ca0ce9e86dc719c7f1cf822abf16bb65fbfa567bdfb136bbbbf691  assets/data/abilities.json
+a4265c3065cdbb3628257d3a9a17a2d15c56c30a43a4dc7eedb41463650c4ddc  Test/harness.gd
+9c4a5cb96ace6ac5c3925a6f12ace718a0a5191632c5d96cc1bd103455aea0bf  Test/c23_damage.gd
+91a110df512d9c8b3389c51b6651e44178b7c2f4e05e30dcecacd9d6bae44a36  Test/c23_pickups.gd
+146e3e14c3e327e870804b916bcbc5c030831680a23e5198fce1ae47626181af  Test/c23_pickup_stats.gd
+562373b3075fd824b075facd5d74fe0b10ace5f33e921c7f698006f02936ac87  Test/c23_pickups_mutations.py
+17b3be9c4057829fcb7e3834057be594a0efc0c65c5e46c93daab04e2c99c9c4  Test/c23b_batch.sh
+```
+
+- 首轮NUC已等到`c23b_batch.done` ALLDONE（2026-11-09T01:38:50+08:00）：suite644/4、rc1；bootsmoke0、neutral0；phonehud a1635/0、s070_i0 1626/0均rc0。四个首轮失败签名及修正已逐条记录；未抹除首轮结果。
+- 最终NUC suite `c23b_final_suite.log` **645/0、rc=0**；神龛同步4箱、guardian真实金币收集音、banner模态结清、meowth6.093→12.330u四签名均绿。未见SCRIPT ERROR。仍有一条`Lambda capture at index 0 was freed`引擎诊断（既有`c22_suite_ubantu.log`/`c22_suite2_ubantu.log`同签名）及退出资源泄漏诊断，不冒充断言失败，不扩改本批外生命周期。
+- 最终bootsmoke rc0（新Linux导出，ALIVE_AT_75S，0 SCRIPT ERROR）；最终中立成品冒烟rc0、alive1/script_errors0、ALLDONE。最终phonehud运行中，继续等最终批ALLDONE。
+- 中间拉回使用`rsync -az`保留属主失败rc23，未记成功；随后`-rtz --no-owner --no-group`重拉已结束suite与首轮phonehud日志rc0。收尾仍走既有`Test/pull_from_nuc.sh`清单/大小核验。
+
+
+## B1 最终交付状态（2026-11-09，全部长跑结束）
+
+最终批 `Test/out/c23b_final_batch.done` 已到 **ALLDONE 2026-11-09T02:05:05+08:00**，不是启动器成功标记。上述“运行中/等待”条目均为中间履历，现已结束，无遗留后台施工任务。
+
+| 最终门禁 | 结果 | 本地证据 |
+|---|---|---|
+| 改动GDScript逐个check-only（9个） | 全部rc=0 | c23b_final_check_*.log |
+| 伤害/护盾/wound/strike/Alpha | 169/0，rc=0 | c23b_final_damage.log |
+| 拾取实体/分派/运动 | 38/0，rc=0 | c23b_final_pickups.log |
+| 实际拾取属性与TM重算 | 50/0，rc=0 | c23b_final_pickup_stats.log |
+| 拾取隔离mutation | 9/9检出，missed=0，rc=0 | c23b_final_pickups_mutations.log |
+| 全量suite | **645/0，rc=0** | c23b_final_suite.log |
+| 新Linux成品bootsmoke | **rc=0**，75s存活，0 SCRIPT ERROR | bootsmoke_ubantu.log |
+| 中立目录成品冒烟 | rc=0，75s存活，0 SCRIPT ERROR，ALLDONE | c23_neutral_smoke.log/.done |
+| phonehud a（2400×1080，s100，i0） | **1635/0，rc=0** | c23b_final_phonehud_a.log |
+| phonehud s070 i0 | **1642/0，rc=0** | c23b_final_phonehud_s070_i0.log |
+
+- 核心证据既有脚本核验：`c23b_finalcore_pull.done` RC=0 files=19 bytes=221245。两张本轮HUD起始截图已目视检查HP、顶栏、触控布局，未见本批新增遮挡；`c23b_finalshots_pull.done` RC=0 files=2 bytes=8048057。两截图属于正常初始无盾角色，不冒充shield/wound视觉触发覆盖；其数值与HUD口径由169项定向验证。
+- 四项均已按已证边界落地；无未解决的本批suite失败。`_boss_strike`逐招mul/n及out_dmg上游等价仍待核，未证部分未猜接；无proxy/tower/endless新玩法。原料与pack摘要差异清单保留供主控裁定。
+- 游戏代码与检查代码完整分列见上方清单，接续无新增游戏行为。DIFF.md原哈希不变；未建APK，未新增reference内容。
+
+- 最终完整证据拉回：`c23b_close_pull.done` **RC=0 files=33 bytes=3488659**；已核验最终DONE、两个phonehud及保留的首轮失败日志。最终12个代码/检查文件SHA逐个再核12/12 OK。
+- 收尾既有同步脚本`c23b_close_sync.log`成功：2026-11-09 02:06:53 CST，**TREE PARITY OK（111文件，local=111/nuc=111/diffs=0）**。最终`git diff --check`通过，DIFF.md哈希再次与原值一致。

@@ -133,6 +133,27 @@ var atk_speed := 1.0
 var area_mult := 1.0
 var luck := 0.0
 var xp_mult := 1.0
+var pickup_range := 6.0
+var powerup_mult := 1.0
+var timed_buffs: Dictionary = {}
+
+func has_buff(key: String) -> bool:
+	return float(timed_buffs.get(key, 0.0)) > 0.0
+
+func add_buff(key: String, secs: float) -> void:
+	timed_buffs[key] = secs
+	recalc()
+
+func tick_buffs(dt: float) -> void:
+	var changed := false
+	for key in timed_buffs.keys():
+		timed_buffs[key] = float(timed_buffs[key])-dt
+		if float(timed_buffs[key]) <= 0.0:
+			timed_buffs.erase(key)
+			changed = true
+	if changed:
+		recalc()
+
 var gold_mult := 1.0
 var level := 1
 var xp := 0.0
@@ -224,12 +245,15 @@ func recalc() -> void:
 	proj_speed_mult = 1.0
 	extra_jumps = 0
 	heal_mult = 1.0
+	shield_max = 0.0
 	status_chance_mult = 1.0
 	duration_mult = 1.0
 	elite_mult = 1.0
 	lifesteal = 0.0
 	difficulty_mult = 1.0
 	enemy_amount_mult = 1.0
+	pickup_range = 6.0 + float(vit_levels.get("bug", 0)) + float(Profile.lab_level("magnet")) * 0.6
+	powerup_mult = 1.0
 	passive_extra = {}
 	for m in GameData.passive_mods(passive_id):
 		var stat := String(m.get("stat", ""))
@@ -255,10 +279,19 @@ func recalc() -> void:
 			"projSpeed": proj_speed_mult *= mul
 			"extraJumps": extra_jumps += int(add)
 			"healing": heal_mult *= mul
+			"shieldMax": shield_max = shield_max * mul + add
 			"statusChance": status_chance_mult *= mul
 			"eliteDamage": elite_mult *= mul
 			"lifesteal": lifesteal += add
-			_: passive_extra[stat] = float(passive_extra.get(stat, 0.0)) + add + (mul - 1.0)  # shieldMax/pickupRange/statusDamage/thorns/flinch/knockback/projectiles: recorded, no system yet (DIFF)
+			"pickupRange": pickup_range = pickup_range * mul + add
+			"powerup": powerup_mult = powerup_mult * mul + add
+			_: passive_extra[stat] = float(passive_extra.get(stat, 0.0)) + add + (mul - 1.0)  # Remaining unsupported stat channels stay recorded (DIFF).
+	# C23 pack §2.4 is authoritative where the older data snapshot differs.
+	var pickup_adds := {"magnet-pull":4.0,"long-tongue":4.0,"static-wool":3.0,"keen-eye":2.0,"beacon":2.0,"gem-hoarder":2.0}
+	if pickup_adds.has(passive_id):
+		pickup_range = 6.0 + float(vit_levels.get("bug",0)) + float(Profile.lab_level("magnet"))*0.6 + float(pickup_adds[passive_id])
+	if base_species == "magneton" and passive_id == "pickup":
+		pickup_range += 2.0  # existing pickup table gives +2, pack proves +4 for magneton
 	# Cycle 14: blessing temp mods LAST, in push order (the bundle's
 	# tempMods.push + recompute()). Same stat vocabulary as the
 	# passive table plus duration/statusChance consumers.
@@ -362,12 +395,21 @@ func recalc() -> void:
 					"eliteDamage": elite_mult *= mul
 					"lifesteal": lifesteal += add
 					"extraJumps": extra_jumps += int(add)
+					"pickupRange": pickup_range = pickup_range * mul + add
+					"powerup": powerup_mult = powerup_mult * mul + add
 					_: passive_extra[stat] = float(passive_extra.get(stat, 0.0)) + add + (mul - 1.0)
 	# Cycle 21: eviolite (bundle recompute, bespoke): while
 	# the species can still evolve, armor x1.5 + maxHp x1.25.
 	if item_count("eviolite") > 0 and not GameData.evo_target(species_id).is_empty():
 		armor *= 1.5
 		max_hp = round(max_hp * 1.25)
+	if has_buff("tm-swords"):
+		damage_mult *= 1.5
+	if has_buff("tm-agility"):
+		speed_mult *= 1.35
+		atk_speed *= 1.3
+	if has_buff("tm-payday"):
+		gold_mult *= 2.0
 	evasion = minf(0.6, evasion)
 	if max_hp != old_max and hp > 0.0:
 		hp = minf(hp + maxf(max_hp - old_max, 0.0), max_hp)
@@ -561,19 +603,54 @@ func gain_level() -> void:
 		world.count_max_level()
 
 ## Heal that also feeds the healed counters (photosynthesis leech).
+func heal(amount: float) -> float:
+	if amount <= 0.0 or hp <= 0.0:
+		return 0.0
+	var before := hp
+	# No endless mode exists in this port; its healing multiplier is 1.
+	var effective := amount * heal_mult * (0.5 if wound_t > 0.0 else 1.0)
+	hp = minf(max_hp, hp + effective)
+	var healed := hp - before
+	healed_run += healed
+	var excess := maxf(0.0, effective - healed)
+	if item_count("fresh-water") > 0:
+		fresh_store = minf(max_hp * 0.4, fresh_store + excess)
+	overheal = minf(max_hp * overheal_ratio, overheal + excess) if overheal_ratio > 0.0 else overheal
+	return healed
+
 func leech_heal(amount: float) -> void:
+	heal(amount)
+
+func wound(duration: float) -> void:
 	if hp <= 0.0:
 		return
-	var before := hp
-	hp = minf(max_hp, hp + amount * heal_mult)  # 'healing' stat multiplies heals
-	healed_run += hp - before
+	if wound_t <= 0.0 and wound_pop_t <= 0.0:
+		wound_pop_t = 3.0
+		if world and world.has_method("spawn_floater") and is_inside_tree():
+			world.spawn_floater(global_position + Vector3(0, 2.9, 0), "受伤！治疗减半", Color(1.0, 0.42, 0.54))
+	wound_t = maxf(wound_t, duration)
+
+func tick_defenses(delta: float) -> void:
+	if hp <= 0.0:
+		return
+	no_hit_t += delta
+	wound_t -= delta
+	wound_pop_t -= delta
+	guard_t -= delta
+	if shield_max > 0.0 and no_hit_t > 3.0:
+		shield = minf(shield_max, shield + shield_max * 0.25 * delta * (0.5 if wound_t > 0.0 else 1.0))
+
+func shield_hud_fraction() -> float:
+	return minf(1.0, shield / maxf(max_hp, 1.0))
+
+func hp_hud_text() -> String:
+	var extra := shield + overheal
+	return str(int(ceil(hp))) + (" +%d" % int(round(extra)) if extra > 1.0 else "")
 
 ## Contact passives (bundle hurt()): poison-point (poison), static
 ## (paralysis), flame-body (burn) and effect-spore (random of
-## poison/paralysis/sleep) strike back at the toucher at 30%. Our
-## take_damage carries no attacker reference, so the status lands
-## on the nearest enemy within melee reach — noted in DIFF.
-func _contact_status() -> void:
+## poison/paralysis/sleep) strike back at the toucher at 30%.
+func _contact_status(attacker: Node = null) -> void:
 	var kind := ""
 	match passive_id:
 		"poison-point":
@@ -585,6 +662,9 @@ func _contact_status() -> void:
 		"effect-spore":
 			kind = ["poison", "paralysis", "sleep"][randi() % 3]
 	if kind == "" or randf() >= 0.30:
+		return
+	if is_instance_valid(attacker) and attacker.has_method("apply_status"):
+		attacker.apply_status(kind, 3.0)
 		return
 	var best: Node = null
 	var bd := 2.6
@@ -605,6 +685,18 @@ func _snap_to_ground() -> void:
 func get_speed_now() -> float:
 	return _speed_now
 
+# C23B: player defenses; shieldMax is a flat passive stat.
+var shield_max := 0.0
+var shield := 0.0
+var overheal := 0.0
+var overheal_ratio := 0.0
+var fresh_store := 0.0
+var wound_t := 0.0
+var wound_pop_t := 0.0
+var guard_t := 0.0
+# Optional ability hurtMod extension, evaluated before strike floor/cap.
+var hurt_mod: Callable
+var last_hit: Variant = null
 var no_hit_t := 0.0  # C23: simulated seconds since player last took a landed hit.
 
 func _physics_process(delta: float) -> void:
@@ -624,7 +716,7 @@ func _physics_process(delta: float) -> void:
 		if rig:
 			rig.set_move_speed(0.0)
 		return
-	no_hit_t += delta
+	tick_defenses(delta)
 	_invuln_t -= delta
 	# Cycle 22: status timers + ice slip decay.
 	for k in pstat.keys():
@@ -963,10 +1055,10 @@ func hurt_fixed(amount: float) -> void:
 			rig.play_faint()
 		emit_signal("died")
 
-func take_damage(dmg: float) -> void:
+func take_damage(dmg: float, opts: Dictionary = {}) -> bool:
 	if hp <= 0.0 or invulnerable or _invuln_t > 0.0:
-		return
-	if randf() < evasion:
+		return false
+	if randf() < evasion * float(opts.get("evade", 1.0)):
 		# Bundle hurt() dodge branch (@819063): iframes = 0.25, a
 		# "-" floater over the player, the dodges counter.
 		if GameAudio.instance:
@@ -976,16 +1068,42 @@ func take_damage(dmg: float) -> void:
 			world.count_event("dodges")  # §3 dodges counter (sandshrew)
 		if world and world.has_method("spawn_floater"):
 			world.spawn_floater(global_position + Vector3(0, 2.2, 0), "-", Color(0.66, 0.91, 0.06))
-		return  # §2.2 evasion roll
-	# Passive hooks (bundle hurt()): dmgTaken multiplier (phantom
-	# 0.8, water/volt-absorb 0.85, fluffy 0.8, bulletproof 0.85) and
-	# multiscale's fullHp (damage halved at full HP).
+		return false  # §2.2 evasion roll
+	var guard_stacks := item_count("guard-spec")
+	if guard_stacks > 0 and guard_t <= 0.0:
+		guard_t = 14.0 - 3.0 * float(guard_stacks - 1)
+		_invuln_t = 0.4
+		if world and world.has_method("count_event"):
+			world.count_event("dodges")
+		return false
+	var raw := dmg
+	var attack_type := String(opts.get("type", ""))
+	if attack_type != "":
+		dmg *= clampf(GameData.type_mult(attack_type, types()), 0.5, 1.6)
+	dmg *= 1.0 - armor / (armor + 45.0)
 	var hooks := GameData.passive_hooks(passive_id)
 	if hooks.has("dmgTaken"):
 		dmg *= float(hooks["dmgTaken"])
-	if hooks.has("fullHp") and hp >= max_hp:
+	if passive_id == "magic-guard" and int(opts.get("source", -1)) < 0:
+		dmg *= 0.7
+	if passive_id == "multiscale" and hp >= max_hp - 0.5:
 		dmg *= 0.5
-	var reduced := dmg * (1.0 - armor / (armor + 45.0))
+	if hurt_mod.is_valid():
+		dmg = maxf(0.0, float(hurt_mod.call(world, self, dmg, int(opts.get("source", -1)))))
+	var floor_frac := float(opts.get("floor", 0.0))
+	if floor_frac != 0.0:
+		dmg = maxf(dmg, max_hp * floor_frac * (1.0 - 0.35 * (1.0 - minf(1.0, dmg / raw) if raw > 0.0 else 0.0)))
+	var cap := float(opts.get("cap", 0.0))
+	if cap > 0.0:
+		dmg = minf(dmg, max_hp * cap)
+	if has_buff("tm-iron"):
+		dmg *= 0.4
+	var absorbed := minf(overheal, dmg)
+	overheal -= absorbed
+	dmg -= absorbed
+	absorbed = minf(shield, dmg)
+	shield -= absorbed
+	var reduced := dmg - absorbed
 	# Sturdy (bundle hurt()): survive a lethal hit at 1 HP, once
 	# per run.
 	if passive_id == "sturdy" and not _sturdy_used and reduced >= hp:
@@ -995,6 +1113,9 @@ func take_damage(dmg: float) -> void:
 			world.spawn_floater(global_position + Vector3(0, 2.4, 0), "结实！", Color(0.9, 0.9, 0.95))
 	no_hit_t = 0.0
 	hp -= reduced
+	if reduced > 0.0:
+		last_hit = opts.get("attacker", null)
+	pstat.erase("sleep")
 	if GameAudio.instance:
 		GameAudio.instance.hurt()  # cycle 16: bundle hurt()
 	# Cycle 13: ult charge from damage taken — the bundle calls
@@ -1002,7 +1123,8 @@ func take_damage(dmg: float) -> void:
 	# (@820982); dodged hits returned above and earn nothing.
 	if world and world.has_method("ult_on_player_hurt"):
 		world.ult_on_player_hurt(reduced / maxf(max_hp, 1.0))
-	_contact_status()
+	if int(opts.get("source", -1)) >= 0:
+		_contact_status(opts.get("attacker", null))
 	# Bundle hurt() (@821025): iframes = 0.45, flash = 1, hurtT 0.3 /
 	# squash 0.5 (the rig's hurt profile), r.kick(.006), shake(.12),
 	# ui.damageFlash(). The cycle-8 version set NO iframes here and
@@ -1021,3 +1143,5 @@ func take_damage(dmg: float) -> void:
 		if rig:
 			rig.play_faint()
 		emit_signal("died")
+
+	return true

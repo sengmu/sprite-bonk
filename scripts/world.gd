@@ -476,6 +476,7 @@ var _lv_label: Label
 var _hud_hp_lag: Panel
 var _hud_hp_fill: Panel
 var _hud_hp_num: Label
+var _hud_shield_fill: Panel
 var _php_lag := 1.0
 var _php_lag_hold := 0.0
 var _php_band := -1
@@ -2888,6 +2889,7 @@ func _build_hud() -> void:
 	_hud_hp_track = hp_track
 	_hud_hp_lag = _panel(hp_track, Vector2(1, 1), Vector2(230, 13), Color(0.9, 0.97, 0.9, 0.75), 6)
 	_hud_hp_fill = _panel(hp_track, Vector2(1, 1), Vector2(230, 13), Color(0.27, 0.85, 0.47), 6)
+	_hud_shield_fill = _panel(hp_track, Vector2(1, 1), Vector2(0, 13), Color(0.4, 0.78, 1.0, 0.8), 6)
 	_hud_hp_num = _label_in(hp_track, "", Vector2(0, 0), Vector2(232, 15), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER)
 	_hud_hp_num.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.55))
 	_hud_hp_num.add_theme_constant_override("shadow_offset_x", 1)
@@ -5520,9 +5522,81 @@ func tier_name() -> String:
 func tier_timeline_time(seconds: float) -> float:
 	return maxf(60.0, seconds - tier_value("early"))
 
+# C23B Sp is a hurt cap, never a director probability.
+var endless := false  # data hook only; this port has no endless game mode.
+
+func alpha_hurt_cap() -> float:
+	return tier_value("alphaCap1") if zone == 1 and not endless else 0.25
+
+func strike_options(frac: float = 0.08) -> Dictionary:
+	return {"floor": frac if frac >= 0.3 else frac * tier_value("strike"), "evade": 0.5, "cap": 0.34, "source": -1}
+
+func contact_hurt(e: Enemy) -> bool:
+	if player == null or e.is_object or e.treasure or e.mode == Enemy.MODE_LEAGUE or (e.flag & 16512) != 0:
+		return false
+	var flags := e.flag | (4 if e.is_guardian else 0)
+	var opts := {"source": e.get_instance_id(), "attacker": e, "type": String(e.types[0]) if not e.types.is_empty() else "",
+		"cap": alpha_hurt_cap() if flags & 2 else (0.25 if flags & 12294 else 0.0),
+		"floor": 0.05 * tier_value("strike") if flags & 4 else 0.0}
+	return player.take_damage(e.out_dmg(), opts)
+
+func hostile_reaches(pos: Vector3, radius: float) -> bool:
+	if player == null:
+		return false
+	var offset := player.global_position - pos
+	return Vector2(offset.x, offset.z).length_squared() < pow(radius + Player.RADIUS, 2.0) and absf(offset.y + 0.8) < 1.5
+
+func hostile_hurt(dmg: float, capped: bool, alpha: bool, attack_type: String = "", attacker: Enemy = null) -> bool:
+	if player == null:
+		return false
+	return player.take_damage(dmg, {"type": attack_type, "source": -1, "attacker": attacker,
+		"cap": 0.15 if capped else (alpha_hurt_cap() if alpha else 0.0),
+		"floor": 0.02 * tier_value("strike") if capped else 0.0})
+
+# Nb/ix success is independent of HP loss; a full shield still wounds.
+func miniboss_strike(e: Enemy, mul: float, floor_frac: float = 0.08) -> bool:
+	if player == null or e == null or e.hp <= 0.0:
+		return false
+	var opts := strike_options(floor_frac)
+	opts["attacker"] = e
+	opts["type"] = String(e.types[0]) if not e.types.is_empty() else ""
+	if not player.take_damage(e.out_dmg() * mul, opts):
+		return false
+	player.wound(tier_value("wound"))
+	return true
+
+# Yy uses the same qy floor but its own >=.3 cap and negative opt-out.
+func legendary_hurt(e: Enemy, mul: float, frac: float = 0.0, attack_type: String = "") -> bool:
+	if player == null or e == null or e.hp <= 0.0:
+		return false
+	var opts := strike_options(maxf(frac, 0.08)) if frac >= 0.0 else {"source": -1}
+	opts["attacker"] = e
+	opts["cap"] = 0.6 if frac >= 0.3 else 0.34
+	opts["type"] = attack_type if attack_type != "" else (String(e.types[0]) if not e.types.is_empty() else "")
+	var landed := player.take_damage(e.out_dmg() * mul, opts)
+	if landed and frac >= 0.0:
+		player.wound(tier_value("wound"))
+	return landed
+
 func run_score(victory: bool) -> float:
 	var base: float = round(float(kills * 2) + run_time * 3.0 + damage_dealt / 200.0 + float(zone - 1) * 1500.0 + float(bosses * 800) + (6000.0 if victory else 0.0))
 	return base * (1.0 + float(run_tier) * 0.5)
+
+var pickups: Node3D
+var keys := 0
+
+func pickup_manager() -> Node3D:
+	if pickups == null or not is_instance_valid(pickups):
+		pickups = load("res://scripts/pickups.gd").new()
+		pickups.world = self
+		add_child(pickups)
+	return pickups
+
+func spawn_pickup(kind: int, pos: Vector3, value := 1.0) -> int:
+	return pickup_manager().spawn(kind, pos, value)
+
+func count_gold_pickup(value: float) -> void:
+	Profile.count("gold", value)
 
 func start_game(p_species: String, boosts: Array = [], requested_tier: int = 0) -> void:
 	if state != "menu":
@@ -5551,6 +5625,8 @@ func start_game(p_species: String, boosts: Array = [], requested_tier: int = 0) 
 	zone = 1
 	gold = 0.0
 	run_time = 0.0
+	pickup_manager().clear()
+	keys = 0
 	damage_dealt = 0.0
 	bosses = 0
 	captured = 0
@@ -5940,7 +6016,6 @@ func _award_kill(e: Enemy) -> void:
 			_kill_chain = 1
 		_kill_chain_t = run_time
 		audio.pop()
-		audio.xp(mini(_kill_chain, 15))
 		if _kill_chain >= 2:
 			audio.streak(_kill_chain)
 	kills += 1
@@ -5949,20 +6024,10 @@ func _award_kill(e: Enemy) -> void:
 	if e.flag == 2:
 		_run_alphas += 1
 		Profile.count("alphas")
-	var gm := player.gold_mult if player else 1.0
-	var gained := 0.2 * gm
-	# Cycle 9 (audit §5): the guardian's gold is NOT here anymore —
-	# the cycle-7 (5 + rand*10) x 3 formula had no bundle source.
-	# The real reward (20 coins x ceil(5 x stage x gold) + candy +
-	# free chests) is paid in _on_guardian_killed, mirroring
-	# onBossKilled @1462726. Guardians still earn kill XP via
-	# xp_value (boss flag x60) below.
-	if e.is_guardian:
-		gained = 0.0
-	gold += gained
-	Profile.count("gold", gained)  # original: addGold -> count('gold', n)
 	if player and is_instance_valid(player):
-		player.gain_xp(e.xp_value(_toughness_now()) * e.xp_mult)
+		pickup_manager().drops(e)
+	if _kill_chain >= 25:
+		pickup_manager().magnet_all = 4.0
 
 func _on_enemy_killed(e: Enemy) -> void:
 	# Cycle 22: bundle R.Object units (lapras pillars)
@@ -6082,21 +6147,14 @@ func _on_guardian_killed(e: Enemy) -> void:
 	# (wB @1555023). Cycle 20 (DIFF §7 correction): there is
 	# NO shiny factor in wB — Be() is a perk ladder with no
 	# gold consumer; the factor cycle 19 wired in here was
-	# invented and is removed. Our gold is credited directly
-	# (no walk-over coin entities in this build), so the total
-	# lands at once with a floater.
+	# invented and is removed. C23 spawns the twenty coin entities
+	# here; their gold settles when the player collects them.
 	var death_pos := e.global_position
 	var gm := player.gold_mult if player else 1.0
-	var coin_total := 20 * int(ceil(5.0 * float(zone) * gm))
-	gold += float(coin_total)
-	Profile.count("gold", float(coin_total))
-	audio.coin()
-	spawn_floater(death_pos + Vector3(0, 2.4, 0), "+%d 金币（守护者）" % coin_total, Color(1.0, 0.85, 0.3))
-	# One rare candy: the bundle's candy pickup grants a level on
-	# pickup (pickups @508408: case candy -> gainLevel()).
-	if player and is_instance_valid(player):
-		player.gain_level()
-		spawn_floater(player.global_position + Vector3(0, 2.6, 0), "经验糖！等级 +1", Color(0.55, 0.95, 0.6))
+	var coin_each := int(ceil(5.0 * float(zone) * gm))
+	for i in range(20):
+		spawn_pickup(1, death_pos, coin_each)
+	spawn_pickup(6, death_pos)
 	# Free Poké Ball chests: one at (+3, +2) from the corpse, plus
 	# one per roar on a 3.2 u ring (spawnChestAt @1462726). Since
 	# cycle 21 they roll REAL items (rollChestItem floor 0).
@@ -6255,7 +6313,7 @@ const PROP_PLAN := [
 	["greed", 1, 2.6, 0], ["challenge", 2, 3.2, 0], ["cursed", 1, 3.0, 0],
 	["porygon", 1, 2.4, 2], ["nest", 1, 2.8, 2], ["meowth", 1, 2.6, 2], ["ditto", 1, 2.6, 2], ["snorlax", 2, 2.6, 2],
 	["slots", 2, 2.4, 0], ["freechest", 3, 2.6, 0], ["cursedchest", 2, 2.6, 0],
-	["cage", 2, 2.6, 2], ["berry", 5, 2.6, 0], ["chest", 14, 2.6, 0],
+	["cage", 2, 2.6, 2], ["berry", 5, 2.6, 0], ["magnet", 2, 2.6, 0], ["chest", 14, 2.6, 0],
 	["rock", 14, 2.6, 0],
 ]
 ## Ambush roster for the cursed chest (RC @1234939, dex ids
@@ -6484,6 +6542,12 @@ func _make_prop(kind: String, pos: Vector2, z: int, rng: RandomNumberGenerator) 
 	var data: Dictionary = {}
 	var accent: StandardMaterial3D
 	match kind:
+		"magnet":
+			accent = _prop_mat(Color(0.6,0.5,1.0),0.8)
+			_prop_box(root,Vector3(0.35,1.1,0.35),accent,Vector3(-0.35,0.8,0))
+			_prop_box(root,Vector3(0.35,1.1,0.35),accent,Vector3(0.35,0.8,0))
+			_prop_box(root,Vector3(1.05,0.3,0.35),accent,Vector3(0,0.25,0))
+			dim.append([accent,accent.albedo_color,0.8])
 		"berry":
 			var leaf := _prop_mat(Color8(46, 125, 50))
 			_prop_sphere(root, 0.62, leaf, Vector3(0, 0.55, 0))
@@ -7720,15 +7784,14 @@ func _boss_say(nm: String) -> void:
 	_boss_move_name = nm
 	_boss_move_t = 2.2
 
-func _boss_strike(mul: float, shove_dir := Vector2.ZERO, shove_pow := 0.0) -> void:
+func _boss_strike(mul: float, shove_dir := Vector2.ZERO, shove_pow := 0.0, floor_frac: float = 0.08) -> bool:
 	if guardian == null or not is_instance_valid(guardian) or player == null or not is_instance_valid(player):
-		return
-	if player.hp <= 0.0:
-		return
-	player.take_damage(guardian.out_dmg() * mul)
-	if shove_pow > 0.0 and player.hp > 0.0:
+		return false
+	var landed := miniboss_strike(guardian, mul, floor_frac)
+	if landed and shove_pow > 0.0 and player.hp > 0.0:
 		var v: Vector3 = player.get("_vel")
 		player.set("_vel", v + Vector3(shove_dir.x, 0, shove_dir.y) * shove_pow)
+	return landed
 
 func _boss_low(limit := 1.8) -> bool:
 	if player == null or not is_instance_valid(player):
@@ -7759,7 +7822,8 @@ func _boss_shot(angle: float, speed: float, dmg_mul: float, life := 3.0, col := 
 	var from: Vector3 = guardian.global_position + Vector3(0, 1.2, 0)
 	mi.global_position = from
 	_hostiles.append({"node": mi, "vel": Vector3(cos(angle), 0, sin(angle)) * speed,
-		"dmg": guardian.dmg * dmg_mul, "life": life})
+		"dmg": guardian.dmg * dmg_mul, "life": life, "capped": true,
+		"alpha": false, "radius": 0.6, "attacker": guardian, "type": String(guardian.types[0]) if not guardian.types.is_empty() else ""})
 
 func _boss_telegraph_strike(pos: Vector3, radius: float, delay: float, dmg_mul: float, col: Color) -> void:
 	spawn_nova(Vector3(pos.x, height_at(pos.x, pos.z) + 0.4, pos.z), radius, col)
@@ -8434,11 +8498,15 @@ func _boss_tick(delta: float) -> void:
 			_hostiles.remove_at(i)
 			continue
 		node.global_position += (h["vel"] as Vector3) * delta
-		node.global_position.y = height_at(node.global_position.x, node.global_position.z) + 1.1
-		var dp := Vector2(node.global_position.x - player.global_position.x,
-			node.global_position.z - player.global_position.z)
-		if dp.length() < 0.9 and _boss_low(2.0):
-			player.take_damage(float(h["dmg"]))
+		# Qm checks terrain before a player overlap. There is no sanctuary cover system here.
+		if height_at(node.global_position.x, node.global_position.z) > node.global_position.y + 0.4:
+			node.queue_free()
+			_hostiles.remove_at(i)
+			continue
+		if hostile_reaches(node.global_position, float(h.get("radius", 0.6))):
+			if hostile_hurt(float(h["dmg"]), bool(h.get("capped", false)), bool(h.get("alpha", false)), String(h.get("type", "")), h.get("attacker") if is_instance_valid(h.get("attacker")) else null):
+				var shove: Vector3 = (h["vel"] as Vector3).normalized() * 3.5
+				player.set("_vel", (player.get("_vel") as Vector3) + shove)
 			node.queue_free()
 			_hostiles.remove_at(i)
 	# Charge movement (the world drives the body).
@@ -9027,10 +9095,7 @@ func event_hit(e: Enemy) -> void:
 	_event_coin_cd = 0.16
 	var gm := player.gold_mult if player else 1.0
 	var v := int(ceil((2.0 + float(zone) * 2.0) * gm))
-	gold += float(v)
-	Profile.count("gold", float(v))
-	audio.coin()
-	spawn_floater(e.global_position + Vector3(0, 2.2, 0), "+%d 金币" % v, Color(1.0, 0.85, 0.3))
+	spawn_pickup(1, e.global_position, v)
 
 ## Cycle 22: events.onKilled — the fountain: 30 coins of
 ## ceil((4 + stage x 4) x gold), the Pay Day banner, and
@@ -9039,9 +9104,9 @@ func _event_meowth_killed() -> void:
 	var gm := player.gold_mult if player else 1.0
 	var each := int(ceil((4.0 + float(zone) * 4.0) * gm))
 	var total := 30 * each
-	gold += float(total)
-	Profile.count("gold", float(total))
-	audio.coin()
+	var death_pos: Vector3 = _event_meowth.global_position
+	for i in range(30):
+		spawn_pickup(1, death_pos, each)
 	show_banner("【发薪日！】黄金喵喵掉出了所有金币（+%d）" % total, 4.0)
 	_event_meowth = null
 	_event_end()
@@ -9329,6 +9394,8 @@ func _prop_label(p: Dictionary) -> String:
 func _prop_label_kbd(p: Dictionary) -> String:
 	var kind := String(p["kind"])
 	match kind:
+		"magnet":
+			return "磁铁 · 按 E 拾取：吸引经验与金币"
 		"berry":
 			return "树果丛 · 按 E 食用：回复 50% 生命"
 		"rock":
@@ -9387,6 +9454,10 @@ func _interact_prop(p: Dictionary) -> void:
 				spawn_floater(pp + Vector3(0, 2.6, 0), "百变怪没有可复制的东西…", Color(0.85, 0.75, 1.0))
 				return
 			_open_ditto(p)
+		"magnet":
+			_prop_set_used(p)
+			pickup_manager().magnet_all = 5.0
+			spawn_floater(pp+Vector3(0,2.6,0),"磁铁！",Color(0.6,0.5,1.0))
 		"berry":
 			_prop_set_used(p)
 			count_run_event("berries")
@@ -9399,11 +9470,9 @@ func _interact_prop(p: Dictionary) -> void:
 			var g := int(round(_bless_rng.randf_range(6.0, 14.0) * maxf(float(zone), _chest_value() / 90.0)))
 			gold += float(g)
 			spawn_floater(pp + Vector3(0, 2.6, 0), "+%d 金币" % g, Color(1.0, 0.85, 0.3))
-			# The 15% x luckMult pickup branch, heal-only
-			# mapping (DIFF cycle 15).
-			if _bless_rng.randf() < 0.15 * _luck_mult() and player.hp < player.max_hp:
-				player.leech_heal(player.max_hp * 0.25)
-				spawn_floater(pp + Vector3(0, 3.4, 0), "滚出一颗树果：回复 25%！", Color(0.55, 0.95, 0.5))
+			if _bless_rng.randf() < 0.15 * _luck_mult():
+				spawn_pickup([2,3,4][_bless_rng.randi_range(0,2)], pp)
+
 		"snorlax":
 			_prop_set_used(p)
 			var lines := ["卡比兽翻了个身，掉出了点什么。", "卡比兽说梦话：『再睡五分钟……』", "卡比兽的肚子咕咕叫。", "卡比兽梦见了大餐。"]
@@ -10189,6 +10258,14 @@ func _blessing_tier_roll() -> int:
 ## Walk within 2.3 u to open it (the original's interactable
 ## radius is 2.6, @1238236 region; ours is a proximity open since
 ## this build has no interact key channel for objects).
+func spawn_supply_chest(pos: Vector3, super_ball: bool) -> void:
+	_spawn_chest(pos)
+	var c: Dictionary = _chests.back()
+	c["super_ball"] = super_ball
+	c["fall_y"] = pos.y
+	c["fall_v"] = 0.0
+	c.node.position.y += 22.0
+
 func _spawn_chest(pos: Vector3) -> void:
 	pos.x = clamp(pos.x, -BOUND + 2.0, BOUND - 2.0)
 	pos.z = clamp(pos.z, -BOUND + 2.0, BOUND - 2.0)
@@ -10236,7 +10313,7 @@ func _open_chest(c: Dictionary) -> void:
 	# Cycle 21: the guardian chest rolls a real item
 	# (rollChestItem floor 0, count 1 — the item roll
 	# counts the chest event and shows take-or-sell).
-	_roll_chest_item(0, 1)
+	_roll_chest_item(0, 1)  # super_ball style retained; its reward policy is outside pack §2
 
 ## Vitamin grant shared by the draft and chest rewards: feeds the
 ## player's accumulator and re-derives stats (same math the draft
@@ -11793,7 +11870,10 @@ func _update_hud_bars(delta: float) -> void:
 				_php_lag = maxf(frac, _php_lag - delta * 0.9)
 		_hud_hp_fill.size.x = 230.0 * frac
 		_hud_hp_lag.size.x = 230.0 * _php_lag
-		_hud_hp_num.text = str(int(ceil(player.hp)))
+		_hud_hp_num.text = player.hp_hud_text()
+		_hud_hp_num.add_theme_color_override("font_color", Color(1.0, 0.42, 0.54) if player.wound_t > 0.0 else Color.WHITE)
+		if _hud_shield_fill:
+			_hud_shield_fill.size = Vector2(230.0 * player.shield_hud_fraction(), _hud_hp_fill.size.y)
 		# Bundle classes low (<0.30) / mid (0.30-0.55): recolor the
 		# fill by band (CSS values were not captured; band thresholds
 		# are the bundle's).
@@ -12216,6 +12296,12 @@ func _process(delta: float) -> void:
 			var cn = c["node"]
 			if not is_instance_valid(cn):
 				continue
+			if c.has("fall_y"):
+				c.fall_v = float(c.fall_v) + 18.0 * delta
+				cn.position.y = maxf(float(c.fall_y),cn.position.y-float(c.fall_v)*delta)
+				if cn.position.y > float(c.fall_y):
+					continue
+				c.erase("fall_y")
 			cn.rotation.y += delta * 1.2
 			if player.global_position.distance_to(cn.global_position) < 2.3:
 				_open_chest(c)
@@ -12318,6 +12404,7 @@ func _process(delta: float) -> void:
 	if running and not sim_frozen:
 		elapsed += delta
 		run_time += delta
+		pickup_manager().tick(delta)
 		if elapsed >= ZONE_TIME and not _swarm:
 			_swarm = true
 			show_banner("Final Swarm！野怪暴走了，坚持住！", 4.0)
@@ -12416,7 +12503,7 @@ func _process(delta: float) -> void:
 		_timers_tick(delta)
 		# Cycle 18 boost events on the world clock: honey's
 		# extra alpha (bundle stage schedule t=240, @852778).
-		if _honey_at > 0.0 and elapsed >= _honey_at:
+		if _honey_at > 0.0 and elapsed >= tier_timeline_time(_honey_at):
 			_honey_at = -1.0
 			_spawn_alpha()
 		# Cycle 20: the shiny stage director (bundle fire
@@ -13602,6 +13689,7 @@ func _apply_top_card_phone(on: bool) -> void:
 		[_hud_hp_lag, Rect2(1, 1, 230, 18)],
 		[_hud_hp_fill, Rect2(1, 1, 230, 18)],
 		[_hud_hp_num, Rect2(0, 0, 232, 20)],
+		[_hud_shield_fill, Rect2(1, 1, 0, 18)],
 		[_party_row, Rect2(94, 114, 240, 44)],
 	]
 	for i in range(_pips.size()):

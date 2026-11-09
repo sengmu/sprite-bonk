@@ -39,6 +39,7 @@ func out_dmg() -> float:
 		return dmg * 0.6
 	return dmg
 var radius := 0.5
+var body_height := 1.0
 var is_guardian := false
 # Cycle 22: bundle R.Object units (lapras's ice pillars):
 # attackable, but no AI, no contact, no kill credit.
@@ -49,6 +50,7 @@ var is_object := false
 var treasure := false
 # Cycle 22: per-unit kill-XP multiplier (fog event
 # spawns earn x2 in the bundle).
+var weight := 1.0  # C23 drop wt (ordinary bodies have weight one)
 var xp_mult := 1.0
 var boss_hold := false  # cycle 21: the world boss brain
 	# holds the guardian (casts / charges) — hostile AI off
@@ -73,6 +75,7 @@ var poison_stacks := 0
 var shiny := false  # cycle 20: shiny encounter flag (bundle spawnShiny)
 var confuse_t := 0.0
 var root_t := 0.0
+var pickup_stun_t := 0.0
 var _counted: Dictionary = {}  # countOnce channels (confused)
 var _wet_vis := false
 # Cycle 14 guardian damage cap + exhaust (Eb @995459, boss.exhaust):
@@ -162,6 +165,8 @@ func setup(p_species: String, p_target: Node3D, p_world: Node, hp_mult: float = 
 	speed = base_speed(p_species)
 	dmg = base_dmg(p_species)
 	radius = 0.55 * scale_mult
+	# 3D port body height: use the shipped model dimensions, not a JS sprite atlas.
+	body_height = float(ModelRig.SPECIES.get(p_species, {}).get("height", 1.0)) * scale_mult
 	rig = ModelRig.new()
 	add_child(rig)
 	rig.setup(p_species, scale_mult)
@@ -375,6 +380,9 @@ func _snap_to_ground() -> void:
 		global_position.y = world.surface_at(global_position.x, global_position.z)
 
 func _frozen() -> bool:
+	return pickup_stun_t > 0.0 or _frozen_without_pickup()
+
+func _frozen_without_pickup() -> bool:
 	return is_weakened or is_downed or root_t > 0.0 or (status_kind == "sleep" and status_t > 0.0) \
 		or (status_kind == "stun" and status_t > 0.0) \
 		or (status_kind == "freeze" and status_t > 0.0) \
@@ -417,6 +425,7 @@ func _physics_process(delta: float) -> void:
 	if root_t > 0.0:
 		root_t = maxf(0.0, root_t - delta)
 	# --- status timers / DoT ---
+	pickup_stun_t = maxf(0.0, pickup_stun_t - delta)
 	if status_t > 0.0:
 		status_t -= delta
 		if status_kind in ["burn", "poison"]:
@@ -448,19 +457,24 @@ func _physics_process(delta: float) -> void:
 		return
 	if target == null or not is_instance_valid(target):
 		return
+	# Pickup stun stops autonomous AI, while repel's physical impulse
+	# continues immediately. Preserve the older root/sleep/freeze gates.
+	var pickup_only_stun := pickup_stun_t > 0.0 and not _frozen_without_pickup()
 	if _frozen():
 		if rig:
 			rig.set_move_speed(0.0)
-		return
+		if not pickup_only_stun:
+			return
 	if is_object:
 		return  # cycle 22: objects never move, chase or touch
-	match mode:
-		MODE_ALLY:
-			_ally_process(delta)
-		MODE_LEAGUE:
-			_league_process(delta)
-		_:
-			_hostile_process(delta)
+	if not pickup_only_stun:
+		match mode:
+			MODE_ALLY:
+				_ally_process(delta)
+			MODE_LEAGUE:
+				_league_process(delta)
+			_:
+				_hostile_process(delta)
 	# Knockback channel (cycle 9): impulse velocity with exp decay,
 	# integrated after the mode's own movement.
 	if _kb_vel.length() > 0.05 and not is_weakened and not is_downed:
@@ -515,6 +529,12 @@ func _move_toward(dir: Vector3, spd: float, delta: float, separation: bool) -> v
 			rig.set_facing(vel.normalized())
 		rig.set_move_speed(vel.length())
 
+func contact_reaches() -> bool:
+	if target == null or _frozen() or is_object or treasure or mode == MODE_LEAGUE or (flag & 16512) != 0:
+		return false
+	var delta_pos := target.global_position - global_position
+	return Vector2(delta_pos.x, delta_pos.z).length() < radius + Player.RADIUS and absf(delta_pos.y) < body_height + 0.8
+
 func _hostile_process(delta: float) -> void:
 	# Cycle 21: while the boss brain holds the guardian
 	# (casting, charging, beaming), the chase/contact AI
@@ -534,16 +554,21 @@ func _hostile_process(delta: float) -> void:
 		if dist > 18.0:
 			flee = Vector3(dir.z, 0, -dir.x)
 		_move_toward(flee.normalized(), speed, delta, true)
-	elif dist > 1.35:
+	elif dist >= radius + Player.RADIUS:
 		_move_toward(dir, speed, delta, true)
 	else:
 		_move_toward(Vector3.ZERO, 0.0, delta, true)
 		if rig:
 			rig.set_facing(dir)
 	# Contact attack (timed, like the original's basic attacks).
-	if dist < 1.9 and _touch_cd <= 0.0 and target.has_method("take_damage"):
+	if contact_reaches() and _touch_cd <= 0.0 and target.has_method("take_damage"):
 		_touch_cd = 1.0
-		target.take_damage(out_dmg())
+		if world and world.has_method("contact_hurt"):
+			if world.contact_hurt(self):
+				var shove_power := 9.0 if (flag & 12294) != 0 or is_guardian else 3.0 + minf(4.0, radius * 2.5)
+				target.set("_vel", (target.get("_vel") as Vector3) + dir * shove_power)
+		else:
+			target.take_damage(out_dmg())
 		if rig:
 			rig.play_lunge()
 
@@ -659,6 +684,22 @@ func _count_status(counter: String) -> void:
 ## stat (§8 scoring). fx (cycle 9, optional): {knock: float,
 ## from: Vector3, ally: Enemy} — strike's knockback channel and the
 ## lastHitBy ally credit for bond kills.
+## C23 pickup effects bypass combat multipliers/caps, retain lethal capture routing.
+func pickup_fixed_damage(amount: float) -> float:
+	if hp <= 0.0 or is_downed or is_weakened or mode == MODE_ALLY:
+		return 0.0
+	_last_hit_ally = null
+	last_hit_slot = 0
+	var dealt := minf(hp, amount)
+	hp -= amount
+	if hp <= 0.0:
+		_lethal()
+	return dealt
+
+## Raw status timers: pickup durations already include resistance, not duration stat.
+func pickup_stun(secs: float) -> void:
+	pickup_stun_t = maxf(pickup_stun_t, secs)
+
 func take_damage(d: float, move_type: String = "", ailment: String = "", ailment_chance: float = 0.0, fx: Dictionary = {}) -> float:
 	last_meter_amount = -1.0
 	if hp <= 0.0 or is_weakened or is_downed or mode == MODE_ALLY:

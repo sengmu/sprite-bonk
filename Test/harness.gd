@@ -997,6 +997,10 @@ func _c22_phase() -> void:
 			"hp=" + str(me.max_hp))
 		_c9_check("c22 meowth: the maps can mark the treasure",
 			w.call("event_marker_pos") != null)
+		# Test radial fleeing inside its 18 u steering threshold;
+		# a random event spawn near 18 u legitimately switches to orbit.
+		me.global_position = p.global_position + Vector3(6.0, 0.0, 0.0)
+		me.global_position.y = w.height_at(me.global_position.x, me.global_position.z)
 		var d0: float = me.global_position.distance_to(p.global_position)
 		await _c211_wait_disarmed(w, p, 1.0)
 		var d1: float = me.global_position.distance_to(p.global_position)
@@ -1004,24 +1008,24 @@ func _c22_phase() -> void:
 			"d " + str(d0) + "->" + str(d1))
 		var gm: float = float(p.gold_mult)
 		var hit_coin := int(ceil((2.0 + 1.0 * 2.0) * gm))
-		var gold0 := float(w.get("gold"))
+		var gold0 := _c23_pickup_value(w, 1)
 		me.take_damage(1.0, "normal")
-		_c9_check("c22 meowth: a hit shakes loose coins (direct credit)",
-			absf(float(w.get("gold")) - (gold0 + hit_coin)) < 0.01,
+		_c9_check("c22 meowth: a hit spawns a coin entity",
+			absf(_c23_pickup_value(w, 1) - (gold0 + hit_coin)) < 0.01,
 			"gold " + str(gold0) + "->" + str(w.get("gold")) + " want+" + str(hit_coin))
 		me.take_damage(1.0, "normal")
 		_c9_check("c22 meowth: the coin drip respects its 0.16 s cooldown",
-			absf(float(w.get("gold")) - (gold0 + hit_coin)) < 0.01)
+			absf(_c23_pickup_value(w, 1) - (gold0 + hit_coin)) < 0.01)
 		w.set("_event_coin_cd", 0.0)
 		var fountain := 30 * int(ceil((4.0 + 1.0 * 4.0) * gm))
-		var gold_k := float(w.get("gold"))
+		var gold_k := _c23_pickup_value(w, 1)
+		var drip := floorf(float(w.get("pickups").gold_frac) + 0.2 * gm)
 		me.take_damage(1000000.0, "normal")
-		await _c21_settle_modals(w)
 		# The fountain rides on top of the standard kill
 		# drip (0.2 x gold_mult, _award_kill) + the killing
 		# blow's own coin.
 		_c9_check("c22 meowth: the kill pays the 30-coin fountain and ends the event",
-			absf(float(w.get("gold")) - (gold_k + hit_coin + fountain + 0.2 * gm)) < 0.01
+			absf(_c23_pickup_value(w, 1) - (gold_k + hit_coin + fountain + drip)) < 0.01
 			and String(w.get("_event_kind")) == "" and w.get("_event_meowth") == null,
 			"gold " + str(gold_k) + "->" + str(w.get("gold"))
 			+ " want+" + str(hit_coin + fountain) + "+drip")
@@ -1167,7 +1171,6 @@ func _c9_guardian_phase() -> void:
 		_c9_check("guardian: summon + fit", false)
 		return
 	var gold0 := float(w.get("gold"))
-	var chests0: int = (w.get("_chests") as Array).size()
 	var lvl0: int = p.level + p.pending_levels
 	var roars: int = g.roars
 	# Cycle 14: the Eb damage cap banks at 3x capRate and refills at
@@ -1176,6 +1179,7 @@ func _c9_guardian_phase() -> void:
 	# (the cycle-9 assertion intent is unchanged).
 	var guard_frames := 0
 	var gold_blow := 0.0
+	var chest_blow := 0
 	while g.hp > 0.0 and guard_frames < 7200:
 		# Cycle 19 harness pacing, second trap (found by the
 		# fixed loop): the gold window must be the killing
@@ -1184,10 +1188,12 @@ func _c9_guardian_phase() -> void:
 		# wild-kill coin can land inside the measurement;
 		# a whole-loop window collects them (delta 103.2 /
 		# 141 against exact 100 / 140 in the wild).
-		var pre_gold := float(w.get("gold"))
+		var pre_gold := _c23_pickup_value(w, 1)
+		var pre_chests: int = (w.get("_chests") as Array).size()
 		g.take_damage(g.max_hp * 0.2, "")
 		if g.hp <= 0.0:
-			gold_blow = float(w.get("gold")) - pre_gold
+			gold_blow = _c23_pickup_value(w, 1) - pre_gold
+			chest_blow = (w.get("_chests") as Array).size() - pre_chests
 		await _c9_frames(1)
 		# Cycle 19 harness pacing (root-caused in cycle 18):
 		# XP earned mid-loop (the player's auto-fire clears
@@ -1209,14 +1215,14 @@ func _c9_guardian_phase() -> void:
 	# perk ladder with no gold consumer; the factor cycle 19
 	# asserted here was invented and is removed).
 	var want_gold := 20 * int(ceil(5.0 * 1.0 * p.gold_mult))
-	_c9_check("guardian: gold == 20 x ceil(5 x stage x gold)",
+	_c9_check("guardian: coin entities == 20 x ceil(5 x stage x gold)",
 		absf(gold_blow - float(want_gold)) < 0.01,
 		"blow_delta=" + str(gold_blow) + " want=" + str(want_gold))
 	_c9_check("guardian: chests == 1 + roars",
-		(w.get("_chests") as Array).size() - chests0 == 1 + roars,
-		"spawned=" + str((w.get("_chests") as Array).size() - chests0) + " roars=" + str(roars))
-	_c9_check("guardian: candy granted a level",
-		(p.level + p.pending_levels) - lvl0 >= 1,
+		chest_blow == 1 + roars,
+		"spawned=" + str(chest_blow) + " roars=" + str(roars))
+	_c9_check("guardian: candy entity waits for pickup",
+		_c23_pickup_value(w, 6) >= 1.0,
 		"lvl delta=" + str((p.level + p.pending_levels) - lvl0))
 	await _c9_settle_drafts()
 	# Open a chest by walking onto it (real proximity path).
@@ -2129,7 +2135,6 @@ func _c9_shrine_phase() -> void:
 	for e in get_tree().get_nodes_in_group("enemies"):
 		e.queue_free()
 	await _c9_frames(2)
-	var chests0: int = (w.get("_chests") as Array).size()
 	var _shrine_pre_n := get_tree().get_nodes_in_group("enemies").size()
 	w.summon_guardian()
 	var _shrine_group_n := get_tree().get_nodes_in_group("enemies").size() - _shrine_pre_n
@@ -2154,15 +2159,21 @@ func _c9_shrine_phase() -> void:
 	_c9_check("shrine: fightSecs == 40 x roar mult", absf(g.fight_secs - 40.0 * o) < 0.001,
 		"secs=" + str(g.fight_secs))
 	var frames := 0
+	var chest_blow := 0
 	while g.hp > 0.0 and frames < 9000:
+		# Measure only the synchronous killing blow; timed supply chests
+		# can legitimately arrive during this long cap-limited fight.
+		var pre_chests: int = (w.get("_chests") as Array).size()
 		g.take_damage(g.max_hp * 0.2, "")
+		if g.hp <= 0.0:
+			chest_blow = (w.get("_chests") as Array).size() - pre_chests
 		await _c9_frames(1)
 		frames += 1
 	_c9_check("shrine: roar guardian killed through the cap", g.hp <= 0.0,
 		"frames=" + str(frames))
 	_c9_check("shrine: chests == 1 + roars after the kill",
-		(w.get("_chests") as Array).size() - chests0 == 4,
-		"spawned=" + str((w.get("_chests") as Array).size() - chests0))
+		chest_blow == 4,
+		"spawned=" + str(chest_blow))
 	w.set("_spawn_t", 0.5)  # spawner fixture released
 	await _c9_settle_drafts()
 	await _c9_cleanup_run()
@@ -2769,15 +2780,19 @@ func _c9_props_phase() -> void:
 	for pr in props:
 		counts[String(pr["kind"])] = int(counts.get(String(pr["kind"]), 0)) + 1
 	var want_counts := {"greed": 1, "challenge": 2, "cursed": 1, "porygon": 1, "nest": 1,
-		"meowth": 1, "ditto": 1, "snorlax": 2, "slots": 2, "freechest": 3, "cursedchest": 2, "cage": 2,
+		"meowth": 1, "ditto": 1, "snorlax": 2, "slots": 2, "freechest": 3, "cursedchest": 2, "cage": 2, "magnet": 2,
 		"berry": 5, "chest": 14, "rock": 14}
-	var counts_ok := props.size() == 52
+	var counts_ok := props.size() == 54
 	for k in want_counts.keys():
 		if int(counts.get(k, 0)) != int(want_counts[k]):
 			counts_ok = false
-	_c9_check("props: zone 1 populates all 52 props (15 kinds, meowth added C21, ditto C22)", counts_ok,
+	_c9_check("props: zone 1 populates all 54 props (16 kinds, meowth added C21, ditto C22)", counts_ok,
 		"counts=" + str(counts))
 	var run_count := func(cname: String) -> int: return int((w.get("run_counts") as Dictionary).get(cname, 0))
+	# C23 magnet writer: a real prop consumes once and sets five seconds.
+	var magnet: Dictionary = find_prop.call("magnet", 0)
+	w._interact_prop(magnet)
+	_c9_check("c23 pickups: magnet prop sets magnetAll=5", bool(magnet["used"]) and is_equal_approx(float(w.get("pickups").magnet_all),5.0))
 	# --- berry through the real E chain ---
 	var berry: Dictionary = find_prop.call("berry", 0)
 	p.hp = p.max_hp * 0.4
@@ -3331,7 +3346,7 @@ func _c9_audio_phase() -> void:
 	A.call("hit", 0.5)
 	_c9_check("audio: direct hit(0.5) plays weak", int(A.call("count_of", "hit_weak")) > hw1,
 		"weak=" + str(A.call("count_of", "hit_weak")))
-	# Kills: pop + xp ladder + streak on the chain.
+	# Kills play pop/streak; collected XP entities play the XP ladder.
 	var pop0 := int(A.call("count_of", "pop"))
 	var xp0 := int(A.call("count_of", "xp"))
 	var st0 := int(A.call("count_of", "streak"))
@@ -3342,12 +3357,14 @@ func _c9_audio_phase() -> void:
 	var m1 = _world.call("_spawn_enemy_at", "rattata", p.global_position + Vector3(2, 0, 1), 0.01)
 	var m2 = _world.call("_spawn_enemy_at", "rattata", p.global_position + Vector3(3, 0, 1), 0.01)
 	m1.call("take_damage", 99999.0, "normal")
+	_c23_collect_last_xp(_world, p)
 	var tk := Time.get_ticks_msec()
 	while Time.get_ticks_msec() - tk < 60:
 		await get_tree().process_frame
 	m2.call("take_damage", 99999.0, "normal")
+	_c23_collect_last_xp(_world, p)
 	await _c16_pump(24)
-	_c9_check("audio: kills play pop + xp", int(A.call("count_of", "pop")) >= pop0 + 2 and int(A.call("count_of", "xp")) >= xp0 + 2,
+	_c9_check("audio: kills play pop and collected entities play xp", int(A.call("count_of", "pop")) >= pop0 + 2 and int(A.call("count_of", "xp")) >= xp0 + 2,
 		"pop=" + str(A.call("count_of", "pop")) + " xp=" + str(A.call("count_of", "xp")))
 	_c9_check("audio: chained kills play streak", int(A.call("count_of", "streak")) > st0)
 	# Player hurt / dodge (evasion is a labelled fixture).
@@ -3413,15 +3430,30 @@ func _c9_audio_phase() -> void:
 	# runs unfrozen, and boss-fight hitstop starves it.)
 	var g2 = _world.get("guardian")
 	var gf := 0
+	var reward_coin: Dictionary = {}
 	if g2 != null and is_instance_valid(g2) and float(g2.get("hp")) > 0.0:
 		g2.set("hp", 1.0)
 		while is_instance_valid(g2) and float(g2.get("hp")) > 0.0 and gf < 600:
 			g2.call("take_damage", 5.0, "")
+			if float(g2.get("hp")) <= 0.0:
+				# Capture an entity created by this synchronous guardian kill,
+				# before physics frames can add unrelated ambient drops.
+				var pool = _world.get("pickups")
+				for ci in range(pool.entries.size()-1,-1,-1):
+					if int(pool.entries[ci].kind)==1:
+						reward_coin = pool.entries[ci]
+						break
 			await get_tree().physics_frame
 			gf += 1
+	_c9_check("audio: guardian death immediately plays boom", int(A.call("count_of", "boom")) > bo0,
+		"boom=" + str(A.call("count_of", "boom")) + "/" + str(bo0) + " frames=" + str(gf))
 	await _c16_pump(30)
-	_c9_check("audio: guardian death plays boom + coin", int(A.call("count_of", "boom")) > bo0 and int(A.call("count_of", "coin")) > co0,
-		"boom=" + str(A.call("count_of", "boom")) + "/" + str(bo0) + " coin=" + str(A.call("count_of", "coin")) + "/" + str(co0) + " frames=" + str(gf))
+	# Collection must use the real entity tick, not a direct audio call.
+	# A coin naturally collected during the wait has already used this path.
+	if not reward_coin.is_empty():
+		_c23_collect_pickup(_world, p, reward_coin)
+	_c9_check("audio: guardian reward collection plays coin", int(A.call("count_of", "coin")) > co0,
+		"coin=" + str(A.call("count_of", "coin")) + "/" + str(co0))
 	var back := false
 	for i in range(150):
 		await get_tree().process_frame
@@ -5238,16 +5270,16 @@ func _c19_phase() -> void:
 		while g.hp > 0.0 and gf < 7200:
 			# Killing-blow window (see the guardian phase):
 			# ambient wild-kill coins stay outside it.
-			var pre_gold := float(w.get("gold"))
+			var pre_gold := _c23_pickup_value(w, 1)
 			g.take_damage(g.max_hp * 0.2, "")
 			if g.hp <= 0.0:
-				gold_blow = float(w.get("gold")) - pre_gold
+				gold_blow = _c23_pickup_value(w, 1) - pre_gold
 			await _c9_frames(1)
 			if String(w.get("state")) == "draft":
 				w._apply_draft_option(0)
 			gf += 1
 		var want := 20 * int(ceil(5.0 * 1.0 * p.gold_mult))
-		_c9_check("c20: guardian coins pay plain wB (no shiny factor)",
+		_c9_check("c20: guardian coin entities pay plain wB (no shiny factor)",
 			absf(gold_blow - float(want)) < 0.01,
 			"blow_delta=" + str(gold_blow) + " want=" + str(want))
 		await _c9_settle_drafts()
@@ -5358,6 +5390,8 @@ func _c19_phase() -> void:
 	# pacing several physics frames fit inside one render
 	# frame, so these three checks WAIT FOR THE CONDITION
 	# instead of counting frames. Assertions unchanged.
+	# C23 pickup/supply rewards can leave a real chest choice open.
+	await _c21_settle_modals(w)
 	w.call("_open_draft")
 	var scrim_up := await _c9_wait(func() -> bool:
 		return bool((w.get("_modal_scrim") as Control).visible), 900)
@@ -5430,7 +5464,9 @@ func _c19_phase() -> void:
 	var shown := false
 	var show_frame := 0
 	for attempt in range(6):
-		await _c9_settle_drafts()
+		# Resolve both actual reward choices and level drafts; the banner
+		# must still meet every original steady-state visibility conjunct.
+		await _c21_settle_modals(w)
 		if String(w.get("state")) not in ["playing", "guardian", "portal"]:
 			await _c9_frames(5)
 			continue
@@ -5694,3 +5730,30 @@ func _c23_phase() -> void:
 	await _c9_cleanup_run()
 	Profile.data = snap
 	Profile.save_profile()
+
+## C23: pending entity value, used by payment checks before walk-over collection.
+func _c23_pickup_value(w: Node, kind: int) -> float:
+	var pool = w.get("pickups")
+	if pool == null:
+		return 0.0
+	var total := 0.0
+	for e in pool.entries:
+		if int(e.kind) == kind:
+			total += float(e.value)
+	return total
+
+func _c23_collect_last_xp(w: Node, p: Node3D) -> void:
+	var pool = w.get("pickups")
+	for i in range(pool.entries.size()-1,-1,-1):
+		var e: Dictionary = pool.entries[i]
+		if int(e.kind)==0:
+			_c23_collect_pickup(w,p,e)
+			return
+
+func _c23_collect_pickup(w: Node, p: Node3D, e: Dictionary) -> void:
+	var pool = w.get("pickups")
+	if pool == null or not pool.entries.has(e) or not is_instance_valid(e.node):
+		return
+	e.age = 1.0
+	e.node.position = p.global_position+Vector3(0,0.7,0)
+	pool.tick(0.001)

@@ -28,7 +28,7 @@ const LAB := {
 	"xp": {"label": "经验+5%/级", "max": 6, "kind": "m", "base": 120.0, "g": 1.45, "fx": true},
 	"gold": {"label": "金币+8%/级", "max": 6, "kind": "m", "base": 100.0, "g": 1.45, "fx": true},
 	"luck": {"label": "幸运+5/级", "max": 6, "kind": "m", "base": 140.0, "g": 1.45, "fx": true},
-	"magnet": {"label": "拾取范围+0.6/级", "max": 5, "kind": "m", "base": 80.0, "g": 1.45, "fx": false},
+	"magnet": {"label": "拾取范围+0.6/级", "max": 5, "kind": "m", "base": 80.0, "g": 1.45, "fx": true},
 	"regen": {"label": "再生+0.2/级", "max": 5, "kind": "m", "base": 120.0, "g": 1.45, "fx": true},
 	"armor": {"label": "护甲+2/级", "max": 6, "kind": "m", "base": 120.0, "g": 1.45, "fx": true},
 	"revive": {"label": "开局复活", "max": 1, "kind": "h", "base": 5000.0, "fx": true},

@@ -1298,6 +1298,7 @@
   "name": "Velo Agua",
   "desc": "+10% evasión. Cada esquiva te envuelve en agua: escudo del 6% de tus PS. Como Seaking, +5% evasión.",
   "mods": [
+   {"stat": "shieldMax", "add": 15},
    {
     "stat": "evasion",
     "add": 0.1
