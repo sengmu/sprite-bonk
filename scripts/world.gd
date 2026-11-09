@@ -4,6 +4,8 @@ extends Node3D
 ## fog #bfe3ff 40-160, sky #5aa8ff -> #d8f0ff, sun #fff1d6 from (60,120,40),
 ## camera FOV 70 / pitch 0.45 / dist 9 / focus +1.5 / lookAt +1.8 (see DIFF.md).
 
+const Fossils = preload("res://scripts/fossils.gd")
+
 const BOUND := 168.0
 const ZONE_TIME := 600.0
 const ALTAR_XZ := Vector2(0, -30)
@@ -659,6 +661,12 @@ var _snap_league := 0
 var _boost_honey := false
 var _honey_at := -1.0
 var _master_ball := false
+var _classic_at := INF
+var _classic_e: Enemy = null
+var _classic_escape := 0.0
+var _shiny_ally: Enemy = null
+var _pending_shiny_ally: Enemy = null
+var _shiny_serial := 0
 var _shiny_at := INF  # cycle 20: stage-clock fire time; INF = the stage roll failed (no shiny)
 var _shiny_spawned := false  # per-stage director latch (shinySpawned)
 var _shiny_e: Enemy = null
@@ -5649,6 +5657,11 @@ func start_game(p_species: String, boosts: Array = [], requested_tier: int = 0) 
 	_shiny_spawned = false
 	_shiny_e = null
 	_shiny_escape = 0.0
+	_classic_e = null
+	_classic_at = INF
+	_shiny_ally = null
+	_pending_shiny_ally = null
+	_shiny_serial = 0
 	_map_pins.clear()
 	_fog = PackedByteArray()
 	_fog.resize(48 * 48)
@@ -5772,6 +5785,7 @@ func start_game(p_species: String, boosts: Array = [], requested_tier: int = 0) 
 	# after the player's setup/recalc, before boosts (the
 	# shiny stone min()s this roll in _apply_boosts).
 	_roll_shiny_director()
+	_roll_classic_director()
 	_apply_starter_hud(p_species)
 	_apply_zone_card()
 	_weather_pick(1)  # cycle 12: stage-entry base weather (+ passive override)
@@ -6287,7 +6301,7 @@ func _build_interactables(z: int) -> Node3D:
 	# altars + totem on the SAME seeded stream (their positions
 	# are new draws; the cycle-14 layout prefix is unchanged).
 	# Order follows populate() @1240977 minus the kinds that
-	# are out of scope (DIFF cycle 15): fossil, bill, hypno,
+	# were out of scope in cycle 15: bill, hypno,
 	# magnet (meowth joined in cycle 21, ditto in cycle 22).
 	# Counts are the areaMul=1 values;
 	# r from add() @~1238150; LC 2 = creature props.
@@ -6310,7 +6324,7 @@ func _build_interactables(z: int) -> Node3D:
 
 ## Cycle 15 populate plan: [kind, count, interact r, LC].
 const PROP_PLAN := [
-	["greed", 1, 2.6, 0], ["challenge", 2, 3.2, 0], ["cursed", 1, 3.0, 0],
+	["fossil", 1, 2.8, 1], ["greed", 1, 2.6, 0], ["challenge", 2, 3.2, 0], ["cursed", 1, 3.0, 0],
 	["porygon", 1, 2.4, 2], ["nest", 1, 2.8, 2], ["meowth", 1, 2.6, 2], ["ditto", 1, 2.6, 2], ["snorlax", 2, 2.6, 2],
 	["slots", 2, 2.4, 0], ["freechest", 3, 2.6, 0], ["cursedchest", 2, 2.6, 0],
 	["cage", 2, 2.6, 2], ["berry", 5, 2.6, 0], ["magnet", 2, 2.6, 0], ["chest", 14, 2.6, 0],
@@ -6542,6 +6556,8 @@ func _make_prop(kind: String, pos: Vector2, z: int, rng: RandomNumberGenerator) 
 	var data: Dictionary = {}
 	var accent: StandardMaterial3D
 	match kind:
+		"fossil":
+			data = Fossils.build_visual(self, root, dim)
 		"magnet":
 			accent = _prop_mat(Color(0.6,0.5,1.0),0.8)
 			_prop_box(root,Vector3(0.35,1.1,0.35),accent,Vector3(-0.35,0.8,0))
@@ -6753,6 +6769,8 @@ func _inter_reset() -> void:
 			_prop_reset_visual(p)
 			var pd: Dictionary = p["data"]
 			match String(p["kind"]):
+				"fossil":
+					Fossils.reset_visual(p)
 				"challenge":
 					pd["wave"] = []
 					pd["pending"] = 0
@@ -6913,7 +6931,7 @@ func _egg_tick() -> void:
 	# gp @319200: recruit, or — when the team is at the
 	# §5.3 cap (2 + Lab party, the _throw_ball gate) — the
 	# bundle's fallback rollChestItem() (one grant, floor 0).
-	if get_tree().get_nodes_in_group("allies").size() >= _team_cap():
+	if _normal_ally_count() >= _team_cap():
 		_chest_roll_single(0)
 		return
 	var pos := _ring_pos(2.5, 3.5)
@@ -9397,6 +9415,8 @@ func _prop_label(p: Dictionary) -> String:
 func _prop_label_kbd(p: Dictionary) -> String:
 	var kind := String(p["kind"])
 	match kind:
+		"fossil":
+			return "化石遗迹 · 按 E 献祭最大生命：物品或祝福"
 		"magnet":
 			return "磁铁 · 按 E 拾取：吸引经验与金币"
 		"berry":
@@ -9446,6 +9466,8 @@ func _interact_prop(p: Dictionary) -> void:
 	var d: Dictionary = p["data"]
 	var pp := player.global_position
 	match kind:
+		"fossil":
+			Fossils.open(self, p)
 		"meowth":
 			# Cycle 21: never consumed; opens the shop.
 			_open_shop()
@@ -10083,12 +10105,12 @@ func _build_blessing(root: Control) -> void:
 
 ## offerBlessing @1481319: while another modal owns the run the
 ## blessing queues (their whenFree); else it opens at once.
-func offer_blessing(title: String, min_tier: int, n_offers: int, picks: int) -> void:
+func offer_blessing(title: String, min_tier: int, n_offers: int, picks: int, power_mult: float = 1.0) -> void:
 	if _blessing_open or state in ["draft", "dead", "victory", "menu", "blessing", "choice"]:
-		_blessing_queue.append({"title": title, "min": min_tier, "offers": n_offers, "picks": picks})
+		_blessing_queue.append({"title": title, "min": min_tier, "offers": n_offers, "picks": picks, "power": power_mult})
 		return
 	_blessing_return = state
-	_blessing_offers = _blessing_roll(min_tier, n_offers)
+	_blessing_offers = _blessing_roll(min_tier, n_offers, power_mult)
 	_blessing_picks_left = picks
 	_blessing_open = true
 	state = "blessing"
@@ -10207,7 +10229,7 @@ func _close_blessing() -> void:
 
 ## Xx @1075554: shuffle the 12 generators, take n; each offer's
 ## tier = max(minT, Bx) and its power = pe[tier].
-func _blessing_roll(min_tier: int, n: int) -> Array:
+func _blessing_roll(min_tier: int, n: int, power_mult: float = 1.0) -> Array:
 	var defs := BLESSING_DEFS.duplicate()
 	for i in range(defs.size() - 1, 0, -1):
 		var j := _bless_rng.randi_range(0, i)
@@ -10218,7 +10240,7 @@ func _blessing_roll(min_tier: int, n: int) -> Array:
 	for k in range(mini(n, defs.size())):
 		var d: Dictionary = defs[k]
 		var tier := maxi(min_tier, _blessing_tier_roll())
-		var e := float(BLESSING_PE[tier])
+		var e := float(BLESSING_PE[tier]) * power_mult
 		var per := float(d["per"])
 		var mod := {"stat": String(d["stat"])}
 		if String(d["mode"]) == "mul":
@@ -10375,6 +10397,7 @@ func _advance_zone() -> void:
 	# @1048868); a live shiny dies with the old stage's
 	# rebuild like the league one.
 	_roll_shiny_director()
+	_roll_classic_director()
 	_shiny_e = null
 	_league_e = null
 	_league_done = false
@@ -10900,7 +10923,7 @@ func _finish_run(victory: bool) -> void:
 	# best_burned/best_poisoned, so the roster's lifetime status
 	# counters (burned/poisoned/slept/crits...) sat at 0 forever
 	# and their challenges could never complete.
-	for k in ["burned", "poisoned", "slept", "frozen", "paralyzed", "confused", "crits", "soaked", "reactions", "rocks", "berries"]:
+	for k in ["burned", "poisoned", "slept", "frozen", "paralyzed", "confused", "crits", "soaked", "reactions", "rocks", "berries", "fossil_helix", "fossil_dome"]:
 		var v := float(run_counts.get(k, 0))
 		if v > 0.0:
 			Profile.count(k, v)
@@ -12420,20 +12443,15 @@ func _process(delta: float) -> void:
 		if _alpha_idx < ALPHA_TIMES.size() and elapsed >= tier_timeline_time(float(ALPHA_TIMES[_alpha_idx])):
 			_alpha_idx += 1
 			_spawn_alpha()
-		if not _league_done:
-			if _league_e == null:
-				if elapsed >= tier_timeline_time(_league_spawn_at):
-					_spawn_league()
-			elif is_instance_valid(_league_e):
-				if not _league_e.is_weakened:
-					_league_escape -= delta
-					if _league_escape <= 0.0:
-						show_banner("%s 逃走了…" % String(ModelRig.SPECIES[_league_e.species_id]["label"]), 3.0)
-						_league_e.capture_remove()
-						_league_e = null
-						_league_done = true
-			else:
-				_league_e = null
+		_tick_capture_director()
+		if not _league_done and is_instance_valid(_league_e):
+			if not _league_e.is_weakened:
+				_league_escape -= delta
+				if _league_escape <= 0.0:
+					show_banner("%s 逃走了…" % String(ModelRig.SPECIES[_league_e.species_id]["label"]), 3.0)
+					_league_e.capture_remove()
+					_league_e = null
+					_league_done = true
 	# Camera: the original's updateCamera (bundle-traced; DIFF "Game feel"):
 	# focus damps per-axis (solo rates XZ 18 / Y 10), position = focus
 	# +1.5 base + pitch/dist offset + 0.6, lookAt focus +1.8, FOV =
@@ -12509,23 +12527,14 @@ func _process(delta: float) -> void:
 		if _honey_at > 0.0 and elapsed >= tier_timeline_time(_honey_at):
 			_honey_at = -1.0
 			_spawn_alpha()
-		# Cycle 20: the shiny stage director (bundle fire
-		# @1049322) — at most once per stage, when the stage
-		# clock reaches the rolled shinyAt; a FAILED roll left
-		# shinyAt = INF, so most stages never fire (the roll
-		# itself is _roll_shiny_director). The stone's
-		# guarantee is the same roll min()ed into [40,150]
-		# for stage 1 (see _apply_boosts).
-		if not _shiny_spawned and _shiny_at > 0.0 and elapsed >= _shiny_at:
-			_shiny_spawned = true
-			# Cycle 20.1 (audit N15): the bundle's spawnShiny
-			# returns early while a league encounter is
-			# roaming / weakened / throwing (@1051777), and
-			# the fire has already consumed shinyAt — so a
-			# shiny whose moment lands during a league
-			# encounter is LOST for the stage, not deferred.
-			if _league_e == null or not is_instance_valid(_league_e):
-				_spawn_shiny()
+		if is_instance_valid(_classic_e):
+			if _classic_e.mode != Enemy.MODE_LEAGUE:
+				_classic_e = null
+			elif not _classic_e.is_weakened:
+				_classic_escape -= delta
+				if _classic_escape <= 0.0:
+					_classic_e.capture_remove()
+					_classic_e = null
 		# Shiny encounter lifecycle (mirrors the league one:
 		# the ladder flee clock — 120 s, 150 s with the Shiny
 		# Charm — that holds while weakened).
@@ -12551,7 +12560,7 @@ func _process(delta: float) -> void:
 		_inter_tick(delta)
 	if not _blessing_open and not _blessing_queue.is_empty() and state in ["playing", "guardian"]:
 		var bq: Dictionary = _blessing_queue.pop_front()
-		offer_blessing(String(bq["title"]), int(bq["min"]), int(bq["offers"]), int(bq["picks"]))
+		offer_blessing(String(bq["title"]), int(bq["min"]), int(bq["offers"]), int(bq["picks"]), float(bq.get("power", 1.0)))
 	# Touch UI visibility: only during play, only on touch devices
 	# (or when forced by the harness / a first real touch).
 	if touch_controls:
@@ -12754,9 +12763,11 @@ func _capture_candidate() -> Enemy:
 ##   chance = base + captureRate/255*0.35 + attempts*0.20 (+0.15 if
 ##   the target is asleep), capped at 0.97 (league) / 0.95 (friend).
 func _throw_ball(e: Enemy) -> void:
+	if not is_instance_valid(e) or e.mode == Enemy.MODE_ALLY:
+		return  # Captured/pending allies cannot be captured again.
 	var is_league := e.mode == Enemy.MODE_LEAGUE
 	# Team cap first (§5.3): don't burn a throw on a full party.
-	if not is_league and get_tree().get_nodes_in_group("allies").size() >= _team_cap():
+	if not is_league and _normal_ally_count() >= _team_cap():
 		show_banner("队伍已满（%d 只）！研究室 party 可扩到 3 只" % _team_cap(), 3.0)
 		return
 	# Cycle 16: throw + open sounds; our capture resolves
@@ -12805,8 +12816,15 @@ func _throw_ball(e: Enemy) -> void:
 			Profile.add_stardust(grant)
 			captured += 1
 			_shiny_beam(e.global_position)
+			_offer_shiny_ally(e)
+			show_banner("闪光的 %s 被收服了！星尘 +%d（闪光图鉴 %d 只）\n%s" % [label, grant, Profile.shiny_count(), _skin_unlock_note(e.species_id)], 3.5)
+			_refresh_meta()
+		elif e.classic:
+			_classic_e = null
+			var grant := Profile.record_classic(e.species_id)
+			captured += 1
 			e.capture_remove()
-			show_banner("闪光的 %s 被收服了！星尘 +%d（闪光图鉴 %d 只）" % [label, grant, Profile.shiny_count()], 3.5)
+			show_banner("经典闪光 %s 被收服！星尘 +%d；家族经典皮肤已记录" % [label, grant], 3.5)
 			_refresh_meta()
 		elif is_league:
 			var sd: Dictionary = GameData.species(e.species_id)
@@ -12835,6 +12853,8 @@ func _throw_ball(e: Enemy) -> void:
 				if _league_e == e:
 					_league_e = null
 					_league_done = true
+				if _classic_e == e:
+					_classic_e = null
 				if _shiny_e == e:
 					_shiny_e = null
 				e.capture_remove()
@@ -15104,13 +15124,13 @@ func _roll_shiny_director() -> void:
 ## PREFERRING families not yet shiny-caught, weighted by
 ## Cx = 0.15 + 0.85 * captureRate/255 (@1047818);
 ## fallback = dex id 25.
-func _pick_shiny_species(pool: Array) -> String:
+func _pick_shiny_species(pool: Array, prefer_fresh: bool = true) -> String:
 	var modelled: Dictionary = {}
 	for k in GameData.roster_species_keys():
 		modelled[String(k)] = true
 	var cands: Array = []
 	for k in pool:
-		if modelled.has(String(k)):
+		if modelled.has(String(k)) or (not prefer_fresh and ModelRig.SPECIES.has(String(k))):
 			cands.append(String(k))
 	if cands.is_empty():
 		return String(GameData.species_by_id(25).get("key", "pikachu"))
@@ -15119,7 +15139,7 @@ func _pick_shiny_species(pool: Array) -> String:
 	for k in cands:
 		if not shiny_fams.has(int(GameData.species(String(k)).get("family", 0))):
 			fresh.append(String(k))
-	var src: Array = fresh if not fresh.is_empty() else cands
+	var src: Array = fresh if prefer_fresh and not fresh.is_empty() else cands
 	var total := 0.0
 	var weights: Array = []
 	for k in src:
@@ -15149,6 +15169,8 @@ func _pick_shiny_species(pool: Array) -> String:
 ## the ladder's: 120 s, 150 s with the Shiny Charm
 ## (shinyFlee @1579088).
 func _spawn_shiny(pool_override: Array = []) -> void:
+	if is_instance_valid(_league_e) or is_instance_valid(_shiny_e) or is_instance_valid(_classic_e):
+		return  # Direct event calls share the capture state gate.
 	var sp := _pick_shiny_species(pool_override if not pool_override.is_empty() else ZONES[zone - 1]["pool"])
 	var e := _spawn_enemy_at(sp, _ring_pos(24.0, 40.0), _spawn_mult() * 2.5, false, 1.25)
 	e.shiny = true
@@ -16737,3 +16759,113 @@ func _loadout_toggle_boost(id: String) -> void:
 func _loadout_start() -> void:
 	_loadout_panel.visible = false
 	start_game(_ls_hero, _ls_boosts.duplicate())
+
+# C24: Classic is an independent collection and encounter, not a Liga capture.
+# Original @1051478 excludes families already covered by classics (pack prose inverted).
+func _classic_pool(pool: Array) -> Array:
+	var out: Array = []
+	var covered := Profile.classic_covered_members()
+	for key in pool:
+		var sp: Dictionary = GameData.species(String(key))
+		var missing := false
+		for member in Profile.classic_members(String(key)):
+			if not covered.has(member):
+				missing = true
+		if not bool(sp.get("legendary", false)) and not bool(sp.get("mythical", false)) \
+				and ModelRig.SPECIES.has(String(key)) and missing:
+			out.append(String(key))
+	return out
+
+func _classic_chance(luck: float) -> float:
+	return (.025 + minf(.025, luck / 3000.0)) * Profile.shiny_rate()
+
+func _roll_classic_director() -> void:
+	_classic_at = INF
+	_classic_e = null
+	if not _classic_pool(ZONES[zone - 1]["pool"]).is_empty() and _rng.randf() < _classic_chance(player.luck if player else 0.0):
+		_classic_at = elapsed + _rng.randf_range(60.0, 420.0)
+
+func _spawn_classic() -> void:
+	if is_instance_valid(_league_e) or is_instance_valid(_shiny_e) or is_instance_valid(_classic_e):
+		return
+	var pool := _classic_pool(ZONES[zone - 1]["pool"])
+	if pool.is_empty():
+		return
+	# Every pool family is fresh here; shared picker therefore uses only Cx weights.
+	var sp := _pick_shiny_species(pool, false)
+	var e := _spawn_enemy_at(sp, _ring_pos(18.0, 32.0), _spawn_mult() * 2.5, false)
+	e.classic = true
+	e.mode = Enemy.MODE_LEAGUE
+	if e.rig:
+		e.rig.apply_shiny()  # Documented 3D equivalent; no PMD atlas in this port.
+	_classic_e = e
+	_classic_escape = Profile.shiny_flee_time()
+	Profile.mark_seen(sp)
+	audio.cry(sp)
+	show_banner("经典闪光 %s 出现了！打弱后投球收服" % String(ModelRig.SPECIES[sp]["label"]), 4.0)
+
+func _make_shiny_ally(e: Enemy) -> void:
+	e.make_ally()
+	e.is_weakened = false
+	e.weak_t = 0.0
+	e.status_t = 0.0
+	e.status_kind = ""
+	e.shiny = true
+	e.classic = false
+	e.bond_level = 2 if Profile.shiny_bond_unlocked() else 0
+	e.ally_slot = 10 + _shiny_serial % 100
+	_shiny_serial += 1
+
+func _offer_shiny_ally(e: Enemy) -> void:
+	_make_shiny_ally(e)
+	if not is_instance_valid(_shiny_ally):
+		_shiny_ally = e
+		return
+	_pending_shiny_ally = e
+	e.remove_from_group("allies")
+	e.set_physics_process(false)
+	e.visible = false
+	_choice_show("闪光队友", "只能带一只闪光队友；替换后旧队友回到森林", ["留下新队友", "放生新队友"], "放生新队友",
+		func(i: int) -> void: _settle_shiny_swap(i == 0), func() -> void: _settle_shiny_swap(false))
+
+func _settle_shiny_swap(keep: bool) -> void:
+	if not is_instance_valid(_pending_shiny_ally):
+		return
+	if keep:
+		if is_instance_valid(_shiny_ally):
+			_shiny_ally.remove_from_group("allies")
+			_shiny_ally.queue_free()
+		_shiny_ally = _pending_shiny_ally
+		_shiny_ally.add_to_group("allies")
+		_shiny_ally.set_physics_process(true)
+		_shiny_ally.visible = true
+	else:
+		_pending_shiny_ally.queue_free()
+	_pending_shiny_ally = null
+
+func _skin_unlock_note(species_key: String) -> String:
+	var family := int(GameData.species(species_key).get("family", -1))
+	return "家族闪光皮肤已解锁" if Profile.in_league(family) else "家族加入联盟后可使用此闪光皮肤"
+
+# Original capture update @1047800+: idle/done gates BEFORE consuming clocks.
+# Resolve only one encounter per tick: shiny, Classic, then Liga.
+func _tick_capture_director() -> void:
+	if is_instance_valid(_league_e) or is_instance_valid(_shiny_e) or is_instance_valid(_classic_e):
+		return
+	if not _shiny_spawned and _shiny_at > 0.0 and elapsed >= _shiny_at:
+		_shiny_spawned = true
+		_shiny_at = INF
+		_spawn_shiny()
+	elif elapsed >= _classic_at:
+		_classic_at = INF
+		_spawn_classic()
+	elif not _league_done and elapsed >= tier_timeline_time(_league_spawn_at):
+		_spawn_league()
+
+# The original's team getter excludes shiny allies (@519492): independent extra slot.
+func _normal_ally_count() -> int:
+	var count := 0
+	for ally in get_tree().get_nodes_in_group("allies"):
+		if not ally.shiny:
+			count += 1
+	return count

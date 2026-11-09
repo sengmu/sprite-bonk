@@ -502,6 +502,9 @@ func _spawn_rig() -> void:
 	rig.is_player = true  # player hurt/faint profiles differ (rig header)
 	add_child(rig)
 	rig.setup(species_id)
+	# C24: selected family look survives evolution and run restart.
+	if Profile.skin_for(base_species) in ["shiny", "classic"]:
+		rig.apply_shiny()  # Classic hue is a documented 3D port choice.
 
 func move_slots() -> int:
 	return 3 + Profile.lab_level("slot-move")

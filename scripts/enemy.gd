@@ -72,6 +72,8 @@ var _soaked_counted := false
 # cap 10); confuse_t/root_t are written RAW by the steam /
 # mind reactions (x resist, no duration-factor scaling).
 var poison_stacks := 0
+var classic := false  # C24: separate Capture|Classic encounter, never a shiny ally
+var ally_slot := 0
 var shiny := false  # cycle 20: shiny encounter flag (bundle spawnShiny)
 var confuse_t := 0.0
 var root_t := 0.0
@@ -198,14 +200,14 @@ func make_ally() -> void:
 
 ## power(e) @519822: (12 + 1.1 * playerLevel) * (0.75 + bst/800) *
 ## (1 + 0.25 * (min(3, stage) - 1)) * (1 + 0.1 * bond) * shiny(1.2 —
-## our allies are never shiny) * lemonade item (not ported).
+## C24 shiny ally) * lemonade item (not ported).
 func ally_power_now() -> float:
 	if world == null or world.get("player") == null:
 		return ally_power
 	var p = world.player
 	var stage := mini(3, int(world.get("zone")))
 	return (12.0 + 1.1 * float(p.level)) * (0.75 + bst / 800.0) \
-		* (1.0 + 0.25 * float(stage - 1)) * bond_mult()
+		* (1.0 + 0.25 * float(stage - 1)) * bond_mult() * (1.2 if shiny else 1.0)
 
 ## cooldown(e) @519822: (physical 1.8 / special 1.6) / sqrt(player
 ## attackSpeed), read live.

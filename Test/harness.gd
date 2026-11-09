@@ -1256,9 +1256,9 @@ func _c9_league_phase() -> void:
 	_c9_check("league: passive mods load from abilities data",
 		not (GameData.passive_mods("swift-swim") as Array).is_empty(),
 		"mods=" + str(GameData.passive_mods("swift-swim")))
-	# Encounter: fresh run, spawn league encounters until magikarp
-	# appears (ready set here is {doduo, magikarp} — both global-only
-	# species; a zone-filtered pool would produce NEITHER).
+	# Encounter: isolate the eligible family to Magikarp, so a fresh
+	# save and RNG order cannot turn a global-pool regression into a lottery.
+	# A zone-filtered implementation still cannot spawn Magikarp.
 	var ok2 := await _c9_start_run("bulbasaur")
 	if not ok2:
 		_c9_check("league: encounter run boots", false)
@@ -1266,6 +1266,14 @@ func _c9_league_phase() -> void:
 	var p2 = _world.get("player")
 	p2.invulnerable = true
 	p2.moves.clear()
+	var old_league: Array = Profile.data.get("league", []).duplicate()
+	var magikarp_family := int(GameData.species("magikarp").get("family", -1))
+	var isolated_league: Array = []
+	for species in GameData.roster_species_keys():
+		var family := int(GameData.species(String(species)).get("family", -1))
+		if family != magikarp_family and not isolated_league.has(family):
+			isolated_league.append(family)
+	Profile.data["league"] = isolated_league
 	var seen := {}
 	for t in range(8):
 		_world._spawn_league()
@@ -1277,6 +1285,8 @@ func _c9_league_phase() -> void:
 		_world.set("_league_e", null)
 		if seen.has("magikarp"):
 			break
+	Profile.data["league"] = old_league
+	Profile.save_profile()
 	_c9_check("league: GLOBAL pool spawns magikarp (in no zone pool)", seen.has("magikarp"),
 		"seen=" + str(seen.keys()))
 	# leave the run alive for the guardian phase when running all
@@ -2942,14 +2952,14 @@ func _c9_props_phase() -> void:
 	var counts: Dictionary = {}
 	for pr in props:
 		counts[String(pr["kind"])] = int(counts.get(String(pr["kind"]), 0)) + 1
-	var want_counts := {"greed": 1, "challenge": 2, "cursed": 1, "porygon": 1, "nest": 1,
+	var want_counts := {"fossil": 1, "greed": 1, "challenge": 2, "cursed": 1, "porygon": 1, "nest": 1,
 		"meowth": 1, "ditto": 1, "snorlax": 2, "slots": 2, "freechest": 3, "cursedchest": 2, "cage": 2, "magnet": 2,
 		"berry": 5, "chest": 14, "rock": 14}
-	var counts_ok := props.size() == 54
+	var counts_ok := props.size() == 55 and counts.size() == 17
 	for k in want_counts.keys():
 		if int(counts.get(k, 0)) != int(want_counts[k]):
 			counts_ok = false
-	_c9_check("props: zone 1 populates all 54 props (16 kinds, meowth added C21, ditto C22)", counts_ok,
+	_c9_check("props: zone 1 populates all 55 props (17 kinds, fossil added C24)", counts_ok,
 		"counts=" + str(counts))
 	var run_count := func(cname: String) -> int: return int((w.get("run_counts") as Dictionary).get(cname, 0))
 	# C23 magnet writer: a real prop consumes once and sets five seconds.
@@ -5104,33 +5114,25 @@ func _c19_phase() -> void:
 	var sat := float(w.get("_shiny_at"))
 	_c9_check("c20: stone guarantees a stage-1 shiny window",
 		sat >= 40.0 and sat <= 150.0, "at=" + str(sat))
-	# --- Cycle 20.1 (audit N15): a shiny whose fire moment
-	# lands during an active league encounter is LOST for
-	# the stage in the bundle — spawnShiny early-returns
-	# on roaming/weakened/throwing (@1051777) AFTER the
-	# fire consumed shinyAt (@1049322). Stage the exact
-	# state _spawn_league() leaves behind (production
-	# spawn + league mode + the world's encounter refs),
-	# cross shinyAt on the real tick, assert no shiny. ---
+	# C24 source correction: idle/done is checked before shinyAt is
+	# consumed. A live capture encounter defers a due shiny.
 	var le = w._spawn_enemy_at("rattata", w._ring_pos(25.0, 45.0), w._spawn_mult() * 0.8)
 	le.set("mode", 2)  # Enemy.MODE_LEAGUE
 	w.set("_league_e", le)
 	w.set("_league_escape", 150.0)
 	w.set("elapsed", 200.0)
 	await _c9_frames(12)
-	_c9_check("c20: shiny fire is lost while a league encounter is active (N15)",
-		w.get("_shiny_e") == null and bool(w.get("_shiny_spawned")),
+	_c9_check("c24: shiny fire waits while a league encounter is active",
+		w.get("_shiny_e") == null and not bool(w.get("_shiny_spawned")) and float(w.get("_shiny_at")) == sat,
 		"shiny_e=" + str(w.get("_shiny_e")) + " latched=" + str(w.get("_shiny_spawned")))
 	# Remove the staged encounter and close the league
 	# channel for the rest of this run (the state the game
 	# itself reaches when no ready species remain), then
-	# re-arm the stone window for the encounter flow.
+	# retain the due stone window for the encounter flow.
 	if is_instance_valid(le):
 		le.capture_remove()
 	w.set("_league_e", null)
 	w.set("_league_done", true)
-	w.set("_shiny_spawned", false)
-	w.set("_shiny_at", sat)
 	w.set("elapsed", 200.0)
 	var spawned := await _c9_wait(func() -> bool:
 		return w.get("_shiny_e") != null, 1800)
@@ -5412,17 +5414,21 @@ func _c19_phase() -> void:
 			var dust1 := Profile.stardust()
 			var n_before := Profile.shiny_count()
 			for t in range(12):
-				if not is_instance_valid(se3):
+				if not is_instance_valid(se3) or w.get("_shiny_e") != se3:
 					break
 				w.call("_throw_ball", se3)
 				await _c9_frames(4)
-				if not is_instance_valid(se3):
+				if not is_instance_valid(se3) or w.get("_shiny_e") != se3:
 					break
 				if not bool(se3.get("is_weakened")):
 					var att4 := 0
 					while is_instance_valid(se3) and not bool(se3.get("is_weakened")) and att4 < 40:
 						se3.call("take_damage", 99999.0)
 						att4 += 1
+			# C24 captured shinies now remain alive as allies. Settle the
+			# explicit swap rather than repeatedly throwing at a captured node.
+			if bool(w.get("_choice_open")) and w.get("_pending_shiny_ally") == se3:
+				w._choice_pick(0)
 			_c9_check("c20: repeat capture grants +50 Stardust, dex unchanged",
 				Profile.stardust() - dust1 == 50 and Profile.shiny_count() == n_before,
 				"delta=" + str(Profile.stardust() - dust1) + " n=" + str(Profile.shiny_count()))

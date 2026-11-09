@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "status": "PROVEN_STATIC_RULES_ONLY",
+  "resolve_order": [
+    "signature",
+    "reaction",
+    "type",
+    "glitch"
+  ],
+  "pairs_bidirectional": true,
+  "excluded_arch": [
+    "weather",
+    "buff",
+    "fusion"
+  ],
+  "parent_min_level": 8,
+  "kind_sort": [
+    "signature",
+    "reaction",
+    "type",
+    "glitch"
+  ],
+  "ready_first": true,
+  "unlearned_signature": {
+    "a": -1,
+    "b": -1,
+    "ready": false
+  },
+  "mods_identity": {
+    "dmg": 1,
+    "cd": 1,
+    "count": 0,
+    "area": 1,
+    "speed": 1,
+    "dur": 1,
+    "pierce": 0,
+    "crit": 0,
+    "status": 1,
+    "bounce": 0
+  },
+  "mods_merge": {
+    "dmg": "a+b-1",
+    "cd": "a*b",
+    "count": "a+b",
+    "area": "a+b-1",
+    "speed": "a+b-1",
+    "dur": "a+b-1",
+    "pierce": "a+b",
+    "crit": "a+b",
+    "status": "a+b-1",
+    "bounce": "a+b"
+  },
+  "result": {
+    "level": 1,
+    "timer": 1.2,
+    "slot": "min(a,b)",
+    "parents": "[idA,idB,...A.parents,...B.parents]",
+    "forget_both_parents": true
+  },
+  "damage": {
+    "base": 17,
+    "multiplier": 1.3,
+    "level_add": 0.04,
+    "formula": "def.dmg*1.3*mods.dmg*(1+(level-1)*0.04)"
+  },
+  "cooldown": {
+    "global_multiplier": 0.85,
+    "cast_min": 0.6,
+    "formula": "max(0.6,def.cd*mods.cd/attackSpeed)"
+  },
+  "normalization": {
+    "if_power_above": 4,
+    "scale": "min(1,max(2/cd,sqrt(4/power)))",
+    "scale_both": [
+      "cd",
+      "power"
+    ]
+  },
+  "bill": {
+    "per_stage": 1,
+    "used_on_ready_choice": true
+  },
+  "glitch": {
+    "key": "fu-missingno",
+    "cast_choice": "random type fusion"
+  },
+  "unimplemented": [
+    "engine",
+    "UI",
+    "cinematic",
+    "bespoke cast bodies",
+    "effect primitives",
+    "runtime registration"
+  ]
+}

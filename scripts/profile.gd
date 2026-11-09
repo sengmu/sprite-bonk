@@ -57,7 +57,7 @@ static func ke(x: float) -> int:
 ## edited / corrupted file) can never inject a wrong-typed value
 ## into the boot path — a bad key resets to its default instead of
 ## crashing a cast downstream.
-const PROFILE_VERSION := 3
+const PROFILE_VERSION := 4
 
 static func load_profile() -> void:
 	if _loaded:
@@ -83,6 +83,11 @@ static func load_profile() -> void:
 		data["counters"] = {}
 	if not (data.get("species_played") is Array):
 		data["species_played"] = []
+	for key in ["classics"]:
+		if not (data.get(key) is Array):
+			data[key] = []
+	if not (data.get("skins") is Dictionary):
+		data["skins"] = {}
 	if not (data.get("shinies") is Array):
 		data["shinies"] = []
 	if not (data.get("settings") is Dictionary):
@@ -777,7 +782,7 @@ static func reset_all() -> void:
 	_loaded = true
 	data = {"stardust": 0, "totalStardust": 0, "league": [], "captured": {},
 		"seen": [], "lab": {}, "counters": {}, "species_played": [],
-		"settings": {}, "bag": {}, "shinies": [], "shiny_bond": false, "items_off": [], "biomes": {"forest":0},
+		"settings": {}, "bag": {}, "shinies": [], "shiny_bond": false, "classics": [], "skins": {}, "items_off": [], "biomes": {"forest":0},
 		"archive_presets": [], "archive_preset_active": -1,
 		"version": PROFILE_VERSION}
 	save_profile()
@@ -802,3 +807,75 @@ static func record_biome_clear(biome: String, tier: int) -> void:
 		data["biomes"] = {}
 	data["biomes"][biome] = maxi(biome_tier(biome), clampi(tier, 0, 2) + 1)
 	save_profile()
+
+# C24: collections are species keys; look selections are keyed by family.
+# Availability is derived from the collection, so old saves need no unlock migration.
+static func skin_available(species_key: String, look: String) -> bool:
+	load_profile()
+	if look == "":
+		return true
+	if look not in ["shiny", "classic"]:
+		return false
+	if look == "classic":
+		var covered := classic_covered_members()
+		for member in classic_members(species_key):
+			if covered.has(member):
+				return true
+		return false
+	var family := int(GameData.species(species_key).get("family", -1))
+	if family < 0:
+		return false
+	for key in data.get("shinies" if look == "shiny" else "classics", []):
+		if int(GameData.species(String(key)).get("family", -2)) == family:
+			return true
+	return false
+
+static func set_skin(species_key: String, look: String) -> bool:
+	load_profile()
+	var family := int(GameData.species(species_key).get("family", -1))
+	if not in_league(family) or not skin_available(species_key, look):
+		return false
+	var skins: Dictionary = data.get("skins", {})
+	if look == "":
+		skins.erase(str(family))
+	else:
+		skins[str(family)] = look
+	data["skins"] = skins
+	save_profile()
+	return true
+
+static func skin_for(species_key: String) -> String:
+	load_profile()
+	var look := String(data.get("skins", {}).get(str(int(GameData.species(species_key).get("family", -1))), ""))
+	return look if skin_available(species_key, look) else ""
+
+static func record_classic(species_key: String) -> int:
+	load_profile()
+	var classics: Array = data.get("classics", [])
+	if classics.has(species_key):
+		return 0
+	classics.append(species_key)
+	data["classics"] = classics
+	add_stardust(200)
+	return 200
+
+# Ae / news wr: a roster member unlocks itself; an evolution maps to
+# all roster members in its family. 106/107 share family236 but remain distinct.
+static func classic_members(species_key: String) -> Array:
+	var sp: Dictionary = GameData.species(species_key)
+	var sid := int(sp.get("id", -1))
+	if not GameData.roster_entry(sid).is_empty():
+		return [sid]
+	var members: Array = []
+	for id in GameData._roster:
+		if int(GameData.species_by_id(int(id)).get("family", -2)) == int(sp.get("family", -1)):
+			members.append(int(id))
+	return members
+
+static func classic_covered_members() -> Dictionary:
+	load_profile()
+	var covered: Dictionary = {}
+	for key in data.get("classics", []):
+		for member in classic_members(String(key)):
+			covered[member] = true
+	return covered
