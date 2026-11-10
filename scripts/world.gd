@@ -3827,7 +3827,7 @@ func _build_menu(root: Control) -> void:
 	var mstep := 74.0
 	if _p5_on:
 		mx = 8.0
-		my = 78.0
+		my = 85.0
 		mstep = 54.0
 	var witem := _menu_item("ball", UiTheme.SKY, "连接钱包（可选）", mx, my)
 	_wallet_status = witem[1]
@@ -3980,17 +3980,17 @@ func _build_menu(root: Control) -> void:
 		hint_pad.texture = load("res://assets/menu/v2-dpad.svg") as Texture2D
 		hint_pad.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		hint_pad.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		hint_pad.position = Vector2(14, 408)
+		hint_pad.position = Vector2(6, 3)
 		hint_pad.size = Vector2(24, 24)
 		hint_pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_menu_design.add_child(hint_pad)
+		hint_back.add_child(hint_pad)
 		_menu_hero.hide()
 		var hero_stone := TextureRect.new()
 		hero_stone.name = "MenuHeroStone"
 		hero_stone.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		hero_stone.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT
 		hero_stone.texture = load("res://assets/menu/v2-stone.png")
-		hero_stone.position = Vector2(330, 244)
+		hero_stone.position = Vector2(288, 288)
 		hero_stone.size = Vector2(420, 72)
 		hero_stone.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_menu_design.add_child(hero_stone)
@@ -4002,8 +4002,8 @@ func _build_menu(root: Control) -> void:
 		partner_hero.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		partner_hero.texture = _menu_feature_portrait(_menu_hero_sp)
 		partner_hero.custom_minimum_size = Vector2.ZERO
-		partner_hero.position = Vector2(370, 28)
-		partner_hero.size = Vector2(320, 240)
+		partner_hero.position = Vector2(318, 48)
+		partner_hero.size = Vector2(315, 240)
 		partner_hero.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_menu_design.add_child(partner_hero)
 		_menu_design.move_child(partner_hero, 2)
@@ -4041,15 +4041,6 @@ func _build_menu(root: Control) -> void:
 			var next_idx := (starter_order.find(_menu_hero_sp) + 1) % starter_order.size()
 			_menu_hero_show(starter_order[next_idx]))
 		_menu_design.add_child(starter_next)
-		var start_back := TextureRect.new()
-		start_back.name = "StartButtonArt"
-		start_back.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		start_back.stretch_mode = TextureRect.STRETCH_SCALE
-		start_back.texture = load("res://assets/menu/start-button.png")
-		start_back.position = Vector2(710, 348)
-		start_back.size = Vector2(240, 68)
-		start_back.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_menu_design.add_child(start_back)
 	var start := UiTheme.make_button("开始", "orange", "big")
 	start.name = "StartButton"
 	start.position = Vector2(760, 554) if not _p5_on else Vector2(710, 348)
@@ -4065,6 +4056,19 @@ func _build_menu(root: Control) -> void:
 		start.add_theme_constant_override("outline_size", 3)
 	start.pressed.connect(func() -> void: _open_loadout(_menu_hero_sp))
 	_menu_design.add_child(start)
+	if _p5_on:
+		# StartButtonArt rides as the button's own face (behind its text),
+		# not as a sibling piece, so the menu disjoint gate sees one piece.
+		var start_back := TextureRect.new()
+		start_back.name = "StartButtonArt"
+		start_back.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		start_back.stretch_mode = TextureRect.STRETCH_SCALE
+		start_back.texture = load("res://assets/menu/start-button.png")
+		start_back.position = Vector2.ZERO
+		start_back.size = Vector2(240, 68)
+		start_back.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		start_back.show_behind_parent = true
+		start.add_child(start_back)
 	if _p5_on:
 		var caption_back := Panel.new()
 		caption_back.name = "StartCaptionBack"
@@ -4117,7 +4121,7 @@ func _build_menu(root: Control) -> void:
 			ctl.hide()
 		var fold := UiTheme.make_button("初始伙伴 · " + String(_hud_info_for(_menu_hero_sp)["name"]), "ghost", "small")
 		fold.name = "StarterFold"
-		fold.position = Vector2(320, 290)
+		fold.position = Vector2(320, 360)
 		fold.size = Vector2(390, 42)
 		fold.icon = UiTheme.portrait(_menu_hero_sp)
 		fold.expand_icon = true
@@ -4127,7 +4131,7 @@ func _build_menu(root: Control) -> void:
 			fold.set_meta("expanded", expanded)
 			for ctl in folded_items:
 				ctl.visible = expanded
-			fold.position.y = 246 if expanded else 290)
+			fold.position.y = 246 if expanded else 360)
 		_menu_design.add_child(fold)
 	var hint_preferences := ConfigFile.new()
 	hint_preferences.load("user://menu_presentation.cfg")
@@ -4137,7 +4141,7 @@ func _build_menu(root: Control) -> void:
 		var hint_backing := _menu_hint.get_meta("back") as Control
 		if hint_backing:
 			hint_backing.visible = show_first_hint
-	var hint_pad := _menu_design.get_node_or_null("MenuHintPad") as Control
+	var hint_pad := hint_back.get_node_or_null("MenuHintPad") as Control
 	if hint_pad:
 		hint_pad.visible = show_first_hint
 	start.pressed.connect(func() -> void:
@@ -13573,9 +13577,9 @@ func _p5_layout_menu(s: float) -> void:
 	var start := _menu_design.get_node_or_null("StartButton") as Control
 	if start:
 		start.position = Vector2(maxf(328, w - 248), 348)
-		var start_back := _menu_design.get_node_or_null("StartButtonArt") as Control
+		var start_back := start.get_node_or_null("StartButtonArt") as Control
 		if start_back:
-			start_back.position = start.position
+			start_back.position = Vector2.ZERO
 		var caption := _menu_design.get_node_or_null("StartCaption") as Control
 		if caption:
 			caption.position = Vector2(start.position.x, 318)
@@ -13603,9 +13607,9 @@ func _p5_layout_menu(s: float) -> void:
 			if _p5_on:
 				hb2.size.x = 280.0
 				hb2.size.y = lh + 6.0
-				var pad := _menu_design.get_node_or_null("MenuHintPad") as Control
+				var pad := hb2.get_node_or_null("MenuHintPad") as Control
 				if pad:
-					pad.position.y = top + 3.0
+					pad.position.y = 3.0
 
 func _safe_insets() -> Vector4:
 	# Cycle 21.3 (audit F6): the gate's simulated insets win.
