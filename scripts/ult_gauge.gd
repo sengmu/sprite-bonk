@@ -59,8 +59,10 @@ func _draw() -> void:
 	var centre := size * 0.5
 	var r_out := minf(size.x, size.y) * 0.5 - 1.0 - hit_pad
 	# Base disc: medal ring + dark face (the old Panel's look).
-	draw_circle(centre, r_out, medal)
-	draw_circle(centre, r_out - 3.0, Color(0.07, 0.09, 0.14, 0.92))
+	draw_circle(centre + Vector2(0, 3), r_out, Color(0.25, 0.18, 0.09, 0.25))
+	draw_circle(centre, r_out, UiTheme.CREAM)
+	draw_circle(centre, r_out - 3.0, UiTheme.ORANGE)
+	draw_arc(centre, r_out - 6.0, PI * 1.12, PI * 1.68, 24, Color(1, 1, 1, 0.65), 3, true)
 	if charge >= 1.0:
 		# Ready: full bright face + pulsing rim in the ult tint.
 		var pulse := 0.75 + 0.25 * sin(_pulse * 6.0)

@@ -54,7 +54,7 @@ const NAMES_ZH := {
 
 static func display_name(en_name: String) -> String:
 	var zh := String(NAMES_ZH.get(en_name, ""))
-	return (zh + " " + en_name) if zh != "" else en_name
+	return zh if zh != "" else en_name
 
 var world  # the World (untyped cross-ref, project idiom)
 

@@ -135,7 +135,7 @@ func _ready() -> void:
 	_ult_glyph.add_theme_font_override("font", UiTheme.display_font())
 	_ult_glyph.add_theme_font_size_override("font_size", 22)
 	_ult_glyph.add_theme_color_override("font_color", Color(1, 1, 1, 0.92))
-	_ult_glyph.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.6))
+	_ult_glyph.add_theme_color_override("font_outline_color", UiTheme.ORANGE.darkened(0.25))
 	_ult_glyph.add_theme_constant_override("outline_size", 4)
 	_ult_glyph.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ult_gauge.add_child(_ult_glyph)
@@ -360,16 +360,20 @@ func _build_button(font: Font, kind: String, icon: String, size: int,
 	var panel := Panel.new()
 	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = fill
+	sb.bg_color = {"dash": UiTheme.GREEN_DEEP, "jump": UiTheme.SKY, "interact": UiTheme.ORANGE}.get(kind, UiTheme.CREAM)
 	sb.set_corner_radius_all(999)
-	sb.set_border_width_all(2)
-	sb.border_color = border
+	sb.set_border_width_all(3)
+	sb.border_width_bottom = 6
+	sb.border_color = UiTheme.CREAM
+	sb.shadow_size = 5
+	sb.shadow_offset = Vector2(0, 3)
+	sb.shadow_color = Color(0.25, 0.18, 0.09, 0.25)
 	panel.add_theme_stylebox_override("panel", sb)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	area.add_child(panel)
 	var ic := UiIcon.new()
 	ic.icon = icon
-	ic.color = Color(1, 1, 1, 0.92)
+	ic.color = UiTheme.TEXT if kind in ["lock", "aim", "pause"] else Color.WHITE
 	ic.set_anchors_preset(Control.PRESET_CENTER)
 	var half := size * 0.30
 	ic.offset_left = -half

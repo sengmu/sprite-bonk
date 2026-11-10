@@ -1717,10 +1717,11 @@ func _c9_ult_phase() -> void:
 	_c9_check("ult: bulbasaur def name/duration (form 0)",
 		ult.ult_name() == "Furious Roots" and absf(ult.cast_dur() - 1.6) < 0.001,
 		"name=" + ult.ult_name() + " dur=" + str(ult.cast_dur()))
-	# Cycle 18 (audit §7): the label localizes to "CN EN" —
+	# Approved UI: single-language label; definition identity is still checked above.
+	#
 	# the check's intent stands: the REAL def name is shown.
 	_c9_check("ult: HUD label shows the real def name",
-		(w.get("_ult_name_label") as Label).text.contains("Furious Roots"),
+		(w.get("_ult_name_label") as Label).text == Ult.display_name("Furious Roots"),
 		"label=" + (w.get("_ult_name_label") as Label).text)
 	w.set_base_weather("clear")  # fixture: exact pipeline readings
 	# Passive gain: 9.5 s of update == +0.1 x rate, synchronously.

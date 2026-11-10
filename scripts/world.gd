@@ -4,6 +4,7 @@ extends Node3D
 ## fog #bfe3ff 40-160, sky #5aa8ff -> #d8f0ff, sun #fff1d6 from (60,120,40),
 ## camera FOV 70 / pitch 0.45 / dist 9 / focus +1.5 / lookAt +1.8 (see DIFF.md).
 
+const UiBadge = preload("res://scripts/ui_badge.gd")
 const Fossils = preload("res://scripts/fossils.gd")
 
 const BOUND := 168.0
@@ -191,7 +192,7 @@ const EARTH_DARK := Color(0.22, 0.15, 0.12)
 const CLIFF_C := Color(0.50, 0.42, 0.24)  # sampled in-game cliff face, rescaled
 
 const STARTER_HUD := {
-	"bulbasaur": {"name": "妙蛙种子", "en": "Bulbasaur", "medal": Color(0.35, 0.71, 0.41), "glyph": "妙", "types": [["草", Color(0.48, 0.78, 0.35)], ["毒", Color(0.64, 0.42, 0.78)]], "evo": "› Lv.24 进化", "move": "藤鞭", "ult": "Furious Roots"},
+	"bulbasaur": {"name": "妙蛙种子", "en": "Bulbasaur", "medal": Color(0.35, 0.71, 0.41), "glyph": "妙", "types": [["草", Color(0.48, 0.78, 0.35)], ["毒", Color(0.64, 0.42, 0.78)]], "evo": "› 24级进化", "move": "藤鞭", "ult": "Furious Roots"},
 	"charmander": {"name": "小火龙", "en": "Charmander", "medal": Color(0.94, 0.54, 0.24), "glyph": "火", "types": [["火", Color(0.94, 0.5, 0.25)]], "evo": "› 进化未解锁", "move": "火花", "ult": "Rising Blaze"},
 	"squirtle": {"name": "杰尼龟", "en": "Squirtle", "medal": Color(0.29, 0.56, 0.85), "glyph": "杰", "types": [["水", Color(0.3, 0.58, 0.9)]], "evo": "› 进化未解锁", "move": "水枪", "ult": "Shell Whirlpool"},
 }
@@ -482,6 +483,8 @@ var _hud_shield_fill: Panel
 var _php_lag := 1.0
 var _php_lag_hold := 0.0
 var _php_band := -1
+var _lab_selected := "dmg"
+var _lab_detail: VBoxContainer
 var _boss_card: Panel
 var _boss_name_label: Label
 var _boss_tag_label: Label
@@ -2684,7 +2687,7 @@ func _open_portal() -> void:
 # ---------------------------------------------------------------------- HUD
 func _style(bg: Color, radius: int, border: Color = Color(0, 0, 0, 0), bw: int = 0) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
-	s.bg_color = bg
+	s.bg_color = UiTheme.CREAM if UiTheme.luminance(bg) < 0.32 and bg.a > 0.4 else bg
 	s.set_corner_radius_all(radius)
 	if bw > 0:
 		s.set_border_width_all(bw)
@@ -2705,7 +2708,7 @@ func _mk_label(parent: Node, text: String, size: int, color: Color = Color.WHITE
 	l.text = text
 	l.add_theme_font_override("font", _font)
 	l.add_theme_font_size_override("font_size", size)
-	l.add_theme_color_override("font_color", color)
+	l.add_theme_color_override("font_color", UiTheme.text_color(color))
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(l)
 	return l
@@ -2717,7 +2720,7 @@ func _mk_dlabel(parent: Node, text: String, size: int, color: Color = Color.WHIT
 	l.text = text
 	l.add_theme_font_override("font", _font_display)
 	l.add_theme_font_size_override("font_size", size)
-	l.add_theme_color_override("font_color", color)
+	l.add_theme_color_override("font_color", UiTheme.text_color(color))
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(l)
 	return l
@@ -2869,7 +2872,7 @@ func _build_hud() -> void:
 	_pause_badge.add_child(pb_ic)
 	_pause_badge.visible = false
 	var lv_badge := _panel(_hero_cluster, Vector2(50, 62), Vector2(44, 24), Color(0.10, 0.07, 0.20, 0.92), 12, Color(1, 1, 1, 0.35), 1)
-	_lv_label = _label_in(lv_badge, "Lv.1", Vector2(0, 0), Vector2(44, 24), 12, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER)
+	_lv_label = _label_in(lv_badge, "1级", Vector2(0, 0), Vector2(44, 24), 12, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER)
 	var info := Panel.new()
 	_hero_info = info
 	info.position = Vector2(94, 4)
@@ -2888,7 +2891,7 @@ func _build_hud() -> void:
 	# Cycle 21.3 (audit §5): 13 px muted grey on glass was
 	# near-illegible — font 14, colour at full alpha
 	# (MUTED is Color8, a = 1.0 >= the audit's 0.8 floor).
-	_hud_evo = _label_in(info, "› Lv.24 进化", Vector2(14, 58), Vector2(210, 18), 14, UiTheme.MUTED)
+	_hud_evo = _label_in(info, "› 24级进化", Vector2(14, 58), Vector2(210, 18), 14, UiTheme.MUTED)
 	# Player HP bar (cycle 10): the original's .bar.hpbar lives in
 	# the plate's under-row (@2000723) — instant fill + lag ghost
 	# (hold 0.4 s, drain 0.9/s, update @2023679) + ceil(hp) number.
@@ -3035,8 +3038,8 @@ func _build_hud() -> void:
 	_boss_card.set_anchors_preset(Control.PRESET_CENTER_TOP)
 	_boss_card.offset_left = -230
 	_boss_card.offset_right = 230
-	_boss_card.offset_top = 160
-	_boss_card.offset_bottom = 230
+	_boss_card.offset_top = 102
+	_boss_card.offset_bottom = 148
 	_boss_card.add_theme_stylebox_override("panel", UiTheme.glass(13, UiTheme.GLASS_A, Color(1, 1, 1, 0.14), 1, 0))
 	_boss_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_boss_card.visible = false
@@ -3053,6 +3056,7 @@ func _build_hud() -> void:
 	_boss_pic.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_boss_card.add_child(_boss_pic)
 	_boss_foot = _label_in(_boss_card, "", Vector2(14, 50), Vector2(432, 16), 12, UiTheme.MUTED)
+	_boss_foot.hide()
 	_boss_name_label = _label_in(_boss_card, "", Vector2(56, 5), Vector2(254, 22), 16, Color.WHITE)
 	_boss_name_label.add_theme_font_override("font", _font_display)
 	_boss_tag_label = _label_in(_boss_card, "守护者", Vector2(316, 5), Vector2(128, 22), 12, UiTheme.MUTED, HORIZONTAL_ALIGNMENT_RIGHT)
@@ -3101,7 +3105,7 @@ func _build_hud() -> void:
 	mm_frame.offset_right = -12
 	mm_frame.offset_top = 10
 	mm_frame.offset_bottom = 186
-	mm_frame.add_theme_stylebox_override("panel", UiTheme.glass(12, UiTheme.GLASS_A, Color(1, 1, 1, 0.14), 1, 0))
+	mm_frame.add_theme_stylebox_override("panel", UiTheme.glass(88, UiTheme.GLASS_A, Color(1, 1, 1, 0.14), 1, 0))
 	mm_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	mm_frame.name = "MinimapFrame"
 	root.add_child(mm_frame)
@@ -3264,14 +3268,14 @@ func _build_hud() -> void:
 		var slot := Panel.new()
 		slot.position = Vector2(16 + i * 52, 56)
 		slot.size = Vector2(46, 46)
-		slot.add_theme_stylebox_override("panel", _style(UiTheme.glass_color(0.66), 10, Color(1, 1, 1, 0.22), 1))
+		slot.add_theme_stylebox_override("panel", _style(UiTheme.glass_color(0.99), 23, Color(1, 1, 1, 0.22), 1))
 		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_bl_cluster.add_child(slot)
 		_bl_legacy.append(slot)
 	var move := Panel.new()
 	move.position = Vector2(232, 48)
 	move.size = Vector2(56, 56)
-	move.add_theme_stylebox_override("panel", _style(UiTheme.glass_color(0.85), 12, Color(0.35, 0.71, 0.41), 2))
+	move.add_theme_stylebox_override("panel", _style(UiTheme.glass_color(0.99), 28, Color(0.35, 0.71, 0.41), 2))
 	move.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_bl_cluster.add_child(move)
 	_move_slot = move
@@ -3285,13 +3289,13 @@ func _build_hud() -> void:
 	_move_slot_icon.position = Vector2(12, 6)
 	_move_slot_icon.size = Vector2(32, 32)
 	move.add_child(_move_slot_icon)
-	_move_name_label = _label_in(move, "Lv.1", Vector2(0, 38), Vector2(56, 14), 10, Color(1, 1, 1, 0.85), HORIZONTAL_ALIGNMENT_CENTER)
+	_move_name_label = _label_in(move, "1级", Vector2(0, 38), Vector2(56, 14), 10, Color(1, 1, 1, 0.85), HORIZONTAL_ALIGNMENT_CENTER)
 	var badge := _panel(move, Vector2(-5, -5), Vector2(20, 18), Color(0.12, 0.11, 0.2, 0.95), 9)
 	_label_in(badge, "1", Vector2(0, 0), Vector2(20, 18), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER)
 	var locked := Panel.new()
 	locked.position = Vector2(296, 56)
 	locked.size = Vector2(46, 46)
-	locked.add_theme_stylebox_override("panel", _style(Color(0.08, 0.08, 0.12, 0.85), 10))
+	locked.add_theme_stylebox_override("panel", _style(UiTheme.CREAM, 23))
 	locked.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_bl_cluster.add_child(locked)
 	var lock_ic := UiIcon.new("lock", Color(0.6, 0.6, 0.7), 24)
@@ -3308,7 +3312,7 @@ func _build_hud() -> void:
 	_bl_cluster.add_child(_bl_rows)
 	_bl_lock = Panel.new()
 	_bl_lock.size = Vector2(46, 46)
-	_bl_lock.add_theme_stylebox_override("panel", _style(Color(0.08, 0.08, 0.12, 0.85), 10))
+	_bl_lock.add_theme_stylebox_override("panel", _style(UiTheme.CREAM, 23))
 	_bl_lock.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_bl_rows.add_child(_bl_lock)
 	var lock_ic2 := UiIcon.new("lock", Color(0.6, 0.6, 0.7), 22)
@@ -3336,11 +3340,11 @@ func _build_hud() -> void:
 	_ult_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_ult_name_label.add_theme_font_override("font", _font)
 	_ult_name_label.add_theme_font_size_override("font_size", 12)
-	_ult_name_label.add_theme_color_override("font_color", Color.WHITE)
+	_ult_name_label.add_theme_color_override("font_color", UiTheme.TEXT)
 	_ult_name_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.6))
 	_ult_name_label.add_theme_constant_override("shadow_offset_x", 1)
 	_ult_name_label.add_theme_constant_override("shadow_offset_y", 1)
-	_ult_name_label.text = "狂怒根须 Furious Roots"
+	_ult_name_label.text = "狂怒根须"
 	_bl_cluster.add_child(_ult_name_label)
 	# Cycle 19 (audit punch #15): the cycle-7 learned-moves
 	# text line ("招式：抓 Lv.1 …") is DELETED — it duplicated
@@ -3374,7 +3378,7 @@ func _build_hud() -> void:
 	_banner.add_theme_constant_override("shadow_offset_x", 2)
 	_banner.add_theme_constant_override("shadow_offset_y", 2)
 	_banner.add_theme_font_override("font", _font_display)
-	UiTheme.outline(_banner, 4)
+
 	_banner.modulate.a = 0.0
 	# Cycle 21.3 (audit §5 + F5): the prompt was white
 	# text on bright grass protected only by an outline —
@@ -3414,7 +3418,7 @@ func _build_hud() -> void:
 	_prompt.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.6))
 	_prompt.add_theme_constant_override("shadow_offset_x", 2)
 	_prompt.add_theme_constant_override("shadow_offset_y", 2)
-	UiTheme.outline(_prompt, 3)
+
 
 	# Cycle 17: everything added to root up to here is run HUD
 	# (medallion, cluster, minimap, slots, banner...). Regroup
@@ -3441,7 +3445,7 @@ func _build_hud() -> void:
 	# is driven per-frame from _any_modal_open().
 	_modal_scrim = ColorRect.new()
 	_modal_scrim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_modal_scrim.color = Color(UiTheme.INK.r, UiTheme.INK.g, UiTheme.INK.b, 0.55)
+	_modal_scrim.color = Color(0.16, 0.20, 0.12, 0.40)
 	_modal_scrim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_modal_scrim.visible = false
 	root.add_child(_modal_scrim)
@@ -3519,6 +3523,7 @@ func _build_hud() -> void:
 	_apply_safe_area()
 	_apply_visibility_settings()
 	_layout_top_card()
+	RenderingServer.frame_pre_draw.connect(_reskin_boss_visibility)
 	get_viewport().size_changed.connect(_on_viewport_resized)
 	# UI-mobile P5: modals opened straight from the menu (lab /
 	# shop / unlock / wallet) never pass _apply_ui_scale — place
@@ -3546,7 +3551,7 @@ func _hud_info_for(species: String) -> Dictionary:
 		chips.append([String(th[0]), th[1]])
 	var medal: Color = (TYPE_HUD.get(String((sd.get("types", ["normal"]) as Array)[0]), ["", Color(0.6, 0.6, 0.6)])[1] as Color)
 	var evo_lv := GameData.evo_level_for(species)
-	var evo_txt := "› Lv.%d 进化" % evo_lv if evo_lv > 0 else "› 最终形态"
+	var evo_txt := "› %d级进化" % evo_lv if evo_lv > 0 else "› 最终形态"
 	var ult := "Furious Roots"
 	if player and STARTER_HUD.has(player.base_species):
 		ult = String(STARTER_HUD[player.base_species]["ult"])
@@ -3562,8 +3567,8 @@ func _apply_starter_hud(species: String) -> void:
 	_medal_glyph.visible = _medal_panel.portrait == null
 	_medal_glyph.text = String(info["glyph"])
 	if _move_slot:
-		_move_slot.add_theme_stylebox_override("panel", _style(UiTheme.glass_color(0.85), 12, info["medal"], 2))
-	_hud_name_full = String(info["name"]) + " " + String(info["en"])
+		_move_slot.add_theme_stylebox_override("panel", _style(UiTheme.glass_color(0.99), 28, info["medal"], 2))
+	_hud_name_full = "%s %s" % [String(info["name"]), String(info["en"])]
 	# UI-mobile P2 (plan H4): Chinese name only on phone; the
 	# EN name is on the pause status page.
 	_hud_name.text = String(info["name"]) if _p2_on == 1 else _hud_name_full
@@ -3628,19 +3633,21 @@ func _on_player_evolved() -> void:
 ## callers wire `pressed` and write status into the subtitle.
 func _menu_item(icon: String, accent: Color, title: String, x: float, y: float) -> Array:
 	# UI-mobile P5: 52 tall on phone (six fit the design column).
-	var h := 52.0 if _p5_on else 64.0
-	var b := UiTheme.make_card(accent, Vector2(300, h))
+	var h := 48.0 if _p5_on else 64.0
+	var b := UiTheme.make_button("", "ghost", "normal")
+	b.custom_minimum_size = Vector2(300, h)
 	b.position = Vector2(x, y)
 	b.size = Vector2(300, h)
 	var ic := UiIcon.new(icon, accent, 30)
 	ic.position = Vector2(16, 11.0 if _p5_on else 17.0)
 	ic.size = Vector2(30, 30)
 	b.add_child(ic)
-	var t := _mk_label(b, title, 17, Color.WHITE)
+	var t := _mk_label(b, title, 22, UiTheme.TEXT)
 	t.add_theme_font_override("font", _font_display)
-	t.position = Vector2(58, 3.0 if _p5_on else 8.0)
+	t.position = Vector2(58, 10.0 if _p5_on else 18.0)
 	t.size = Vector2(232, 24)
 	var s := _mk_label(b, "", 12, UiTheme.MUTED)
+	s.hide()
 	s.position = Vector2(58, 28.0 if _p5_on else 36.0)
 	s.size = Vector2(232, 20)
 	_menu_panel.add_child(b)
@@ -3651,74 +3658,24 @@ func _menu_item(icon: String, accent: Color, title: String, x: float, y: float) 
 ## (pokemon.json via GameData), and the ult line — replacing
 ## the pre-17 text-only button that showed none of this.
 func _starter_card(sp: String, unlocked: bool, w: float) -> Button:
-	var info: Dictionary = _hud_info_for(sp)
-	var accent: Color = info["medal"]
-	var b := UiTheme.make_card(accent, Vector2(w, 104))
-	b.size = Vector2(w, 104)
-	var pt := TextureRect.new()
-	pt.texture = UiTheme.portrait(sp)
-	# Expand/stretch BEFORE size: with the default KEEP_SIZE
-	# expand mode, assigning size first is overridden back to
-	# the texture's native 224px (cycle-17 menu bug, proven by
-	# Test/trecttest.tscn).
-	pt.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	pt.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	pt.position = Vector2(10, 12)
-	pt.size = Vector2(80, 80)
-	pt.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	b.add_child(pt)
-	if pt.texture == null:
-		_label_in(b, String(info["glyph"]), Vector2(8, 8), Vector2(80, 80), 30, accent, HORIZONTAL_ALIGNMENT_CENTER)
-	var nm := _mk_label(b, "%s  %s" % [String(info["name"]), String(info["en"])], 19, Color.WHITE)
-	nm.add_theme_font_override("font", _font_display)
-	nm.position = Vector2(100, 5)
-	nm.size = Vector2(250, 26)
-	var chips := HBoxContainer.new()
-	chips.position = Vector2(100, 34)
-	chips.add_theme_constant_override("separation", 5)
-	chips.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	b.add_child(chips)
-	for t in info["types"]:
-		chips.add_child(UiTheme.chip(String(t[0]), t[1], 11))
-	var sd: Dictionary = GameData.species(sp)
-	var st: Dictionary = sd.get("stats", {})
-	var stats := _mk_label(b, "HP %d · 攻击 %d · 防御 %d · 速度 %d" % [int(st.get("hp", 0)), int(st.get("atk", 0)), int(st.get("def", 0)), int(st.get("spe", 0))], 12, UiTheme.MUTED)
-	stats.position = Vector2(100, 58)
-	stats.size = Vector2(290, 18)
-	var foot := _mk_label(b, "大招 %s" % Ult.display_name(String(info["ult"])), 12, UiTheme.GOLD)
-	if not STARTER_HUD.has(sp):
-		foot.text = String(info["evo"])
-		foot.add_theme_color_override("font_color", UiTheme.LILAC)
-	foot.position = Vector2(100, 79)
-	foot.size = Vector2(290, 16)
-	if w < 380.0:
-		# UI-mobile P5: the phone menu's 340 cards keep their
-		# text columns inside the card.
-		nm.size.x = w - 108.0
-		stats.size.x = w - 104.0
-		foot.size.x = w - 104.0
-		# Same four values, short stat names (fits at the 14 px
-		# phone floor; the hero card / loadout show the full six).
-		stats.text = "HP %d · 攻 %d · 防 %d · 速 %d" % [int(st.get("hp", 0)), int(st.get("atk", 0)), int(st.get("def", 0)), int(st.get("spe", 0))]
-	if unlocked:
-		var tag := UiTheme.chip("联盟解锁", Color(0.13, 0.35, 0.55, 0.95), 11)
-		tag.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-		tag.offset_left = -84
-		tag.offset_right = -8
-		tag.offset_top = 8
-		tag.offset_bottom = 30
-		b.add_child(tag)
-	var captured: String = sp
-	# Cycle 18: starter cards open the LOADOUT (the bundle's
-	# region/select flow: pick hero + team + bag boosts,
-	# then start) instead of starting the run directly.
+	var info := _hud_info_for(sp)
+	var b := UiTheme.make_card(info["medal"], Vector2(110, 112))
+	b.size = Vector2(110, 112)
+	var portrait := TextureRect.new()
+	portrait.texture = UiTheme.portrait(sp)
+	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	portrait.position = Vector2(15, 4)
+	portrait.size = Vector2(80, 80)
+	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(portrait)
+	_label_in(b, String(info["name"]), Vector2(0, 82), Vector2(110, 26), 17, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER)
 	b.pressed.connect(func() -> void:
 		audio.click()
-		audio.cry(captured)
-		_open_loadout(captured))
-	# Cycle 19: the menu hero card follows hover/focus.
-	b.mouse_entered.connect(func() -> void: _menu_hero_show(captured))
-	b.focus_entered.connect(func() -> void: _menu_hero_show(captured))
+		audio.cry(sp)
+		_open_loadout(sp))
+	b.mouse_entered.connect(func() -> void: _menu_hero_show(sp))
+	b.focus_entered.connect(func() -> void: _menu_hero_show(sp))
 	return b
 
 func _build_menu(root: Control) -> void:
@@ -3731,12 +3688,17 @@ func _build_menu(root: Control) -> void:
 	_menu_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_menu_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(_menu_panel)
-	var title := _mk_dlabel(_menu_panel, "SpriteBonk 3D", 54, Color.WHITE)
+	var ribbon := _panel(_menu_panel, Vector2(30, 24), Vector2(280, 72), UiTheme.CREAM, 32, Color.WHITE, 3)
+	ribbon.name = "LogoRibbon"
+	if _p5_on:
+		ribbon.position = Vector2(8, 0)
+		ribbon.size = Vector2(300, 58)
+	var title := _mk_dlabel(_menu_panel, "", 54, Color.WHITE)
 	title.position = Vector2(52, 30)
 	title.size = Vector2(600, 66)
 	UiTheme.outline(title, 6)
-	var sub := _mk_label(_menu_panel, "选择你的初始伙伴", 19, UiTheme.LILAC)
-	sub.position = Vector2(56, 102)
+	var sub := _mk_label(_menu_panel, "选择初始伙伴", 19, UiTheme.LILAC)
+	sub.position = Vector2(362, 430)
 	sub.size = Vector2(400, 26)
 	# UI-mobile P5 (plan §B3 G1-G6): the phone menu is laid out
 	# on a 450-tall design surface scaled ~1.58 (see
@@ -3745,16 +3707,16 @@ func _build_menu(root: Control) -> void:
 	# the width allows, the touch hint along the foot.
 	if _p5_on:
 		title.add_theme_font_size_override("font_size", 40)
-		var tw := _font_display.get_string_size("SpriteBonk 3D", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 40).x
+		var tw := _font_display.get_string_size("", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 40).x
 		title.position = Vector2(8, 0)
 		title.size = Vector2(tw + 12.0, 50)
-		sub.position = Vector2(tw + 32.0, 14)
+		sub.position = Vector2(332, 192)
 		sub.size = Vector2(300, 26)
 	# Cycle 19 (audit §2.1): the subtitle was the least
 	# legible text on the screen — 19 px lilac with no
 	# outline, sitting on pale scenery. It gets the
 	# title's outline treatment.
-	UiTheme.outline(sub, 3)
+
 	if _p5_on:
 		# The display face's line box at 40 (+ outline) is taller
 		# than the 50 row and pushed the title's rect into the
@@ -3764,18 +3726,19 @@ func _build_menu(root: Control) -> void:
 		while tfs > 30 and title.get_minimum_size().y > 54.0:
 			tfs -= 2
 			title.add_theme_font_size_override("font_size", tfs)
-		var tw2 := _font_display.get_string_size("SpriteBonk 3D", HORIZONTAL_ALIGNMENT_LEFT, -1.0, tfs).x
+		var tw2 := _font_display.get_string_size("", HORIZONTAL_ALIGNMENT_LEFT, -1.0, tfs).x
 		title.size = Vector2(tw2 + 12.0, title.get_minimum_size().y)
-		sub.position = Vector2(tw2 + 32.0, 14)
+		sub.position = Vector2(332, 192)
 	var y := 146.0
-	var pcol: VBoxContainer = null
+	var pcol: HBoxContainer = null
 	if _p5_on:
 		_menu_starters = ScrollContainer.new()
-		_menu_starters.position = Vector2(8, 56)
-		_menu_starters.size = Vector2(354, 338)
-		_menu_starters.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		_menu_starters.position = Vector2(328, 226)
+		_menu_starters.size = Vector2(354, 124)
+		_menu_starters.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+		_menu_starters.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 		_menu_panel.add_child(_menu_starters)
-		pcol = VBoxContainer.new()
+		pcol = HBoxContainer.new()
 		pcol.add_theme_constant_override("separation", 10)
 		_menu_starters.add_child(pcol)
 	for sp in ["bulbasaur", "charmander", "squirtle"]:
@@ -3783,7 +3746,7 @@ func _build_menu(root: Control) -> void:
 		if _p5_on:
 			pcol.add_child(card)
 		else:
-			card.position = Vector2(52, y)
+			card.position = Vector2(358 + ["bulbasaur", "charmander", "squirtle"].find(sp) * 124, 470)
 			_menu_panel.add_child(card)
 			_menu_intro_items.append(card)
 		if _first_starter_card == null:
@@ -3802,23 +3765,23 @@ func _build_menu(root: Control) -> void:
 		pcol.add_child(_starter_unlock_box)
 	else:
 		var usc := ScrollContainer.new()
-		usc.position = Vector2(52, y + 2)
-		usc.size = Vector2(396, 160)
+		usc.position = Vector2(358, 590)
+		usc.size = Vector2(360, 60)
 		_menu_panel.add_child(usc)
 		usc.add_child(_starter_unlock_box)
 	# Cycle 19 (audit §2.2): the control hint gets a glass
 	# backing (it was raw 13 px text laid over grass).
 	var hint_back := Panel.new()
 	hint_back.position = Vector2(44, 664)
-	hint_back.size = Vector2(796, 48)
+	hint_back.size = Vector2(1192, 48)
 	hint_back.add_theme_stylebox_override("panel", UiTheme.glass(10, 0.55))
 	hint_back.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_menu_panel.add_child(hint_back)
 	var hint := _mk_label(_menu_panel, MENU_HINT_KBD, 13, Color(0.84, 0.86, 0.94))
 	_menu_hint = hint  # UI-mobile P1.1: re-texted by _touch_text_sync
 	hint.position = Vector2(52, 672)
-	hint.size = Vector2(780, 40)
-	UiTheme.outline(hint, 2)
+	hint.size = Vector2(1170, 40)
+
 	hint.set_meta("back", hint_back)
 	if _p5_on:
 		hint_back.position = Vector2(8, 400)
@@ -3829,13 +3792,13 @@ func _build_menu(root: Control) -> void:
 	# --- meta column (cycle 17): mm-item cards — the wallet
 	# subtitle carries the live wallet state, the Lab subtitle
 	# the bundle's "{n} 星尘" line (via _refresh_meta). ---
-	var mx := 492.0
-	var my := 146.0
+	var mx := 30.0
+	var my := 136.0
 	var mstep := 74.0
 	if _p5_on:
-		mx = 374.0
-		my = 56.0
-		mstep = 57.0
+		mx = 8.0
+		my = 64.0
+		mstep = 54.0
 	var witem := _menu_item("ball", UiTheme.SKY, "连接钱包（可选）", mx, my)
 	_wallet_status = witem[1]
 	(witem[0] as Button).pressed.connect(func() -> void:
@@ -3843,7 +3806,7 @@ func _build_menu(root: Control) -> void:
 		_wallet_panel.visible = not _wallet_panel.visible)
 	_menu_intro_items.append(witem[0])
 	my += mstep
-	var litem := _menu_item("flask", UiTheme.PURPLE, "研究室 · Lab", mx, my)
+	var litem := _menu_item("flask", UiTheme.PURPLE, "实验室", mx, my)
 	_meta_status = litem[1]
 	(litem[0] as Button).pressed.connect(func() -> void:
 		audio.click()
@@ -3873,7 +3836,7 @@ func _build_menu(root: Control) -> void:
 			_open_settings())
 	_menu_intro_items.append(snditem[0])
 	my += mstep
-	var uitem := _menu_item("trophy", Color8(90, 170, 255), "联盟挑战 · 解锁", mx, my)
+	var uitem := _menu_item("trophy", Color8(90, 170, 255), "联盟挑战", mx, my)
 	(uitem[1] as Label).text = "终身挑战进度"
 	(uitem[0] as Button).pressed.connect(func() -> void:
 		audio.click()
@@ -3900,12 +3863,12 @@ func _build_menu(root: Control) -> void:
 	# was empty scenery — a hero detail card (the original
 	# frames an ls-hero) follows starter hover/focus.
 	_menu_hero = PanelContainer.new()
-	_menu_hero.position = Vector2(836, 146)
-	_menu_hero.size = Vector2(392, 384)
+	_menu_hero.position = Vector2(580, 100)
+	_menu_hero.size = Vector2(600, 320)
 	if _p5_on:
-		_menu_hero.position = Vector2(686, 56)
+		_menu_hero.position = Vector2(686, 80)
 		_menu_hero.size = Vector2(300, 338)
-	_menu_hero.add_theme_stylebox_override("panel", UiTheme.glass(16, 0.88))
+	_menu_hero.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	_menu_panel.add_child(_menu_hero)
 	_menu_hero_box = VBoxContainer.new()
 	_menu_hero_box.add_theme_constant_override("separation", 6)
@@ -3927,6 +3890,29 @@ func _build_menu(root: Control) -> void:
 	for c in _menu_panel.get_children():
 		if c != _menu_design:
 			(c as Node).reparent(_menu_design, false)
+	var start := UiTheme.make_button("开始", "orange", "big")
+	start.name = "StartButton"
+	start.position = Vector2(760, 554) if not _p5_on else Vector2(710, 344)
+	start.size = Vector2(340, 80) if not _p5_on else Vector2(260, 48)
+	start.add_theme_font_size_override("font_size", 32)
+	start.pressed.connect(func() -> void: _open_loadout(_menu_hero_sp))
+	_menu_design.add_child(start)
+	var resources := HBoxContainer.new()
+	resources.name = "Resources"
+	resources.position = Vector2(820, 26) if not _p5_on else Vector2(698, 8)
+	resources.add_theme_constant_override("separation", 10)
+	for entry in [["星尘 %d  +" % Profile.stardust(), "lab"], ["累计 %d  +" % int(Profile.data.get("totalStardust", 0)), "shop"]]:
+		var pill := UiTheme.make_button(String(entry[0]), "ghost", "normal")
+		var dest: String = entry[1]
+		pill.pressed.connect(func() -> void:
+			if dest == "lab":
+				_lab_panel.show()
+				_refresh_lab()
+			else:
+				_shop_panel.show()
+				_refresh_shop())
+		resources.add_child(pill)
+	_menu_design.add_child(resources)
 	_menu_intro()
 	if _first_starter_card:
 		# A visible focus ring from boot (audit punch #18);
@@ -3979,117 +3965,98 @@ func _menu_hero_show(sp: String) -> void:
 		return
 	for c in _menu_hero_box.get_children():
 		_menu_hero_box.remove_child(c)
-		c.free()
-	var info: Dictionary = _hud_info_for(sp)
-	var prow := HBoxContainer.new()
-	prow.alignment = BoxContainer.ALIGNMENT_CENTER
-	_menu_hero_box.add_child(prow)
+		c.queue_free()
 	var pt := TextureRect.new()
 	pt.texture = UiTheme.portrait(sp)
 	pt.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	pt.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	pt.custom_minimum_size = Vector2(150, 150)
-	pt.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	prow.add_child(pt)
-	var nm := _mk_dlabel(_menu_hero_box, "%s  %s" % [String(info["name"]), String(info["en"])], 22, Color.WHITE)
-	nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	var chips := HBoxContainer.new()
-	chips.alignment = BoxContainer.ALIGNMENT_CENTER
-	chips.add_theme_constant_override("separation", 5)
-	_menu_hero_box.add_child(chips)
-	for t in info["types"]:
-		chips.add_child(UiTheme.chip(String(t[0]), t[1], 12))
-	var sd: Dictionary = GameData.species(sp)
-	var st: Dictionary = sd.get("stats", {})
-	var sl := _mk_label(_menu_hero_box, "HP %d · 攻击 %d · 防御 %d\n特攻 %d · 特防 %d · 速度 %d" % [
-		int(st.get("hp", 0)), int(st.get("atk", 0)), int(st.get("def", 0)),
-		int(st.get("spa", 0)), int(st.get("spd", 0)), int(st.get("spe", 0))], 13, UiTheme.MUTED)
-	sl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	var foot := _mk_label(_menu_hero_box, "大招 %s" % Ult.display_name(String(info["ult"])), 13, UiTheme.GOLD)
-	foot.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	if not STARTER_HUD.has(sp):
-		foot.text = String(info["evo"])
-		foot.add_theme_color_override("font_color", UiTheme.LILAC)
+	pt.custom_minimum_size = Vector2(280, 280) if not _p5_on else Vector2(210, 210)
+	pt.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_menu_hero_box.add_child(pt)
 
 func _build_wallet_panel(root: Control) -> void:
 	_wallet_panel = PanelContainer.new()
 	_wallet_panel.set_anchors_preset(Control.PRESET_CENTER)
-	_wallet_panel.offset_left = -280
-	_wallet_panel.offset_right = 280
-	_wallet_panel.offset_top = 96
-	_wallet_panel.offset_bottom = 344
+	_wallet_panel.offset_left = -340
+	_wallet_panel.offset_right = 340
+	_wallet_panel.offset_top = -210
+	_wallet_panel.offset_bottom = 210
 	_wallet_panel.visible = false
-	_wallet_panel.add_theme_stylebox_override("panel", UiTheme.glass(16))
+	_wallet_panel.add_theme_stylebox_override("panel", UiTheme.glass(36))
 	root.add_child(_wallet_panel)
 	var vb := VBoxContainer.new()
-	vb.add_theme_constant_override("separation", 8)
+	vb.add_theme_constant_override("separation", 18)
 	_wallet_panel.add_child(vb)
-	var t := _mk_dlabel(vb, "Solana 钱包 · 只读连接", 20, UiTheme.SKY)
-	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var title := _mk_dlabel(vb, "钱包", 30, UiTheme.TEXT)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 14)
+	vb.add_child(header)
+	header.add_child(UiBadge.new("ball", UiTheme.SKY, 62))
 	_wallet_edit = LineEdit.new()
-	_wallet_edit.placeholder_text = "粘贴 Solana 地址（Base58）"
+	_wallet_edit.placeholder_text = "粘贴公开地址"
+	_wallet_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_wallet_edit.add_theme_font_override("font", _font)
-	_wallet_edit.add_theme_font_size_override("font_size", 15)
-	vb.add_child(_wallet_edit)
+	_wallet_edit.add_theme_font_size_override("font_size", 16)
+	_wallet_edit.add_theme_color_override("font_color", UiTheme.TEXT)
+	_wallet_edit.add_theme_color_override("font_placeholder_color", UiTheme.MUTED)
+	_wallet_edit.add_theme_stylebox_override("normal", UiTheme.glass(32))
+	header.add_child(_wallet_edit)
+	_wallet_balance = _mk_dlabel(vb, "尚未连接", 36, UiTheme.TEXT)
+	_wallet_balance.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_wallet_balance.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_wallet_balance.custom_minimum_size.y = 80
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
+	row.add_theme_constant_override("separation", 12)
 	vb.add_child(row)
-	var cbtn := UiTheme.make_button("连接", "green", "small")
+	var cbtn := UiTheme.make_button("连接", "green", "big")
 	cbtn.pressed.connect(func() -> void:
-		if wallet.connect_with_address(_wallet_edit.text):
-			_wallet_edit.text = ""
-		else:
-			_wallet_balance.text = "地址无效 — 请检查后重试")
+		if wallet.is_wallet_connected():
+			wallet.disconnect_wallet()
+		elif not wallet.connect_with_address(_wallet_edit.text):
+			_wallet_balance.text = "地址无效，请重试")
 	row.add_child(cbtn)
-	var dbtn := UiTheme.make_button("断开", "red", "small")
-	dbtn.pressed.connect(func() -> void: wallet.disconnect_wallet())
-	row.add_child(dbtn)
-	var xbtn := UiTheme.make_button("关闭", "ghost", "small")
+	var copy := UiTheme.make_button("复制地址", "blue", "big")
+	copy.pressed.connect(func() -> void: DisplayServer.clipboard_set(wallet.address if wallet.is_wallet_connected() else _wallet_edit.text))
+	row.add_child(copy)
+	var xbtn := UiTheme.make_button("关闭", "orange", "big")
 	xbtn.pressed.connect(func() -> void: _wallet_panel.visible = false)
-	if not _p5_on:
-		row.add_child(xbtn)
-	_wallet_balance = _mk_label(vb, "", 15, Color(0.8, 1.0, 0.8))
-	# Cycle 18 (store checklist): a visible failure state +
-	# retry — a silent RPC failure reads as a broken panel.
-	_wallet_retry = UiTheme.make_button("重试读取余额", "blue", "small")
+	xbtn.set_meta("p5_primary", true)
+	row.add_child(xbtn)
+	for btn in row.get_children():
+		(btn as Control).size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cbtn.set_meta("wallet_connect", true)
+	_wallet_panel.set_meta("connect_button", cbtn)
+	_wallet_retry = UiTheme.make_button("重试读取余额", "ghost", "small")
 	_wallet_retry.visible = false
 	_wallet_retry.pressed.connect(func() -> void: wallet.fetch_balance())
 	vb.add_child(_wallet_retry)
-	var note := _mk_label(vb, "游客模式可直接游玩，无需钱包。连接仅用于显示地址与余额（只读，不签名、不交易）。\nAndroid 原生 MWA 授权待 godot-solana-sdk 支持成熟后接入；当前为手动地址连接。", 12, Color(0.75, 0.75, 0.75))
+	var note := _mk_label(vb, "可选 · 仅查看公开余额，不签名、不交易。断开连接会清除保存的地址。", 14, UiTheme.MUTED)
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	if _p5_on:
-		# UI-mobile P5: 关闭 (primary) bottom-right, under the note.
-		_wallet_balance.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		note.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		vb.add_child(xbtn)
-		_p5_overlay(null, xbtn)
 
 func _refresh_wallet_ui() -> void:
 	if _wallet_status == null or wallet == null:
 		return
-	if wallet.is_wallet_connected():
+	var connected: bool = wallet.is_wallet_connected()
+	if _wallet_balance == null:
+		_wallet_status.text = wallet.short_address() if connected else "游客模式"
+		return
+	if _wallet_panel and _wallet_panel.has_meta("connect_button"):
+		(_wallet_panel.get_meta("connect_button") as Button).text = "断开连接" if connected else "连接"
+	if connected:
 		var failed := wallet.balance_state == "failed"
-		var bal := "…"
+		var bal := "读取中…"
 		if wallet.last_balance_sol >= 0.0:
 			bal = "%.4f SOL" % wallet.last_balance_sol
-		elif wallet.balance_state == "loading":
-			bal = "读取中…"
-		_wallet_status.text = wallet.short_address() + " · " + ("余额读取失败" if failed else bal)
-		if _wallet_balance:
-			if failed:
-				_wallet_balance.text = "地址 " + wallet.address + "\n余额读取失败（" + wallet.balance_error + "）— 请检查网络后重试"
-				_wallet_balance.add_theme_color_override("font_color", Color(1.0, 0.62, 0.55))
-			else:
-				_wallet_balance.text = "地址 " + wallet.address + "\n余额 " + bal + "（" + wallet.cluster + "，只读）"
-				_wallet_balance.add_theme_color_override("font_color", Color(0.8, 1.0, 0.8))
-		if _wallet_retry:
-			_wallet_retry.visible = failed
+		_wallet_status.text = wallet.short_address()
+		_wallet_edit.text = wallet.address
+		_wallet_balance.text = "余额读取失败" if failed else bal
+		_wallet_retry.visible = failed
 	else:
-		_wallet_status.text = "游客模式（可直接游玩）"
-		if _wallet_balance:
-			_wallet_balance.text = ""
-		if _wallet_retry:
-			_wallet_retry.visible = false
+		_wallet_status.text = "游客模式"
+		_wallet_balance.text = "尚未连接"
+		_wallet_edit.text = ""
+		_wallet_retry.visible = false
 
 func _refresh_meta() -> void:
 	if _meta_status:
@@ -4134,8 +4101,8 @@ func _refresh_starter_unlocks() -> void:
 func _build_lab_panel(root: Control) -> void:
 	_lab_panel = PanelContainer.new()
 	_lab_panel.set_anchors_preset(Control.PRESET_CENTER)
-	_lab_panel.offset_left = -330
-	_lab_panel.offset_right = 330
+	_lab_panel.offset_left = -420
+	_lab_panel.offset_right = 420
 	_lab_panel.offset_top = -280
 	_lab_panel.offset_bottom = 280
 	_lab_panel.visible = false
@@ -4146,7 +4113,7 @@ func _build_lab_panel(root: Control) -> void:
 	_lab_panel.add_child(vb)
 	# Cycle 17 copy fix: the shipped title carried a spec
 	# section number ("§6.2") — internal reference, not copy.
-	var t := _mk_dlabel(vb, "研究室 · Lab（星尘永久升级）", 20, Color(0.95, 0.85, 0.5))
+	var t := _mk_dlabel(vb, "实验室 · 永久升级", 20, Color(0.95, 0.85, 0.5))
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_lab_info = _mk_label(vb, "", 14, Color(0.85, 0.85, 0.85))
 	_lab_info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -4188,44 +4155,84 @@ func _refresh_lab() -> void:
 	if _lab_list == null:
 		return
 	for c in _lab_list.get_children():
+		_lab_list.remove_child(c)
 		c.queue_free()
-	_lab_info.text = "✦ 星尘 %d（累计 %d）· 联盟 %d 只" % [Profile.stardust(), int(Profile.data.get("totalStardust", 0)), (Profile.data.get("league", []) as Array).size()]
+	_lab_info.text = "星尘 %d · 累计 %d" % [Profile.stardust(), int(Profile.data.get("totalStardust", 0))]
+	var columns := HBoxContainer.new()
+	columns.add_theme_constant_override("separation", 20)
+	_lab_list.add_child(columns)
+	var grid := GridContainer.new()
+	grid.columns = 4
+	grid.add_theme_constant_override("h_separation", 10)
+	grid.add_theme_constant_override("v_separation", 10)
+	var node_scroll := ScrollContainer.new()
+	node_scroll.custom_minimum_size = Vector2(300, 300)
+	node_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	columns.add_child(node_scroll)
+	node_scroll.add_child(grid)
+	grid.draw.connect(func() -> void:
+		for i in range(grid.get_child_count()):
+			var node := grid.get_child(i) as Control
+			for j in [i + 1 if i % 4 < 3 else -1, i + 4]:
+				if j >= 0 and j < grid.get_child_count():
+					var other := grid.get_child(j) as Control
+					grid.draw_line(node.position + Vector2(33, 27), other.position + Vector2(33, 27), UiTheme.INK_DEEP, 5, true))
+	grid.resized.connect(func() -> void: grid.queue_redraw())
 	for id in Profile.LAB_ORDER:
-		var cfg: Dictionary = Profile.LAB[id]
 		var lv := Profile.lab_level(id)
-		var cost := Profile.lab_cost(id)
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 8)
-		var name_l := _mk_label(row, "%s  Lv.%d/%d" % [String(cfg["label"]), lv, int(cfg["max"])], 15)
-		name_l.custom_minimum_size = Vector2(330, 0)
-		# Cycle 19 (audit §6.2): the price column right-aligns
-		# ("MAX" used to left-align against "✦ 1275").
-		var cost_l := _mk_label(row, "✦ %d" % cost if cost >= 0 else "", 15, Color(0.9, 0.85, 0.6))
-		cost_l.custom_minimum_size = Vector2(90, 0)
-		cost_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		if cost < 0:
-			# Cycle 19 (audit punch #19): a MAXed row carries
-			# a 已满 state chip — not a disabled 购买 button
-			# pretending to be a state.
-			var max_chip := UiTheme.chip("已满",
-				Color(UiTheme.INK_DEEP, 0.92), 12, UiTheme.GOLD)
-			max_chip.custom_minimum_size = Vector2(64, 28)
-			row.add_child(max_chip)
+		var b := UiTheme.make_button("", "ghost", "small")
+		b.custom_minimum_size = Vector2(66, 78)
+		b.tooltip_text = String(Profile.LAB[id]["label"])
+		var accent := UiTheme.GREEN_DEEP if lv > 0 else UiTheme.MUTED
+		if id == _lab_selected:
+			accent = UiTheme.ORANGE
+		var badge := UiBadge.new(_lab_icon(id), accent, 54)
+		badge.position = Vector2(6, 0)
+		b.add_child(badge)
+		if lv == 0:
+			var lock_icon := UiIcon.new("lock", UiTheme.TEXT, 14)
+			lock_icon.position = Vector2(44, 36)
+			b.add_child(lock_icon)
+		_label_in(b, "已满" if Profile.lab_cost(id) < 0 else "%d级" % lv, Vector2(0, 52), Vector2(66, 24), 13, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER)
+		var selected: String = id
+		b.pressed.connect(func() -> void:
+			_lab_selected = selected
+			_refresh_lab())
+		grid.add_child(b)
+	var detail := PanelContainer.new()
+	detail.custom_minimum_size = Vector2(280, 0)
+	detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	detail.add_theme_stylebox_override("panel", UiTheme.glass(30))
+	columns.add_child(detail)
+	_lab_detail = VBoxContainer.new()
+	_lab_detail.add_theme_constant_override("separation", 8)
+	detail.add_child(_lab_detail)
+	var cfg: Dictionary = Profile.LAB[_lab_selected]
+	var level := Profile.lab_level(_lab_selected)
+	var cost := Profile.lab_cost(_lab_selected)
+	var hero := UiBadge.new(_lab_icon(_lab_selected), UiTheme.GREEN_DEEP, 84)
+	hero.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_lab_detail.add_child(hero)
+	var title := _mk_dlabel(_lab_detail, String(cfg["label"]), 24, UiTheme.TEXT)
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_mk_label(_lab_detail, "当前等级  %d" % level, 17, UiTheme.TEXT)
+	_mk_label(_lab_detail, "最高等级  %d" % int(cfg["max"]), 17, UiTheme.TEXT)
+	_mk_label(_lab_detail, "升级消耗  %d 星尘" % cost if cost >= 0 else "已达最高等级", 17, UiTheme.TEXT)
+	var buy := UiTheme.make_button("升级" if cost >= 0 else "已满", "orange", "big")
+	buy.disabled = cost < 0 or Profile.stardust() < cost
+	buy.pressed.connect(func() -> void:
+		if Profile.lab_buy(_lab_selected):
+			audio.coin()
+			if player and is_instance_valid(player):
+				player.recalc()
+			_refresh_lab()
+			_refresh_meta()
 		else:
-			var b := UiTheme.make_button("购买", "green", "small")
-			b.disabled = Profile.stardust() < cost
-			var captured_id: String = id
-			b.pressed.connect(func() -> void:
-				if Profile.lab_buy(captured_id):
-					audio.coin()  # cycle 16: lab buy (bundle: coin on buys)
-					if player and is_instance_valid(player):
-						player.recalc()
-					_refresh_lab()
-					_refresh_meta()
-				else:
-					audio.deny())
-			row.add_child(b)
-		_lab_list.add_child(row)
+			audio.deny())
+	_lab_detail.add_child(buy)
+
+func _lab_icon(id: String) -> String:
+	return {"dmg": "sword", "hp": "heart", "spd": "wind", "gold": "coin", "luck": "star", "magnet": "magnet", "armor": "shield", "party": "paw", "archive": "bag", "reroll": "reroll", "skip": "skip", "banish": "banish"}.get(id, "flask")
 
 ## Cycle 19: Lab tab switch (the bundle's Lab screen has
 ## lab/items modes; SL @1897612).
@@ -4594,6 +4601,7 @@ func _settings_show_tab(tid: String) -> void:
 		"keys": _settings_page_keys()
 		"hud": _settings_page_hud()
 		"account": _settings_page_account()
+		"legal": _settings_page_legal()
 
 ## One st-row: label (+hint) on the left, control on the right.
 func _st_row(parent: Container, label: String, hint: String = "") -> HBoxContainer:
@@ -4773,20 +4781,35 @@ func _settings_page_account() -> void:
 			Profile.reset_all()
 			get_tree().reload_current_scene())
 	_settings_page.add_child(resetb)
-	# Cycle 18 (store audit correction): in-app links to
-	# BOTH documents are REQUIRED — Developer Agreement
-	# §2.1 (privacy policy + EULA/terms), not optional
-	# insurance as the checklist first said. Each row
-	# opens the live neutral-site page.
-	_mk_label(_settings_page, "法律", 13, Color(0.72, 0.68, 0.85))
-	var legal := [ ["隐私政策", "https://spritebonk-site.musen-ai-9527.workers.dev/privacy"],
-		["用户协议", "https://spritebonk-site.musen-ai-9527.workers.dev/terms"] ]
-	for pair in legal:
-		var url := String(pair[1])
-		var row := _st_row(_settings_page, String(pair[0]), url.trim_prefix("https://"))
-		var open_btn := UiTheme.make_button("打开", "ghost", "small")
-		open_btn.pressed.connect(func() -> void: OS.shell_open(url))
-		row.add_child(open_btn)
+	var legal_button := UiTheme.make_button("隐私政策与服务条款", "ghost")
+	legal_button.pressed.connect(func() -> void: _settings_show_tab("legal"))
+	_settings_page.add_child(legal_button)
+
+func _settings_page_legal(doc: String = "privacy", lang: String = "zh") -> void:
+	for child in _settings_page.get_children():
+		_settings_page.remove_child(child)
+		child.queue_free()
+	var english := lang == "en"
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	_settings_page.add_child(row)
+	for entry in [["privacy", "Privacy" if english else "隐私政策"], ["terms", "Terms" if english else "服务条款"]]:
+		var button := UiTheme.make_button(String(entry[1]), "green" if doc == entry[0] else "ghost", "small")
+		var selected: String = entry[0]
+		button.pressed.connect(func() -> void: _settings_page_legal(selected, lang))
+		row.add_child(button)
+	var language := UiTheme.make_button("中文" if english else "English", "ghost", "small")
+	language.pressed.connect(func() -> void: _settings_page_legal(doc, "zh" if english else "en"))
+	row.add_child(language)
+	var body := _mk_label(_settings_page, "", 16, UiTheme.TEXT)
+	body.text = load("res://assets/legal/%s_%s.tres" % [doc, lang]).text
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.custom_minimum_size.x = 300
+	body.text = str(load("res://assets/legal/%s_%s.tres" % [doc, lang]).get("text"))
+	var online := UiTheme.make_button("Online version" if english else "在线版", "ghost", "small")
+	online.pressed.connect(func() -> void: OS.shell_open("https://spritebonk-site.musen-ai-9527.workers.dev/" + doc))
+	_settings_page.add_child(online)
 
 func _refresh_account_label(l: Label) -> void:
 	if wallet and wallet.is_wallet_connected():
@@ -4904,7 +4927,7 @@ func _build_draft(root: Control) -> void:
 		vb.add_child(_draft_mini)
 	var tools := HBoxContainer.new()
 	tools.add_theme_constant_override("separation", 10)
-	tools.alignment = BoxContainer.ALIGNMENT_CENTER
+	tools.alignment = BoxContainer.ALIGNMENT_END
 	vb.add_child(tools)
 	_draft_rb = UiTheme.make_icon_button("reroll", "重抽", "blue", "small")
 	_draft_rb.pressed.connect(_draft_reroll)
@@ -4915,6 +4938,7 @@ func _build_draft(root: Control) -> void:
 	_draft_bb = UiTheme.make_icon_button("banish", "放逐模式", "red", "small")
 	_draft_bb.pressed.connect(_draft_toggle_banish)
 	tools.add_child(_draft_bb)
+	tools.move_child(_draft_rb, -1)
 	# Cycle 19 (audit punch #13): kbd caps on the tools
 	# (the bundle's ez caps, @1999261) + the "Ver mi
 	# equipo" [Tab] button the bundle appends to both card
@@ -5139,7 +5163,7 @@ func _draft_card(opt: Dictionary, idx: int) -> Button:
 		"move_up":
 			var md2: Dictionary = GameData.move(key)
 			title = "招式强化 · " + _move_zh(key)
-			desc = "Lv.%d → Lv.%d\n伤害 +%s%%" % [player.move_level(key), player.move_level(key) + 1, _fmt_num(10.0 * pe)]
+			desc = "%d级 → %d级\n伤害 +%s%%" % [player.move_level(key), player.move_level(key) + 1, _fmt_num(10.0 * pe)]
 			icon = _type_icon(String(md2.get("type", "")))
 		"vitamin":
 			var vc: Dictionary = GameData.VITAMINS[key]
@@ -5149,7 +5173,7 @@ func _draft_card(opt: Dictionary, idx: int) -> Button:
 	# UI-mobile P5 (plan §B3 M1): phone cards 220 x 230, narrower
 	# when four must share a 16:9 row (_p5_card_w).
 	var csz := Vector2(_p5_card_w(_draft_panel, _draft_options.size(), 220.0), 230.0) \
-		if _p5_on else Vector2(198, 246)
+		if _p5_on else Vector2(222, 302)
 	var card := UiTheme.make_card(accent, csz)
 	card.clip_contents = true  # cycle 19: the shine stays in the card
 	_draft_card_btns.append(card)
@@ -5159,14 +5183,14 @@ func _draft_card(opt: Dictionary, idx: int) -> Button:
 	top.offset_left = 2
 	top.offset_right = -2
 	top.offset_top = 2
-	top.offset_bottom = 86
+	top.offset_bottom = 114
 	var tc := top_c
 	tc.a = 0.85
-	top.add_theme_stylebox_override("panel", UiTheme.flat_box(tc, 12))
+	top.add_theme_stylebox_override("panel", UiTheme.flat_box(tc.lightened(0.62), 28))
 	top.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card.add_child(top)
-	var ic := UiIcon.new(icon, Color.WHITE, 52)
-	ic.position = Vector2((csz.x - 52.0) * 0.5, 17)
+	var ic := UiBadge.new(icon, top_c, 78)
+	ic.position = Vector2((csz.x - 78.0) * 0.5, 30)
 	card.add_child(ic)
 	# Cycle 19 (audit §4.3): the bundle's top zone also
 	# carries a KIND chip — NUEVO for a new move/vitamin,
@@ -5207,7 +5231,7 @@ func _draft_card(opt: Dictionary, idx: int) -> Button:
 	flow.set_anchors_preset(Control.PRESET_FULL_RECT)
 	flow.offset_left = 10
 	flow.offset_right = -10
-	flow.offset_top = 92
+	flow.offset_top = 122
 	flow.offset_bottom = -8
 	flow.add_theme_constant_override("separation", 4)
 	flow.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -5215,8 +5239,8 @@ func _draft_card(opt: Dictionary, idx: int) -> Button:
 	var tl := Label.new()
 	tl.text = title
 	tl.add_theme_font_override("font", UiTheme.display_font())
-	tl.add_theme_font_size_override("font_size", 16)
-	tl.add_theme_color_override("font_color", Color.WHITE)
+	tl.add_theme_font_size_override("font_size", 18)
+	tl.add_theme_color_override("font_color", UiTheme.TEXT)
 	tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	tl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	tl.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -5263,7 +5287,7 @@ func _draft_card(opt: Dictionary, idx: int) -> Button:
 	return card
 
 func _render_draft() -> void:
-	_draft_title.text = "Lv.%d · 升级！" % player.level
+	_draft_title.text = "%d级 · 升级！" % player.level
 	for c in _draft_opts_box.get_children():
 		c.queue_free()
 	_draft_card_btns.clear()
@@ -5278,11 +5302,11 @@ func _render_draft() -> void:
 		var mk := String(m["key"])
 		var star := " ★" if bool(m.get("fused", false)) or bool(m.get("fusion", false)) else ""
 		_draft_mini.add_child(UiTheme.chip(
-			"%s Lv.%d%s" % [_move_zh(mk), int(m["level"]), star],
+			"%s %d级%s" % [_move_zh(mk), int(m["level"]), star],
 			UiTheme.type_color(String(GameData.move(mk).get("type", ""))), 11))
 	for vk in player.vit_levels.keys():
 		_draft_mini.add_child(UiTheme.chip(
-			"%s Lv.%d" % [String(GameData.VITAMINS[vk]["label"]), int(player.vit_levels[vk])],
+			"%s %d级" % [String(GameData.VITAMINS[vk]["label"]), int(player.vit_levels[vk])],
 			Color8(106, 90, 168), 11))
 	_paint_draft_cards()
 	_refresh_draft_tools()
@@ -5465,7 +5489,18 @@ func _build_result(root: Control) -> void:
 		cols.add_child(rcol)
 	else:
 		_result_panel.add_child(vb)
-	_result_title = _mk_dlabel(vb, "", 34, UiTheme.GOLD)
+	var stars := _mk_dlabel(vb, "★  ★  ★", 36, UiTheme.ORANGE)
+	stars.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var ribbon := PanelContainer.new()
+	ribbon.add_theme_stylebox_override("panel", UiTheme._btn_box(UiTheme.GREEN_DEEP, 32, Color.WHITE, 2, 20))
+	vb.add_child(ribbon)
+	_result_title = _mk_dlabel(ribbon, "", 34, UiTheme.TEXT)
+	_result_title.add_theme_color_override("font_color", Color.WHITE)
+	_result_panel.draw.connect(func() -> void:
+		for i in range(14):
+			var x := 10.0 if i % 2 == 0 else _result_panel.size.x - 10.0
+			var y := 28.0 + float(i / 2) * 72.0
+			_result_panel.draw_circle(Vector2(x, y), 3.0, [UiTheme.ORANGE, UiTheme.SKY, UiTheme.GREEN][i % 3]))
 	_result_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	# Cycle 18: the sectioned summary (UI_SPEC §2.7) replaces
 	# the single body label — payout chips, a 4-up fact grid,
@@ -5490,9 +5525,18 @@ func _build_result(root: Control) -> void:
 	# The pre-18 label said 再来一局 but the button reloads
 	# into the MENU (boot state) — the bundle's own primary
 	# here is back-to-menu; label it truthfully.
-	var b := UiTheme.make_button("返回菜单", "green", "big")
+	var actions := HBoxContainer.new()
+	actions.add_theme_constant_override("separation", 12)
+	actions.alignment = BoxContainer.ALIGNMENT_END
+	rcol.add_child(actions)
+	var again := UiTheme.make_button("再次出发", "green", "big")
+	again.pressed.connect(func() -> void:
+		_result_panel.hide()
+		_open_loadout(_menu_hero_sp))
+	actions.add_child(again)
+	var b := UiTheme.make_button("返回菜单", "ghost", "big")
 	b.pressed.connect(func() -> void: get_tree().reload_current_scene())
-	rcol.add_child(b)
+	actions.add_child(b)
 	if _p5_on:
 		scroll.custom_minimum_size = Vector2(0, 0)
 		scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -8454,6 +8498,7 @@ func _boss_lapras_surf() -> void:
 ## ---- the boss tick (Nb update + tick) ----
 func _boss_enrage() -> void:
 	_boss_enraged = true
+	_refresh_boss_tag()
 	show_banner("狂怒！%s 狂暴化：新招式，更快！" % String(ModelRig.SPECIES[guardian.species_id]["label"]), 3.0)
 	guardian.speed *= 1.2
 	audio.cry(guardian.species_id)
@@ -11911,13 +11956,14 @@ func _update_hud_bars(delta: float) -> void:
 	var show_boss := guardian != null and is_instance_valid(guardian) and guardian.hp > 0.0
 	if _boss_card:
 		_boss_card.visible = show_boss
+
 	if show_boss:
 		if not _boss_shown or _boss_key != guardian.species_id:
 			_boss_key = guardian.species_id
 			_boss_lag = 1.0
 			_boss_lag_hold = 0.0
 			var info := _hud_info_for(guardian.species_id)
-			_boss_name_label.text = String(info["name"]) + " " + String(info["en"])
+			_boss_name_label.text = String(info["name"])
 			_boss_tag_label.text = "传说守护者" if zone == 4 else "守护者"
 			# Cycle 21: phase ticks only for kit bosses
 			# (a mech or a signature — the bundle's rule).
@@ -11928,11 +11974,7 @@ func _update_hud_bars(delta: float) -> void:
 				_boss_pic.texture = UiTheme.portrait(guardian.species_id)
 		_boss_shown = true
 		# Cycle 21: rage state on the tag (bundle bossRage).
-		if _boss_tag_label:
-			var base_tag := "传说守护者" if zone == 4 else "守护者"
-			_boss_tag_label.text = base_tag + (" · 狂怒！" if _boss_enraged else "")
-			_boss_tag_label.add_theme_color_override("font_color",
-				Color(1, 0.35, 0.3) if _boss_enraged else UiTheme.MUTED)
+		_refresh_boss_tag()
 		if _boss_foot:
 			# Cycle 21: while a move is announced (say(),
 			# 2.2 s), the foot row carries the move name —
@@ -11985,6 +12027,45 @@ func _update_hud_bars(delta: float) -> void:
 ## Cycle 19: the HUD move slot mirrors the player's first
 ## move — its type icon and a level strip (audit punch #15).
 ## Refreshed on signature change (drafts mutate moves).
+func _refresh_boss_tag() -> void:
+	if _boss_tag_label:
+		# Keep the compact right-hand tag readable even during a move announcement.
+		_boss_tag_label.text = "狂怒！" if _boss_enraged else ("传说守护者" if zone == 4 else "守护者")
+		_boss_tag_label.add_theme_color_override("font_color",
+			Color(1, 0.35, 0.3) if _boss_enraged else UiTheme.MUTED)
+
+func _reskin_boss_visibility() -> void:
+	# After this frame's camera / rig animation updates, before canvas rendering.
+	if _boss_card != null and _boss_card.is_visible_in_tree():
+		_boss_card.modulate.a = 0.0 if _boss_body_overlaps_header() else float(Profile.setting("bossOpacity"))
+
+func _boss_body_overlaps_header() -> bool:
+	if _cam == null or guardian == null or not is_instance_valid(guardian):
+		return false
+	var header := _p3_draw_rect(_boss_card)
+	var stack: Array[Node] = [guardian]
+	while not stack.is_empty():
+		var node := stack.pop_back() as Node
+		stack.append_array(node.get_children())
+		if node is MeshInstance3D and (node as MeshInstance3D).is_visible_in_tree():
+			var mesh := node as MeshInstance3D
+			var bounds := mesh.get_aabb()
+			var projected := Rect2()
+			var first := true
+			for i in range(8):
+				var point := mesh.global_transform * bounds.get_endpoint(i)
+				if _cam.is_position_behind(point):
+					continue
+				var screen := _cam.unproject_position(point)
+				if first:
+					projected = Rect2(screen, Vector2.ZERO)
+					first = false
+				else:
+					projected = projected.expand(screen)
+			if not first and projected.grow(16).intersects(header):
+				return true
+	return false
+
 func _refresh_move_slot() -> void:
 	if _move_slot_icon == null or player == null or not is_instance_valid(player):
 		return
@@ -11998,7 +12079,7 @@ func _refresh_move_slot() -> void:
 	var t := String(GameData.move(String(m0["key"])).get("type", ""))
 	_move_slot_icon.icon = _type_icon(t)
 	_move_slot_icon.color = UiTheme.type_color(t).lightened(0.25)
-	_move_name_label.text = "Lv.%d" % int(m0["level"])
+	_move_name_label.text = "%d级" % int(m0["level"])
 
 ## Cycle 19: any modal surface up (draft / blessing / choice /
 ## pause / big map / results / menu overlays). Drives the
@@ -12031,7 +12112,7 @@ func _refresh_hud() -> void:
 		_ball_price_label.add_theme_color_override("font_color",
 			Color.WHITE if gold >= float(bc) else Color(0.95, 0.5, 0.45))
 	if player and is_instance_valid(player):
-		_lv_label.text = "Lv.%d" % player.level
+		_lv_label.text = "%d级" % player.level
 		var frac := clampf(player.xp / maxf(float(player.xp_next()), 1.0), 0.0, 1.0)
 		_medal_panel.set_xp(frac)
 		_refresh_move_slot()
@@ -12674,7 +12755,15 @@ func _process(delta: float) -> void:
 		touch_controls.set_interact_mode(act)
 	# Cycle 21.3 (§5): the prompt's ink-glass backing
 	# tracks its text.
+	# One semantic hint: generic boss/portal prompt yields while its banner is on screen.
+	var duplicate_hint := _banner != null and _banner.modulate.a > 0.0 and (
+		(_prompt.text == "击败守护者！" and _banner.text.contains("守护者"))
+		or (_prompt.text == "走进紫色传送门！" and _banner.text.contains("传送门")))
+	_prompt.modulate.a = 0.0 if duplicate_hint else 1.0
+	if _prompt_tri:
+		_prompt_tri.modulate.a = _prompt.modulate.a
 	if _prompt_back:
+		_prompt_back.modulate.a = _prompt.modulate.a
 		_prompt_back.visible = _prompt.text != ""
 		# Cycle 21.3.1 (re-audit N2): on desktop the
 		# phone branch never mirrors the backing, so
@@ -13222,13 +13311,19 @@ func _p5_layout_menu(s: float) -> void:
 	if _menu_hero:
 		var hw := w - 8.0 - 686.0
 		_menu_hero.visible = hw >= 240.0
-		_menu_hero.position = Vector2(686, 56)
-		_menu_hero.size = Vector2(hw, 338)
+		_menu_hero.position = Vector2(686, 80)
+		_menu_hero.size = Vector2(hw, 250)
 	if _menu_hint:
 		var hb := _menu_hint.get_meta("back") as Control
 		if hb:
 			hb.size = Vector2(w - 16.0, 48)
 		_menu_hint.size = Vector2(w - 36.0, 42)
+	var start := _menu_design.get_node_or_null("StartButton") as Control
+	if start:
+		start.position = Vector2(maxf(328, w - 268), 332)
+	var resources := _menu_design.get_node_or_null("Resources") as Control
+	if resources:
+		resources.position = Vector2(maxf(328, w - resources.get_combined_minimum_size().x - 8), 8)
 	_p5_fit(_menu_design, sm)
 	if _menu_hint:
 		# The floored font wraps the hint to two lines taller than
@@ -13519,6 +13614,9 @@ func _layout_hud() -> void:
 		# bottom + 8, 8 px gaps, hidden items skipped:
 		# boss card -> mini bars -> banner (audit F3).
 		var stack_y := 10.0 + 84.0 * s_card + 8.0
+		var boss_y := stack_y
+		if _boss_card and _boss_card.visible:
+			stack_y += 46.0 * minf(s, span_w / 460.0) + 8.0
 		# UI-mobile P3 (plan C4): the ult cut-in heads the
 		# centre stack on the new layout (it shared the boss
 		# card's y band); the boss card moves down for 1.3 s.
@@ -13543,9 +13641,8 @@ func _layout_hud() -> void:
 				# these are plain Panels, so a top-only
 				# write would stretch the card (its
 				# bottom stays at the creation value).
-				_boss_card.offset_top = stack_y
-				_boss_card.offset_bottom = stack_y + 70.0
-				stack_y += 70.0 * bs + 8.0
+				_boss_card.offset_top = boss_y
+				_boss_card.offset_bottom = boss_y + 46.0
 		# Audit F4: bar scale capped by s_top (not the
 		# raw factor) and the span; bars flow under the
 		# boss card instead of the fixed 238.
@@ -14468,14 +14565,14 @@ func _p4_refresh_slots(relayout: bool) -> void:
 		pnl.position = Vector2(i * P4_MOVE_STEP, 0)
 		pnl.size = Vector2(46, 46)
 		pnl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		pnl.add_theme_stylebox_override("panel", _style(UiTheme.glass_color(0.85), 10,
+		pnl.add_theme_stylebox_override("panel", _style(UiTheme.glass_color(0.99), 23,
 			UiTheme.type_color(t), 2))
 		_bl_rows.add_child(pnl)
 		var ic := UiIcon.new(_type_icon(t), UiTheme.type_color(t).lightened(0.25), 22)
 		ic.position = Vector2(12, 2)
 		ic.size = Vector2(22, 22)
 		pnl.add_child(ic)
-		var lv := _label_in(pnl, "Lv.%d" % int(m["level"]), Vector2(0, 24), Vector2(46, 21),
+		var lv := _label_in(pnl, "%d级" % int(m["level"]), Vector2(0, 24), Vector2(46, 21),
 			14, Color(1, 1, 1, 0.92), HORIZONTAL_ALIGNMENT_CENTER)
 		# Cooldown sweep (UltGauge-style arc): the remaining
 		# fraction of the move's cooldown, drawn over the face.
@@ -14496,7 +14593,7 @@ func _p4_refresh_slots(relayout: bool) -> void:
 		pv.position = Vector2(j * P4_VIT_STEP, 48)
 		pv.size = Vector2(34, 34)
 		pv.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		pv.add_theme_stylebox_override("panel", _style(Color(0.416, 0.353, 0.659, 0.92), 8,
+		pv.add_theme_stylebox_override("panel", _style(UiTheme.GREEN_DEEP, 17,
 			Color(1, 1, 1, 0.25), 1))
 		_bl_rows.add_child(pv)
 		var vic := UiIcon.new(String(P4_VIT_ICON.get(String(vd.get("acc", "")), "flask")),
@@ -14564,9 +14661,9 @@ func _p4_fit_fonts(s_bl: float) -> void:
 		# "Lv.10" outgrows the 46 slot at the lifted sizes.
 		if (d as Dictionary).has("sweep"):
 			var lvn := _p4_lv_of(l.text)
-			l.text = "Lv.%d" % lvn
+			l.text = "%d级" % lvn
 			if l.get_theme_font("font").get_string_size(l.text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, px).x > 44.0:
-				l.text = "Lv%d" % lvn
+				l.text = str(lvn)
 
 func _p4_lv_of(t: String) -> int:
 	var dg := ""
@@ -15259,6 +15356,19 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 		zone, String(ZONES[zone - 1]["cn"]), kills, _fmt_time(run_time), int(damage_dealt)]
 	for c in _result_box.get_children():
 		(c as Node).queue_free()
+	# Approved U5: four readable summary rows before extended statistics.
+	for data in [["clock", "用时", _fmt_time(run_time)], ["sword", "击杀", str(kills)], ["star", "等级", str(player.level if player else 1)], ["coin", "金币", str(int(gold))]]:
+		var plate := PanelContainer.new()
+		plate.add_theme_stylebox_override("panel", UiTheme.glass(24, 1.0, Color.WHITE, 2, 8))
+		_result_box.add_child(plate)
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 14)
+		plate.add_child(row)
+		row.add_child(UiBadge.new(String(data[0]), UiTheme.SKY, 40))
+		var label := _mk_label(row, String(data[1]), 18, UiTheme.TEXT)
+		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var value := UiTheme.chip(String(data[2]), UiTheme.GREEN.lightened(0.65), 22, UiTheme.TEXT, 160)
+		row.add_child(value)
 	# Payout chips.
 	var chips := HBoxContainer.new()
 	chips.add_theme_constant_override("separation", 8)
@@ -15617,7 +15727,7 @@ func _pause_fill_status() -> void:
 		var ic := UiIcon.new(_type_icon(t), UiTheme.type_color(t), 22)
 		ic.custom_minimum_size = Vector2(22, 22)
 		row.add_child(ic)
-		_mk_label(row, "%s Lv.%d" % [_move_zh(String(m["key"])), int(m["level"])], 15)
+		_mk_label(row, "%s %d级" % [_move_zh(String(m["key"])), int(m["level"])], 15)
 		row.add_child(UiTheme.chip(String((TYPE_HUD.get(t, [t]) as Array)[0]),
 			Color(UiTheme.type_color(t), 0.85), 11))
 		var pwv2 = md.get("power", 0)
@@ -15637,7 +15747,7 @@ func _pause_fill_status() -> void:
 		vf.add_theme_constant_override("v_separation", 4)
 		box.add_child(vf)
 		for vk in player.vit_levels.keys():
-			vf.add_child(UiTheme.chip("%s Lv.%d" % [
+			vf.add_child(UiTheme.chip("%s %d级" % [
 				String(GameData.VITAMINS[vk]["label"]), int(player.vit_levels[vk])],
 				Color8(106, 90, 168), 13))
 	# 4. 物品 (held items — before this page the meowth
@@ -16034,7 +16144,7 @@ func _refresh_pw_chips() -> void:
 		(c as Node).queue_free()
 	for d in _pw_defs():
 		_pw_row.add_child(UiTheme.chip(String(d[0]),
-			Color(0.45, 0.32, 0.08, 0.95) if bool(d[1]) else Color(0.10, 0.07, 0.20, 0.85), 11))
+			UiTheme.GOLD.lightened(0.65) if bool(d[1]) else UiTheme.CREAM, 11, UiTheme.TEXT))
 
 ## UI-mobile P2 (plan H9 / D3): with the pw row collapsed on
 ## phone, a change to any of the six values flashes one 1.5 s
@@ -16454,7 +16564,7 @@ func _loadout_fill_detail() -> void:
 	tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	tr.texture = UiTheme.portrait(sp)
 	_ls_detail.add_child(tr)
-	var nm := _mk_dlabel(_ls_detail, "%s %s" % [String(info["name"]), String(info["en"])], 22, Color.WHITE)
+	var nm := _mk_dlabel(_ls_detail, String(info["name"]), 22, Color.WHITE)
 	var chips := HBoxContainer.new()
 	chips.add_theme_constant_override("separation", 5)
 	_ls_detail.add_child(chips)

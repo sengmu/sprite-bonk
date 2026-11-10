@@ -1979,7 +1979,7 @@ func _p3_boss(vp: Vector2) -> void:
 		clear = clear and _disjoint(rc, _vis_rect(b))
 	_check("P3: cutin x boss disjoint",
 		cut.is_visible_in_tree() and boss.is_visible_in_tree() and _disjoint(rc, rb)
-		and rc.end.y <= rb.position.y + 1.0 and clear
+		and rb.end.y <= rc.position.y + 1.0 and clear
 		and rc.position.x >= sl - 2.0 and rc.end.x <= sr + 2.0,
 		"cutin=" + str(rc) + " boss=" + str(rb) + " bars_clear=" + str(clear)
 		+ " span=" + str(Vector2(sl, sr)))
@@ -2781,11 +2781,11 @@ func _p4_parity(tag: String) -> void:
 	var texts := _p4_status_texts()
 	var miss: Array = []
 	for m in pl.moves:
-		var want := "%s Lv.%d" % [String(_world.call("_move_zh", String(m["key"]))), int(m["level"])]
+		var want := "%s %d级" % [String(_world.call("_move_zh", String(m["key"]))), int(m["level"])]
 		if not _p3_has_text(texts, want):
 			miss.append(want)
 	for vk in pl.vit_levels.keys():
-		var want2 := "%s Lv.%d" % [String(GameData.VITAMINS[vk]["label"]), int(pl.vit_levels[vk])]
+		var want2 := "%s %d级" % [String(GameData.VITAMINS[vk]["label"]), int(pl.vit_levels[vk])]
 		if not _p3_has_text(texts, want2):
 			miss.append(want2)
 	var ms := _p4_vis_slots("_bl_move_slots")
@@ -3336,10 +3336,10 @@ func _p5_menu_block(vp: Vector2) -> void:
 			"scale=" + (str(mdc.scale.x) if mdc else "none (legacy tree)"))
 		var fc := _world.get("_first_starter_card") as Control
 		_check("P5 desktop: menu starter card keeps its spot",
-			fc != null and _vis_rect(fc).position.distance_to(Vector2(52, 146)) < 1.5,
+			fc != null and _vis_rect(fc).position.distance_to(Vector2(358, 470)) < 1.5,
 			str(_vis_rect(fc).position) if fc else "none")
 	# The menu overlays, opened through their menu items.
-	for row in [["wallet", "连接钱包"], ["lab", "研究室"], ["shop", "星尘商店"],
+	for row in [["wallet", "连接钱包"], ["lab", "实验室"], ["shop", "星尘商店"],
 			["unlock", "联盟挑战"], ["sound", "设置"]]:
 		var nm := String(row[0])
 		var mb := _p5_menu_button(String(row[1]))

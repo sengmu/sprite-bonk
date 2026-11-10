@@ -39,6 +39,8 @@ func _draw() -> void:
 	else:
 		draw_circle(center, radius + 3.0, Color(0.85, 0.25, 0.3))
 		draw_circle(center, radius, Color(0.16, 0.13, 0.26, 0.92))
+	draw_arc(center, radius, 0, TAU, 64, UiTheme.CREAM, 6, true)
+	draw_arc(center, radius - 4, PI * 1.12, PI * 1.68, 32, Color(1, 1, 1, 0.7), 2, true)
 	if world == null:
 		return
 	# Cycle 22: fog blinding (sx.blind, bundle minimap

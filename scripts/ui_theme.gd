@@ -1,43 +1,28 @@
 class_name UiTheme
 extends RefCounted
 
-## Cycle 17 — the design-token layer (UI_SPEC §1). One home for
-## the palette, the font stack, and the component factories every
-## screen builds from, replacing the pre-cycle-17 state where
-## colors were bare Color() literals per call site and every
-## Button wore the engine's stock theme.
-##
-## Token provenance (UI_SPEC §1.2, bundle-verified): panel ink
-## #1d1236 (glass alpha .78/.80/.82 — toast cssText @2134144
-## proves rgba(29,18,54,.82)), light-face ink #2a2350, outline
-## ink #1a1030 (damage-text stroke @187085), accent gold
-## #ffd23a, muted #9aa0b4 / #6a6488, rarity legend "blue =
-## common, green = rare, purple = epic, gold = legendary"
-## (map legend @~2079000), the Yi type-color table (@3184), and
-## the danger ramp WR (@1997817, thresholds UR alongside).
-## Per-class padding/radius/shadow values were NOT captured
-## (the original's main CSS is the named evidence gap, UI_SPEC
-## §0/§4): geometry below is judged against the verified tokens,
-## not claimed as original numbers.
-
+## Approved U1–U6 palette, 2026-11-09. Shared presentation tokens.
 # ---------------------------------------------------------------- tokens
-const INK := Color8(29, 18, 54)          # #1d1236 panel ink
-const INK_DEEP := Color8(26, 16, 48)     # #1a1030 outline ink
-const INK_SOFT := Color8(42, 35, 80)     # #2a2350 ink on light faces
-const GLASS_A := 0.82                    # verified glass alpha
+const INK := Color8(255, 247, 229)          # #1d1236 panel ink
+const INK_DEEP := Color8(218, 198, 162)     # #1a1030 outline ink
+const INK_SOFT := Color8(82, 64, 49)     # #2a2350 ink on light faces
+const GLASS_A := 0.98                    # verified glass alpha
 const GOLD := Color8(255, 210, 58)       # #ffd23a
 const YELLOW := Color8(255, 226, 58)      # #ffe23a
-const GREEN := Color8(122, 255, 138)     # #7aff8a
-const GREEN_DEEP := Color8(54, 201, 106) # #36c96a
-const SKY := Color8(138, 232, 255)       # #8ae8ff
+const GREEN := Color8(144, 205, 62)     # #7aff8a
+const GREEN_DEEP := Color8(103, 166, 40) # #36c96a
+const SKY := Color8(72, 170, 218)       # #8ae8ff
 const PIN := Color8(255, 210, 58)        # #ffd23a map pin gold
 const PINK := Color8(255, 90, 138)       # #ff5a8a
 const PINK_SOFT := Color8(255, 154, 224) # #ff9ae0
 const PURPLE := Color8(154, 106, 255)    # #9a6aff
 const LILAC := Color8(200, 168, 255)     # #c8a8ff
-const MUTED := Color8(154, 160, 180)     # #9aa0b4
-const FAINT := Color8(106, 100, 136)     # #6a6488
+const MUTED := Color8(119, 101, 79)     # #9aa0b4
+const FAINT := Color8(151, 134, 111)     # #6a6488
 const RED := Color8(255, 74, 74)         # #ff4a4a
+const ORANGE := Color8(255, 151, 36)
+const CREAM := INK
+const TEXT := INK_SOFT
 const WHITE := Color(1, 1, 1)
 
 ## Rarity ramp (UI_SPEC §1.2): the map legend anchors blue =
@@ -87,7 +72,7 @@ static func rarity_color(i: int) -> Color:
 	return RARITY[clampi(i, 0, RARITY.size() - 1)]
 
 static func glass_color(alpha: float = GLASS_A) -> Color:
-	return Color(INK.r, INK.g, INK.b, alpha)
+	return Color(INK.r, INK.g, INK.b, 1.0)
 
 # ---------------------------------------------------------------- fonts
 ## Display stack: Fredoka SemiBold (headings/numbers, OFL) ->
@@ -153,7 +138,7 @@ static func body_font() -> Font:
 	return _body_font
 
 # ---------------------------------------------------------------- boxes
-## The one panel language: deep-ink glass, white hairline,
+## The one panel language: opaque cream, white top highlight,
 ## soft drop shadow, real content margins (pre-cycle-17 _style
 ## never set shadow or margins — UI_SPEC §1.5).
 static func glass(radius: int = 16, alpha: float = GLASS_A,
@@ -161,13 +146,14 @@ static func glass(radius: int = 16, alpha: float = GLASS_A,
 		margin: int = 14) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
 	s.bg_color = glass_color(alpha)
-	s.set_corner_radius_all(radius)
+	s.set_corner_radius_all(maxi(radius, 28))
 	if bw > 0:
 		s.set_border_width_all(bw)
-		s.border_color = border
+		s.border_color = Color(1, 1, 1, 0.92)
+		s.border_width_top = maxi(bw, 3)
 	s.shadow_size = 8
-	s.shadow_color = Color(0.04, 0.02, 0.10, 0.45)
-	s.shadow_offset = Vector2(0, 3)
+	s.shadow_color = Color(0.29, 0.21, 0.10, 0.23)
+	s.shadow_offset = Vector2(0, 5)
 	s.set_content_margin_all(margin)
 	return s
 
@@ -186,21 +172,23 @@ static func flat_box(bg: Color, radius: int, border: Color = Color(0, 0, 0, 0), 
 ## sizes big / normal / small. Four states each; disabled goes
 ## to the spec's .45 opacity family (sold-out cards @2053527).
 const BTN_KINDS := {
-	"green": Color8(38, 176, 84),
-	"blue": Color8(43, 116, 214),
+	"green": Color8(128, 187, 43),
+	"blue": Color8(66, 174, 224),
 	"red": Color8(206, 62, 52),
-	"ghost": Color(0.114, 0.071, 0.212, 0.72),
+	"orange": ORANGE,
+	"ghost": CREAM,
 }
 
 static func _btn_box(bg: Color, radius: int, border: Color, bw: int, pad: int) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
 	s.bg_color = bg
-	s.set_corner_radius_all(radius)
-	if bw > 0:
-		s.set_border_width_all(bw)
-		s.border_color = border
-	s.shadow_size = 4
-	s.shadow_color = Color(0.04, 0.02, 0.10, 0.4)
+	s.set_corner_radius_all(64)
+	s.set_border_width_all(2)
+	s.border_width_bottom = 5
+	s.border_width_top = 3
+	s.border_color = bg.darkened(0.18)
+	s.shadow_size = 5
+	s.shadow_color = Color(0.29, 0.21, 0.10, 0.23)
 	s.shadow_offset = Vector2(0, 2)
 	s.content_margin_left = pad
 	s.content_margin_right = pad
@@ -238,8 +226,8 @@ static func make_button(text: String, kind: String = "ghost",
 	var hover := base.lightened(0.13)
 	var pressed := base.darkened(0.15)
 	if kind == "ghost":
-		hover = Color(INK.r, INK.g, INK.b, 0.88)
-		pressed = Color(INK_DEEP.r, INK_DEEP.g, INK_DEEP.b, 0.9)
+		hover = CREAM.lightened(0.06)
+		pressed = CREAM.darkened(0.08)
 	b.add_theme_stylebox_override("normal", _btn_box(base, radius, border, bw, pad))
 	b.add_theme_stylebox_override("hover", _btn_box(hover, radius, border, bw, pad))
 	b.add_theme_stylebox_override("pressed", _btn_box(pressed, radius, border, bw, pad))
@@ -247,10 +235,10 @@ static func make_button(text: String, kind: String = "ghost",
 	dis.a *= 0.45
 	b.add_theme_stylebox_override("disabled", _btn_box(dis, radius, border, bw, pad))
 	b.add_theme_stylebox_override("focus", _btn_box(Color(0, 0, 0, 0), radius, GOLD, 2, pad))
-	b.add_theme_color_override("font_color", WHITE)
-	b.add_theme_color_override("font_hover_color", WHITE)
-	b.add_theme_color_override("font_pressed_color", WHITE)
-	b.add_theme_color_override("font_disabled_color", Color(1, 1, 1, 0.55))
+	b.add_theme_color_override("font_color", TEXT)
+	b.add_theme_color_override("font_hover_color", TEXT)
+	b.add_theme_color_override("font_pressed_color", TEXT)
+	b.add_theme_color_override("font_disabled_color", Color(TEXT, 0.5))
 	return b
 
 ## Re-apply a semantic kind to an existing button (cycle 18:
@@ -273,8 +261,8 @@ static func retint_button(b: Button, kind: String) -> void:
 	var hover := base.lightened(0.13)
 	var pressed := base.darkened(0.15)
 	if kind == "ghost":
-		hover = Color(INK.r, INK.g, INK.b, 0.88)
-		pressed = Color(INK_DEEP.r, INK_DEEP.g, INK_DEEP.b, 0.9)
+		hover = CREAM.lightened(0.06)
+		pressed = CREAM.darkened(0.08)
 	b.add_theme_stylebox_override("normal", _btn_box(base, radius, border, bw, pad))
 	b.add_theme_stylebox_override("hover", _btn_box(hover, radius, border, bw, pad))
 	b.add_theme_stylebox_override("pressed", _btn_box(pressed, radius, border, bw, pad))
@@ -296,13 +284,13 @@ static func make_icon_button(icon: String, text: String,
 	row.add_theme_constant_override("separation", 6)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var px := 18.0 if size == "small" else 20.0
-	var ic := UiIcon.new(icon, WHITE, px)
+	var ic := UiIcon.new(icon, TEXT, px)
 	row.add_child(ic)
 	var l := Label.new()
 	l.add_theme_font_override("font", body_font())
 	l.add_theme_font_size_override("font_size",
 		13 if size == "small" else (20 if size == "big" else 16))
-	l.add_theme_color_override("font_color", WHITE)
+	l.add_theme_color_override("font_color", TEXT)
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(l)
 	b.add_child(row)
@@ -336,15 +324,15 @@ static func set_icon_button_text(b: Button, text: String) -> void:
 ## whose face is glass with a colored 2px rim — the accent
 ## carries rarity or type; hover lifts the rim to full color.
 static func card_box(accent: Color, hover: bool = false,
-		radius: int = 14, alpha: float = 0.92) -> StyleBoxFlat:
+		radius: int = 32, alpha: float = 0.99) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
 	s.bg_color = glass_color(alpha if not hover else 0.97)
 	s.set_corner_radius_all(radius)
 	s.set_border_width_all(2)
 	s.border_color = Color(accent.r, accent.g, accent.b, 1.0 if hover else 0.75)
 	s.shadow_size = 8
-	s.shadow_color = Color(0.04, 0.02, 0.10, 0.45)
-	s.shadow_offset = Vector2(0, 3)
+	s.shadow_color = Color(0.29, 0.21, 0.10, 0.23)
+	s.shadow_offset = Vector2(0, 5)
 	s.set_content_margin_all(0)
 	return s
 
@@ -430,7 +418,7 @@ static func portrait(species: String) -> Texture2D:
 ## Dark outline for floating/display text (UI_SPEC §1.1: the
 ## original strokes world text with #1a1030).
 static func outline(l: Label, size: int = 3) -> void:
-	l.add_theme_color_override("font_outline_color", Color(INK_DEEP.r, INK_DEEP.g, INK_DEEP.b, 0.95))
+	l.add_theme_color_override("font_outline_color", Color(TEXT, 0.95))
 	l.add_theme_constant_override("outline_size", size)
 
 # ------------------------------------------------- settings components
@@ -552,3 +540,8 @@ static func set_segmented(hb: HBoxContainer, current: int) -> void:
 		(b as Button).add_theme_stylebox_override("focus", flat_box(Color(0, 0, 0, 0), 10, GOLD, 2))
 		(b as Button).add_theme_color_override("font_color", WHITE if on else MUTED)
 		(b as Button).add_theme_color_override("font_hover_color", WHITE)
+
+static func text_color(color: Color) -> Color:
+	if color.r > 0.74 and color.g > 0.74 and color.b > 0.74:
+		return TEXT
+	return color.darkened(0.20) if luminance(color) > 0.6 else color

@@ -32,7 +32,7 @@ var press_a := 0.0:
 		press_a = v
 		queue_redraw()
 
-const XP_COLOR := Color8(122, 255, 138)  # #7aff8a
+const XP_COLOR := UiTheme.GREEN_DEEP  # #7aff8a
 
 func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -51,7 +51,7 @@ func _draw() -> void:
 		var d := r * 2.0 - 7.0
 		draw_texture_rect(portrait, Rect2(centre - Vector2(d, d) * 0.5, Vector2(d, d)), false)
 	# XP ring: dark track + swept arc from the top.
-	draw_arc(centre, r - 1.0, 0.0, TAU, 48, Color(0.10, 0.06, 0.19, 0.55), 5.0, true)
+	draw_arc(centre, r - 1.0, 0.0, TAU, 48, UiTheme.INK_DEEP, 5.0, true)
 	if xp_frac > 0.001:
 		draw_arc(centre, r - 1.0, -PI / 2.0, -PI / 2.0 + TAU * xp_frac, 48, XP_COLOR, 5.0, true)
 	if press_a > 0.001:

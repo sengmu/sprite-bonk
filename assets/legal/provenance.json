@@ -1,0 +1,13 @@
+{
+  "source": "spritebonk-site/worker.js",
+  "sha256": "91b311e937364fd6bc80a0099671b7acee4c4b92bbf0c97109d2cc50d2d6ab85",
+  "effective": "2026-10-25",
+  "extraction": "body visible text, template constants resolved, HTML tags removed/entities decoded; English and Chinese split at hr; wording unchanged",
+  "solana_mobile": "Terms section 7 in both languages contains the two policy §10.6 obligations",
+  "text_sha256": {
+    "privacy_en": "fc8a5ad37ef28aeb8eb6f45f7fd60a9e0e859be76b0310c609862c12a878c994",
+    "privacy_zh": "807392d5ae387d7c32f98617c8d0fb61ee817b6d00b719ec634a6c5bf9ed6213",
+    "terms_en": "1bcae3abd8ec85b5d09570ab277e1da9ee7112d6419fce3fdede154470ee73ad",
+    "terms_zh": "cd4e6ccaefacaa071637a8d30dcd28162db39fa90e47836b911994e8eaa34696"
+  }
+}
