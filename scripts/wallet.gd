@@ -45,12 +45,24 @@ var balance_state := "idle"
 var balance_error := ""
 
 var _http: HTTPRequest
+var _adapter: Node = null
 
 func _ready() -> void:
 	_http = HTTPRequest.new()
 	add_child(_http)
 	_http.request_completed.connect(_on_rpc_completed)
+	_init_mwa_adapter()
 	_load_saved()
+
+func _init_mwa_adapter() -> void:
+	if ClassDB.class_exists("WalletAdapter"):
+		_adapter = ClassDB.instantiate("WalletAdapter")
+		if _adapter:
+			add_child(_adapter)
+			if _adapter.has_signal("connection_established"):
+				_adapter.connect("connection_established", Callable(self, "_on_mwa_connected"))
+			if _adapter.has_signal("connection_failed"):
+				_adapter.connect("connection_failed", Callable(self, "_on_mwa_failed"))
 
 func is_wallet_connected() -> bool:
 	return address != ""
@@ -63,11 +75,24 @@ func short_address() -> String:
 func rpc_url() -> String:
 	return RPC_DEVNET if cluster == "devnet" else RPC_MAINNET
 
-# ------------------------------------------------------------- authorize
-## Production path (Android): Mobile Wallet Adapter authorize via the
-## godot-solana-sdk plugin. Currently unavailable — see header. Returns an
-## error string; the UI then offers manual (watch-only) address entry.
+func is_mwa_available() -> bool:
+	return _adapter != null
+
+func _on_mwa_connected() -> void:
+	if _adapter and _adapter.has_method("get_connected_key"):
+		var key = _adapter.call("get_connected_key")
+		if key != null:
+			var addr_str: String = key.to_string()
+			if is_valid_address(addr_str):
+				connect_with_address(addr_str)
+
+func _on_mwa_failed() -> void:
+	auth_failed.emit("MWA 授权失败或已取消")
+
 func request_authorize() -> String:
+	if _adapter != null and _adapter.has_method("connect_wallet"):
+		_adapter.call("connect_wallet")
+		return ""
 	return ERR_MWA_UNAVAILABLE
 
 ## Watch-only connect: validate + bind an address the user pastes/types.

@@ -16,6 +16,10 @@ config/description="SpriteBonk 3D remake — milestone 1: 3D arena + altar/guard
 run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.3", "GL Compatibility")
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/SolanaSDK/plugin.cfg")
+
 [display]
 
 window/size/viewport_width=1280

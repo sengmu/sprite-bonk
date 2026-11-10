@@ -25,26 +25,31 @@ jobs:
       - name: 设置 Android SDK 依赖环境
         uses: android-actions/setup-android@v3
         with:
-          packages: 'platforms;android-34 build-tools;34.0.0'
+          packages: 'platforms;android-34 build-tools;34.0.0 cmdline-tools;latest'
 
       - name: 自动接受 Android SDK 协议
         run: |
           yes | sdkmanager --licenses || true
 
-      - name: 下载并配置 Godot 4.3 导出环境
+      - name: 下载并配置 Godot 4.4 导出环境
         run: |
           mkdir -p tools/godot
-          wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip -O godot.zip
+          wget -q https://github.com/godotengine/godot-builds/releases/download/4.4-stable/Godot_v4.4-stable_linux.x86_64.zip -O godot.zip
           unzip -q godot.zip -d tools/godot/
-          mv tools/godot/Godot_v4.3-stable_linux.x86_64 tools/godot/godot
+          mv tools/godot/Godot_v4.4-stable_linux.x86_64 tools/godot/godot
           chmod +x tools/godot/godot
 
-          # 下载 Godot 4.3 官方导出模板 (Export Templates)
-          mkdir -p ~/.local/share/godot/export_templates/4.3.stable
-          wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz -O templates.tpz
+          # 下载 Godot 4.4 官方导出模板 (Export Templates)
+          mkdir -p ~/.local/share/godot/export_templates/4.4.stable
+          wget -q https://github.com/godotengine/godot-builds/releases/download/4.4-stable/Godot_v4.4-stable_export_templates.tpz -O templates.tpz
           unzip -q templates.tpz -d /tmp/templates
-          mv /tmp/templates/templates/* ~/.local/share/godot/export_templates/4.3.stable/
+          mv /tmp/templates/templates/* ~/.local/share/godot/export_templates/4.4.stable/
           rm -rf templates.tpz /tmp/templates godot.zip
+
+          # 初始化 Android Gradle 构建模板
+          mkdir -p android/build
+          unzip -q -o ~/.local/share/godot/export_templates/4.4.stable/android_source.zip -d android/build/
+          chmod +x android/build/gradlew || true
 
       - name: 配置 Godot Android SDK 路径
         run: |
