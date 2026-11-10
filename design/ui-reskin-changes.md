@@ -77,3 +77,37 @@ Boss 狂暴态实拍：`Test/out/ui_boss_rage_reskin_fix.png`，真实场景与 
 | Boss 补证 | 狂怒态无遮挡 + 相交透明避让断言通过，rc=0 | `reskin_fix_boss.log`、两张 `ui_boss_*_reskin_fix.png` |
 
 P5 a 档主操作实测中心 **(1366,647)**（首轮为 (892,647)），原 `c.x > 0.6 * vp.x`、`c.y > 0.6 * vp.y` 检查 PASS。实拍 `Test/out/mobile_p5_result_2400x1080_s100_i0.png`，已目视确认双钮行右锚。本轮未修改 `Test/phonehud.gd` / `Test/harness.gd`。
+
+## 素材接线 · 2026-11-10
+
+施工基线 `ad460f9`。仅改变 UI 呈现，玩法数值、按钮回调、购买/解锁条件、流程不变；没有构建 APK，`reference/` 不入树。
+
+素材来自仓库外 `../goals/5000/files/ui-assets/`：原名复制 badges 27 枚、textures 4 张及九切片 9 张、decorations 4 张，共 44 张 PNG。逐文件 SHA-256 与来源一致；glyphs 没有实际需要，未入仓。UiTheme 的 `asset(category, key)` 为统一资源入口，经 Godot 导入管线加载。
+
+九切片源边距遵照 NOTES：面板 112/112/112/112，按钮 192/96/192/96。运行时完整纹理等比例缩至 1/4 后缓存，切片边距同步为面板 28、按钮 48/24/48/24，再由 StyleBoxTexture 拉伸中心与边，避免小按钮使用原生 192px 端帽。源 PNG 不改写。面板在真实亮场景中奶油边缘可辨，本轮未额外添加描边/投影。目标药丸保留原 StyleBoxFlat 和触控反馈，draw 接入 panel 纹理；Boss 悬顶条和投影相交透明避让保持原实现。
+
+| 屏幕 | 接线内容 | 新实拍（Test/out/） | 左目标 / 右实拍并排图（Test/out/） |
+| --- | --- | --- | --- |
+| U1 | 技能槽与必杀光泽徽章底，招式字形沿用；小地图圆框使用徽章材质，目标药丸 panel；Boss 保持原策略 | `ui_hud_assets_wiring.png`，附 `ui_boss_assets_wiring.png` | `sbs_U1.png` |
+| U2 | 六入口 wallet/flask/bell/gear/trophy/vibrate；sparkle 货币胶囊；orange 开始钮；logo_ribbon + 独立 Label「SpriteBonk」 | `ui_menu_assets_wiring.png` | `sbs_U2.png` |
+| U3 | panel_9patch 卡面、语义 badge；无对应图标时保留既有字形叠在徽章底上 | `ui_draft_assets_wiring.png` | `sbs_U3.png` |
+| U4 | 节点语义 badge；未购代码调暗 + badge_lock；orange 升级钮 | `ui_lab_assets_wiring.png` | `sbs_U4.png` |
+| U5 | star_filled/star_empty 装饰星行；logo_ribbon 标题；confetti_strip 顶部背景装饰；green/cream 双钮，bottom-right 契约保留 | `ui_result_assets_wiring.png` | `sbs_U5.png` |
+| U6 | wallet 头像徽章、panel_9patch、green/cream/orange 三胶囊；地址/余额/错误各自单层 | `ui_wallet_assets_wiring.png` | `sbs_U6.png` |
+
+截图沿用 `Test/reskin_shot.tscn` / reskin_shots 路径，新增 `Test/assets_shots.sh` 隔离输出标签。`Test/assets_compare.py` 使用 PIL 将对应批准图缩放到实拍高度后并置，不裁剪、不覆盖游戏画面。三星仍为装饰，没有引入评分。
+
+### 首轮与修正（如实保留）
+
+- 本机首次直接 `--check-only` 未设置独立 XDG，因用户日志目录不可写退出/崩溃；保留 `Test/out/assets_check_*_first_red.log`。切换工程内隔离 XDG 后重跑。
+- 首版实拍 Logo 偏左、结算彩带覆盖统计，已修正居中排字与顶部背景层绘制；另修正 blue 语义按钮误选 green 贴图。首版证据 `ui_{menu,wallet,result}_assets_wiring_first.png`、`assets_wiring_shots_first.log`。
+- NUC 首批在视觉修正后主动中断，未记为通过；局部日志保留 NUC `Test/out/assets_first_run/`。最终代码另起完整批次。
+- 新增 runner 与并行 rsync 曾造成 parity 缺 1 文件，保留 `assets_sync.log`；最终串行同步另记 `assets_sync_final.log`。parity 扩展到 `assets/ui/`，覆盖 PNG 与导入配置。
+
+### 最终验收结果
+
+最终批次 `Test/assets_run.sh` → `assets_shots.sh` + `assets_batch.sh`。待完整 `.done`、日志与实拍回拉后填入。
+
+## 主控检查点冻结（2026-11-10 20:32）
+
+用户安排公司电脑 AI 先行下一单（Notion 开发单：占位IP文案替换+图标），主控停手转验收位。本提交为接线段施工检查点：最终批 assets_batch ALLDONE（legal/bootsmoke/neutral rc=0、phonehud 三档 rc=0、suite 658/1）；world.gd 改动经主控逐 hunk 核对均为呈现层（StyleBox/徽章/Logo 丝带），无玩法逻辑。suite 唯一红 c21 passive tentacles 与 C24 的 static 红同属被动实验室环境签名，**复跑定性未做、验收未关**，待公司 AI 返工后由主控一并复跑裁定。

@@ -2877,7 +2877,7 @@ func _build_hud() -> void:
 	_hero_info = info
 	info.position = Vector2(94, 4)
 	info.size = Vector2(232, 80)
-	info.add_theme_stylebox_override("panel", UiTheme.glass(14, UiTheme.GLASS_A, Color(1, 1, 1, 0.14), 1, 0))
+	info.add_theme_stylebox_override("panel", UiTheme.panel_texture())
 	info.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_hero_cluster.add_child(info)
 	_hud_name = _label_in(info, "妙蛙种子 Bulbasaur", Vector2(14, 6), Vector2(210, 27), 19, Color.WHITE)
@@ -2940,7 +2940,7 @@ func _build_hud() -> void:
 	card.offset_right = 363
 	card.offset_top = 10
 	card.offset_bottom = 94
-	card.add_theme_stylebox_override("panel", UiTheme.glass(16, UiTheme.GLASS_A, Color(1, 1, 1, 0.14), 1, 0))
+	card.add_theme_stylebox_override("panel", UiTheme.panel_texture())
 	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(card)
 	_zone_cn = _label_in(card, "常磐森林", Vector2(18, 8), Vector2(170, 28), 19, Color.WHITE)
@@ -3084,7 +3084,7 @@ func _build_hud() -> void:
 		mp.offset_right = 150
 		mp.offset_top = 238 + mi * 46
 		mp.offset_bottom = 238 + mi * 46 + 40
-		mp.add_theme_stylebox_override("panel", UiTheme.glass(11, UiTheme.GLASS_A, Color(1, 1, 1, 0.12), 1, 0))
+		mp.add_theme_stylebox_override("panel", UiTheme.panel_texture())
 		mp.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		mp.visible = false
 		root.add_child(mp)
@@ -3105,7 +3105,7 @@ func _build_hud() -> void:
 	mm_frame.offset_right = -12
 	mm_frame.offset_top = 10
 	mm_frame.offset_bottom = 186
-	mm_frame.add_theme_stylebox_override("panel", UiTheme.glass(88, UiTheme.GLASS_A, Color(1, 1, 1, 0.14), 1, 0))
+	mm_frame.add_theme_stylebox_override("panel", UiTheme.badge_base())
 	mm_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	mm_frame.name = "MinimapFrame"
 	root.add_child(mm_frame)
@@ -3161,7 +3161,7 @@ func _build_hud() -> void:
 	_goal_card.offset_right = -12
 	_goal_card.offset_top = 226
 	_goal_card.offset_bottom = 312
-	_goal_card.add_theme_stylebox_override("panel", UiTheme.glass(12))
+	_goal_card.add_theme_stylebox_override("panel", UiTheme.panel_texture())
 	_goal_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	# Cycle 19 hotfix: the card's width is FIXED at the
 	# designed 176 — a long challenge name must clip inside
@@ -3268,7 +3268,7 @@ func _build_hud() -> void:
 		var slot := Panel.new()
 		slot.position = Vector2(16 + i * 52, 56)
 		slot.size = Vector2(46, 46)
-		slot.add_theme_stylebox_override("panel", _style(UiTheme.glass_color(0.99), 23, Color(1, 1, 1, 0.22), 1))
+		slot.add_theme_stylebox_override("panel", UiTheme.badge_base())
 		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_bl_cluster.add_child(slot)
 		_bl_legacy.append(slot)
@@ -3570,7 +3570,7 @@ func _apply_starter_hud(species: String) -> void:
 	_medal_glyph.visible = _medal_panel.portrait == null
 	_medal_glyph.text = String(info["glyph"])
 	if _move_slot:
-		_move_slot.add_theme_stylebox_override("panel", _style(UiTheme.glass_color(0.99), 28, info["medal"], 2))
+		_move_slot.add_theme_stylebox_override("panel", UiTheme.badge_base())
 	_hud_name_full = "%s %s" % [String(info["name"]), String(info["en"])]
 	# UI-mobile P2 (plan H4): Chinese name only on phone; the
 	# EN name is on the pause status page.
@@ -3641,9 +3641,9 @@ func _menu_item(icon: String, accent: Color, title: String, x: float, y: float) 
 	b.custom_minimum_size = Vector2(300, h)
 	b.position = Vector2(x, y)
 	b.size = Vector2(300, h)
-	var ic := UiIcon.new(icon, accent, 30)
-	ic.position = Vector2(16, 11.0 if _p5_on else 17.0)
-	ic.size = Vector2(30, 30)
+	var ic := UiBadge.new(icon, accent, 42)
+	ic.position = Vector2(10, 3.0 if _p5_on else 11.0)
+	ic.size = Vector2(42, 42)
 	b.add_child(ic)
 	var t := _mk_label(b, title, 22, UiTheme.TEXT)
 	t.add_theme_font_override("font", _font_display)
@@ -3696,10 +3696,14 @@ func _build_menu(root: Control) -> void:
 	if _p5_on:
 		ribbon.position = Vector2(8, 0)
 		ribbon.size = Vector2(300, 58)
-	var title := _mk_dlabel(_menu_panel, "", 54, Color.WHITE)
-	title.position = Vector2(52, 30)
-	title.size = Vector2(600, 66)
-	UiTheme.outline(title, 6)
+	ribbon.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	var logo_art := UiTheme.art("logo_ribbon", ribbon.size)
+	ribbon.add_child(logo_art)
+	var title := _mk_dlabel(_menu_panel, "SpriteBonk", 30, UiTheme.TEXT)
+	title.position = Vector2(72, 30)
+	title.size = Vector2(200, 48)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	UiTheme.outline(title, 2)
 	var sub := _mk_label(_menu_panel, "选择初始伙伴", 19, UiTheme.LILAC)
 	sub.position = Vector2(362, 430)
 	sub.size = Vector2(400, 26)
@@ -3709,9 +3713,9 @@ func _build_menu(root: Control) -> void:
 	# the league unlocks), the six items, the hero card where
 	# the width allows, the touch hint along the foot.
 	if _p5_on:
-		title.add_theme_font_size_override("font_size", 40)
-		var tw := _font_display.get_string_size("", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 40).x
-		title.position = Vector2(8, 0)
+		title.add_theme_font_size_override("font_size", 30)
+		var tw := _font_display.get_string_size("SpriteBonk", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 40).x
+		title.position = Vector2(46, 0)
 		title.size = Vector2(tw + 12.0, 50)
 		sub.position = Vector2(332, 192)
 		sub.size = Vector2(300, 26)
@@ -3725,11 +3729,11 @@ func _build_menu(root: Control) -> void:
 		# than the 50 row and pushed the title's rect into the
 		# starter column (gate: menu pieces disjoint) — step the
 		# size down until the drawn box fits above y 56.
-		var tfs := 40
+		var tfs := 30
 		while tfs > 30 and title.get_minimum_size().y > 54.0:
 			tfs -= 2
 			title.add_theme_font_size_override("font_size", tfs)
-		var tw2 := _font_display.get_string_size("", HORIZONTAL_ALIGNMENT_LEFT, -1.0, tfs).x
+		var tw2 := _font_display.get_string_size("SpriteBonk", HORIZONTAL_ALIGNMENT_LEFT, -1.0, tfs).x
 		title.size = Vector2(tw2 + 12.0, title.get_minimum_size().y)
 		sub.position = Vector2(332, 192)
 	var y := 146.0
@@ -3777,7 +3781,7 @@ func _build_menu(root: Control) -> void:
 	var hint_back := Panel.new()
 	hint_back.position = Vector2(44, 664)
 	hint_back.size = Vector2(1192, 48)
-	hint_back.add_theme_stylebox_override("panel", UiTheme.glass(10, 0.55))
+	hint_back.add_theme_stylebox_override("panel", UiTheme.panel_texture())
 	hint_back.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_menu_panel.add_child(hint_back)
 	var hint := _mk_label(_menu_panel, MENU_HINT_KBD, 13, Color(0.84, 0.86, 0.94))
@@ -3904,7 +3908,10 @@ func _build_menu(root: Control) -> void:
 	resources.position = Vector2(820, 26) if not _p5_on else Vector2(698, 8)
 	resources.add_theme_constant_override("separation", 10)
 	for entry in [["星尘 %d  +" % GameProfile.stardust(), "lab"], ["累计 %d  +" % int(GameProfile.data.get("totalStardust", 0)), "shop"]]:
-		var pill := UiTheme.make_button(String(entry[0]), "ghost", "normal")
+		var pill := UiTheme.make_button("    " + String(entry[0]), "ghost", "normal")
+		var dust_badge := UiBadge.new("sparkle", UiTheme.GOLD, 32)
+		dust_badge.position = Vector2(4, 5)
+		pill.add_child(dust_badge)
 		var dest: String = entry[1]
 		pill.pressed.connect(func() -> void:
 			if dest == "lab":
@@ -3984,7 +3991,7 @@ func _build_wallet_panel(root: Control) -> void:
 	_wallet_panel.offset_top = -210
 	_wallet_panel.offset_bottom = 210
 	_wallet_panel.visible = false
-	_wallet_panel.add_theme_stylebox_override("panel", UiTheme.glass(36))
+	_wallet_panel.add_theme_stylebox_override("panel", UiTheme.panel_texture())
 	root.add_child(_wallet_panel)
 	var vb := VBoxContainer.new()
 	vb.add_theme_constant_override("separation", 18)
@@ -3994,7 +4001,7 @@ func _build_wallet_panel(root: Control) -> void:
 	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation", 14)
 	vb.add_child(header)
-	header.add_child(UiBadge.new("ball", UiTheme.SKY, 62))
+	header.add_child(UiBadge.new("wallet", UiTheme.SKY, 62))
 	_wallet_edit = LineEdit.new()
 	_wallet_edit.placeholder_text = "粘贴公开地址"
 	_wallet_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -4119,7 +4126,7 @@ func _build_lab_panel(root: Control) -> void:
 	_lab_panel.offset_top = -280
 	_lab_panel.offset_bottom = 280
 	_lab_panel.visible = false
-	_lab_panel.add_theme_stylebox_override("panel", UiTheme.glass(16, 0.95))  # audit §6: menu-overlay panels stay readable (was .82)
+	_lab_panel.add_theme_stylebox_override("panel", UiTheme.panel_texture())
 	root.add_child(_lab_panel)
 	var vb := VBoxContainer.new()
 	vb.add_theme_constant_override("separation", 8)
@@ -4203,7 +4210,8 @@ func _refresh_lab() -> void:
 		badge.position = Vector2(6, 0)
 		b.add_child(badge)
 		if lv == 0:
-			var lock_icon := UiIcon.new("lock", UiTheme.TEXT, 14)
+			badge.modulate = Color(0.48, 0.48, 0.48)
+			var lock_icon := UiBadge.new("lock", UiTheme.TEXT, 22)
 			lock_icon.position = Vector2(44, 36)
 			b.add_child(lock_icon)
 		_label_in(b, "已满" if GameProfile.lab_cost(id) < 0 else "%d级" % lv, Vector2(0, 52), Vector2(66, 24), 13, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER)
@@ -4215,7 +4223,7 @@ func _refresh_lab() -> void:
 	var detail := PanelContainer.new()
 	detail.custom_minimum_size = Vector2(280, 0)
 	detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	detail.add_theme_stylebox_override("panel", UiTheme.glass(30))
+	detail.add_theme_stylebox_override("panel", UiTheme.panel_texture())
 	columns.add_child(detail)
 	_lab_detail = VBoxContainer.new()
 	_lab_detail.add_theme_constant_override("separation", 8)
@@ -4421,7 +4429,7 @@ func _build_shop_panel(root: Control) -> void:
 	_shop_panel.offset_top = -252
 	_shop_panel.offset_bottom = 252
 	_shop_panel.visible = false
-	_shop_panel.add_theme_stylebox_override("panel", UiTheme.glass(16, 0.95))  # audit §6: menu-overlay panels stay readable (was .82)
+	_shop_panel.add_theme_stylebox_override("panel", UiTheme.panel_texture())
 	root.add_child(_shop_panel)
 	var vb := VBoxContainer.new()
 	vb.add_theme_constant_override("separation", 8)
@@ -4540,7 +4548,7 @@ func _build_sound_panel(root: Control) -> void:
 	_sound_panel.offset_top = -285
 	_sound_panel.offset_bottom = 285
 	_sound_panel.visible = false
-	_sound_panel.add_theme_stylebox_override("panel", UiTheme.glass(16, 0.95))  # audit §6: menu-overlay panels stay readable (was .82)
+	_sound_panel.add_theme_stylebox_override("panel", UiTheme.panel_texture())
 	root.add_child(_sound_panel)
 	var hb := HBoxContainer.new()
 	hb.add_theme_constant_override("separation", 12)
@@ -4839,7 +4847,7 @@ func _build_unlock_panel(root: Control) -> void:
 	_unlock_panel.offset_top = -280
 	_unlock_panel.offset_bottom = 280
 	_unlock_panel.visible = false
-	_unlock_panel.add_theme_stylebox_override("panel", UiTheme.glass(16, 0.95))  # audit §6: menu-overlay panels stay readable (was .82)
+	_unlock_panel.add_theme_stylebox_override("panel", UiTheme.panel_texture())
 	root.add_child(_unlock_panel)
 	var vb := VBoxContainer.new()
 	vb.add_theme_constant_override("separation", 8)
@@ -4910,7 +4918,7 @@ func _build_draft(root: Control) -> void:
 	_draft_panel.offset_top = -226  # cycle 19: +team row
 	_draft_panel.offset_bottom = 226
 	_draft_panel.visible = false
-	_draft_panel.add_theme_stylebox_override("panel", UiTheme.glass(16, 0.94))
+	_draft_panel.add_theme_stylebox_override("panel", UiTheme.panel_texture())
 	root.add_child(_draft_panel)
 	var vb := VBoxContainer.new()
 	vb.add_theme_constant_override("separation", 10)
@@ -5180,6 +5188,7 @@ func _draft_card(opt: Dictionary, idx: int) -> Button:
 			icon = _type_icon(String(md2.get("type", "")))
 		"vitamin":
 			var vc: Dictionary = GameData.VITAMINS[key]
+			icon = {"protein":"sword", "calcium":"sparkle", "iron":"shield", "carbos":"vibrate", "hp-up":"heart", "ether":"flask", "dire-hit":"sword", "exp-candy":"book", "nugget":"wallet", "super-potion":"flask", "star-piece":"star"}.get(key, "flask")
 			title = String(vc["label"])
 			desc = String(vc["fmt"]) % _fmt_num(float(vc["per"]) * pe)
 	var accent := top_c if kind == "move_new" else rar_c
@@ -5481,7 +5490,7 @@ func _build_result(root: Control) -> void:
 	_result_panel.offset_top = -290
 	_result_panel.offset_bottom = 290
 	_result_panel.visible = false
-	_result_panel.add_theme_stylebox_override("panel", UiTheme.glass(18, 0.92))
+	_result_panel.add_theme_stylebox_override("panel", UiTheme.panel_texture())
 	root.add_child(_result_panel)
 	var vb := VBoxContainer.new()
 	vb.add_theme_constant_override("separation", 8)
@@ -5502,18 +5511,23 @@ func _build_result(root: Control) -> void:
 		cols.add_child(rcol)
 	else:
 		_result_panel.add_child(vb)
-	var stars := _mk_dlabel(vb, "★  ★  ★", 36, UiTheme.ORANGE)
-	stars.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var stars := HBoxContainer.new()
+	stars.alignment = BoxContainer.ALIGNMENT_CENTER
+	vb.add_child(stars)
+	for key in ["star_filled", "star_filled", "star_empty"]:
+		stars.add_child(UiTheme.art(key, Vector2(44, 44)))
 	var ribbon := PanelContainer.new()
-	ribbon.add_theme_stylebox_override("panel", UiTheme._btn_box(UiTheme.GREEN_DEEP, 32, Color.WHITE, 2, 20))
+	ribbon.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	ribbon.custom_minimum_size.y = 54
+	ribbon.draw.connect(func() -> void:
+		var extent := Vector2(minf(ribbon.size.x, 300), 72)
+		ribbon.draw_texture_rect(UiTheme.asset("decorations", "logo_ribbon"), Rect2(Vector2((ribbon.size.x - extent.x) / 2, -8), extent), false))
 	vb.add_child(ribbon)
 	_result_title = _mk_dlabel(ribbon, "", 34, UiTheme.TEXT)
-	_result_title.add_theme_color_override("font_color", Color.WHITE)
+	_result_title.add_theme_color_override("font_color", UiTheme.TEXT)
 	_result_panel.draw.connect(func() -> void:
-		for i in range(14):
-			var x := 10.0 if i % 2 == 0 else _result_panel.size.x - 10.0
-			var y := 28.0 + float(i / 2) * 72.0
-			_result_panel.draw_circle(Vector2(x, y), 3.0, [UiTheme.ORANGE, UiTheme.SKY, UiTheme.GREEN][i % 3]))
+		_result_panel.draw_texture_rect(UiTheme.asset("decorations", "confetti_strip"), Rect2(12, 4, _result_panel.size.x - 24, 64), false))
+
 	_result_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	# Cycle 18: the sectioned summary (UI_SPEC §2.7) replaces
 	# the single body label — payout chips, a 4-up fact grid,
@@ -7576,7 +7590,7 @@ func _build_shop(root: Control) -> void:
 	_meowth_panel.offset_top = -215
 	_meowth_panel.offset_bottom = 215
 	_meowth_panel.visible = false
-	_meowth_panel.add_theme_stylebox_override("panel", UiTheme.glass(16, 0.94))
+	_meowth_panel.add_theme_stylebox_override("panel", UiTheme.panel_texture())
 	root.add_child(_meowth_panel)
 	var vb := VBoxContainer.new()
 	vb.add_theme_constant_override("separation", 10)
@@ -7653,7 +7667,7 @@ func _build_choice(root: Control) -> void:
 	_choice_panel.offset_top = -190
 	_choice_panel.offset_bottom = 190
 	_choice_panel.visible = false
-	_choice_panel.add_theme_stylebox_override("panel", UiTheme.glass(16, 0.94))
+	_choice_panel.add_theme_stylebox_override("panel", UiTheme.panel_texture())
 	root.add_child(_choice_panel)
 	var vb := VBoxContainer.new()
 	vb.add_theme_constant_override("separation", 10)
@@ -10135,7 +10149,7 @@ func _build_blessing(root: Control) -> void:
 	_blessing_panel.offset_top = -198  # cycle 19: +team row
 	_blessing_panel.offset_bottom = 198
 	_blessing_panel.visible = false
-	_blessing_panel.add_theme_stylebox_override("panel", UiTheme.glass(16, 0.94))
+	_blessing_panel.add_theme_stylebox_override("panel", UiTheme.panel_texture())
 	root.add_child(_blessing_panel)
 	var vb := VBoxContainer.new()
 	vb.add_theme_constant_override("separation", 10)
@@ -14112,6 +14126,7 @@ func _build_objective(root: Control, kpill: Control) -> void:
 	_obj_pill.offset_bottom = 290
 	_obj_pill.custom_minimum_size = Vector2(176, 0)
 	_obj_pill.add_theme_stylebox_override("panel", UiTheme.glass(11))
+	UiTheme.panel_underlay(_obj_pill)
 	_obj_pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_obj_pill.visible = false
 	root.add_child(_obj_pill)
@@ -14163,7 +14178,7 @@ func _build_objective(root: Control, kpill: Control) -> void:
 	_obj_drawer.offset_right = -200
 	_obj_drawer.offset_top = 10
 	_obj_drawer.offset_bottom = 300
-	_obj_drawer.add_theme_stylebox_override("panel", UiTheme.glass(14, 0.92))
+	_obj_drawer.add_theme_stylebox_override("panel", UiTheme.panel_texture())
 	_obj_drawer.mouse_filter = Control.MOUSE_FILTER_STOP
 	_obj_drawer.visible = false
 	root.add_child(_obj_drawer)
@@ -14578,8 +14593,7 @@ func _p4_refresh_slots(relayout: bool) -> void:
 		pnl.position = Vector2(i * P4_MOVE_STEP, 0)
 		pnl.size = Vector2(46, 46)
 		pnl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		pnl.add_theme_stylebox_override("panel", _style(UiTheme.glass_color(0.99), 23,
-			UiTheme.type_color(t), 2))
+		pnl.add_theme_stylebox_override("panel", UiTheme.badge_base())
 		_bl_rows.add_child(pnl)
 		var ic := UiIcon.new(_type_icon(t), UiTheme.type_color(t).lightened(0.25), 22)
 		ic.position = Vector2(12, 2)
@@ -15372,7 +15386,7 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 	# Approved U5: four readable summary rows before extended statistics.
 	for data in [["clock", "用时", _fmt_time(run_time)], ["sword", "击杀", str(kills)], ["star", "等级", str(player.level if player else 1)], ["coin", "金币", str(int(gold))]]:
 		var plate := PanelContainer.new()
-		plate.add_theme_stylebox_override("panel", UiTheme.glass(24, 1.0, Color.WHITE, 2, 8))
+		plate.add_theme_stylebox_override("panel", UiTheme.panel_texture())
 		_result_box.add_child(plate)
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 14)
@@ -15539,7 +15553,7 @@ func _build_pause(root: Control) -> void:
 	_pause_panel.offset_top = -270
 	_pause_panel.offset_bottom = 270
 	_pause_panel.visible = false
-	_pause_panel.add_theme_stylebox_override("panel", UiTheme.glass(16, 0.94))
+	_pause_panel.add_theme_stylebox_override("panel", UiTheme.panel_texture())
 	root.add_child(_pause_panel)
 	var vb := VBoxContainer.new()
 	vb.add_theme_constant_override("separation", 10)
@@ -15963,7 +15977,7 @@ func _build_bigmap(root: Control) -> void:
 	_bigmap_panel.offset_top = -side * 0.5 - 10.0
 	_bigmap_panel.offset_bottom = side * 0.5 + 10.0
 	_bigmap_panel.visible = false
-	_bigmap_panel.add_theme_stylebox_override("panel", UiTheme.glass(16, 0.95))
+	_bigmap_panel.add_theme_stylebox_override("panel", UiTheme.panel_texture())
 	root.add_child(_bigmap_panel)
 	var hb := HBoxContainer.new()
 	hb.add_theme_constant_override("separation", 12)
@@ -16336,7 +16350,7 @@ func _refresh_event_pills() -> void:
 		(c as Node).queue_free()
 	for ev in evs:
 		var pill := PanelContainer.new()
-		pill.add_theme_stylebox_override("panel", UiTheme.glass(11))
+		pill.add_theme_stylebox_override("panel", UiTheme.panel_texture())
 		pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_pill_box.add_child(pill)
 		var hb := HBoxContainer.new()
@@ -16432,7 +16446,7 @@ func _build_loadout(root: Control) -> void:
 	panel.offset_right = 545
 	panel.offset_top = -318
 	panel.offset_bottom = 318
-	panel.add_theme_stylebox_override("panel", UiTheme.glass(18, 0.95))
+	panel.add_theme_stylebox_override("panel", UiTheme.panel_texture())
 	_loadout_panel.add_child(panel)
 	var hb := HBoxContainer.new()
 	hb.add_theme_constant_override("separation", 14)
