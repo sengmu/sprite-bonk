@@ -545,6 +545,7 @@ var debug_safe_insets := Vector4(-1, -1, -1, -1)
 ## _ui_root space). Exposed for the phonehud gate.
 var _dbg_span := Vector2.ZERO
 var _zone_chip_label: Label
+var _tier_chip_label: Label
 var _meta_status: Label
 var _minimap: Minimap
 var _draft_panel: PanelContainer
@@ -1030,7 +1031,6 @@ func collide_circle(next: Vector3, radius: float) -> Vector3:
 func _bake_minimap() -> void:
 	var sz := 168
 	var img := Image.create(sz, sz, false, Image.FORMAT_RGBA8)
-	var navy := Color(0.13, 0.14, 0.28)
 	for j in range(sz):
 		if _slice_builds and j % 12 == 11:
 			await get_tree().process_frame
@@ -1051,10 +1051,15 @@ func _bake_minimap() -> void:
 			var h := height_at(wx, wz)
 			var n := _terrain_normal(wx, wz, 2.0)
 			var col := _terrain_color(wx, wz, h, n.y)
-			# U1 1:1 (dark HUD): the reference minimap reads as
-			# bright terrain — 0.55 + navy 0.18 baked it near-black.
-			col = Color(col.r * 0.85, col.g * 0.85, col.b * 0.85).lerp(navy, 0.08)
-			var lift := 0.85 + clampf(h, 0.0, 8.0) / 8.0 * 0.35
+			# U1 1:1 round 3: the reference minimap reads as
+			# bright hand-painted meadow, while the baked
+			# terrain colours run dark — true colour (factor
+			# 1.0, no navy) plus a lift toward light meadow
+			# green keeps the terrain variation but lands in
+			# the reference's brightness band.
+			var meadow := Color(0.60, 0.80, 0.40)
+			col = col.lerp(meadow, 0.45)
+			var lift := 1.0 + clampf(h, 0.0, 8.0) / 8.0 * 0.35
 			col = Color(col.r * lift, col.g * lift, col.b * lift, 1)
 			if rr > sz * 0.5 - 6.0:
 				col = Color(col.r * 0.75, col.g * 0.75, col.b * 0.75, 1)
@@ -2965,7 +2970,7 @@ func _build_hud() -> void:
 	_zone_chip_label = _label_in(zchip, "区域 1/4", Vector2(0, 0), Vector2(74, 22), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
 	var nchip := _panel(card, Vector2(176, 57), Vector2(64, 22), Color(0.35, 0.38, 0.55, 0.95), 11, Color(0, 0, 0, 0), 0, true)
 	_tier_chip = nchip
-	_label_in(nchip, "普通", Vector2(0, 0), Vector2(64, 22), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
+	_tier_chip_label = _label_in(nchip, "普通", Vector2(0, 0), Vector2(64, 22), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
 	var wxchip := _panel(card, Vector2(246, 57), Vector2(64, 22), Color(0.13, 0.30, 0.48, 0.95), 11, Color(0, 0, 0, 0), 0, true)
 	_wx_chip = wxchip
 	_wx_icon = UiIcon.new("sun", Color(1.0, 0.9, 0.5), 14)
@@ -14069,21 +14074,30 @@ func _apply_top_card_phone(on: bool) -> void:
 	_p2_on = want
 	_p2_font_sig = ""
 	var lay := [
-		[_zone_cn, Rect2(18, 8, 150, 26)],
-		[_wx_chip, Rect2(96, 40, 60, 26)],
-		[_wx_icon, Rect2(6, 5, 16, 16)],
-		[_wx_label, Rect2(24, 0, 34, 26)],
-		[_timer_label, Rect2(170, 4, 220, 44)],
+		[_zone_cn, Rect2(18, 8, 120, 26)],
+		[_zone_chip, Rect2(18, 40, 74, 22)],
+		[_tier_chip, Rect2(98, 40, 44, 22)],
+		[_tier_chip_label, Rect2(0, 0, 44, 22)],
+		[_wx_chip, Rect2(148, 40, 48, 26)],
+		[_wx_icon, Rect2(5, 5, 14, 14)],
+		[_wx_label, Rect2(21, 0, 25, 26)],
+		[_timer_label, Rect2(140, 4, 180, 44)],
 		# Plan (170,48,220,14): at the floor-fitted size
 		# (14+ px) the centred glyphs ran into the segments
 		# at y 64 — the box lifts into the timer's empty
 		# lower margin, same centre column.
-		[_danger_name, Rect2(170, 41, 220, 20)],
-		[_wallet_pill, Rect2(392, 24, 156, 36)],
-		[_coin_icon, Rect2(10, 9, 18, 18)],
-		[_gold_label, Rect2(31, 0, 50, 36)],
-		[_ball_icon, Rect2(88, 9, 18, 18)],
-		[_ball_price_label, Rect2(109, 0, 44, 36)],
+		[_danger_name, Rect2(140, 41, 180, 20)],
+		# U1 1:1 round 3: the wallet carries all three
+		# resources again (dust + gold + ball price), so it
+		# widens to 220 inside the unchanged 560 card — the
+		# zone name (120) and timer (180) give back the room.
+		[_wallet_pill, Rect2(328, 24, 220, 36)],
+		[_dust_icon, Rect2(8, 9, 18, 18)],
+		[_dust_label, Rect2(28, 0, 36, 36)],
+		[_coin_icon, Rect2(70, 9, 18, 18)],
+		[_gold_label, Rect2(90, 0, 36, 36)],
+		[_ball_icon, Rect2(132, 9, 18, 18)],
+		[_ball_price_label, Rect2(152, 0, 60, 36)],
 		[_hud_hp_track, Rect2(94, 90, 232, 20)],
 		[_hud_hp_lag, Rect2(1, 1, 230, 18)],
 		[_hud_hp_fill, Rect2(1, 1, 230, 18)],
@@ -14092,9 +14106,13 @@ func _apply_top_card_phone(on: bool) -> void:
 		[_party_row, Rect2(94, 114, 240, 44)],
 	]
 	for i in range(_pips.size()):
-		lay.append([_pips[i], Rect2(18 + i * 17, 46, 11, 11)])
+		# U1 1:1 round 3: pips drop to the third row — the
+		# second row now holds the restored zone / tier /
+		# weather chips (reference U1_final.jpg).
+		lay.append([_pips[i], Rect2(18 + i * 17, 64, 11, 11)])
 	for i in range(_danger_segs.size()):
-		lay.append([_danger_segs[i], Rect2(204 + i * 17, 64, 13, 14)])
+		# Recentered under the narrowed timer (centre 230).
+		lay.append([_danger_segs[i], Rect2(171 + i * 17, 64, 13, 14)])
 	for e in lay:
 		var c := e[0] as Control
 		if c == null:
@@ -14109,8 +14127,11 @@ func _apply_top_card_phone(on: bool) -> void:
 			c.size.y = r.size.y
 		else:
 			c.size = r.size
-	for c in [_pw_row, _zone_en, _elapsed_label, _zone_chip, _tier_chip,
-			_dust_icon, _dust_label]:
+	# U1 1:1 round 3: zone / tier chips and the stardust
+	# item are restored on phone (reference U1_final.jpg) —
+	# only the English name, elapsed clock and power row stay
+	# collapsed (parity via the pause status page).
+	for c in [_pw_row, _zone_en, _elapsed_label]:
 		if c != null:
 			(c as Control).visible = not on
 	if _mm_expand:
@@ -14149,6 +14170,8 @@ func _p2_fit_fonts(s_card: float, s_hero: float) -> void:
 	var rows := [[_zone_cn, 19, fl, s_card], [_wx_label, 14, fl, s_card],
 		[_timer_label, 32, f24, s_card], [_danger_name, 13, fl, s_card],
 		[_gold_label, 17, f24, s_card], [_ball_price_label, 17, f24, s_card],
+		[_dust_label, 15, f24, s_card],
+		[_zone_chip_label, 11, fl, s_card], [_tier_chip_label, 11, fl, s_card],
 		[_hud_name, 19, fl, s_hero], [_lv_label, 12, fl, s_hero],
 		[_hud_evo, 14, fl, s_hero], [_hud_hp_num, 14, f20, s_hero]]
 	for l in chips:
@@ -14170,7 +14193,8 @@ func _p2_fit_fonts(s_card: float, s_hero: float) -> void:
 ## Desktop: the fitted labels go back to their build sizes.
 func _p2_restore_fonts() -> void:
 	var rows: Array = [_zone_cn, _wx_label, _timer_label, _danger_name, _gold_label,
-		_ball_price_label, _hud_name, _lv_label, _hud_evo, _hud_hp_num]
+		_ball_price_label, _dust_label, _zone_chip_label, _tier_chip_label,
+		_hud_name, _lv_label, _hud_evo, _hud_hp_num]
 	for c in _hud_chips.get_children():
 		var chip := c as Control
 		chip.custom_minimum_size.y = 20.0

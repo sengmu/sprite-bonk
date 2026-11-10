@@ -58,8 +58,11 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	var centre := size * 0.5
 	var r_out := minf(size.x, size.y) * 0.5 - 1.0 - hit_pad
-	# Base disc: medal ring + dark face (the old Panel's look).
-	draw_texture_rect(UiTheme.asset("badges", "badge_star_empty"), Rect2(centre - Vector2.ONE * r_out, Vector2.ONE * r_out * 2), false)
+	# Base disc: ult purple (reference U1: purple disc +
+	# white 必) with a lighter rim — the old star badge
+	# texture read as an orange star and buried the glyph.
+	draw_circle(centre, r_out, Color(0.55, 0.28, 0.88))
+	draw_arc(centre, r_out - 1.5, 0.0, TAU, 48, Color(0.72, 0.50, 1.0), 3.0, true)
 	if charge >= 1.0:
 		# Ready: full bright face + pulsing rim in the ult tint.
 		var pulse := 0.75 + 0.25 * sin(_pulse * 6.0)

@@ -1426,12 +1426,16 @@ func _p2_state(vp: Vector2, st: String) -> void:
 			nok = false
 	_check("P2: must-glance numerals (" + st + ")", nok, str(nd))
 	# -- collapsed items are hidden on phone ------------------
+	# U1 1:1 round 3: zone / tier chips and the stardust item
+	# are restored on phone (reference U1_final.jpg) — the
+	# collapse now covers only the English name, the elapsed
+	# clock and the power row; the restored items are
+	# asserted VISIBLE instead (same strictness, new target).
 	var zchip := (_world.get("_zone_chip_label") as Control).get_parent() as Control
 	var tchip := _p2_tier_chip()
 	var hid := {
 		"pw_row": _world.get("_pw_row"), "zone_en": _world.get("_zone_en"),
-		"elapsed": _world.get("_elapsed_label"), "zone_chip": zchip,
-		"tier_chip": tchip, "dust": _world.get("_dust_label")}
+		"elapsed": _world.get("_elapsed_label")}
 	var shown: Array = []
 	for k in hid.keys():
 		var c := hid[k] as Control
@@ -1439,6 +1443,16 @@ func _p2_state(vp: Vector2, st: String) -> void:
 			shown.append(k)
 	_check("P2: collapsed top-band items hidden (" + st + ")", shown.is_empty(),
 		"still shown=" + str(shown))
+	var restored := {
+		"zone_chip": zchip, "tier_chip": tchip,
+		"dust": _world.get("_dust_label")}
+	var missing: Array = []
+	for k in restored.keys():
+		var c := restored[k] as Control
+		if c == null or not c.is_visible_in_tree():
+			missing.append(k)
+	_check("P2: restored top-band items visible (" + st + ")", missing.is_empty(),
+		"hidden=" + str(missing))
 	var hn := String((_world.get("_hud_name") as Label).text)
 	var pl = _world.get("player")
 	var en := String(pl.species_id).capitalize() if pl != null else "?"
@@ -1697,6 +1711,7 @@ func _p2_snap(state: String) -> void:
 		return
 	var tag := _run_tag()
 	var corner := tag in ["2400x1080_s070_i0", "2400x1080_s150_i0",
+		"2340x1080_s070_i0", "2340x1080_s150_i0",
 		"1920x1080_s070_i0", "1920x1080_s150_i0"]
 	if _p1_capture_combo() or (corner and state in ["hud_start", "boss"]):
 		await _snap("mobile_p2_" + state + "_" + tag)
