@@ -3818,6 +3818,7 @@ func _build_menu(root: Control) -> void:
 		hint.add_theme_color_override("font_color", Color(1.0, 0.98, 0.86))
 		hint.add_theme_font_size_override("font_size", 13)
 		hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		hint.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	# --- meta column (cycle 17): mm-item cards — the wallet
 	# subtitle carries the live wallet state, the Lab subtitle
 	# the bundle's "{n} 萤尘" line (via _refresh_meta). ---
@@ -3970,7 +3971,7 @@ func _build_menu(root: Control) -> void:
 		menu_logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		menu_logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT
 		menu_logo.texture = load("res://assets/menu/logo.png")
-		menu_logo.position = Vector2(8, -3)
+		menu_logo.position = Vector2(8, 0)
 		menu_logo.size = Vector2(310, 85)
 		menu_logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_menu_design.add_child(menu_logo)
@@ -13568,7 +13569,7 @@ func _p5_layout_menu(s: float) -> void:
 		var hb := _menu_hint.get_meta("back") as Control
 		if hb:
 			hb.size = Vector2(w - 16.0, 48)
-		_menu_hint.size = Vector2(w - 36.0, 42)
+		_menu_hint.size = Vector2(245.0 if _p5_on else w - 36.0, 42)
 	var start := _menu_design.get_node_or_null("StartButton") as Control
 	if start:
 		start.position = Vector2(maxf(328, w - 248), 348)
@@ -13591,9 +13592,8 @@ func _p5_layout_menu(s: float) -> void:
 		# still encloses the label, never above the column foot.
 		var hb2 := _menu_hint.get_meta("back") as Control
 		var lh := _menu_hint.get_minimum_size().y
-		var top := clampf(450.0 - lh - 6.0, 396.0, 400.0)
+		var top := 450.0 - lh - 6.0
 		if _p5_on:
-			top = 405.0
 			_menu_hint.size.x = 245.0
 		_menu_hint.position.y = top + 3.0
 		_menu_hint.size.y = minf(lh, 450.0 - top - 3.0)
@@ -13602,7 +13602,10 @@ func _p5_layout_menu(s: float) -> void:
 			hb2.size.y = 450.0 - top
 			if _p5_on:
 				hb2.size.x = 280.0
-				hb2.size.y = 32.0
+				hb2.size.y = lh + 6.0
+				var pad := _menu_design.get_node_or_null("MenuHintPad") as Control
+				if pad:
+					pad.position.y = top + 3.0
 
 func _safe_insets() -> Vector4:
 	# Cycle 21.3 (audit F6): the gate's simulated insets win.
