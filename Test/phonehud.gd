@@ -325,7 +325,7 @@ func _run() -> void:
 	# time, which a slow host can burn before the first
 	# assertion — geometry is what's being gated).
 	_world._refresh_goal_card()
-	_world.show_banner("第一关 · 常磐森林 — 去北边的祭坛召唤守护者！", 600.0)
+	_world.show_banner("第一关 · 青苔林 — 去北边的祭坛召唤守护者！", 600.0)
 	await _frames(6)
 	_assert_state(vp, "hud_start", false)
 	await _snap("phone_hud_touch_" + _run_tag() + "_hudstart")
@@ -833,7 +833,7 @@ func _p1_alpha_banner() -> void:
 	var texts := _p1_banner_texts()
 	var alpha_t := ""
 	for t in texts:
-		if String(t).contains("阿尔法"):
+		if String(t).contains("头领"):
 			alpha_t = String(t)
 	if _mode == "phone":
 		_check("P1: alpha banner has no keyboard verb",
@@ -843,7 +843,7 @@ func _p1_alpha_banner() -> void:
 		# (the queue rotates on its own; bounded wait).
 		if _p1_capture_combo():
 			for i in range(400):
-				if String((_world.get("_banner") as Label).text).contains("阿尔法") \
+				if String((_world.get("_banner") as Label).text).contains("头领") \
 						and float(_world.get("_banner_t")) > 0.0:
 					break
 				await get_tree().process_frame
@@ -985,7 +985,7 @@ func _p1_phone_block(vp: Vector2) -> void:
 		pl.global_position = alpha.global_position + Vector3(3, 0.2, 0)
 		await _frames(12)
 		var t := String(_world.get("_prompt").text)
-		_check("P1: capture prompt shown", t.contains("投球"), "text=" + t
+		_check("P1: capture prompt shown", t.contains("邀伴"), "text=" + t
 			+ " state=" + String(_world.get("state"))
 			+ " d=" + str(pl.global_position.distance_to(alpha.global_position)))
 		_p1_prompt_verb("capture")
@@ -3339,8 +3339,8 @@ func _p5_menu_block(vp: Vector2) -> void:
 			fc != null and _vis_rect(fc).position.distance_to(Vector2(358, 470)) < 1.5,
 			str(_vis_rect(fc).position) if fc else "none")
 	# The menu overlays, opened through their menu items.
-	for row in [["wallet", "连接钱包"], ["lab", "实验室"], ["shop", "星尘商店"],
-			["unlock", "联盟挑战"], ["sound", "设置"]]:
+	for row in [["wallet", "连接钱包"], ["lab", "实验室"], ["shop", "萤尘商店"],
+			["unlock", "伙伴营挑战"], ["sound", "设置"]]:
 		var nm := String(row[0])
 		var mb := _p5_menu_button(String(row[1]))
 		if mb == null:

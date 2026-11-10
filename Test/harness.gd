@@ -4205,7 +4205,7 @@ func _c18_ui2_phase() -> void:
 	var has_dust := false
 	var has_moves := false
 	for l in rlabels:
-		if (l as Label).text.contains("星尘 +"):
+		if (l as Label).text.contains("萤尘 +"):
 			has_dust = true
 		if (l as Label).text == "招式伤害":
 			has_moves = true
@@ -4308,7 +4308,7 @@ func _c21_phase() -> void:
 	# --- zone truths (inventory #4) ---
 	_c9_check("c21: zone 2 is Torre Lavanda with the mined trio",
 		String(w.call("zone_def", 2)["tiles"]) == "graveyard" and String(w.call("zone_def", 2)["en"]) == "Lavender Tower"
-		and String(w.call("zone_def", 2)["cn"]) == "紫苑塔"
+		and String(w.call("zone_def", 2)["cn"]) == "雾钟塔"
 		and (w.call("zone_def", 2)["guardians"] as Array) == ["gengar", "weezing", "hypno"])
 	_c9_check("c21: zone 4 is Isla Volcán with the mined trio",
 		String(w.call("zone_def", 4)["tiles"]) == "volcano" and String(w.call("zone_def", 4)["en"]) == "Volcano Island"

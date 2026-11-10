@@ -30,7 +30,7 @@ const VITAMINS := {
 	"ether": {"label": "以太 Ether", "acc": "atkspd_pct", "per": 8.0, "fmt": "攻速 +%s%%"},
 	"dire-hit": {"label": "要害镜 Dire Hit", "acc": "crit_pct", "per": 5.0, "fmt": "暴击率 +%s%%"},
 	"exp-candy": {"label": "经验糖 Exp Candy", "acc": "xp_pct", "per": 10.0, "fmt": "经验 +%s%%"},
-	"nugget": {"label": "金珠 Nugget", "acc": "gold_pct", "per": 15.0, "fmt": "金币 +%s%%"},
+	"nugget": {"label": "金块", "acc": "gold_pct", "per": 15.0, "fmt": "金币 +%s%%"},
 	"super-potion": {"label": "超级伤药", "acc": "regen_flat", "per": 0.7, "fmt": "再生 +%s/s"},
 	"star-piece": {"label": "星星碎片", "acc": "luck_flat", "per": 10.0, "fmt": "幸运 +%s"},
 }
