@@ -4016,13 +4016,12 @@ func _build_wallet_panel(root: Control) -> void:
 		elif _wallet_edit.text.strip_edges() != "":
 			if not wallet.connect_with_address(_wallet_edit.text):
 				_wallet_balance.text = "地址无效，请重试"
-		elif wallet.is_mwa_available():
+		else:
 			_wallet_balance.text = "正在唤起 Solana 钱包授权..."
 			var err := wallet.request_authorize()
 			if err != "":
 				_wallet_balance.text = err
-		else:
-			_wallet_balance.text = "请输入地址或连接移动钱包")
+	)
 	row.add_child(cbtn)
 	wallet.auth_failed.connect(func(reason: String) -> void:
 		if _wallet_balance:

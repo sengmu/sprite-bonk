@@ -13,3 +13,4 @@ Test/out/
 # 临时派单文件
 .tmp/
 android/keystore_credentials.txt
+screenshots/

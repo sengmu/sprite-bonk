@@ -6,14 +6,8 @@ extends Node
 ## - Guest mode is the default and needs no wallet to play.
 ## - "Connected" state = a validated Solana address bound to this session,
 ##   persisted in user://wallet.cfg. Balances are read via public JSON-RPC.
-## - The authorize step is isolated in request_authorize(): on Android the
-##   production path is Mobile Wallet Adapter (MWA). The maintained Godot
-##   plugin (Virus-Axel/godot-solana-sdk, GDExtension) currently exposes its
-##   wallet adapter for web/desktop wallets; its Android MWA support is
-##   still in-progress upstream (see PHASES.md research notes), so until
-##   that lands, request_authorize() returns ERR_MWA_UNAVAILABLE and the UI
-##   falls back to manual address entry (watch-only connect). Swapping in
-##   the MWA implementation later touches only request_authorize().
+## - Android uses Mobile Wallet Adapter (MWA) for authorization. Manual
+##   address entry is also available for balance lookup.
 ## - Token hooks for the tokenomics plan ($SPRT / Genesis NFT, see
 ##   goals/5000/files/sprite-bonk-tokenomics-2026-10-24.md) are stubs:
 ##   neither the token nor the NFT collection exists yet.
@@ -23,7 +17,7 @@ signal balance_updated(sol: float)
 signal balance_failed(reason: String)
 signal auth_failed(reason: String)
 
-const ERR_MWA_UNAVAILABLE := "MWA authorize unavailable: godot-solana-sdk Android MWA not production-ready; use manual address entry (watch-only)."
+const ERR_MWA_UNAVAILABLE := "此版本无法打开移动钱包，可输入公开地址查询余额。"
 
 const RPC_MAINNET := "https://api.mainnet-beta.solana.com"
 const RPC_DEVNET := "https://api.devnet.solana.com"
@@ -55,7 +49,7 @@ func _ready() -> void:
 	_load_saved()
 
 func _init_mwa_adapter() -> void:
-	if ClassDB.class_exists("WalletAdapter"):
+	if Engine.has_singleton("WalletAdapterAndroid") and ClassDB.class_exists("WalletAdapter"):
 		_adapter = ClassDB.instantiate("WalletAdapter")
 		if _adapter:
 			add_child(_adapter)
@@ -76,7 +70,7 @@ func rpc_url() -> String:
 	return RPC_DEVNET if cluster == "devnet" else RPC_MAINNET
 
 func is_mwa_available() -> bool:
-	return _adapter != null
+	return _adapter != null and _adapter.has_method("connect_wallet")
 
 func _on_mwa_connected() -> void:
 	if _adapter and _adapter.has_method("get_connected_key"):
@@ -90,7 +84,8 @@ func _on_mwa_failed() -> void:
 	auth_failed.emit("MWA 授权失败或已取消")
 
 func request_authorize() -> String:
-	if _adapter != null and _adapter.has_method("connect_wallet"):
+	if is_mwa_available():
+		# Android chooses the wallet through the MWA association intent.
 		_adapter.call("connect_wallet")
 		return ""
 	return ERR_MWA_UNAVAILABLE

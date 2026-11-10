@@ -57,5 +57,10 @@ class AndroidExportPlugin extends EditorExportPlugin:
 						"androidx.compose.ui:ui-tooling-preview:1.4.3",
 						"androidx.activity:activity-compose:1.8.0",])
 
+	func _get_android_manifest_application_element_contents(_platform, _debug):
+		# Keep the bridge alive when a portrait wallet opens over the game.
+		# Recreating it would start another MWA request.
+		return '<activity android:name="plugin.walletadapterandroid.ComposeWalletActivity" android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden" />'
+
 	func _get_name():
 		return _plugin_name
