@@ -3900,13 +3900,13 @@ func _build_menu(root: Control) -> void:
 	# Cycle 19: the shake glyph replaces "wind" (audit §2.3).
 	if _p5_on:
 		for entry in [[litem, Vector2(8, 140), "res://assets/menu/icon-lab.png", Vector2(70, 55)],
-				[sitem, Vector2(162, 140), "res://assets/menu/icon-shop.png", Vector2(76, 60)],
-				[uitem, Vector2(8, 226), "res://assets/menu/icon-league.png", Vector2(60, 52)],
-				[snditem, Vector2(162, 226), "res://assets/menu/icon-settings.png", Vector2(52, 45)]]:
+				[sitem, Vector2(84, 140), "res://assets/menu/icon-shop.png", Vector2(76, 60)],
+				[uitem, Vector2(160, 140), "res://assets/menu/icon-league.png", Vector2(60, 52)],
+				[snditem, Vector2(236, 140), "res://assets/menu/icon-settings.png", Vector2(52, 45)]]:
 			var item_button := entry[0][0] as Control
 			item_button.position = entry[1]
-			item_button.custom_minimum_size = Vector2(146, 76)
-			item_button.size = Vector2(146, 76)
+			item_button.custom_minimum_size = Vector2(70, 76)
+			item_button.size = Vector2(70, 76)
 			item_button.clip_contents = true
 			for state in ["normal", "hover", "pressed", "focus"]:
 				var tile_face := _style(Color(1.0, 0.967, 0.87), 15,
@@ -3923,14 +3923,14 @@ func _build_menu(root: Control) -> void:
 			art_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 			art_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			var art_size: Vector2 = entry[3]
-			art_icon.position = Vector2((146.0 - art_size.x) * 0.5, 1.0 - maxf(0.0, art_size.y - 45.0) * 0.55)
+			art_icon.position = Vector2((70.0 - art_size.x) * 0.5, 1.0 - maxf(0.0, art_size.y - 45.0) * 0.55)
 			art_icon.size = art_size
 			item_button.add_child(art_icon)
 			var item_title := item_button.get_child(1) as Label
 			item_title.position = Vector2(0, 46)
-			item_title.size = Vector2(146, 28)
+			item_title.size = Vector2(70, 28)
 			item_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			item_title.add_theme_font_size_override("font_size", 18)
+			item_title.add_theme_font_size_override("font_size", 12)
 			(entry[0][1] as Label).hide()
 		for badge_key in ["lab", "shop", "unlock"]:
 			(_menu_badges[badge_key] as Control).hide()
