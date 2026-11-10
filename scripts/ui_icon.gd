@@ -9,20 +9,50 @@ extends Control
 ## ships real assets — shapes are generic (sword, heart,
 ## shield, star), never traced from the original's files.
 
+## U1 (2026-11-11): the coin/ball SVG textures MUST be resolved
+## before the first _draw — a load() issued inside _draw() lands
+## after the renderer built the frame's draw list, so the first
+## paint is the default white texture, and a Control never
+## redraws on its own: the white square was permanent (repro:
+## Test/out/u1_icon_render.png white vs u1_icon_render2.png
+## gold once preloaded). Textures are therefore resolved when
+## the icon is assigned (setter / _init) and cached
+## process-wide; _draw only draws.
+static var _svg_cache: Dictionary = {}
+
 var icon := "":
 	set(v):
 		icon = v
+		_refresh_tex()
 		queue_redraw()
 var color := Color.WHITE:
 	set(v):
 		color = v
 		queue_redraw()
+var _tex: Texture2D = null
+
+func _svg_path() -> String:
+	if icon == "coin":
+		return "res://assets/ui-v2/icons/coin.svg"
+	if icon == "ball":
+		return "res://assets/ui-v2/icons/wooden-chest.svg"
+	return ""
+
+func _refresh_tex() -> void:
+	_tex = null
+	var path := _svg_path()
+	if path == "":
+		return
+	if not _svg_cache.has(path):
+		_svg_cache[path] = load(path) as Texture2D
+	_tex = _svg_cache[path] as Texture2D
 
 func _init(p_icon: String = "", p_color: Color = Color.WHITE, px: float = 24.0) -> void:
 	icon = p_icon
 	color = p_color
 	custom_minimum_size = Vector2(px, px)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_refresh_tex()
 
 ## Point in 24-space -> draw space.
 func _p(x: float, y: float) -> Vector2:
@@ -60,11 +90,18 @@ func _draw() -> void:
 	if size.x < 4.0 or size.y < 4.0:
 		return
 	if icon in ["coin", "ball"]:
-		var asset_path := "res://assets/ui-v2/icons/coin.svg" if icon == "coin" else "res://assets/ui-v2/icons/wooden-chest.svg"
-		var texture := load(asset_path) as Texture2D
-		if texture:
+		if _tex == null:
+			# Late-assignment safety net: the setter / _init
+			# normally preloads _tex, so this only heals a
+			# load that failed the first time — and the queued
+			# redraw paints it on the next frame instead of
+			# leaving the first white paint permanent.
+			_refresh_tex()
+			if _tex != null:
+				queue_redraw()
+		if _tex != null:
 			var side := minf(size.x, size.y)
-			draw_texture_rect(texture, Rect2((size - Vector2.ONE * side) * 0.5, Vector2.ONE * side), false)
+			draw_texture_rect(_tex, Rect2((size - Vector2.ONE * side) * 0.5, Vector2.ONE * side), false)
 			return
 	match icon:
 		"sword":
