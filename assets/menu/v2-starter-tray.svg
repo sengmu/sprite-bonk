@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="810" height="280" viewBox="0 0 810 280">
+  <defs>
+    <linearGradient id="cream" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fffbe9"/><stop offset="1" stop-color="#f8edce"/></linearGradient>
+  </defs>
+  <rect x="9" y="13" width="790" height="258" rx="48" fill="#5b3b20" opacity=".24"/>
+  <rect x="5" y="5" width="800" height="258" rx="48" fill="url(#cream)" stroke="#f0c95e" stroke-width="7"/>
+  <rect x="41" y="71" width="210" height="172" rx="30" fill="#e9f9e3" stroke="#48ac16" stroke-width="6"/>
+  <rect x="269" y="71" width="210" height="172" rx="30" fill="#fff0d8" stroke="#eed8b6" stroke-width="5"/>
+  <rect x="497" y="71" width="210" height="172" rx="30" fill="#f1dcf8" stroke="#e9c7ed" stroke-width="5"/>
+</svg>

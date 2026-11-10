@@ -249,9 +249,9 @@ static func _desc_for(counter: String, goal: float) -> String:
 		"best_crits": return "单局暴击 %s 次" % g
 		"healed": return "累计回复 %s 点 HP" % g
 		"best_healed": return "单局回复 %s 点 HP" % g
-		"alphas": return "累计击败 %s 只阿尔法" % g
-		"best_alphas": return "单局击败 %s 只阿尔法" % g
-		"alphaCaught": return "用友情球收服 %s 只阿尔法" % g
+		"alphas": return "累计击败 %s 只头领" % g
+		"best_alphas": return "单局击败 %s 只头领" % g
+		"alphaCaught": return "用结伴匣结伴 %s 只头领" % g
 		"burned": return "累计使 %s 只陷入灼伤" % g
 		"best_burned": return "单局使 %s 只陷入灼伤" % g
 		"poisoned": return "累计使 %s 只中毒" % g
@@ -267,8 +267,8 @@ static func _desc_for(counter: String, goal: float) -> String:
 		"maxTime": return "单局存活 %s 秒" % g
 		"bosses": return "累计击败 %s 名守护者" % g
 		"gold": return "累计获得 %s 金币" % g
-		"evolutions": return "累计进化 %s 次" % g
-		"league": return "联盟达到 %s 名成员" % g
+		"evolutions": return "累计成长 %s 次" % g
+		"league": return "伙伴营达到 %s 名成员" % g
 		"speciesPlayed": return "使用过 %s 只不同的初始伙伴" % g
 		"chests": return "开启 %s 个宝箱" % g
 		"rocks": return "用碎岩击破 %s 块岩石" % g
@@ -277,7 +277,7 @@ static func _desc_for(counter: String, goal: float) -> String:
 		"ultimates": return "释放 %s 次必杀技" % g
 		"rainKills", "best_rainKills": return "雨天击杀 %s 只" % g
 		"soaked": return "使 %s 只浸水" % g
-		"win_forest": return "通关常磐森林 %s 次" % g
+		"win_forest": return "通关青苔林 %s 次" % g
 		"birds": return "三圣鸟入盟 %s 只" % g
 		"legendaries": return "累计击败 %s 只传说守护者" % g
 	return "%s 达到 %s" % [counter, g]
@@ -443,7 +443,7 @@ static func challenge_done(species_key: String) -> bool:
 	return true
 
 ## ------------------------------------------------------------------
-## Cycle 16: the META daily shop （星尘商店）. Verdict from the
+## Cycle 16: the META daily shop （萤尘商店）. Verdict from the
 ## bundle: it EXISTS — distinct from the in-run Meowth gold shop
 ## (cycle 15 OUT). Spec in DIFF cycle 16: catalog $e (news chunk
 ## @83481) is FIXED; prices escalate within the day (nt @83738,
@@ -467,18 +467,18 @@ static func challenge_done(species_key: String) -> bool:
 ##   master-ball the run's first capture (alpha/league) is sure
 ## The descs now render Ye faithfully.
 const SHOP_ITEMS := [
-	{"id": "rare-candy", "price": 150, "daily": 4, "tier": 1, "name": "神奇糖果",
+	{"id": "rare-candy", "price": 150, "daily": 4, "tier": 1, "name": "成长糖",
 		"desc": "开局等级 +2，并获得 2 次升级选择"},
 	{"id": "lucky-egg", "price": 250, "daily": 4, "tier": 1, "name": "幸运蛋",
 		"desc": "整局经验 +25%"},
-	{"id": "amulet-coin", "price": 250, "daily": 4, "tier": 1, "name": "护符金币",
+	{"id": "amulet-coin", "price": 250, "daily": 4, "tier": 1, "name": "招财币",
 		"desc": "整局金币 +50%"},
-	{"id": "honey", "price": 450, "daily": 3, "tier": 2, "name": "甜甜蜜",
-		"desc": "每一区额外出现 1 只阿尔法"},
-	{"id": "shiny-stone", "price": 900, "daily": 2, "tier": 3, "name": "闪光之石",
-		"desc": "第 1 区必定出现 1 只闪光宝可梦"},
-	{"id": "master-ball", "price": 1800, "daily": 1, "tier": 4, "name": "大师球",
-		"desc": "本局第一次收服（阿尔法或联盟）必定成功"},
+	{"id": "honey", "price": 450, "daily": 3, "tier": 2, "name": "林蜜",
+		"desc": "每一区额外出现 1 只头领"},
+	{"id": "shiny-stone", "price": 900, "daily": 2, "tier": 3, "name": "流光石",
+		"desc": "第 1 区必定出现 1 只流光伙伴"},
+	{"id": "master-ball", "price": 1800, "daily": 1, "tier": 4, "name": "必成木匣",
+		"desc": "本局第一次结伴（头领或伙伴营）必定成功"},
 ]
 const SHOP_BAG_CAP := 9          # wA: bag[t] >= 9 -> full
 const SHOP_PRICE_STEP := 0.5     # nt: price x (1 + .5 x bought)

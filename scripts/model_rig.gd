@@ -59,7 +59,7 @@ const SPECIES := {
 	"oddish": {"path": "res://assets/models/oddish.glb", "height": 1.25, "native": 1.291, "feet": -0.0217, "yaw": 0.0, "label": "走路草", "gait": "biped"},
 	"paras": {"path": "res://assets/models/paras.glb", "height": 0.75, "native": 0.8953, "feet": -0.105, "yaw": 0.0, "label": "派拉斯", "gait": "quad"},
 	"venonat": {"path": "res://assets/models/venonat.glb", "height": 1.25, "native": 4.435, "feet": -0.1258, "yaw": 0.0, "label": "毛球", "gait": "biped"},
-	"meowth": {"path": "res://assets/models/meowth.glb", "height": 1.0, "native": 1.1348, "feet": -0.0321, "yaw": 0.0, "label": "喵喵", "gait": "quad"},
+	"meowth": {"path": "res://assets/models/meowth.glb", "height": 1.0, "native": 1.1348, "feet": -0.0321, "yaw": 0.0, "label": "獾掌柜", "gait": "quad"},
 	"mankey": {"path": "res://assets/models/mankey.glb", "height": 1.75, "native": 1.4367, "feet": -0.1154, "yaw": 0.0, "label": "猴怪", "gait": "biped"},
 	"poliwag": {"path": "res://assets/models/poliwag.glb", "height": 1.5, "native": 0.6038, "feet": -0.0217, "yaw": 0.0, "label": "蚊香蝌蚪", "gait": "hover"},
 	"abra": {"path": "res://assets/models/abra.glb", "height": 1.5, "native": 2.3945, "feet": -0.0841, "yaw": 0.0, "label": "凯西", "gait": "biped"},

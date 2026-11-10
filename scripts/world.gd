@@ -78,7 +78,7 @@ const ALPHA_TIMES := [150.0, 330.0, 480.0]  # §4.3 classic timeline
 ## grass gains are measured (forest's calibrated gain x
 ## forest-tile-avg / zone-tile-avg per channel).
 const ZONES := [
-	{"cn": "常磐森林", "en": "Viridian Forest", "tiles": "forest",
+	{"cn": "青苔林", "en": "Viridian Forest", "tiles": "forest",
 		"pool": ["rattata", "pidgey", "sandshrew", "geodude"], "weights": [0.34, 0.26, 0.24, 0.16],
 		"guardians": ["scyther", "pinsir", "nidoking"],
 		"gain": Vector3(0.09, 0.63, 0.50), "fog": Color(0.749, 0.89, 1.0),
@@ -97,7 +97,7 @@ const ZONES := [
 			"cap": Color(0.91, 0.286, 0.227), "stem": Color(0.941, 0.886, 0.784)},
 		# Cycle 12: biome weather candidates (news chunk @31433).
 		"weather": ["clear", "clear", "rain"]},
-	{"cn": "紫苑塔", "en": "Lavender Tower", "tiles": "graveyard",
+	{"cn": "雾钟塔", "en": "Lavender Tower", "tiles": "graveyard",
 		"pool": ["gastly", "zubat", "cubone", "geodude"], "weights": [0.3, 0.26, 0.24, 0.2],
 		"guardians": ["gengar", "weezing", "hypno"],
 		"gain": Vector3(0.65, 0.65, 0.65), "fog": Color(0.72, 0.74, 0.85),
@@ -192,9 +192,9 @@ const EARTH_DARK := Color(0.22, 0.15, 0.12)
 const CLIFF_C := Color(0.50, 0.42, 0.24)  # sampled in-game cliff face, rescaled
 
 const STARTER_HUD := {
-	"bulbasaur": {"name": "妙蛙种子", "en": "Bulbasaur", "medal": Color(0.35, 0.71, 0.41), "glyph": "妙", "types": [["草", Color(0.48, 0.78, 0.35)], ["毒", Color(0.64, 0.42, 0.78)]], "evo": "› 24级进化", "move": "藤鞭", "ult": "Furious Roots"},
-	"charmander": {"name": "小火龙", "en": "Charmander", "medal": Color(0.94, 0.54, 0.24), "glyph": "火", "types": [["火", Color(0.94, 0.5, 0.25)]], "evo": "› 进化未解锁", "move": "火花", "ult": "Rising Blaze"},
-	"squirtle": {"name": "杰尼龟", "en": "Squirtle", "medal": Color(0.29, 0.56, 0.85), "glyph": "杰", "types": [["水", Color(0.3, 0.58, 0.9)]], "evo": "› 进化未解锁", "move": "水枪", "ult": "Shell Whirlpool"},
+	"bulbasaur": {"name": "妙蛙种子", "en": "Bulbasaur", "medal": Color(0.35, 0.71, 0.41), "glyph": "妙", "types": [["草", Color(0.48, 0.78, 0.35)], ["毒", Color(0.64, 0.42, 0.78)]], "evo": "› 24级成长", "move": "藤鞭", "ult": "Furious Roots"},
+	"charmander": {"name": "小火龙", "en": "Charmander", "medal": Color(0.94, 0.54, 0.24), "glyph": "火", "types": [["火", Color(0.94, 0.5, 0.25)]], "evo": "› 成长未解锁", "move": "火花", "ult": "Rising Blaze"},
+	"squirtle": {"name": "杰尼龟", "en": "Squirtle", "medal": Color(0.29, 0.56, 0.85), "glyph": "杰", "types": [["水", Color(0.3, 0.58, 0.9)]], "evo": "› 成长未解锁", "move": "水枪", "ult": "Shell Whirlpool"},
 }
 
 var state := "menu"  # menu / playing / guardian / portal / draft / victory / dead
@@ -2891,7 +2891,7 @@ func _build_hud() -> void:
 	# Cycle 21.3 (audit §5): 13 px muted grey on glass was
 	# near-illegible — font 14, colour at full alpha
 	# (MUTED is Color8, a = 1.0 >= the audit's 0.8 floor).
-	_hud_evo = _label_in(info, "› 24级进化", Vector2(14, 58), Vector2(210, 18), 14, UiTheme.MUTED)
+	_hud_evo = _label_in(info, "› 24级成长", Vector2(14, 58), Vector2(210, 18), 14, UiTheme.MUTED)
 	# Player HP bar (cycle 10): the original's .bar.hpbar lives in
 	# the plate's under-row (@2000723) — instant fill + lag ghost
 	# (hold 0.4 s, drain 0.9/s, update @2023679) + ceil(hp) number.
@@ -2943,7 +2943,7 @@ func _build_hud() -> void:
 	card.add_theme_stylebox_override("panel", UiTheme.panel_texture())
 	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(card)
-	_zone_cn = _label_in(card, "常磐森林", Vector2(18, 8), Vector2(170, 28), 19, Color.WHITE)
+	_zone_cn = _label_in(card, "青苔林", Vector2(18, 8), Vector2(170, 28), 19, Color.WHITE)
 	_zone_cn.add_theme_font_override("font", _font_display)
 	_zone_en = _label_in(card, "Viridian Forest", Vector2(18, 36), Vector2(170, 18), 12, UiTheme.MUTED)
 	for i in range(4):
@@ -3076,7 +3076,7 @@ func _build_hud() -> void:
 	# @2020582 — the cycle-10 ledger correction). Feed:
 	# alphas in spawn order (our secondary-boss source,
 	# named in DIFF). Anatomy mirrors the main bar: name +
-	# 阿尔法 tag + lag fill + HP number, narrower.
+	# 头领 tag + lag fill + HP number, narrower.
 	for mi in range(2):
 		var mp := Panel.new()
 		mp.set_anchors_preset(Control.PRESET_CENTER_TOP)
@@ -3090,7 +3090,7 @@ func _build_hud() -> void:
 		root.add_child(mp)
 		var mnm := _label_in(mp, "", Vector2(10, 2), Vector2(200, 18), 13, Color.WHITE)
 		mnm.add_theme_font_override("font", _font_display)
-		_label_in(mp, "阿尔法", Vector2(216, 2), Vector2(76, 18), 11, Color(1, 0.62, 0.3), HORIZONTAL_ALIGNMENT_RIGHT)
+		_label_in(mp, "头领", Vector2(216, 2), Vector2(76, 18), 11, Color(1, 0.62, 0.3), HORIZONTAL_ALIGNMENT_RIGHT)
 		var mtr := _panel(mp, Vector2(10, 22), Vector2(280, 12), Color(0.1, 0.1, 0.16, 0.9), 6)
 		var mlag := _panel(mtr, Vector2(1, 1), Vector2(278, 10), Color(1.0, 0.82, 0.78, 0.8), 5)
 		var mfill := _panel(mtr, Vector2(1, 1), Vector2(278, 10), Color(1, 0.55, 0.16), 5)
@@ -3554,7 +3554,7 @@ func _hud_info_for(species: String) -> Dictionary:
 		chips.append([String(th[0]), th[1]])
 	var medal: Color = (TYPE_HUD.get(String((sd.get("types", ["normal"]) as Array)[0]), ["", Color(0.6, 0.6, 0.6)])[1] as Color)
 	var evo_lv := GameData.evo_level_for(species)
-	var evo_txt := "› %d级进化" % evo_lv if evo_lv > 0 else "› 最终形态"
+	var evo_txt := "› %d级成长" % evo_lv if evo_lv > 0 else "› 成长"
 	var ult := "Furious Roots"
 	if player and STARTER_HUD.has(player.base_species):
 		ult = String(STARTER_HUD[player.base_species]["ult"])
@@ -3628,7 +3628,7 @@ func _on_player_evolved() -> void:
 		player.rig.set_flash(1.0)
 	player._invuln_t = maxf(player._invuln_t, 2.6)
 	count_max_level()
-	show_banner("进化！变成了 %s！" % String(ModelRig.SPECIES[player.species_id]["label"]), 3.5)
+	show_banner("成长！变成了 %s！" % String(ModelRig.SPECIES[player.species_id]["label"]), 3.5)
 
 ## Cycle 17: one floating menu item (UI_SPEC §2.1 mm-item):
 ## a glass card button with an accent icon, a title, and a
@@ -3691,19 +3691,26 @@ func _build_menu(root: Control) -> void:
 	_menu_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_menu_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(_menu_panel)
+	if _p5_on:
+		var forest := TextureRect.new()
+		forest.name = "MenuForestBackground"
+		forest.set_anchors_preset(Control.PRESET_FULL_RECT)
+		forest.offset_left = -48.0
+		forest.offset_right = 48.0
+		forest.texture = load("res://assets/menu/v2-background.png")
+		forest.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		forest.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		forest.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_menu_panel.add_child(forest)
 	var ribbon := _panel(_menu_panel, Vector2(30, 24), Vector2(280, 72), UiTheme.CREAM, 32, Color.WHITE, 3)
 	ribbon.name = "LogoRibbon"
 	if _p5_on:
 		ribbon.position = Vector2(8, 0)
 		ribbon.size = Vector2(300, 58)
-	ribbon.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
-	var logo_art := UiTheme.art("logo_ribbon", ribbon.size)
-	ribbon.add_child(logo_art)
-	var title := _mk_dlabel(_menu_panel, "SpriteBonk", 30, UiTheme.TEXT)
-	title.position = Vector2(72, 30)
-	title.size = Vector2(200, 48)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	UiTheme.outline(title, 2)
+	var title := _mk_dlabel(_menu_panel, "SpriteBonk", 54, Color.WHITE)
+	title.position = Vector2(52, 30)
+	title.size = Vector2(600, 66)
+	UiTheme.outline(title, 6)
 	var sub := _mk_label(_menu_panel, "选择初始伙伴", 19, UiTheme.LILAC)
 	sub.position = Vector2(362, 430)
 	sub.size = Vector2(400, 26)
@@ -3713,9 +3720,13 @@ func _build_menu(root: Control) -> void:
 	# the league unlocks), the six items, the hero card where
 	# the width allows, the touch hint along the foot.
 	if _p5_on:
-		title.add_theme_font_size_override("font_size", 30)
+		ribbon.hide()
+		title.hide()
+		title.add_theme_color_override("font_color", Color(1.0, 0.98, 0.88))
+		title.add_theme_color_override("font_outline_color", Color(0.30, 0.16, 0.06))
+		title.add_theme_font_size_override("font_size", 40)
 		var tw := _font_display.get_string_size("SpriteBonk", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 40).x
-		title.position = Vector2(46, 0)
+		title.position = Vector2(8, 0)
 		title.size = Vector2(tw + 12.0, 50)
 		sub.position = Vector2(332, 192)
 		sub.size = Vector2(300, 26)
@@ -3729,24 +3740,27 @@ func _build_menu(root: Control) -> void:
 		# than the 50 row and pushed the title's rect into the
 		# starter column (gate: menu pieces disjoint) — step the
 		# size down until the drawn box fits above y 56.
-		var tfs := 30
+		var tfs := 40
 		while tfs > 30 and title.get_minimum_size().y > 54.0:
 			tfs -= 2
 			title.add_theme_font_size_override("font_size", tfs)
 		var tw2 := _font_display.get_string_size("SpriteBonk", HORIZONTAL_ALIGNMENT_LEFT, -1.0, tfs).x
 		title.size = Vector2(tw2 + 12.0, title.get_minimum_size().y)
-		sub.position = Vector2(332, 192)
+		sub.position = Vector2(340, 296)
+		sub.size.x = 365
+		sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		sub.add_theme_color_override("font_color", UiTheme.TEXT)
 	var y := 146.0
 	var pcol: HBoxContainer = null
 	if _p5_on:
 		_menu_starters = ScrollContainer.new()
-		_menu_starters.position = Vector2(328, 226)
-		_menu_starters.size = Vector2(354, 124)
+		_menu_starters.position = Vector2(340, 314)
+		_menu_starters.size = Vector2(355, 112)
 		_menu_starters.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 		_menu_starters.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 		_menu_panel.add_child(_menu_starters)
 		pcol = HBoxContainer.new()
-		pcol.add_theme_constant_override("separation", 10)
+		pcol.add_theme_constant_override("separation", 4)
 		_menu_starters.add_child(pcol)
 	for sp in ["bulbasaur", "charmander", "squirtle"]:
 		var card := _starter_card(sp, false, 340.0 if _p5_on else 396.0)
@@ -3781,7 +3795,7 @@ func _build_menu(root: Control) -> void:
 	var hint_back := Panel.new()
 	hint_back.position = Vector2(44, 664)
 	hint_back.size = Vector2(1192, 48)
-	hint_back.add_theme_stylebox_override("panel", UiTheme.panel_texture())
+	hint_back.add_theme_stylebox_override("panel", UiTheme.glass(10, 0.55))
 	hint_back.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_menu_panel.add_child(hint_back)
 	var hint := _mk_label(_menu_panel, MENU_HINT_KBD, 13, Color(0.84, 0.86, 0.94))
@@ -3793,21 +3807,49 @@ func _build_menu(root: Control) -> void:
 	if _p5_on:
 		hint_back.position = Vector2(8, 400)
 		hint_back.size = Vector2(780, 48)
-		hint.position = Vector2(18, 403)
-		hint.size = Vector2(760, 42)
+		var hint_style := StyleBoxFlat.new()
+		hint_style.bg_color = Color(0.13, 0.21, 0.08, 0.82)
+		hint_style.set_corner_radius_all(15)
+		hint_style.set_border_width_all(1)
+		hint_style.border_color = Color(0.67, 0.79, 0.45, 0.65)
+		hint_back.add_theme_stylebox_override("panel", hint_style)
+		hint.position = Vector2(43, 403)
+		hint.size = Vector2(245, 42)
+		hint.add_theme_color_override("font_color", Color(1.0, 0.98, 0.86))
+		hint.add_theme_font_size_override("font_size", 13)
 		hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	# --- meta column (cycle 17): mm-item cards — the wallet
 	# subtitle carries the live wallet state, the Lab subtitle
-	# the bundle's "{n} 星尘" line (via _refresh_meta). ---
+	# the bundle's "{n} 萤尘" line (via _refresh_meta). ---
 	var mx := 30.0
 	var my := 136.0
 	var mstep := 74.0
 	if _p5_on:
 		mx = 8.0
-		my = 64.0
+		my = 78.0
 		mstep = 54.0
 	var witem := _menu_item("ball", UiTheme.SKY, "连接钱包（可选）", mx, my)
 	_wallet_status = witem[1]
+	if _p5_on:
+		((witem[0] as Button).get_child(0) as Control).hide()
+		var wallet_art := TextureRect.new()
+		wallet_art.texture = load("res://assets/menu/icon-wallet.png") as Texture2D
+		wallet_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		wallet_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		wallet_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		wallet_art.position = Vector2(13, 3)
+		wallet_art.size = Vector2(40, 40)
+		(witem[0] as Button).add_child(wallet_art)
+		var wallet_chip := _panel(witem[0], Vector2(198, 9), Vector2(91, 30),
+			Color(0.42, 0.40, 0.34), 15)
+		wallet_chip.name = "WalletChip"
+		var wallet_chip_text := _mk_label(wallet_chip, "未连接", 15, Color.WHITE)
+		wallet_chip_text.name = "WalletChipText"
+		wallet_chip_text.add_theme_color_override("font_color", Color.WHITE)
+		wallet_chip_text.position = Vector2.ZERO
+		wallet_chip_text.size = Vector2(91, 30)
+		wallet_chip_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		wallet_chip_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	(witem[0] as Button).pressed.connect(func() -> void:
 		audio.click()
 		_wallet_panel.visible = not _wallet_panel.visible)
@@ -3823,7 +3865,7 @@ func _build_menu(root: Control) -> void:
 	_menu_intro_items.append(litem[0])
 	_menu_badges["lab"] = _menu_badge(litem[0] as Button)
 	my += mstep
-	var sitem := _menu_item("bag", UiTheme.GOLD, "星尘商店", mx, my)
+	var sitem := _menu_item("bag", UiTheme.GOLD, "萤尘商店", mx, my)
 	(sitem[1] as Label).text = "每日背包道具 · 00:00 UTC 刷新"
 	(sitem[0] as Button).pressed.connect(func() -> void:
 		audio.click()
@@ -3843,7 +3885,7 @@ func _build_menu(root: Control) -> void:
 			_open_settings())
 	_menu_intro_items.append(snditem[0])
 	my += mstep
-	var uitem := _menu_item("trophy", Color8(90, 170, 255), "联盟挑战", mx, my)
+	var uitem := _menu_item("trophy", Color8(90, 170, 255), "伙伴营挑战", mx, my)
 	(uitem[1] as Label).text = "终身挑战进度"
 	(uitem[0] as Button).pressed.connect(func() -> void:
 		audio.click()
@@ -3858,9 +3900,59 @@ func _build_menu(root: Control) -> void:
 	# Cycle 19: the shake glyph replaces "wind" (audit §2.3).
 	var kitem := _menu_item("shake", UiTheme.GREEN_DEEP, "画面震动", mx, my)
 	_menu_intro_items.append(kitem[0])
+	if _p5_on:
+		for entry in [[litem, Vector2(8, 140), "res://assets/menu/icon-lab.png", Vector2(70, 55)],
+				[sitem, Vector2(162, 140), "res://assets/menu/icon-shop.png", Vector2(76, 60)],
+				[uitem, Vector2(8, 226), "res://assets/menu/icon-league.png", Vector2(60, 52)],
+				[snditem, Vector2(162, 226), "res://assets/menu/icon-settings.png", Vector2(52, 45)]]:
+			var item_button := entry[0][0] as Control
+			item_button.position = entry[1]
+			item_button.custom_minimum_size = Vector2(146, 76)
+			item_button.size = Vector2(146, 76)
+			item_button.clip_contents = true
+			for state in ["normal", "hover", "pressed", "focus"]:
+				var tile_face := _style(Color(1.0, 0.967, 0.87), 15,
+					Color(1.0, 1.0, 0.98, 0.94), 2)
+				tile_face.shadow_size = 4
+				tile_face.shadow_color = Color(0.24, 0.18, 0.09, 0.25)
+				tile_face.shadow_offset = Vector2(0, 3)
+				item_button.add_theme_stylebox_override(state, tile_face)
+			var item_icon := item_button.get_child(0) as Control
+			item_icon.hide()
+			var art_icon := TextureRect.new()
+			art_icon.texture = load(entry[2]) as Texture2D
+			art_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			art_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			art_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			var art_size: Vector2 = entry[3]
+			art_icon.position = Vector2((146.0 - art_size.x) * 0.5, 1.0 - maxf(0.0, art_size.y - 45.0) * 0.55)
+			art_icon.size = art_size
+			item_button.add_child(art_icon)
+			var item_title := item_button.get_child(1) as Label
+			item_title.position = Vector2(0, 46)
+			item_title.size = Vector2(146, 28)
+			item_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			item_title.add_theme_font_size_override("font_size", 18)
+			(entry[0][1] as Label).hide()
+		for badge_key in ["lab", "shop", "unlock"]:
+			(_menu_badges[badge_key] as Control).hide()
+		(kitem[0] as Control).position = Vector2(8, 314)
+		(kitem[0] as Control).size = Vector2(300, 48)
+		var shake_track := _panel(kitem[0], Vector2(236, 11), Vector2(52, 27),
+			Color(0.22, 0.67, 0.08), 14)
+		shake_track.name = "ShakeTrack"
+		var shake_dot := _panel(shake_track, Vector2(27, 3), Vector2(21, 21),
+			Color.WHITE, 11)
+		shake_dot.name = "ShakeDot"
 	var ksub: Label = kitem[1]
 	var refresh_ksub := func() -> void:
-		ksub.text = "当前：%s" % ("开" if bool(GameProfile.setting("shakeOn")) else "关")
+		var shake_on := bool(GameProfile.setting("shakeOn"))
+		ksub.text = "当前：%s" % ("开" if shake_on else "关")
+		if _p5_on:
+			var shake_track := (kitem[0] as Control).get_node("ShakeTrack") as Panel
+			shake_track.add_theme_stylebox_override("panel", _style(
+				Color(0.22, 0.67, 0.08) if shake_on else Color(0.58, 0.55, 0.48), 14))
+			(shake_track.get_node("ShakeDot") as Control).position.x = 27 if shake_on else 4
 	(kitem[0] as Button).pressed.connect(func() -> void:
 		audio.click()
 		GameProfile.set_setting("shakeOn", not bool(GameProfile.setting("shakeOn")))
@@ -3894,25 +3986,138 @@ func _build_menu(root: Control) -> void:
 		_menu_design.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_menu_panel.add_child(_menu_design)
 	for c in _menu_panel.get_children():
-		if c != _menu_design:
+		if c != _menu_design and c.name != "MenuForestBackground":
 			(c as Node).reparent(_menu_design, false)
+	if _p5_on:
+		var menu_logo := TextureRect.new()
+		menu_logo.name = "MenuLogo"
+		menu_logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		menu_logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT
+		menu_logo.texture = load("res://assets/menu/logo.png")
+		menu_logo.position = Vector2(8, -3)
+		menu_logo.size = Vector2(310, 85)
+		menu_logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_menu_design.add_child(menu_logo)
+		var hint_pad := TextureRect.new()
+		hint_pad.name = "MenuHintPad"
+		hint_pad.texture = load("res://assets/menu/v2-dpad.svg") as Texture2D
+		hint_pad.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		hint_pad.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		hint_pad.position = Vector2(14, 408)
+		hint_pad.size = Vector2(24, 24)
+		hint_pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_menu_design.add_child(hint_pad)
+		_menu_hero.hide()
+		var hero_stone := TextureRect.new()
+		hero_stone.name = "MenuHeroStone"
+		hero_stone.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		hero_stone.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT
+		hero_stone.texture = load("res://assets/menu/v2-stone.png")
+		hero_stone.position = Vector2(330, 244)
+		hero_stone.size = Vector2(420, 72)
+		hero_stone.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_menu_design.add_child(hero_stone)
+		_menu_design.move_child(hero_stone, 1)
+		var partner_hero := TextureRect.new()
+		partner_hero.name = "MenuPartnerHero"
+		partner_hero.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		partner_hero.stretch_mode = TextureRect.STRETCH_SCALE
+		partner_hero.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		partner_hero.texture = _menu_feature_portrait(_menu_hero_sp)
+		partner_hero.custom_minimum_size = Vector2.ZERO
+		partner_hero.position = Vector2(370, 28)
+		partner_hero.size = Vector2(320, 240)
+		partner_hero.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_menu_design.add_child(partner_hero)
+		_menu_design.move_child(partner_hero, 2)
+		var starter_back := TextureRect.new()
+		starter_back.name = "StarterPanel"
+		starter_back.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		starter_back.stretch_mode = TextureRect.STRETCH_SCALE
+		starter_back.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		starter_back.texture = load("res://assets/menu/v2-starter-tray.svg")
+		starter_back.position = Vector2(320, 290)
+		starter_back.size = Vector2(420, 140)
+		starter_back.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_menu_design.add_child(starter_back)
+		_menu_design.move_child(starter_back, 3)
+		for leaf_side in [false, true]:
+			var leaf_art := TextureRect.new()
+			leaf_art.texture = load("res://assets/menu/v2-leaves.svg") as Texture2D
+			leaf_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			leaf_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			leaf_art.flip_h = leaf_side
+			leaf_art.position = Vector2(594 if leaf_side else 430, 303)
+			leaf_art.size = Vector2(25, 17)
+			leaf_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			_menu_design.add_child(leaf_art)
+		var starter_next := UiTheme.make_button("❯", "ghost", "small")
+		starter_next.name = "StarterNext"
+		starter_next.position = Vector2(685, 344)
+		starter_next.size = Vector2(36, 38)
+		starter_next.add_theme_font_size_override("font_size", 25)
+		starter_next.add_theme_color_override("font_color", UiTheme.TEXT)
+		for state in ["normal", "hover", "pressed", "focus"]:
+			starter_next.add_theme_stylebox_override(state, StyleBoxEmpty.new())
+		starter_next.pressed.connect(func() -> void:
+			var starter_order := ["bulbasaur", "charmander", "squirtle"]
+			var next_idx := (starter_order.find(_menu_hero_sp) + 1) % starter_order.size()
+			_menu_hero_show(starter_order[next_idx]))
+		_menu_design.add_child(starter_next)
+		var start_back := TextureRect.new()
+		start_back.name = "StartButtonArt"
+		start_back.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		start_back.stretch_mode = TextureRect.STRETCH_SCALE
+		start_back.texture = load("res://assets/menu/start-button.png")
+		start_back.position = Vector2(710, 348)
+		start_back.size = Vector2(240, 68)
+		start_back.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_menu_design.add_child(start_back)
 	var start := UiTheme.make_button("开始", "orange", "big")
 	start.name = "StartButton"
-	start.position = Vector2(760, 554) if not _p5_on else Vector2(710, 344)
-	start.size = Vector2(340, 80) if not _p5_on else Vector2(260, 48)
+	start.position = Vector2(760, 554) if not _p5_on else Vector2(710, 348)
+	start.size = Vector2(340, 80) if not _p5_on else Vector2(240, 68)
 	start.add_theme_font_size_override("font_size", 32)
+	if _p5_on:
+		var clear_button := StyleBoxEmpty.new()
+		for state in ["normal", "hover", "pressed", "focus"]:
+			start.add_theme_stylebox_override(state, clear_button)
+		for state in ["font_color", "font_hover_color", "font_pressed_color"]:
+			start.add_theme_color_override(state, Color.WHITE)
+		start.add_theme_color_override("font_outline_color", Color(0.37, 0.17, 0.04))
+		start.add_theme_constant_override("outline_size", 3)
 	start.pressed.connect(func() -> void: _open_loadout(_menu_hero_sp))
 	_menu_design.add_child(start)
+	if _p5_on:
+		var caption_back := Panel.new()
+		caption_back.name = "StartCaptionBack"
+		caption_back.size = Vector2(240, 24)
+		caption_back.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		caption_back.add_theme_stylebox_override("panel", _style(Color(1.0, 0.96, 0.80, 0.78), 12))
+		_menu_design.add_child(caption_back)
+		var start_caption := _mk_label(_menu_design, "进入出战配置", 16, UiTheme.TEXT)
+		start_caption.name = "StartCaption"
+		start_caption.size = Vector2(240, 24)
+		start_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		start_caption.add_theme_font_override("font", _font_display)
 	var resources := HBoxContainer.new()
 	resources.name = "Resources"
 	resources.position = Vector2(820, 26) if not _p5_on else Vector2(698, 8)
 	resources.add_theme_constant_override("separation", 10)
-	for entry in [["星尘 %d  +" % GameProfile.stardust(), "lab"], ["累计 %d  +" % int(GameProfile.data.get("totalStardust", 0)), "shop"]]:
-		var pill := UiTheme.make_button("    " + String(entry[0]), "ghost", "normal")
-		var dust_badge := UiBadge.new("sparkle", UiTheme.GOLD, 32)
-		dust_badge.position = Vector2(4, 5)
-		pill.add_child(dust_badge)
+	for entry in [["萤尘 %d  +" % GameProfile.stardust(), "lab"], ["累计 %d  +" % int(GameProfile.data.get("totalStardust", 0)), "shop"]]:
+		var pill := UiTheme.make_button(String(entry[0]), "ghost", "normal")
 		var dest: String = entry[1]
+		if _p5_on:
+			pill.text = ""
+			pill.custom_minimum_size = Vector2(162, 45)
+			var resource_icon := UiIcon.new("spark", Color("aa4ace") if dest == "lab" else UiTheme.GOLD, 25)
+			resource_icon.position = Vector2(12, 10)
+			resource_icon.size = Vector2(25, 25)
+			pill.add_child(resource_icon)
+			var resource_text := _mk_label(pill, String(entry[0]), 18, UiTheme.TEXT)
+			resource_text.position = Vector2(44, 6)
+			resource_text.size = Vector2(115, 32)
+			resource_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		pill.pressed.connect(func() -> void:
 			if dest == "lab":
 				_lab_panel.show()
@@ -4080,7 +4285,7 @@ func _refresh_wallet_ui() -> void:
 
 func _refresh_meta() -> void:
 	if _meta_status:
-		_meta_status.text = "星尘 %d · 联盟 %d 只" % [GameProfile.stardust(), (GameProfile.data.get("league", []) as Array).size()]
+		_meta_status.text = "萤尘 %d · 伙伴营 %d 只" % [GameProfile.stardust(), (GameProfile.data.get("league", []) as Array).size()]
 	# Cycle 19: mm-badge counts (audit punch #18) — Lab rows
 	# buyable right now, shop quota left today, challenges
 	# completed.
@@ -4114,7 +4319,7 @@ func _refresh_starter_unlocks() -> void:
 		if key == "" or key in ["bulbasaur", "charmander", "squirtle"]:
 			continue
 		# Cycle 17: unlocks render as starter cards, like the
-		# base three (portrait / types / stats / 联盟解锁 tag).
+		# base three (portrait / types / stats / 伙伴营解锁 tag).
 		_starter_unlock_box.add_child(_starter_card(key, true, 340.0 if _p5_on else 372.0))
 
 # ------------------------------------------------------------- Lab (cycle 7)
@@ -4177,7 +4382,7 @@ func _refresh_lab() -> void:
 	for c in _lab_list.get_children():
 		_lab_list.remove_child(c)
 		c.queue_free()
-	_lab_info.text = "星尘 %d · 累计 %d" % [GameProfile.stardust(), int(GameProfile.data.get("totalStardust", 0))]
+	_lab_info.text = "萤尘 %d · 累计 %d" % [GameProfile.stardust(), int(GameProfile.data.get("totalStardust", 0))]
 	var columns := HBoxContainer.new()
 	columns.add_theme_constant_override("separation", 20)
 	_lab_list.add_child(columns)
@@ -4238,7 +4443,7 @@ func _refresh_lab() -> void:
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_mk_label(_lab_detail, "当前等级  %d" % level, 17, UiTheme.TEXT)
 	_mk_label(_lab_detail, "最高等级  %d" % int(cfg["max"]), 17, UiTheme.TEXT)
-	_mk_label(_lab_detail, "升级消耗  %d 星尘" % cost if cost >= 0 else "已达最高等级", 17, UiTheme.TEXT)
+	_mk_label(_lab_detail, "升级消耗  %d 萤尘" % cost if cost >= 0 else "已达最高等级", 17, UiTheme.TEXT)
 	var buy := UiTheme.make_button("升级" if cost >= 0 else "已满", "orange", "big")
 	buy.disabled = cost < 0 or GameProfile.stardust() < cost
 	buy.pressed.connect(func() -> void:
@@ -4436,7 +4641,7 @@ func _build_shop_panel(root: Control) -> void:
 	_shop_panel.add_child(vb)
 	# Cycle 17 copy fix: dropped the leftover Spanish
 	# "· Tienda" from the cycle-16 title.
-	var t := _mk_dlabel(vb, "星尘商店", 22, UiTheme.GOLD)
+	var t := _mk_dlabel(vb, "萤尘商店", 22, UiTheme.GOLD)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_shop_info = _mk_label(vb, "", 15, Color(0.9, 0.85, 0.6))
 	_shop_info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -4475,7 +4680,7 @@ func _refresh_shop() -> void:
 		c.queue_free()
 	var now := GameProfile.shop_now()
 	var counts := GameProfile.shop_bought_today(now)
-	_shop_info.text = "✦ 星尘 %d（累计 %d）" % [GameProfile.stardust(), int(GameProfile.data.get("totalStardust", 0))]
+	_shop_info.text = "✦ 萤尘 %d（累计 %d）" % [GameProfile.stardust(), int(GameProfile.data.get("totalStardust", 0))]
 	_refresh_shop_countdown()
 	for it in GameProfile.SHOP_ITEMS:
 		var id := String(it["id"])
@@ -4511,7 +4716,7 @@ func _refresh_shop() -> void:
 			b.text = "背包已满"
 			b.disabled = true
 		elif GameProfile.stardust() < price:
-			b.text = "✦ %d（星尘不足）" % price
+			b.text = "✦ %d（萤尘不足）" % price
 			b.disabled = true
 		else:
 			b.text = "购买 ✦ %d" % price
@@ -4743,7 +4948,7 @@ func _settings_page_keys() -> void:
 	# table below it under "外接键盘".
 	if _touch_wanted():
 		_mk_dlabel(_settings_page, "操作", 20, UiTheme.SKY)
-		for row in [["移动", "左半屏拖动（摇杆）"], ["互动 / 投球", "右下「！」互动键"],
+		for row in [["移动", "左半屏拖动（摇杆）"], ["互动 / 邀伴", "右下「！」互动键"],
 				["跳跃 · 下砸（空中）", "↑ 键"], ["冲刺 · 滑铲", "风 键"],
 				["大招", "「必」键"], ["锁定最近敌人", "准星键"],
 				["暂停", "点左上头像" if _new_layout() else "右下竖列暂停键"]]:
@@ -4753,7 +4958,7 @@ func _settings_page_keys() -> void:
 	else:
 		_mk_dlabel(_settings_page, "键位", 20, UiTheme.SKY)
 	_mk_label(_settings_page, "固定键位 · 本构建不支持改绑", 12, UiTheme.MUTED)
-	for row in [["移动", "W A S D"], ["互动 / 投球", "E"], ["下砸（空中）", "空格"],
+	for row in [["移动", "W A S D"], ["互动 / 邀伴", "E"], ["下砸（空中）", "空格"],
 			["疾跑", "Shift"], ["大招", "R"], ["暂停", "Esc / P"], ["选卡", "1 – 9"]]:
 		var hb := _st_row(_settings_page, String(row[0]))
 		hb.add_child(UiTheme.kbd(String(row[1])))
@@ -4854,7 +5059,7 @@ func _build_unlock_panel(root: Control) -> void:
 	_unlock_panel.add_child(vb)
 	# Cycle 17 copy fix: same leak class as the Lab title —
 	# the "（§3）" spec reference is not player copy.
-	var t := _mk_dlabel(vb, "联盟挑战 · 终身挑战", 20, Color(0.65, 0.9, 1.0))
+	var t := _mk_dlabel(vb, "伙伴营挑战 · 终身挑战", 20, Color(0.65, 0.9, 1.0))
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_unlock_info = _mk_label(vb, "", 14, Color(0.85, 0.85, 0.85))
 	_unlock_info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -4885,7 +5090,7 @@ func _refresh_unlock_panel() -> void:
 		return
 	for c in _unlock_list.get_children():
 		c.queue_free()
-	_unlock_info.text = "联盟 %d 只 · 累计击杀 %d · 完成对局 %d · 阿尔法 %d · 守护者 %d · 收服 %d" % [
+	_unlock_info.text = "伙伴营 %d 只 · 累计击杀 %d · 完成对局 %d · 头领 %d · 守护者 %d · 结伴 %d" % [
 		(GameProfile.data.get("league", []) as Array).size(),
 		int(GameProfile.counter_value("kills")), int(GameProfile.counter_value("runs")),
 		int(GameProfile.counter_value("alphas")), int(GameProfile.counter_value("bosses")),
@@ -4895,7 +5100,7 @@ func _refresh_unlock_panel() -> void:
 		var sd: Dictionary = GameData.species(key)
 		var in_league := GameProfile.in_league(int(sd.get("family", 0)))
 		var done := GameProfile.challenge_done(key)
-		var status := "已加入联盟 ★" if in_league else ("挑战完成 · 等待遭遇 ✓" if done else "进行中")
+		var status := "已加入伙伴营 ★" if in_league else ("挑战完成 · 等待遭遇 ✓" if done else "进行中")
 		var head := _mk_label(_unlock_list, "%s（%s）· %s" % [
 			String(ModelRig.SPECIES[key]["label"]), String(cfg["rank"]), status],
 			16, Color(0.95, 0.9, 0.6) if done or in_league else Color(0.9, 0.9, 0.9))
@@ -4987,7 +5192,7 @@ func _build_draft(root: Control) -> void:
 	_draft_team_btn = team_b  # UI-mobile P1.1: "[Tab]" off on touch
 
 ## Learnset level of a move for the player's evolution chain — the
-## original takes the chain minimum (§2.3: 进化链取最小学习级).
+## original takes the chain minimum (§2.3: 成长取最小学习级).
 func _learn_level_of(move_key: String) -> int:
 	var best := -1
 	var cur := player.base_species
@@ -5867,7 +6072,7 @@ func start_game(p_species: String, boosts: Array = [], requested_tier: int = 0) 
 	# player exists and before the first draft can open.
 	if not boosts.is_empty():
 		_apply_boosts(boosts)
-	show_banner("第一关 · 常磐森林 — 去北边的祭坛召唤守护者！", 4.0)
+	show_banner("第一关 · 青苔林 — 去北边的祭坛召唤守护者！", 4.0)
 	for i in range(4):
 		_spawn_enemy()
 	_cam_focus = player.global_position
@@ -6042,7 +6247,7 @@ func _spawn_alpha() -> void:
 	# Cycle 16: alpha warning (bundle @860152: alarm + cry).
 	audio.alarm()
 	audio.cry(sp)
-	show_banner("阿尔法 %s 出现了！打倒它后%s用友情球收服" % [String(ModelRig.SPECIES[sp]["label"]), _ik()], 4.0)
+	show_banner("头领 %s 出现了！打倒它后%s用结伴匣结伴" % [String(ModelRig.SPECIES[sp]["label"]), _ik()], 4.0)
 
 ## League encounter (§5.2): one roaming species whose family is not
 ## yet in the league; weakened (not killed) in combat, caught with E.
@@ -6081,7 +6286,7 @@ func _spawn_league() -> void:
 	audio.encounter()
 	audio.cry(sp)
 	GameProfile.mark_seen(sp)
-	show_banner("野生的 %s 出现了！打倒它后靠近%s，收服进联盟" % [String(ModelRig.SPECIES[sp]["label"]), _ik()], 4.0)
+	show_banner("林间出现了 %s！打倒它后靠近%s，结伴进伙伴营" % [String(ModelRig.SPECIES[sp]["label"]), _ik()], 4.0)
 
 ## Kill rewards (§4.4): XP by the enemy's own formula, gold 0.2/kill
 ## x the player's gold multiplier (swarm weight factor is 1 here).
@@ -6181,7 +6386,7 @@ func summon_guardian() -> void:
 		guardian.shiny = true
 		if guardian.rig:
 			guardian.rig.apply_shiny()
-		show_banner("传说闪光守护者 %s！击败它可必定捕获！" % String(ModelRig.SPECIES[guardian.species_id]["label"]), 4.0)
+		show_banner("传说流光守护者 %s！击败它可必定捕获！" % String(ModelRig.SPECIES[guardian.species_id]["label"]), 4.0)
 	guardian.dmg *= 2.2 * (1.0 + 0.12 * float(roars))  # boss flag x2.2 + roar damage Ry .12/roar
 	guardian.roars = roars
 	guardian.fight_secs = secs
@@ -6264,7 +6469,7 @@ func _on_guardian_killed(e: Enemy) -> void:
 		tk.weak_t = 9999.0
 		_shiny_e = tk
 		_takeover_e = tk
-		show_banner("闪光守护者被击败了！走近%s投球——必定捕获！" % _ik(), 5.0)
+		show_banner("流光守护者被击败了！走近%s邀伴——必定捕获！" % _ik(), 5.0)
 	state = "portal"
 	guardian = null
 	_open_portal()
@@ -7264,9 +7469,9 @@ const ITEM_BESPOKE_CN := {
 	"ss-ticket": "本局同伴上限 +1",
 	"tm-case": "技能等级上限 +2（至 10）",
 	"max-ether": "维生素等级上限 +2（至 12）",
-	"eviolite": "可进化时：护甲 +50%，最大生命 +25%",
-	"gold-teeth": "喵喵商店与老虎机价格 -8%/层（至 -24%）",
-	"big-nugget": "精灵球（付费宝箱）价格 -8%/层（至 -40%）",
+	"eviolite": "可成长时：护甲 +50%，最大生命 +25%",
+	"gold-teeth": "獾掌柜铺与老虎机价格 -8%/层（至 -24%）",
+	"big-nugget": "藤纹宝箱（付费宝箱）价格 -8%/层（至 -40%）",
 	"dowsing-machine": "后续区域：祭坛 +1/层，付费宝箱 +2/层",
 }
 
@@ -7470,16 +7675,16 @@ func _shop_close() -> void:
 func _shop_refresh() -> void:
 	if _meowth_panel == null:
 		return
-	_shop_title.text = "喵喵：「有钱吗，喵？」 · %d 金币" % int(gold)
+	_shop_title.text = "獾掌柜：「带金币了吗？」 · %d 金币" % int(gold)
 	if _shop_gold_l:
-		_shop_title.text = "喵喵：「有钱吗，喵？」"
+		_shop_title.text = "獾掌柜：「带金币了吗？」"
 		_shop_gold_l.text = "%d 金币" % int(gold)
 	for c in _shop_stock_box.get_children():
 		c.queue_free()
 	var stock: Array = _shop.get("stock", [])
 	if stock.is_empty():
 		var l := Label.new()
-		l.text = "「你什么都有了，喵。这里没剩什么给你了。」"
+		l.text = "「你什么都有了。这里没剩什么给你了。」"
 		l.add_theme_font_override("font", UiTheme.body_font())
 		l.add_theme_font_size_override("font_size", 15)
 		l.add_theme_color_override("font_color", Color.WHITE)
@@ -7610,7 +7815,7 @@ func _build_shop(root: Control) -> void:
 		_shop_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		_shop_gold_l = _mk_dlabel(mhead, "", 26, UiTheme.GOLD)
 		_shop_gold_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	var help := _mk_label(vb, "买得太多又不打开精灵球，喵喵下次会涨价。", 13, Color(0.8, 0.82, 0.9))
+	var help := _mk_label(vb, "买得太多又不打开藤纹宝箱，獾掌柜下次会涨价。", 13, Color(0.8, 0.82, 0.9))
 	help.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT if _p5_on else HORIZONTAL_ALIGNMENT_CENTER
 	_shop_stock_box = HBoxContainer.new()
 	_shop_stock_box.add_theme_constant_override("separation", 10)
@@ -9031,12 +9236,12 @@ const EVENT_DEFS := {
 	"storm": {"name": "雷暴", "sub": "落雷不断：离黄色标记远一点", "dur": 40.0,
 		"pool": [[100, 81, 25], [101, 82, 125, 26], [101, 82, 125, 135]],
 		"fog": Color(0.337, 0.325, 0.4), "near": 22.0, "far": 110.0, "light": 0.58},
-	"eclipse": {"name": "日蚀", "sub": "光熄灭了。夜行者们出来了……也许还有闪光", "dur": 40.0,
+	"eclipse": {"name": "日蚀", "sub": "光熄灭了。夜行者们出来了……也许还有流光", "dur": 40.0,
 		"pool": [[41, 92, 96, 35, 43], [42, 93, 97, 36, 44], [42, 94, 97, 36, 45]],
 		"fog": Color(0.224, 0.184, 0.263), "near": 26.0, "far": 120.0, "light": 0.42},
 	# The meowth def has no pool and no look in the bundle
 	# (the running weather look simply persists).
-	"meowth": {"name": "黄金喵喵", "sub": "每次命中都会掉金币：在它逃走前抓住它！", "dur": 25.0},
+	"meowth": {"name": "金鼹鼠", "sub": "每次命中都会掉金币：在它逃走前抓住它！", "dur": 25.0},
 }
 var _event_kind := ""
 var _event_left := 0.0
@@ -9197,7 +9402,7 @@ func _event_meowth_killed() -> void:
 	var death_pos: Vector3 = _event_meowth.global_position
 	for i in range(30):
 		spawn_pickup(1, death_pos, each)
-	show_banner("【发薪日！】黄金喵喵掉出了所有金币（+%d）" % total, 4.0)
+	show_banner("【金币雨！】金鼹鼠掉出了所有金币（+%d）" % total, 4.0)
 	_event_meowth = null
 	_event_end()
 
@@ -9237,7 +9442,7 @@ func _event_tick(delta: float) -> void:
 			spawn_nova(mp + Vector3(0, 0.6, 0), 3.0, Color(1.0, 0.78, 0.23))
 			_event_meowth.capture_remove()
 			_event_meowth = null
-			show_banner("黄金喵喵带着战利品逃走了", 2.5)
+			show_banner("金鼹鼠带着战利品逃走了", 2.5)
 			_event_end()
 		return
 	if _event_left <= 0.0:
@@ -9505,8 +9710,8 @@ func _prop_label_kbd(p: Dictionary) -> String:
 			# Bundle label @1245997: price, plus the
 			# insufficient-funds state.
 			if gold < float(_chest_cost()):
-				return "精灵球 · %d 金币（金币不足）：三选一，或全部出售" % _chest_cost()
-			return "精灵球 · 按 E 开启（%d 金币）：三选一，或全部出售" % _chest_cost()
+				return "藤纹宝箱 · %d 金币（金币不足）：三选一，或全部出售" % _chest_cost()
+			return "藤纹宝箱 · 按 E 开启（%d 金币）：三选一，或全部出售" % _chest_cost()
 		"freechest":
 			return "免费宝箱 · 按 E 开启"
 		"cursedchest":
@@ -9522,9 +9727,9 @@ func _prop_label_kbd(p: Dictionary) -> String:
 				return "蛋正在孵化中（还差 %d 次击杀）" % maxi(0, int(_egg["need"]) - (kills - int(_egg["from"])))
 			return "神秘的蛋 · 按 E 抱回孵化（击杀 %d 后孵化）" % (200 + 100 * (mini(3, zone) - 1))
 		"porygon":
-			return "多边兽终端 · 按 E 重编译：三选一（增益＋代价）"
+			return "机关匣 · 按 E 重编译：三选一（增益＋代价）"
 		"meowth":
-			return "喵喵商店 · 按 E 逛逛：买入物品，或按市价出售"
+			return "獾掌柜铺 · 按 E 逛逛：买入物品，或按市价出售"
 		"ditto":
 			# Bundle prompt (unused): "Ditto: clona uno de
 			# tus objetos".
@@ -9794,7 +9999,7 @@ func _slots_spin() -> void:
 			_chest_roll_single(1)
 		"pikachu":
 			audio.jackpot()
-			show_banner("🎰 皮卡丘！一份宝藏", 2.5)
+			show_banner("🎰 金橡果！一份宝藏", 2.5)
 			_chest_roll_single(2)
 		"berry":
 			audio.heal()
@@ -9806,17 +10011,17 @@ func _slots_spin() -> void:
 			audio.coin()
 			var win := int(round(float(cost) * 2.5))
 			gold += float(win)
-			show_banner("🎰 喵喵！金币 +%d" % win, 2.5)
+			show_banner("🎰 金币袋！金币 +%d" % win, 2.5)
 		"gengar":
 			audio.slot_curse()
 			count_run_event("curses")
 			player.temp_mods.append({"stat": "enemyAmount", "mul": 1.05})
 			player.temp_mods.append({"stat": "difficulty", "mul": 1.05})
 			player.recalc()
-			show_banner("🎰 耿鬼！诅咒降临：敌人更多更强…", 2.5)
+			show_banner("🎰 鬼火！诅咒降临：敌人更多更强…", 2.5)
 		"voltorb":
 			audio.zap()
-			show_banner("🎰 霹雳电球从机器里蹦了出来！", 2.5)
+			show_banner("🎰 咬人箱从机器里蹦了出来！", 2.5)
 			_later(0.3, func() -> void: _slots_ambush())
 		_:
 			audio.slot_stop()
@@ -9916,7 +10121,7 @@ func _porygon_open(p: Dictionary) -> void:
 		var l: Dictionary = o["loss"]
 		opts.append("重编译\n%s\n代价：%s" % [_porygon_mod_text(String(g["stat"]), g["gain"], true),
 			_porygon_mod_text(String(l["stat"]), l["loss"], false)])
-	_choice_show("多边兽 · 重编译", "选择一组重编译（本局生效）", opts, "离开（不选择）",
+	_choice_show("机关匣 · 重编译", "选择一组重编译（本局生效）", opts, "离开（不选择）",
 		func(idx: int) -> void:
 			var o: Dictionary = offers[idx]
 			var g: Dictionary = o["gain"]
@@ -10085,8 +10290,8 @@ func _totem_label(tot: Dictionary) -> String:
 	if bool(tot["used"]) or boss_spawned:
 		return "犀牛图腾沉睡中 · 已咆哮 %d 次" % run_roars
 	if run_roars > 0:
-		return "咆哮神龛（%d/3）· 再吼：守护者 +30%% 生命、+1 超级球箱" % run_roars
-	return "咆哮神龛 · 互动咆哮：守护者更强，但击败掉落 +1 超级球箱/次"
+		return "咆哮神龛（%d/3）· 再吼：守护者 +30%% 生命、+1 金纹宝箱" % run_roars
+	return "咆哮神龛 · 互动咆哮：守护者更强，但击败掉落 +1 金纹宝箱/次"
 
 func _roar_at_totem(tot: Dictionary) -> void:
 	var tp := Vector3(float(tot["x"]), height_at(float(tot["x"]), float(tot["z"])), float(tot["z"]))
@@ -10105,7 +10310,7 @@ func _roar_at_totem(tot: Dictionary) -> void:
 	spawn_nova(tp + Vector3(0, 0.5, 0), 6.0 + 2.0 * float(n), Color(1.0, 0.85, 0.3))
 	add_trauma(0.35 + 0.12 * float(n))
 	hitstop(0.08)
-	show_banner("🦏 犀牛咆哮！（%d/3）\n守护者将以 +%d%% 生命、+%d%% 伤害登场，精英护卫更多；击败后 +%d 个超级球箱" % [
+	show_banner("🦏 犀牛咆哮！（%d/3）\n守护者将以 +%d%% 生命、+%d%% 伤害登场，精英护卫更多；击败后 +%d 个金纹宝箱" % [
 		mini(n, 3), n * 30, n * 12, n], 3.5)
 
 ## The live zone's totem when the player is inside its interact
@@ -12041,7 +12246,7 @@ func _update_hud_bars(delta: float) -> void:
 	# UI-mobile P4 (found by the full-slots state): the objective
 	# pill drops / regains its alpha entry with the bars (plan
 	# R4g) — refresh on the frame the visible-bar set changes,
-	# not on the next 0.15 s tick (a stale "阿尔法" / count).
+	# not on the next 0.15 s tick (a stale "头领" / count).
 	if _p3_on == 1:
 		var nb := 0
 		for bar in _mini_bars:
@@ -12652,7 +12857,7 @@ func _process(delta: float) -> void:
 			elif not _shiny_e.is_weakened:
 				_shiny_escape -= delta
 				if _shiny_escape <= 0.0:
-					show_banner("闪光的 %s 逃走了…" % String(ModelRig.SPECIES[_shiny_e.species_id]["label"]), 3.0)
+					show_banner("流光的 %s 逃走了…" % String(ModelRig.SPECIES[_shiny_e.species_id]["label"]), 3.0)
 					_shiny_e.capture_remove()
 					_shiny_e = null
 		# Fog of war (big map): mark the player's cell ring
@@ -12721,8 +12926,8 @@ func _process(delta: float) -> void:
 		var flat_p := Vector2(player.global_position.x, player.global_position.z)
 		if cand != null and state in ["playing", "guardian", "portal"]:
 			act = 2
-			var what := "友情球" if cand.is_downed else "收服它加入联盟"
-			_prompt.text = "%s投球：%s！（%s）" % [_ik(), what, String(ModelRig.SPECIES[cand.species_id]["label"])]
+			var what := "结伴匣" if cand.is_downed else "结伴它加入伙伴营"
+			_prompt.text = "%s邀伴：%s！（%s）" % [_ik(), what, String(ModelRig.SPECIES[cand.species_id]["label"])]
 			if e_now and not _e_prev:
 				_throw_ball(cand)
 		elif state == "playing":
@@ -12933,14 +13138,14 @@ func _throw_ball(e: Enemy) -> void:
 			captured += 1
 			_shiny_beam(e.global_position)
 			_offer_shiny_ally(e)
-			show_banner("闪光的 %s 被收服了！星尘 +%d（闪光图鉴 %d 只）\n%s" % [label, grant, GameProfile.shiny_count(), _skin_unlock_note(e.species_id)], 3.5)
+			show_banner("流光的 %s 被结伴了！萤尘 +%d（流光伙伴册 %d 只）\n%s" % [label, grant, GameProfile.shiny_count(), _skin_unlock_note(e.species_id)], 3.5)
 			_refresh_meta()
 		elif e.classic:
 			_classic_e = null
 			var grant := GameProfile.record_classic(e.species_id)
 			captured += 1
 			e.capture_remove()
-			show_banner("经典闪光 %s 被收服！星尘 +%d；家族经典皮肤已记录" % [label, grant], 3.5)
+			show_banner("经典流光 %s 被结伴！萤尘 +%d；家族经典皮肤已记录" % [label, grant], 3.5)
 			_refresh_meta()
 		elif is_league:
 			var sd: Dictionary = GameData.species(e.species_id)
@@ -12950,7 +13155,7 @@ func _throw_ball(e: Enemy) -> void:
 				_league_e = null
 				_league_done = true
 			e.capture_remove()
-			show_banner("%s 加入了联盟！（联盟共 %d 只）" % [label, (GameProfile.data.get("league", []) as Array).size()], 3.5)
+			show_banner("%s 加入了伙伴营！（伙伴营共 %d 只）" % [label, (GameProfile.data.get("league", []) as Array).size()], 3.5)
 			_refresh_meta()
 		else:
 			# Cycle 9: no frozen power/cooldown snapshot — the ally
@@ -13335,7 +13540,7 @@ func _p5_layout_menu(s: float) -> void:
 	_menu_design.size = Vector2(w, 450)
 	_menu_design.scale = Vector2(sm, sm)
 	_menu_design.position = ((area - Vector2(w, 450) * sm) * 0.5).floor()
-	if _menu_hero:
+	if _menu_hero and not _p5_on:
 		var hw := w - 8.0 - 686.0
 		_menu_hero.visible = hw >= 240.0
 		_menu_hero.position = Vector2(686, 80)
@@ -13347,7 +13552,16 @@ func _p5_layout_menu(s: float) -> void:
 		_menu_hint.size = Vector2(w - 36.0, 42)
 	var start := _menu_design.get_node_or_null("StartButton") as Control
 	if start:
-		start.position = Vector2(maxf(328, w - 268), 332)
+		start.position = Vector2(maxf(328, w - 248), 348)
+		var start_back := _menu_design.get_node_or_null("StartButtonArt") as Control
+		if start_back:
+			start_back.position = start.position
+		var caption := _menu_design.get_node_or_null("StartCaption") as Control
+		if caption:
+			caption.position = Vector2(start.position.x, 318)
+		var caption_back := _menu_design.get_node_or_null("StartCaptionBack") as Control
+		if caption_back:
+			caption_back.position = Vector2(start.position.x, 318)
 	var resources := _menu_design.get_node_or_null("Resources") as Control
 	if resources:
 		resources.position = Vector2(maxf(328, w - resources.get_combined_minimum_size().x - 8), 8)
@@ -13359,11 +13573,17 @@ func _p5_layout_menu(s: float) -> void:
 		var hb2 := _menu_hint.get_meta("back") as Control
 		var lh := _menu_hint.get_minimum_size().y
 		var top := clampf(450.0 - lh - 6.0, 396.0, 400.0)
+		if _p5_on:
+			top = 405.0
+			_menu_hint.size.x = 245.0
 		_menu_hint.position.y = top + 3.0
 		_menu_hint.size.y = minf(lh, 450.0 - top - 3.0)
 		if hb2:
 			hb2.position.y = top
 			hb2.size.y = 450.0 - top
+			if _p5_on:
+				hb2.size.x = 280.0
+				hb2.size.y = 32.0
 
 func _safe_insets() -> Vector4:
 	# Cycle 21.3 (audit F6): the gate's simulated insets win.
@@ -14217,7 +14437,7 @@ func _p3_refresh_objective() -> void:
 			res = ev
 			break
 	if res.is_empty() and has_goal:
-		res = ["联盟挑战", _goal_name.text, Color(0.35, 0.95, 0.55), "goal"]
+		res = ["伙伴营挑战", _goal_name.text, Color(0.35, 0.95, 0.55), "goal"]
 	if res.is_empty() and not evs.is_empty():
 		res = evs[0]
 	var total := evs.size() + (1 if has_goal else 0)
@@ -14362,7 +14582,7 @@ func _p3_fill_drawer() -> void:
 		sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		(_obj_drawer_refs["ev"] as Array).append([dot, t, sub])
 	if has_goal:
-		var gt := _mk_label(_obj_drawer_box, "联盟挑战", _p3_px(13, sc), Color(0.35, 0.95, 0.55))
+		var gt := _mk_label(_obj_drawer_box, "伙伴营挑战", _p3_px(13, sc), Color(0.35, 0.95, 0.55))
 		gt.add_theme_font_override("font", UiTheme.display_font())
 		var ghb := HBoxContainer.new()
 		ghb.add_theme_constant_override("separation", 8)
@@ -15311,7 +15531,7 @@ func _spawn_shiny(pool_override: Array = []) -> void:
 	_shiny_e = e
 	_shiny_escape = GameProfile.shiny_flee_time()
 	audio.cry(sp)
-	show_banner("闪光的 %s 出现了！打弱它再投球收服！" % String(ModelRig.SPECIES[sp]["label"]), 4.0)
+	show_banner("流光的 %s 出现了！打弱它再邀伴结伴！" % String(ModelRig.SPECIES[sp]["label"]), 4.0)
 
 ## The bundle's twinkle sparkles on a shiny encounter: a
 ## small GPU emitter riding the enemy — the weather
@@ -15401,7 +15621,7 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 	chips.add_theme_constant_override("separation", 8)
 	chips.alignment = BoxContainer.ALIGNMENT_CENTER
 	_result_box.add_child(chips)
-	var c1 := UiTheme.chip("星尘 +%d" % dust, Color(0.45, 0.32, 0.08, 0.95))
+	var c1 := UiTheme.chip("萤尘 +%d" % dust, Color(0.45, 0.32, 0.08, 0.95))
 	chips.add_child(c1)
 	var c2 := UiTheme.chip("金币 %d" % int(gold), Color(0.16, 0.13, 0.30, 0.95))
 	chips.add_child(c2)
@@ -15414,9 +15634,9 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 	grid.add_theme_constant_override("v_separation", 4)
 	_result_box.add_child(grid)
 	_result_fact(grid, "守护者", bosses)
-	_result_fact(grid, "收服", captured)
+	_result_fact(grid, "结伴", captured)
 	_result_fact(grid, "元素反应", int(run_counts.get("reactions", 0)))
-	_result_fact(grid, "进化", run_evos)
+	_result_fact(grid, "成长", run_evos)
 	# Per-move damage bars.
 	if not run_move_dmg.is_empty():
 		_result_section_title("招式伤害")
@@ -15466,7 +15686,7 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 			flow.add_child(UiTheme.chip(txt, Color(0.30, 0.20, 0.48, 0.95)))
 	# Capture grid.
 	if not run_captures.is_empty():
-		_result_section_title("本局收服")
+		_result_section_title("本局结伴")
 		var flow2 := HFlowContainer.new()
 		flow2.add_theme_constant_override("h_separation", 10)
 		flow2.add_theme_constant_override("v_separation", 6)
@@ -15500,11 +15720,11 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 			var row := _mk_label(_result_box, "", 13, Color(0.75, 1, 0.8))
 			row.text = "★ %s 挑战完成" % String(ModelRig.SPECIES[sp]["label"])
 	# Dex lines (totals + this run's deltas).
-	_result_section_title("图鉴")
+	_result_section_title("伙伴册")
 	var seen_now := (GameProfile.data.get("seen", []) as Array).size()
 	var cap_now := (GameProfile.data.get("captured", {}) as Dictionary).size()
 	var league_now := (GameProfile.data.get("league", []) as Array).size()
-	_mk_label(_result_box, "已见 %d（+%d） · 已收服 %d（+%d） · 联盟 %d（+%d） · 闪光 %d" % [
+	_mk_label(_result_box, "已见 %d（+%d） · 已结伴 %d（+%d） · 伙伴营 %d（+%d） · 流光 %d" % [
 		seen_now, seen_now - _snap_seen, cap_now, cap_now - _snap_captured,
 		league_now, league_now - _snap_league,
 		(GameProfile.data.get("shinies", []) as Array).size()], 13, UiTheme.MUTED)
@@ -15822,13 +16042,13 @@ func _pause_fill_status() -> void:
 	# full values live here.
 	var hinfo: Dictionary = _hud_info_for(String(player.species_id))
 	for line in [
-			"精灵：%s %s · %s" % [String(hinfo["name"]), String(hinfo["en"]),
+			"伙伴：%s %s · %s" % [String(hinfo["name"]), String(hinfo["en"]),
 				String(hinfo["evo"]).trim_prefix("› ")],
 			_weather_explain(),
 			"区域：%s %s · 第 %d/%d 区" % [String(zrow["cn"]), String(zrow["en"]), zone, ZONES.size()],
 			"难度：普通",
 			"用时：%s" % _fmt_elapsed(elapsed),
-			"星尘：%d" % GameProfile.stardust(),
+			"萤尘：%d" % GameProfile.stardust(),
 			"金币：%d" % int(gold),
 			"击杀：%d" % kills,
 			"咆哮 ×%d" % run_roars]:
@@ -15875,8 +16095,8 @@ func _p5_wrap_page(box: Control, rows: bool = true) -> void:
 func _pause_fill_legend(box: VBoxContainer) -> void:
 	_mk_dlabel(box, "地图图例", 16, UiTheme.SKY)
 	# Ring colors from the bundle's marker table (gR @2093942).
-	var rows := [["守护者", Color("ff2a4a")], ["阿尔法", Color("ff8a2a")],
-		["可收服目标", Color("5af0ff")], ["宝藏", Color("ffc83a")],
+	var rows := [["守护者", Color("ff2a4a")], ["头领", Color("ff8a2a")],
+		["可结伴目标", Color("5af0ff")], ["宝藏", Color("ffc83a")],
 		["祭坛 / 图腾", Color("c25aff")], ["队友", Color("3ac85a")],
 		["玩家标记（大地图）", UiTheme.PIN]]
 	for r in rows:
@@ -16074,7 +16294,7 @@ func _bigmap_refresh_list() -> void:
 	if guardian != null and is_instance_valid(guardian) and guardian.hp > 0.0:
 		_mk_label(_bigmap_list, "守护者 · 存活", 13, Color(1, 0.6, 0.4))
 	if _shiny_e != null and is_instance_valid(_shiny_e):
-		_mk_label(_bigmap_list, "闪光遭遇 · 出现中", 13, Color(0.6, 0.95, 1))
+		_mk_label(_bigmap_list, "流光遭遇 · 出现中", 13, Color(0.6, 0.95, 1))
 
 func _fog_mark(pos: Vector3, radius: float) -> void:
 	if _fog.size() != 48 * 48:
@@ -16242,7 +16462,7 @@ func _refresh_goal_card() -> void:
 	if first_inc.is_empty():
 		_goal_name.text = "%s · 挑战完成" % label
 		_goal_bar_fill.size.x = float(_goal_bar_fill.get_meta("track_w", 158.0))
-		_goal_next.text = "等待联盟遭遇"
+		_goal_next.text = "等待伙伴营遭遇"
 		_goal_count.text = ""
 	else:
 		var left := int(float(first_inc["goal"]) - float(first_inc["value"]))
@@ -16281,11 +16501,11 @@ func _event_list(new_layout: bool = false) -> Array:
 			int(float(_comet.get("life", 0.0))),
 			int(float(_comet.get("charge", 0.0)))], Color("4aa8ff"), "comet"])
 	if _league_e != null and is_instance_valid(_league_e) and _league_e.mode == Enemy.MODE_LEAGUE:
-		evs.append(["联盟遭遇", "%s · 逃走 %ds" % [
+		evs.append(["伙伴营遭遇", "%s · 逃走 %ds" % [
 			String(ModelRig.SPECIES[_league_e.species_id]["label"]),
 			int(maxf(_league_escape, 0.0))], Color("9a6aff"), "league"])
 	if _shiny_e != null and is_instance_valid(_shiny_e):
-		evs.append(["闪光遭遇", "%s · 逃走 %ds" % [
+		evs.append(["流光遭遇", "%s · 逃走 %ds" % [
 			String(ModelRig.SPECIES[_shiny_e.species_id]["label"]),
 			int(maxf(_shiny_escape, 0.0))], Color("5af0ff"), "shiny"])
 	if _swarm:
@@ -16301,7 +16521,7 @@ func _event_list(new_layout: bool = false) -> Array:
 	for pr in (shop_state.get("props", []) as Array):
 		if String((pr as Dictionary)["kind"]) == "meowth":
 			if not new_layout or _p3_meowth_near(pr as Dictionary):
-				evs.append(["喵喵在拜访", "本区有喵喵商店", Color("ffd23a"), "meowth"])
+				evs.append(["獾掌柜铺", "本区有獾掌柜铺", Color("ffd23a"), "meowth"])
 			break
 	var any_alpha := false
 	for e in get_tree().get_nodes_in_group("enemies"):
@@ -16310,7 +16530,7 @@ func _event_list(new_layout: bool = false) -> Array:
 			any_alpha = true
 			break
 	if any_alpha:
-		evs.append(["阿尔法", "阿尔法出没", Color("ff8a2a"), "alpha"])
+		evs.append(["头领", "头领出没", Color("ff8a2a"), "alpha"])
 	if not new_layout:
 		return evs
 	var bars_up := false
@@ -16604,7 +16824,7 @@ func _loadout_fill_detail() -> void:
 		var rank_zh: String = String({"common": "普通", "uncommon": "优秀", "rare": "稀有",
 			"epic": "史诗", "legendary": "传说"}.get(String(rentry.get("rank", "")), ""))
 		if rank_zh != "":
-			chips.add_child(UiTheme.chip("图鉴 · " + rank_zh, Color(0.16, 0.13, 0.30, 0.95), 11))
+			chips.add_child(UiTheme.chip("伙伴册 · " + rank_zh, Color(0.16, 0.13, 0.30, 0.95), 11))
 	# Base stats with bars (frac of 180). The species dict
 	# keys them "stats" (the starter cards read the same).
 	var base: Dictionary = sd.get("stats", {})
@@ -16706,7 +16926,7 @@ func _loadout_fill_detail() -> void:
 		chain.append(nx)
 		cur = nx
 	if chain.size() > 1 or chain_cut != "":
-		_mk_dlabel(_ls_detail, "进化链", 15, UiTheme.SKY)
+		_mk_dlabel(_ls_detail, "成长", 15, UiTheme.SKY)
 		var evo_txt: Array = []
 		for i in range(chain.size()):
 			var seg := String(ModelRig.SPECIES[chain[i]]["label"])
@@ -16729,7 +16949,7 @@ func _loadout_fill_detail() -> void:
 		_mk_label(_ls_detail, "大招数据未建模（本构建仅三条初始线有专属大招）", 11, UiTheme.MUTED)
 	# Lock progress for unplayable species.
 	if not _ls_playable(sp):
-		_mk_dlabel(_ls_detail, "解锁条件（联盟挑战）", 15, Color(1, 0.7, 0.5))
+		_mk_dlabel(_ls_detail, "解锁条件（伙伴营挑战）", 15, Color(1, 0.7, 0.5))
 		for p in GameProfile.challenge_parts(sp):
 			var pd2 := p as Dictionary
 			_mk_label(_ls_detail, "%s：%d / %d%s" % [
@@ -16939,7 +17159,7 @@ func _spawn_classic() -> void:
 	_classic_escape = GameProfile.shiny_flee_time()
 	GameProfile.mark_seen(sp)
 	audio.cry(sp)
-	show_banner("经典闪光 %s 出现了！打弱后投球收服" % String(ModelRig.SPECIES[sp]["label"]), 4.0)
+	show_banner("经典流光 %s 出现了！打弱后邀伴结伴" % String(ModelRig.SPECIES[sp]["label"]), 4.0)
 
 func _make_shiny_ally(e: Enemy) -> void:
 	e.make_ally()
@@ -16962,7 +17182,7 @@ func _offer_shiny_ally(e: Enemy) -> void:
 	e.remove_from_group("allies")
 	e.set_physics_process(false)
 	e.visible = false
-	_choice_show("闪光队友", "只能带一只闪光队友；替换后旧队友回到森林", ["留下新队友", "放生新队友"], "放生新队友",
+	_choice_show("流光队友", "只能带一只流光队友；替换后旧队友回到森林", ["留下新队友", "放生新队友"], "放生新队友",
 		func(i: int) -> void: _settle_shiny_swap(i == 0), func() -> void: _settle_shiny_swap(false))
 
 func _settle_shiny_swap(keep: bool) -> void:
@@ -16982,7 +17202,7 @@ func _settle_shiny_swap(keep: bool) -> void:
 
 func _skin_unlock_note(species_key: String) -> String:
 	var family := int(GameData.species(species_key).get("family", -1))
-	return "家族闪光皮肤已解锁" if GameProfile.in_league(family) else "家族加入联盟后可使用此闪光皮肤"
+	return "家族流光皮肤已解锁" if GameProfile.in_league(family) else "家族加入伙伴营后可使用此流光皮肤"
 
 # Original capture update @1047800+: idle/done gates BEFORE consuming clocks.
 # Resolve only one encounter per tick: shiny, Classic, then Liga.
@@ -17006,3 +17226,18 @@ func _normal_ally_count() -> int:
 		if not ally.shiny:
 			count += 1
 	return count
+
+func _menu_feature_portrait(sp: String) -> Texture2D:
+	if _p5_on:
+		return load("res://assets/menu/v2-mascot.png")
+	if sp == "bulbasaur":
+		return load("res://assets/menu/fern-hero.png")
+	return _menu_card_portrait(sp)
+
+
+func _menu_card_portrait(sp: String) -> Texture2D:
+	match sp:
+		"bulbasaur": return load("res://assets/menu/v2-starter-stump.svg")
+		"charmander": return load("res://assets/menu/v2-starter-coal.svg")
+		"squirtle": return load("res://assets/menu/v2-starter-shell.svg")
+	return UiTheme.portrait(sp)

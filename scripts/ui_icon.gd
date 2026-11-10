@@ -59,6 +59,13 @@ func _arc(x: float, y: float, r: float, a0: float, a1: float, w: float = 2.2) ->
 func _draw() -> void:
 	if size.x < 4.0 or size.y < 4.0:
 		return
+	if icon in ["coin", "ball"]:
+		var asset_path := "res://assets/ui-v2/icons/coin.svg" if icon == "coin" else "res://assets/ui-v2/icons/wooden-chest.svg"
+		var texture := load(asset_path) as Texture2D
+		if texture:
+			var side := minf(size.x, size.y)
+			draw_texture_rect(texture, Rect2((size - Vector2.ONE * side) * 0.5, Vector2.ONE * side), false)
+			return
 	match icon:
 		"sword":
 			_poly([Vector2(6, 18), Vector2(15.5, 8.5), Vector2(19, 5), Vector2(18.5, 10.5), Vector2(9, 20)], color)
