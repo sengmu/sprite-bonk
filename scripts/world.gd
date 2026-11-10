@@ -4104,6 +4104,30 @@ func _build_menu(root: Control) -> void:
 		resources.add_child(pill)
 	_menu_design.add_child(resources)
 	_menu_intro()
+	if _p5_on:
+		var folded_items: Array[Control] = []
+		for child in _menu_design.get_children():
+			var ctl := child as Control
+			if ctl and ctl.position.x >= 320 and ctl.position.x < 710 and ctl.position.y >= 290:
+				folded_items.append(ctl)
+		if _menu_starters and not folded_items.has(_menu_starters):
+			folded_items.append(_menu_starters)
+		for ctl in folded_items:
+			ctl.hide()
+		var fold := UiTheme.make_button("初始伙伴 · " + String(_hud_info_for(_menu_hero_sp)["name"]), "ghost", "small")
+		fold.name = "StarterFold"
+		fold.position = Vector2(320, 290)
+		fold.size = Vector2(390, 42)
+		fold.icon = UiTheme.portrait(_menu_hero_sp)
+		fold.expand_icon = true
+		fold.add_theme_constant_override("icon_max_width", 32)
+		fold.pressed.connect(func() -> void:
+			var expanded := not bool(fold.get_meta("expanded", false))
+			fold.set_meta("expanded", expanded)
+			for ctl in folded_items:
+				ctl.visible = expanded
+			fold.position.y = 246 if expanded else 290)
+		_menu_design.add_child(fold)
 	if _first_starter_card:
 		# A visible focus ring from boot (audit punch #18);
 		# the card faces already carry the gold focus style.
