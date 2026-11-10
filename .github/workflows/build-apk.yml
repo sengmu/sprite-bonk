@@ -49,6 +49,11 @@ jobs:
           # 初始化 Android Gradle 构建模板
           mkdir -p android/build
           unzip -q -o ~/.local/share/godot/export_templates/4.4.stable/android_source.zip -d android/build/
+          if [ -d "android/build/build" ]; then
+            cp -r android/build/build/* android/build/
+            rm -rf android/build/build
+          fi
+          echo "4.4.stable" > android/.build_version
           chmod +x android/build/gradlew || true
 
       - name: 配置 Godot Android SDK 路径
@@ -77,7 +82,7 @@ jobs:
           sed -i 's|keystore/debug_password=""|keystore/debug_password="android"|g' export_presets.cfg
 
           # 导出 APK
-          ./tools/godot/godot --headless --export-debug "Android" build/android/SpriteBonk-debug.apk || ./tools/godot/godot --headless --export-release "Android" build/android/SpriteBonk-debug.apk || true
+          ./tools/godot/godot --headless --export-debug "Android" build/android/SpriteBonk-debug.apk
 
           # 检查导出的 APK
           ls -lh build/android/
