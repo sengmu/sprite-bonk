@@ -18,6 +18,9 @@ const PINK_SOFT := Color8(255, 154, 224) # #ff9ae0
 const PURPLE := Color8(154, 106, 255)    # #9a6aff
 const LILAC := Color8(200, 168, 255)     # #c8a8ff
 const MUTED := Color8(119, 101, 79)     # #9aa0b4
+## U1 1:1 (dark HUD): secondary text on the dark HUD faces —
+## MUTED is a brown-grey tuned for cream, too dim on ink.
+const HUD_DIM := Color8(206, 200, 190)
 const FAINT := Color8(151, 134, 111)     # #6a6488
 const RED := Color8(255, 74, 74)         # #ff4a4a
 const ORANGE := Color8(255, 151, 36)
@@ -200,6 +203,25 @@ static func glass(radius: int = 16, alpha: float = GLASS_A,
 		s.border_width_top = maxi(bw, 3)
 	s.shadow_size = 8
 	s.shadow_color = Color(0.29, 0.21, 0.10, 0.23)
+	s.shadow_offset = Vector2(0, 5)
+	s.set_content_margin_all(margin)
+	return s
+
+## U1 1:1 (dark HUD): the HUD's dark face — deep ink at 0.92,
+## light rim, same shadow as glass(). The menu keeps glass()
+## (opaque cream); only in-run HUD chrome uses this.
+static func dark_glass(radius: int = 16, alpha: float = 0.92,
+		border: Color = Color(1, 1, 1, 0.25), bw: int = 1,
+		margin: int = 14) -> StyleBoxFlat:
+	var s := StyleBoxFlat.new()
+	s.bg_color = Color(0.10, 0.07, 0.20, alpha)
+	s.set_corner_radius_all(maxi(radius, 12))
+	if bw > 0:
+		s.set_border_width_all(bw)
+		s.border_color = border
+		s.border_width_top = maxi(bw, 1)
+	s.shadow_size = 8
+	s.shadow_color = Color(0.02, 0.01, 0.05, 0.35)
 	s.shadow_offset = Vector2(0, 5)
 	s.set_content_margin_all(margin)
 	return s

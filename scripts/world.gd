@@ -1051,7 +1051,9 @@ func _bake_minimap() -> void:
 			var h := height_at(wx, wz)
 			var n := _terrain_normal(wx, wz, 2.0)
 			var col := _terrain_color(wx, wz, h, n.y)
-			col = Color(col.r * 0.55, col.g * 0.55, col.b * 0.55).lerp(navy, 0.18)
+			# U1 1:1 (dark HUD): the reference minimap reads as
+			# bright terrain — 0.55 + navy 0.18 baked it near-black.
+			col = Color(col.r * 0.85, col.g * 0.85, col.b * 0.85).lerp(navy, 0.08)
 			var lift := 0.85 + clampf(h, 0.0, 8.0) / 8.0 * 0.35
 			col = Color(col.r * lift, col.g * lift, col.b * lift, 1)
 			if rr > sz * 0.5 - 6.0:
@@ -2685,42 +2687,46 @@ func _open_portal() -> void:
 	add_child(portal_node)
 
 # ---------------------------------------------------------------------- HUD
-func _style(bg: Color, radius: int, border: Color = Color(0, 0, 0, 0), bw: int = 0) -> StyleBoxFlat:
+## U1 1:1 (dark HUD): `dark` keeps an authored dark face — the
+## cream substitution below is the menu language, not the HUD's.
+func _style(bg: Color, radius: int, border: Color = Color(0, 0, 0, 0), bw: int = 0, dark: bool = false) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
-	s.bg_color = UiTheme.CREAM if UiTheme.luminance(bg) < 0.32 and bg.a > 0.4 else bg
+	s.bg_color = bg if dark else (UiTheme.CREAM if UiTheme.luminance(bg) < 0.32 and bg.a > 0.4 else bg)
 	s.set_corner_radius_all(radius)
 	if bw > 0:
 		s.set_border_width_all(bw)
 		s.border_color = border
 	return s
 
-func _panel(parent: Node, pos: Vector2, sz: Vector2, bg: Color, radius: int, border: Color = Color(0, 0, 0, 0), bw: int = 0) -> Panel:
+func _panel(parent: Node, pos: Vector2, sz: Vector2, bg: Color, radius: int, border: Color = Color(0, 0, 0, 0), bw: int = 0, dark: bool = false) -> Panel:
 	var p := Panel.new()
 	p.position = pos
 	p.size = sz
-	p.add_theme_stylebox_override("panel", _style(bg, radius, border, bw))
+	p.add_theme_stylebox_override("panel", _style(bg, radius, border, bw, dark))
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(p)
 	return p
 
-func _mk_label(parent: Node, text: String, size: int, color: Color = Color.WHITE) -> Label:
+func _mk_label(parent: Node, text: String, size: int, color: Color = Color.WHITE, raw: bool = false) -> Label:
 	var l := Label.new()
 	l.text = text
 	l.add_theme_font_override("font", _font)
 	l.add_theme_font_size_override("font_size", size)
-	l.add_theme_color_override("font_color", UiTheme.text_color(color))
+	# U1 1:1 (dark HUD): `raw` keeps an authored light color —
+	# text_color() would turn it into dark ink for cream faces.
+	l.add_theme_color_override("font_color", color if raw else UiTheme.text_color(color))
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(l)
 	return l
 
 ## Cycle 17: display-face label (Fredoka / Smiley stack) for
 ## titles, big numbers and card headings.
-func _mk_dlabel(parent: Node, text: String, size: int, color: Color = Color.WHITE) -> Label:
+func _mk_dlabel(parent: Node, text: String, size: int, color: Color = Color.WHITE, raw: bool = false) -> Label:
 	var l := Label.new()
 	l.text = text
 	l.add_theme_font_override("font", _font_display)
 	l.add_theme_font_size_override("font_size", size)
-	l.add_theme_color_override("font_color", UiTheme.text_color(color))
+	l.add_theme_color_override("font_color", color if raw else UiTheme.text_color(color))
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(l)
 	return l
@@ -2751,8 +2757,8 @@ func _type_icon(t: String) -> String:
 		"electric": return "bolt"
 	return "spark"
 
-func _label_in(parent: Node, text: String, pos: Vector2, sz: Vector2, size: int, color: Color, align: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT) -> Label:
-	var l := _mk_label(parent, text, size, color)
+func _label_in(parent: Node, text: String, pos: Vector2, sz: Vector2, size: int, color: Color, align: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT, raw: bool = false) -> Label:
+	var l := _mk_label(parent, text, size, color, raw)
 	l.position = pos
 	l.size = sz
 	l.horizontal_alignment = align
@@ -2823,11 +2829,11 @@ func _build_hud() -> void:
 	_cutin_panel.visible = false
 	# Cycle 17: the cut-in band gets a real glass stylebox (it
 	# shipped as a bare default-gray Panel through cycle 16).
-	_cutin_panel.add_theme_stylebox_override("panel", UiTheme.glass(12, 0.88, Color(1, 1, 1, 0.25), 1, 0))
+	_cutin_panel.add_theme_stylebox_override("panel", UiTheme.dark_glass(12, 0.88, Color(1, 1, 1, 0.25), 1, 0))
 	root.add_child(_cutin_panel)
-	var cutin_t := _label_in(_cutin_panel, "必杀技！", Vector2(24, 8), Vector2(200, 26), 20, Color.WHITE)
+	var cutin_t := _label_in(_cutin_panel, "必杀技！", Vector2(24, 8), Vector2(200, 26), 20, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT, true)
 	cutin_t.add_theme_font_override("font", _font_display)
-	_cutin_name = _label_in(_cutin_panel, "", Vector2(24, 36), Vector2(420, 24), 15, Color.WHITE)
+	_cutin_name = _label_in(_cutin_panel, "", Vector2(24, 36), Vector2(420, 24), 15, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT, true)
 
 	# --- top-left: portrait medallion + glass info panel ---
 	# Cycle 17 (UI_SPEC §2.3 tl-medal): the medallion carries
@@ -2856,14 +2862,14 @@ func _build_hud() -> void:
 	_medal_panel.medal = STARTER_HUD["bulbasaur"]["medal"]
 	_medal_panel.portrait = UiTheme.portrait("bulbasaur")
 	_hero_cluster.add_child(_medal_panel)
-	_medal_glyph = _label_in(_medal_panel, "妙", Vector2(0, 0), Vector2(86, 86), 34, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER)
+	_medal_glyph = _label_in(_medal_panel, "妙", Vector2(0, 0), Vector2(86, 86), 34, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
 	_medal_glyph.visible = _medal_panel.portrait == null
 	# UI-mobile P3 (plan H1 / D1): on phone a tap on the
 	# portrait pauses — a small "‖" badge says so. Plan text
 	# puts it "右下（Lv 徽对角）", but the Lv badge IS the
 	# bottom-right corner; it sits on the Lv badge's diagonal
 	# (top-left), 20 design px. Shown by _p3_apply_mode.
-	_pause_badge = _panel(_medal_panel, Vector2(-2, -2), Vector2(22, 22), Color(0.10, 0.07, 0.20, 0.92), 11, Color(1, 1, 1, 0.45), 1)
+	_pause_badge = _panel(_medal_panel, Vector2(-2, -2), Vector2(22, 22), Color(0.10, 0.07, 0.20, 0.92), 11, Color(1, 1, 1, 0.45), 1, true)
 	_pause_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var pb_ic := UiIcon.new("pause", Color(1, 1, 1, 0.92), 12)
 	pb_ic.position = Vector2(5, 5)
@@ -2871,16 +2877,16 @@ func _build_hud() -> void:
 	pb_ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_pause_badge.add_child(pb_ic)
 	_pause_badge.visible = false
-	var lv_badge := _panel(_hero_cluster, Vector2(50, 62), Vector2(44, 24), Color(0.10, 0.07, 0.20, 0.92), 12, Color(1, 1, 1, 0.35), 1)
-	_lv_label = _label_in(lv_badge, "1级", Vector2(0, 0), Vector2(44, 24), 12, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER)
+	var lv_badge := _panel(_hero_cluster, Vector2(50, 62), Vector2(44, 24), Color(0.10, 0.07, 0.20, 0.92), 12, Color(1, 1, 1, 0.35), 1, true)
+	_lv_label = _label_in(lv_badge, "1级", Vector2(0, 0), Vector2(44, 24), 12, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
 	var info := Panel.new()
 	_hero_info = info
 	info.position = Vector2(94, 4)
 	info.size = Vector2(232, 80)
-	info.add_theme_stylebox_override("panel", UiTheme.panel_texture())
+	info.add_theme_stylebox_override("panel", UiTheme.dark_glass(16, 0.92))
 	info.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_hero_cluster.add_child(info)
-	_hud_name = _label_in(info, "妙蛙种子 Bulbasaur", Vector2(14, 6), Vector2(210, 27), 19, Color.WHITE)
+	_hud_name = _label_in(info, "妙蛙种子 Bulbasaur", Vector2(14, 6), Vector2(210, 27), 19, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT, true)
 	_hud_name.add_theme_font_override("font", _font_display)
 	_hud_chips = HBoxContainer.new()
 	_hud_chips.position = Vector2(14, 36)
@@ -2891,17 +2897,17 @@ func _build_hud() -> void:
 	# Cycle 21.3 (audit §5): 13 px muted grey on glass was
 	# near-illegible — font 14, colour at full alpha
 	# (MUTED is Color8, a = 1.0 >= the audit's 0.8 floor).
-	_hud_evo = _label_in(info, "› 24级成长", Vector2(14, 58), Vector2(210, 18), 14, UiTheme.MUTED)
+	_hud_evo = _label_in(info, "› 24级成长", Vector2(14, 58), Vector2(210, 18), 14, UiTheme.HUD_DIM, HORIZONTAL_ALIGNMENT_LEFT, true)
 	# Player HP bar (cycle 10): the original's .bar.hpbar lives in
 	# the plate's under-row (@2000723) — instant fill + lag ghost
 	# (hold 0.4 s, drain 0.9/s, update @2023679) + ceil(hp) number.
 	# Driven per-frame in _update_hud_bars.
-	var hp_track := _panel(_hero_cluster, Vector2(94, 90), Vector2(232, 15), Color(0.08, 0.05, 0.16, 0.88), 7)
+	var hp_track := _panel(_hero_cluster, Vector2(94, 90), Vector2(232, 15), Color(0.08, 0.05, 0.16, 0.88), 7, Color(0, 0, 0, 0), 0, true)
 	_hud_hp_track = hp_track
 	_hud_hp_lag = _panel(hp_track, Vector2(1, 1), Vector2(230, 13), Color(0.9, 0.97, 0.9, 0.75), 6)
 	_hud_hp_fill = _panel(hp_track, Vector2(1, 1), Vector2(230, 13), Color(0.27, 0.85, 0.47), 6)
 	_hud_shield_fill = _panel(hp_track, Vector2(1, 1), Vector2(0, 13), Color(0.4, 0.78, 1.0, 0.8), 6)
-	_hud_hp_num = _label_in(hp_track, "", Vector2(0, 0), Vector2(232, 15), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER)
+	_hud_hp_num = _label_in(hp_track, "", Vector2(0, 0), Vector2(232, 15), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
 	_hud_hp_num.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.55))
 	_hud_hp_num.add_theme_constant_override("shadow_offset_x", 1)
 	_hud_hp_num.add_theme_constant_override("shadow_offset_y", 1)
@@ -2940,12 +2946,12 @@ func _build_hud() -> void:
 	card.offset_right = 363
 	card.offset_top = 10
 	card.offset_bottom = 94
-	card.add_theme_stylebox_override("panel", UiTheme.panel_texture())
+	card.add_theme_stylebox_override("panel", UiTheme.dark_glass(16, 0.92))
 	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(card)
-	_zone_cn = _label_in(card, "青苔林", Vector2(18, 8), Vector2(170, 28), 19, Color.WHITE)
+	_zone_cn = _label_in(card, "青苔林", Vector2(18, 8), Vector2(170, 28), 19, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT, true)
 	_zone_cn.add_theme_font_override("font", _font_display)
-	_zone_en = _label_in(card, "Viridian Forest", Vector2(18, 36), Vector2(170, 18), 12, UiTheme.MUTED)
+	_zone_en = _label_in(card, "Viridian Forest", Vector2(18, 36), Vector2(170, 18), 12, UiTheme.HUD_DIM, HORIZONTAL_ALIGNMENT_LEFT, true)
 	for i in range(4):
 		var pip := Panel.new()
 		pip.position = Vector2(18 + i * 17, 63)
@@ -2954,21 +2960,21 @@ func _build_hud() -> void:
 		pip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		card.add_child(pip)
 		_pips.append(pip)
-	var zchip := _panel(card, Vector2(96, 57), Vector2(74, 22), Color(0.16, 0.55, 0.30, 0.95), 11)
+	var zchip := _panel(card, Vector2(96, 57), Vector2(74, 22), Color(0.16, 0.55, 0.30, 0.95), 11, Color(0, 0, 0, 0), 0, true)
 	_zone_chip = zchip
-	_zone_chip_label = _label_in(zchip, "区域 1/4", Vector2(0, 0), Vector2(74, 22), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER)
-	var nchip := _panel(card, Vector2(176, 57), Vector2(64, 22), Color(0.35, 0.38, 0.55, 0.95), 11)
+	_zone_chip_label = _label_in(zchip, "区域 1/4", Vector2(0, 0), Vector2(74, 22), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
+	var nchip := _panel(card, Vector2(176, 57), Vector2(64, 22), Color(0.35, 0.38, 0.55, 0.95), 11, Color(0, 0, 0, 0), 0, true)
 	_tier_chip = nchip
-	_label_in(nchip, "普通", Vector2(0, 0), Vector2(64, 22), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER)
-	var wxchip := _panel(card, Vector2(246, 57), Vector2(64, 22), Color(0.13, 0.30, 0.48, 0.95), 11)
+	_label_in(nchip, "普通", Vector2(0, 0), Vector2(64, 22), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
+	var wxchip := _panel(card, Vector2(246, 57), Vector2(64, 22), Color(0.13, 0.30, 0.48, 0.95), 11, Color(0, 0, 0, 0), 0, true)
 	_wx_chip = wxchip
 	_wx_icon = UiIcon.new("sun", Color(1.0, 0.9, 0.5), 14)
 	_wx_icon.position = Vector2(7, 4)
 	_wx_icon.size = Vector2(14, 14)
 	wxchip.add_child(_wx_icon)
-	_wx_label = _label_in(wxchip, "晴", Vector2(24, 0), Vector2(38, 22), 11, Color.WHITE)
+	_wx_label = _label_in(wxchip, "晴", Vector2(24, 0), Vector2(38, 22), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT, true)
 
-	_timer_label = _label_in(card, "10:00", Vector2(250, 6), Vector2(180, 40), 30, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER)
+	_timer_label = _label_in(card, "10:00", Vector2(250, 6), Vector2(180, 40), 30, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
 	_timer_label.add_theme_font_override("font", _font_display)
 	# Danger meter (bundle UR/WR/GR @1997817): tier name +
 	# seven segments in the verified color ramp; the value is
@@ -2976,7 +2982,7 @@ func _build_hud() -> void:
 	# Cycle 18 (audit §3.1): the tier name moves UNDER the
 	# timer, centered on ht-c — at (254,54) it overprinted
 	# the weather chip (246..310 x 57..79) into illegibility.
-	_danger_name = _label_in(card, "平静", Vector2(250, 45), Vector2(180, 13), 12, UiTheme.DANGER_COLORS[0], HORIZONTAL_ALIGNMENT_CENTER)
+	_danger_name = _label_in(card, "平静", Vector2(250, 45), Vector2(180, 13), 12, UiTheme.DANGER_COLORS[0], HORIZONTAL_ALIGNMENT_CENTER, true)
 	_danger_name.add_theme_font_override("font", _font_display)
 	for i in range(7):
 		var seg := Panel.new()
@@ -2986,7 +2992,7 @@ func _build_hud() -> void:
 		seg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		card.add_child(seg)
 		_danger_segs.append(seg)
-	_elapsed_label = _label_in(card, "0:00.0", Vector2(446, 8), Vector2(176, 20), 13, UiTheme.MUTED, HORIZONTAL_ALIGNMENT_RIGHT)
+	_elapsed_label = _label_in(card, "0:00.0", Vector2(446, 8), Vector2(176, 20), 13, UiTheme.HUD_DIM, HORIZONTAL_ALIGNMENT_RIGHT, true)
 	# Wallet pill (bundle .wallet @2000510 region): stardust +
 	# gold with drawn icons and display numbers. Cycle 21:
 	# the third element IS the next-ball price — mining
@@ -2998,7 +3004,7 @@ func _build_hud() -> void:
 	var wpill := Panel.new()
 	wpill.position = Vector2(446, 42)
 	wpill.size = Vector2(268, 36)
-	wpill.add_theme_stylebox_override("panel", _style(Color(0.08, 0.05, 0.16, 0.85), 18))
+	wpill.add_theme_stylebox_override("panel", _style(Color(0.08, 0.05, 0.16, 0.85), 18, Color(0, 0, 0, 0), 0, true))
 	wpill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card.add_child(wpill)
 	_wallet_pill = wpill
@@ -3007,21 +3013,21 @@ func _build_hud() -> void:
 	dust_ic.size = Vector2(18, 18)
 	wpill.add_child(dust_ic)
 	_dust_icon = dust_ic
-	_dust_label = _label_in(wpill, "0", Vector2(31, 0), Vector2(56, 36), 15, Color.WHITE)
+	_dust_label = _label_in(wpill, "0", Vector2(31, 0), Vector2(56, 36), 15, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT, true)
 	_dust_label.add_theme_font_override("font", _font_display)
 	var coin_ic := UiIcon.new("coin", UiTheme.GOLD, 18)
 	coin_ic.position = Vector2(94, 9)
 	coin_ic.size = Vector2(18, 18)
 	wpill.add_child(coin_ic)
 	_coin_icon = coin_ic
-	_gold_label = _label_in(wpill, "0", Vector2(115, 0), Vector2(54, 36), 15, Color.WHITE)
+	_gold_label = _label_in(wpill, "0", Vector2(115, 0), Vector2(54, 36), 15, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT, true)
 	_gold_label.add_theme_font_override("font", _font_display)
 	var ball_ic := UiIcon.new("ball", Color(0.95, 0.45, 0.45), 18)
 	ball_ic.position = Vector2(178, 9)
 	ball_ic.size = Vector2(18, 18)
 	wpill.add_child(ball_ic)
 	_ball_icon = ball_ic
-	_ball_price_label = _label_in(wpill, "0", Vector2(199, 0), Vector2(62, 36), 15, Color.WHITE)
+	_ball_price_label = _label_in(wpill, "0", Vector2(199, 0), Vector2(62, 36), 15, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT, true)
 	_ball_price_label.add_theme_font_override("font", _font_display)
 
 	# Guardian boss bar (cycle 10; glass restyle cycle 17):
@@ -3040,7 +3046,7 @@ func _build_hud() -> void:
 	_boss_card.offset_right = 230
 	_boss_card.offset_top = 102
 	_boss_card.offset_bottom = 148
-	_boss_card.add_theme_stylebox_override("panel", UiTheme.glass(13, UiTheme.GLASS_A, Color(1, 1, 1, 0.14), 1, 0))
+	_boss_card.add_theme_stylebox_override("panel", UiTheme.dark_glass(13, 0.92, Color(1, 1, 1, 0.25), 1, 0))
 	_boss_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_boss_card.visible = false
 	root.add_child(_boss_card)
@@ -3055,15 +3061,15 @@ func _build_hud() -> void:
 	_boss_pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_boss_pic.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_boss_card.add_child(_boss_pic)
-	_boss_foot = _label_in(_boss_card, "", Vector2(14, 50), Vector2(432, 16), 12, UiTheme.MUTED)
+	_boss_foot = _label_in(_boss_card, "", Vector2(14, 50), Vector2(432, 16), 12, UiTheme.HUD_DIM, HORIZONTAL_ALIGNMENT_LEFT, true)
 	_boss_foot.hide()
-	_boss_name_label = _label_in(_boss_card, "", Vector2(56, 5), Vector2(254, 22), 16, Color.WHITE)
+	_boss_name_label = _label_in(_boss_card, "", Vector2(56, 5), Vector2(254, 22), 16, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT, true)
 	_boss_name_label.add_theme_font_override("font", _font_display)
-	_boss_tag_label = _label_in(_boss_card, "守护者", Vector2(316, 5), Vector2(128, 22), 12, UiTheme.MUTED, HORIZONTAL_ALIGNMENT_RIGHT)
-	var boss_track := _panel(_boss_card, Vector2(14, 30), Vector2(432, 16), Color(0.1, 0.1, 0.16, 0.9), 8)
+	_boss_tag_label = _label_in(_boss_card, "守护者", Vector2(316, 5), Vector2(128, 22), 12, UiTheme.HUD_DIM, HORIZONTAL_ALIGNMENT_RIGHT, true)
+	var boss_track := _panel(_boss_card, Vector2(14, 30), Vector2(432, 16), Color(0.1, 0.1, 0.16, 0.9), 8, Color(0, 0, 0, 0), 0, true)
 	_boss_hp_lag = _panel(boss_track, Vector2(1, 1), Vector2(430, 14), Color(1.0, 0.82, 0.78, 0.8), 7)
 	_boss_hp_fill = _panel(boss_track, Vector2(1, 1), Vector2(430, 14), Color(0.93, 0.3, 0.22), 7)
-	_boss_hp_num = _label_in(_boss_card, "", Vector2(14, 30), Vector2(432, 16), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER)
+	_boss_hp_num = _label_in(_boss_card, "", Vector2(14, 30), Vector2(432, 16), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
 	_boss_hp_num.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.55))
 	_boss_hp_num.add_theme_constant_override("shadow_offset_x", 1)
 	_boss_hp_num.add_theme_constant_override("shadow_offset_y", 1)
@@ -3084,17 +3090,17 @@ func _build_hud() -> void:
 		mp.offset_right = 150
 		mp.offset_top = 238 + mi * 46
 		mp.offset_bottom = 238 + mi * 46 + 40
-		mp.add_theme_stylebox_override("panel", UiTheme.panel_texture())
+		mp.add_theme_stylebox_override("panel", UiTheme.dark_glass(13, 0.92, Color(1, 1, 1, 0.25), 1, 0))
 		mp.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		mp.visible = false
 		root.add_child(mp)
-		var mnm := _label_in(mp, "", Vector2(10, 2), Vector2(200, 18), 13, Color.WHITE)
+		var mnm := _label_in(mp, "", Vector2(10, 2), Vector2(200, 18), 13, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT, true)
 		mnm.add_theme_font_override("font", _font_display)
-		_label_in(mp, "头领", Vector2(216, 2), Vector2(76, 18), 11, Color(1, 0.62, 0.3), HORIZONTAL_ALIGNMENT_RIGHT)
-		var mtr := _panel(mp, Vector2(10, 22), Vector2(280, 12), Color(0.1, 0.1, 0.16, 0.9), 6)
-		var mlag := _panel(mtr, Vector2(1, 1), Vector2(278, 10), Color(1.0, 0.82, 0.78, 0.8), 5)
-		var mfill := _panel(mtr, Vector2(1, 1), Vector2(278, 10), Color(1, 0.55, 0.16), 5)
-		var mnum := _label_in(mp, "", Vector2(10, 22), Vector2(280, 12), 10, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER)
+		_label_in(mp, "头领", Vector2(216, 2), Vector2(76, 18), 11, Color(1, 0.62, 0.3), HORIZONTAL_ALIGNMENT_RIGHT, true)
+		var mtr := _panel(mp, Vector2(10, 22), Vector2(280, 12), Color(0.1, 0.1, 0.16, 0.9), 6, Color(0, 0, 0, 0), 0, true)
+		var mlag := _panel(mtr, Vector2(1, 1), Vector2(278, 10), Color(1.0, 0.82, 0.78, 0.8), 5, Color(0, 0, 0, 0), 0, true)
+		var mfill := _panel(mtr, Vector2(1, 1), Vector2(278, 10), Color(1, 0.55, 0.16), 5, Color(0, 0, 0, 0), 0, true)
+		var mnum := _label_in(mp, "", Vector2(10, 22), Vector2(280, 12), 10, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
 		_mini_bars.append({"panel": mp, "name": mnm, "fill": mfill,
 			"lag": mlag, "num": mnum, "lagv": 1.0, "hold": 0.0, "key": null})
 
@@ -3138,7 +3144,7 @@ func _build_hud() -> void:
 	kpill.offset_right = -16
 	kpill.offset_top = 190
 	kpill.offset_bottom = 218
-	kpill.add_theme_stylebox_override("panel", _style(UiTheme.glass_color(0.85), 14))
+	kpill.add_theme_stylebox_override("panel", _style(Color(0.10, 0.07, 0.20, 0.92), 14, Color(1, 1, 1, 0.25), 1, true))
 	kpill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(kpill)
 	var kic := UiIcon.new("skull", Color(1, 0.78, 0.72), 16)
@@ -3147,7 +3153,7 @@ func _build_hud() -> void:
 	kpill.add_child(kic)
 	# Cycle 21.3 (audit §5): left-aligned next to the icon
 	# (centred text left a dead gap after the skull).
-	_kills_label = _label_in(kpill, "击杀 0", Vector2(30, 0), Vector2(104, 28), 14, Color.WHITE)
+	_kills_label = _label_in(kpill, "击杀 0", Vector2(30, 0), Vector2(104, 28), 14, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT, true)
 	# Cycle 18: goal card + event-pill stack (UI_SPEC §2.3
 	# kgoal / §2.10 pills). The goal card's anatomy is the
 	# constructor's (portrait + name + "n left" + bar + next
@@ -3161,7 +3167,7 @@ func _build_hud() -> void:
 	_goal_card.offset_right = -12
 	_goal_card.offset_top = 226
 	_goal_card.offset_bottom = 312
-	_goal_card.add_theme_stylebox_override("panel", UiTheme.panel_texture())
+	_goal_card.add_theme_stylebox_override("panel", UiTheme.dark_glass(16, 0.92))
 	_goal_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	# Cycle 19 hotfix: the card's width is FIXED at the
 	# designed 176 — a long challenge name must clip inside
@@ -3186,7 +3192,7 @@ func _build_hud() -> void:
 	var gvb2 := VBoxContainer.new()
 	gvb2.add_theme_constant_override("separation", 0)
 	ghb.add_child(gvb2)
-	_goal_name = _mk_label(gvb2, "", 14, Color.WHITE)
+	_goal_name = _mk_label(gvb2, "", 14, Color.WHITE, true)
 	_goal_name.clip_text = true  # hotfix: never widen the card
 	# clip_text zeroes the label's minimum width, which
 	# would starve it inside this HBox (it rendered with
@@ -3220,10 +3226,10 @@ func _build_hud() -> void:
 	var gnb := HBoxContainer.new()
 	gnb.add_theme_constant_override("separation", 6)
 	gvb.add_child(gnb)
-	_goal_next = _mk_label(gnb, "", 11, UiTheme.MUTED)
+	_goal_next = _mk_label(gnb, "", 11, UiTheme.HUD_DIM, true)
 	_goal_next.clip_text = true  # hotfix: never widen the card
 	_goal_next.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_goal_count = _mk_label(gnb, "", 11, Color.WHITE)
+	_goal_count = _mk_label(gnb, "", 11, Color.WHITE, true)
 	_goal_count.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_pill_box = VBoxContainer.new()
 	_pill_box.set_anchors_preset(Control.PRESET_TOP_RIGHT)
@@ -3241,11 +3247,11 @@ func _build_hud() -> void:
 	# scaled by _layout_hud, hidden unless shedding.
 	_pill_badge = Panel.new()
 	_pill_badge.size = Vector2(34, 20)
-	_pill_badge.add_theme_stylebox_override("panel", _style(Color(0.10, 0.07, 0.20, 0.92), 10, Color(1, 1, 1, 0.35), 1))
+	_pill_badge.add_theme_stylebox_override("panel", _style(Color(0.10, 0.07, 0.20, 0.92), 10, Color(1, 1, 1, 0.35), 1, true))
 	_pill_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_pill_badge.visible = false
 	root.add_child(_pill_badge)
-	_pill_badge_label = _label_in(_pill_badge, "+0", Vector2(0, 0), Vector2(34, 20), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER)
+	_pill_badge_label = _label_in(_pill_badge, "+0", Vector2(0, 0), Vector2(34, 20), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
 	_build_objective(root, kpill)
 
 	# --- bottom-left: item slots, move slot, locked slot, ult ---
@@ -3275,7 +3281,7 @@ func _build_hud() -> void:
 	var move := Panel.new()
 	move.position = Vector2(232, 48)
 	move.size = Vector2(56, 56)
-	move.add_theme_stylebox_override("panel", _style(UiTheme.glass_color(0.99), 28, Color(0.35, 0.71, 0.41), 2))
+	move.add_theme_stylebox_override("panel", _style(Color(0.10, 0.07, 0.20, 0.92), 28, Color(0.35, 0.71, 0.41), 2, true))
 	move.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_bl_cluster.add_child(move)
 	_move_slot = move
@@ -3289,16 +3295,16 @@ func _build_hud() -> void:
 	_move_slot_icon.position = Vector2(12, 6)
 	_move_slot_icon.size = Vector2(32, 32)
 	move.add_child(_move_slot_icon)
-	_move_name_label = _label_in(move, "1级", Vector2(0, 38), Vector2(56, 14), 10, Color(1, 1, 1, 0.85), HORIZONTAL_ALIGNMENT_CENTER)
-	var badge := _panel(move, Vector2(-5, -5), Vector2(20, 18), Color(0.12, 0.11, 0.2, 0.95), 9)
-	_label_in(badge, "1", Vector2(0, 0), Vector2(20, 18), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER)
+	_move_name_label = _label_in(move, "1级", Vector2(0, 38), Vector2(56, 14), 10, Color(1, 1, 1, 0.85), HORIZONTAL_ALIGNMENT_CENTER, true)
+	var badge := _panel(move, Vector2(-5, -5), Vector2(20, 18), Color(0.12, 0.11, 0.2, 0.95), 9, Color(0, 0, 0, 0), 0, true)
+	_label_in(badge, "1", Vector2(0, 0), Vector2(20, 18), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
 	var locked := Panel.new()
 	locked.position = Vector2(296, 56)
 	locked.size = Vector2(46, 46)
-	locked.add_theme_stylebox_override("panel", _style(UiTheme.CREAM, 23))
+	locked.add_theme_stylebox_override("panel", _style(Color(0.10, 0.07, 0.20, 0.92), 23, Color(1, 1, 1, 0.25), 1, true))
 	locked.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_bl_cluster.add_child(locked)
-	var lock_ic := UiIcon.new("lock", Color(0.6, 0.6, 0.7), 24)
+	var lock_ic := UiIcon.new("lock", Color(0.85, 0.85, 0.9), 24)
 	lock_ic.position = Vector2(11, 11)
 	lock_ic.size = Vector2(24, 24)
 	locked.add_child(lock_ic)
@@ -3312,10 +3318,10 @@ func _build_hud() -> void:
 	_bl_cluster.add_child(_bl_rows)
 	_bl_lock = Panel.new()
 	_bl_lock.size = Vector2(46, 46)
-	_bl_lock.add_theme_stylebox_override("panel", _style(UiTheme.CREAM, 23))
+	_bl_lock.add_theme_stylebox_override("panel", _style(Color(0.10, 0.07, 0.20, 0.92), 23, Color(1, 1, 1, 0.25), 1, true))
 	_bl_lock.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_bl_rows.add_child(_bl_lock)
-	var lock_ic2 := UiIcon.new("lock", Color(0.6, 0.6, 0.7), 22)
+	var lock_ic2 := UiIcon.new("lock", Color(0.85, 0.85, 0.9), 22)
 	lock_ic2.position = Vector2(12, 12)
 	lock_ic2.size = Vector2(22, 22)
 	_bl_lock.add_child(lock_ic2)
@@ -3327,11 +3333,11 @@ func _build_hud() -> void:
 	_ult_circle.size = Vector2(62, 62)
 	_ult_circle.medal = STARTER_HUD["bulbasaur"]["medal"]
 	_bl_cluster.add_child(_ult_circle)
-	var ult_glyph := _label_in(_ult_circle, "必", Vector2(0, 0), Vector2(62, 62), 20, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER)
+	var ult_glyph := _label_in(_ult_circle, "必", Vector2(0, 0), Vector2(62, 62), 20, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
 	ult_glyph.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var rbadge := _panel(_ult_circle, Vector2(42, -4), Vector2(22, 20), Color(0.12, 0.11, 0.2, 0.95), 10)
+	var rbadge := _panel(_ult_circle, Vector2(42, -4), Vector2(22, 20), Color(0.12, 0.11, 0.2, 0.95), 10, Color(0, 0, 0, 0), 0, true)
 	rbadge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var rbadge_label := _label_in(rbadge, "R", Vector2(0, 0), Vector2(22, 20), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER)
+	var rbadge_label := _label_in(rbadge, "R", Vector2(0, 0), Vector2(22, 20), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
 	rbadge_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_ult_circle.pressed.connect(_on_ult_button)
 	_ult_name_label = Label.new()
@@ -3364,7 +3370,7 @@ func _build_hud() -> void:
 	_banner_back.offset_bottom = 204
 	# Cycle 21.3 (audit §5): backing alpha 0.55 -> 0.75
 	# (0.55 over bright terrain read muddy).
-	_banner_back.add_theme_stylebox_override("panel", UiTheme.glass(12, 0.75))
+	_banner_back.add_theme_stylebox_override("panel", UiTheme.dark_glass(12, 0.75))
 	_banner_back.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_banner_back.modulate.a = 0.0
 	root.add_child(_banner_back)
@@ -3391,7 +3397,7 @@ func _build_hud() -> void:
 	_prompt_back.offset_right = 312
 	_prompt_back.offset_top = -124
 	_prompt_back.offset_bottom = 6
-	_prompt_back.add_theme_stylebox_override("panel", UiTheme.glass(12, 0.75))
+	_prompt_back.add_theme_stylebox_override("panel", UiTheme.dark_glass(12, 0.75))
 	_prompt_back.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_prompt_back.visible = false
 	root.add_child(_prompt_back)
@@ -3401,7 +3407,7 @@ func _build_hud() -> void:
 	_prompt_tri.color = (_prompt_back.get_theme_stylebox("panel") as StyleBoxFlat).bg_color
 	_prompt_tri.visible = false
 	_prompt_back.add_child(_prompt_tri)
-	_prompt = _mk_label(root, "", 20, Color.WHITE)
+	_prompt = _mk_label(root, "", 20, Color.WHITE, true)
 	_prompt.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	# Cycle 21.3.1 (re-audit N1): audit F5c's "at most
 	# 2 lines" rule — the 21.3 pass shipped the scale
@@ -11737,7 +11743,7 @@ func show_ult_cutin(ult_name_: String, color: Color) -> void:
 	if _cutin_panel == null:
 		return
 	_cutin_panel.add_theme_stylebox_override("panel",
-		_style(Color(0.08, 0.08, 0.14, 0.92), 12, color, 2))
+		_style(Color(0.08, 0.08, 0.14, 0.92), 12, color, 2, true))
 	_cutin_name.text = ult_name_
 	_cutin_name.add_theme_color_override("font_color", color)
 	_cutin_panel.visible = true
@@ -12240,7 +12246,7 @@ func _update_hud_bars(delta: float) -> void:
 				_boss_foot.text = "▶ " + _boss_move_name
 				_boss_foot.add_theme_color_override("font_color", UiTheme.GOLD)
 			else:
-				_boss_foot.add_theme_color_override("font_color", UiTheme.MUTED)
+				_boss_foot.add_theme_color_override("font_color", UiTheme.HUD_DIM)
 				var foot: Array = []
 				for t in GameData.species(guardian.species_id).get("types", []):
 					foot.append(String((TYPE_HUD.get(String(t), [String(t)]) as Array)[0]))
@@ -12288,7 +12294,7 @@ func _refresh_boss_tag() -> void:
 		# Keep the compact right-hand tag readable even during a move announcement.
 		_boss_tag_label.text = "狂怒！" if _boss_enraged else ("传说守护者" if zone == 4 else "守护者")
 		_boss_tag_label.add_theme_color_override("font_color",
-			Color(1, 0.35, 0.3) if _boss_enraged else UiTheme.MUTED)
+			Color(1, 0.35, 0.3) if _boss_enraged else UiTheme.HUD_DIM)
 
 func _reskin_boss_visibility() -> void:
 	# After this frame's camera / rig animation updates, before canvas rendering.
@@ -14371,8 +14377,7 @@ func _build_objective(root: Control, kpill: Control) -> void:
 	_obj_pill.offset_top = 226
 	_obj_pill.offset_bottom = 290
 	_obj_pill.custom_minimum_size = Vector2(176, 0)
-	_obj_pill.add_theme_stylebox_override("panel", UiTheme.glass(11))
-	UiTheme.panel_underlay(_obj_pill)
+	_obj_pill.add_theme_stylebox_override("panel", UiTheme.dark_glass(11, 0.92))
 	_obj_pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_obj_pill.visible = false
 	root.add_child(_obj_pill)
@@ -14391,7 +14396,7 @@ func _build_objective(root: Control, kpill: Control) -> void:
 	var th := HBoxContainer.new()
 	th.add_theme_constant_override("separation", 4)
 	vb.add_child(th)
-	_obj_title = _mk_label(th, "", 13, Color.WHITE)
+	_obj_title = _mk_label(th, "", 13, Color.WHITE, true)
 	_obj_title.add_theme_font_override("font", UiTheme.display_font())
 	_obj_title.clip_text = true  # never widen the 176 pill
 	_obj_title.custom_minimum_size = Vector2(80, 0)
@@ -14399,11 +14404,11 @@ func _build_objective(root: Control, kpill: Control) -> void:
 	_obj_badge = Panel.new()
 	_obj_badge.custom_minimum_size = Vector2(30, 20)
 	_obj_badge.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	_obj_badge.add_theme_stylebox_override("panel", _style(Color(0.10, 0.07, 0.20, 0.92), 10, Color(1, 1, 1, 0.35), 1))
+	_obj_badge.add_theme_stylebox_override("panel", _style(Color(0.10, 0.07, 0.20, 0.92), 10, Color(1, 1, 1, 0.35), 1, true))
 	_obj_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	th.add_child(_obj_badge)
-	_obj_badge_label = _label_in(_obj_badge, "+0", Vector2(0, 0), Vector2(30, 20), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER)
-	_obj_sub = _mk_label(vb, "", 11, UiTheme.MUTED)
+	_obj_badge_label = _label_in(_obj_badge, "+0", Vector2(0, 0), Vector2(30, 20), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
+	_obj_sub = _mk_label(vb, "", 11, UiTheme.HUD_DIM, true)
 	_obj_sub.clip_text = true
 	_obj_sub.custom_minimum_size = Vector2(120, 0)
 	# Plan Z3: past Z the pill folds into the kills pill's "+N"
@@ -14411,11 +14416,11 @@ func _build_objective(root: Control, kpill: Control) -> void:
 	_kills_badge = Panel.new()
 	_kills_badge.position = Vector2(100, 4)
 	_kills_badge.size = Vector2(30, 20)
-	_kills_badge.add_theme_stylebox_override("panel", _style(Color(0.10, 0.07, 0.20, 0.92), 10, Color(1, 1, 1, 0.35), 1))
+	_kills_badge.add_theme_stylebox_override("panel", _style(Color(0.10, 0.07, 0.20, 0.92), 10, Color(1, 1, 1, 0.35), 1, true))
 	_kills_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_kills_badge.visible = false
 	kpill.add_child(_kills_badge)
-	_kills_badge_label = _label_in(_kills_badge, "+0", Vector2(0, 0), Vector2(30, 20), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER)
+	_kills_badge_label = _label_in(_kills_badge, "+0", Vector2(0, 0), Vector2(30, 20), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
 	# Plan I4 drawer: right edge = minimap left - 8, top =
 	# minimap top, 320 x s_mm wide, never pauses.
 	_obj_drawer = PanelContainer.new()
@@ -14424,7 +14429,7 @@ func _build_objective(root: Control, kpill: Control) -> void:
 	_obj_drawer.offset_right = -200
 	_obj_drawer.offset_top = 10
 	_obj_drawer.offset_bottom = 300
-	_obj_drawer.add_theme_stylebox_override("panel", UiTheme.panel_texture())
+	_obj_drawer.add_theme_stylebox_override("panel", UiTheme.dark_glass(16, 0.92))
 	_obj_drawer.mouse_filter = Control.MOUSE_FILTER_STOP
 	_obj_drawer.visible = false
 	root.add_child(_obj_drawer)
@@ -14586,7 +14591,7 @@ func _p3_fill_drawer() -> void:
 		_obj_drawer_box.remove_child(c)
 		c.queue_free()
 	var sc := _p3_s_col
-	var head := _mk_label(_obj_drawer_box, "目标 · %d 项" % _obj_total, _p3_px(15, sc), UiTheme.SKY)
+	var head := _mk_label(_obj_drawer_box, "目标 · %d 项" % _obj_total, _p3_px(15, sc), UiTheme.SKY, true)
 	head.add_theme_font_override("font", UiTheme.display_font())
 	_obj_drawer_refs["head"] = head
 	for ev in evs:
@@ -14602,13 +14607,13 @@ func _p3_fill_drawer() -> void:
 		vb.add_theme_constant_override("separation", 0)
 		vb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		hb.add_child(vb)
-		var t := _mk_label(vb, String(ev[0]), _p3_px(13, sc), Color.WHITE)
+		var t := _mk_label(vb, String(ev[0]), _p3_px(13, sc), Color.WHITE, true)
 		t.add_theme_font_override("font", UiTheme.display_font())
-		var sub := _mk_label(vb, String(ev[1]), _p3_px(11, sc), UiTheme.MUTED)
+		var sub := _mk_label(vb, String(ev[1]), _p3_px(11, sc), UiTheme.HUD_DIM, true)
 		sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		(_obj_drawer_refs["ev"] as Array).append([dot, t, sub])
 	if has_goal:
-		var gt := _mk_label(_obj_drawer_box, "伙伴营挑战", _p3_px(13, sc), Color(0.35, 0.95, 0.55))
+		var gt := _mk_label(_obj_drawer_box, "伙伴营挑战", _p3_px(13, sc), Color(0.35, 0.95, 0.55), true)
 		gt.add_theme_font_override("font", UiTheme.display_font())
 		var ghb := HBoxContainer.new()
 		ghb.add_theme_constant_override("separation", 8)
@@ -14620,7 +14625,7 @@ func _p3_fill_drawer() -> void:
 		pic.texture = _goal_pic.texture
 		pic.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		ghb.add_child(pic)
-		var gn := _mk_label(ghb, _goal_name.text, _p3_px(13, sc), Color.WHITE)
+		var gn := _mk_label(ghb, _goal_name.text, _p3_px(13, sc), Color.WHITE, true)
 		gn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var track := Panel.new()
 		track.custom_minimum_size = Vector2(0, 9)
@@ -14636,12 +14641,12 @@ func _p3_fill_drawer() -> void:
 		var nhb := HBoxContainer.new()
 		nhb.add_theme_constant_override("separation", 6)
 		_obj_drawer_box.add_child(nhb)
-		var nx := _mk_label(nhb, _goal_next.text, _p3_px(11, sc), UiTheme.MUTED)
+		var nx := _mk_label(nhb, _goal_next.text, _p3_px(11, sc), UiTheme.HUD_DIM, true)
 		nx.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		nx.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var cnt: Label = null
 		if _goal_count.text != "":
-			cnt = _mk_label(nhb, _goal_count.text, _p3_px(11, sc), Color.WHITE)
+			cnt = _mk_label(nhb, _goal_count.text, _p3_px(11, sc), Color.WHITE, true)
 		_obj_drawer_refs["goal"] = [pic, gn, fill, nx, cnt]
 	_obj_drawer_all.add_theme_font_size_override("font_size", _p3_px(13, sc))
 	# Plan I2: a HUD tappable draws >= 70 logical px tall.
@@ -16596,7 +16601,7 @@ func _refresh_event_pills() -> void:
 		(c as Node).queue_free()
 	for ev in evs:
 		var pill := PanelContainer.new()
-		pill.add_theme_stylebox_override("panel", UiTheme.panel_texture())
+		pill.add_theme_stylebox_override("panel", UiTheme.dark_glass(11, 0.92))
 		pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_pill_box.add_child(pill)
 		var hb := HBoxContainer.new()
@@ -16609,9 +16614,9 @@ func _refresh_event_pills() -> void:
 		var vb := VBoxContainer.new()
 		vb.add_theme_constant_override("separation", 0)
 		hb.add_child(vb)
-		var tl := _mk_label(vb, String(ev[0]), 13, Color.WHITE)
+		var tl := _mk_label(vb, String(ev[0]), 13, Color.WHITE, true)
 		tl.add_theme_font_override("font", UiTheme.display_font())
-		_mk_label(vb, String(ev[1]), 11, UiTheme.MUTED)
+		_mk_label(vb, String(ev[1]), 11, UiTheme.HUD_DIM, true)
 	# Cycle 21.3: a rebuild replaces every pill node
 	# (fresh nodes are visible by default), which would
 	# silently undo the layout's info-stack budget shed
