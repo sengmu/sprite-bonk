@@ -3898,8 +3898,6 @@ func _build_menu(root: Control) -> void:
 	# Settings (cycle 9): the bundle's shakeOn toggle (profile
 	# settings, defaults shakeOn true / screenShake 1 @1566819).
 	# Cycle 19: the shake glyph replaces "wind" (audit §2.3).
-	var kitem := _menu_item("shake", UiTheme.GREEN_DEEP, "画面震动", mx, my)
-	_menu_intro_items.append(kitem[0])
 	if _p5_on:
 		for entry in [[litem, Vector2(8, 140), "res://assets/menu/icon-lab.png", Vector2(70, 55)],
 				[sitem, Vector2(162, 140), "res://assets/menu/icon-shop.png", Vector2(76, 60)],
@@ -3936,28 +3934,6 @@ func _build_menu(root: Control) -> void:
 			(entry[0][1] as Label).hide()
 		for badge_key in ["lab", "shop", "unlock"]:
 			(_menu_badges[badge_key] as Control).hide()
-		(kitem[0] as Control).position = Vector2(8, 314)
-		(kitem[0] as Control).size = Vector2(300, 48)
-		var shake_track := _panel(kitem[0], Vector2(236, 11), Vector2(52, 27),
-			Color(0.22, 0.67, 0.08), 14)
-		shake_track.name = "ShakeTrack"
-		var shake_dot := _panel(shake_track, Vector2(27, 3), Vector2(21, 21),
-			Color.WHITE, 11)
-		shake_dot.name = "ShakeDot"
-	var ksub: Label = kitem[1]
-	var refresh_ksub := func() -> void:
-		var shake_on := bool(GameProfile.setting("shakeOn"))
-		ksub.text = "当前：%s" % ("开" if shake_on else "关")
-		if _p5_on:
-			var shake_track := (kitem[0] as Control).get_node("ShakeTrack") as Panel
-			shake_track.add_theme_stylebox_override("panel", _style(
-				Color(0.22, 0.67, 0.08) if shake_on else Color(0.58, 0.55, 0.48), 14))
-			(shake_track.get_node("ShakeDot") as Control).position.x = 27 if shake_on else 4
-	(kitem[0] as Button).pressed.connect(func() -> void:
-		audio.click()
-		GameProfile.set_setting("shakeOn", not bool(GameProfile.setting("shakeOn")))
-		refresh_ksub.call())
-	refresh_ksub.call()
 	# Cycle 19 (audit punch #18): the right side of the menu
 	# was empty scenery — a hero detail card (the original
 	# frames an ls-hero) follows starter hover/focus.
