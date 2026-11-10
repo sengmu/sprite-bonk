@@ -4128,6 +4128,25 @@ func _build_menu(root: Control) -> void:
 				ctl.visible = expanded
 			fold.position.y = 246 if expanded else 290)
 		_menu_design.add_child(fold)
+	var hint_preferences := ConfigFile.new()
+	hint_preferences.load("user://menu_presentation.cfg")
+	var show_first_hint := not bool(hint_preferences.get_value("menu", "hint_seen", false))
+	if _menu_hint:
+		_menu_hint.visible = show_first_hint
+		var hint_backing := _menu_hint.get_meta("back") as Control
+		if hint_backing:
+			hint_backing.visible = show_first_hint
+	var hint_pad := _menu_design.get_node_or_null("MenuHintPad") as Control
+	if hint_pad:
+		hint_pad.visible = show_first_hint
+	start.pressed.connect(func() -> void:
+		hint_preferences.set_value("menu", "hint_seen", true)
+		hint_preferences.save("user://menu_presentation.cfg")
+		if _menu_hint:
+			_menu_hint.hide()
+			(_menu_hint.get_meta("back") as Control).hide()
+		if hint_pad:
+			hint_pad.hide())
 	if _first_starter_card:
 		# A visible focus ring from boot (audit punch #18);
 		# the card faces already carry the gold focus style.
