@@ -1,4 +1,4 @@
-extends Node
+﻿extends Node
 ## Standing rig-verification harness (Test/* is excluded from exports).
 ## Boots the real game with a chosen starter, spawns a same-species
 ## enemy through the normal world path, freezes the frame, and dumps
@@ -249,9 +249,9 @@ func _process_faint() -> void:
 ## events. Fixture arrangement (placing targets, pinning a target's
 ## HP pool, zeroing crit for one deterministic pipeline reading) is
 ## labelled where it happens; no profile counters are written by
-## the harness except through the game's own APIs (Profile.count
+## the harness except through the game's own APIs (GameProfile.count
 ## happens inside the game code; lab dust is funded via
-## Profile.add_stardust — the same function _finish_run awards
+## GameProfile.add_stardust — the same function _finish_run awards
 ## through — and spent through the real lab_buy).
 ## Usage: --mode=cycle9 [--only=league|guardian|slam|revive|attack|ult|shrine|bossscale|wet|react|comet|props|audio|shop|boost|ui2|c19|c21|c212]
 
@@ -361,7 +361,7 @@ func _c211_dbg(tag: String) -> void:
 		" pendlv=", (int(p.get("pending_levels")) if p else -1),
 		" timers=", (w.get("_timers") as Array).size(),
 		" chests=", (w.get("_chests") as Array).size(),
-		" party_lab=", Profile.lab_level("party"))
+		" party_lab=", GameProfile.lab_level("party"))
 
 ## Cycle 21.1: _c21_wait with the player kept disarmed.
 ## Settling a draft mid-window can grant a MOVE (the draft
@@ -719,7 +719,7 @@ func _c212_reset_phase() -> void:
 ## event kind/clock sets, _boss_t quieting).
 
 func _c23b2_phase() -> void:
-	var snap: Dictionary = Profile.data.duplicate(true)
+	var snap: Dictionary = GameProfile.data.duplicate(true)
 	var w = _world
 	var ok := await _c9_start_run("bulbasaur")
 	_c9_check("c23b2: isolated run boots", ok)
@@ -770,17 +770,17 @@ func _c23b2_phase() -> void:
 
 	w.set("guardian", null)
 	await _c9_cleanup_run()
-	Profile.data = snap
-	Profile.save_profile()
+	GameProfile.data = snap
+	GameProfile.save_profile()
 
 func _c22_phase() -> void:
-	var snap: Dictionary = JSON.parse_string(JSON.stringify(Profile.data))
+	var snap: Dictionary = JSON.parse_string(JSON.stringify(GameProfile.data))
 	var w = _world
 	var ok := await _c9_start_run("bulbasaur")
 	_c9_check("c22: run boots", ok)
 	if not ok:
-		Profile.data = snap
-		Profile.save_profile()
+		GameProfile.data = snap
+		GameProfile.save_profile()
 		return
 	var p = w.get("player")
 	var pid0: String = p.passive_id
@@ -884,8 +884,8 @@ func _c22_phase() -> void:
 	_c9_check("c22 boss: guardian summoned for the mech blocks", g != null and g.is_inside_tree())
 	if g == null:
 		await _c9_cleanup_run()
-		Profile.data = snap
-		Profile.save_profile()
+		GameProfile.data = snap
+		GameProfile.save_profile()
 		return
 	var php_max: float = p.max_hp
 	p.max_hp = 200000.0
@@ -1216,15 +1216,15 @@ func _c22_phase() -> void:
 	await _c9_frames(2)
 
 	await _c9_cleanup_run()
-	Profile.data = snap
-	Profile.save_profile()
+	GameProfile.data = snap
+	GameProfile.save_profile()
 
 ## P1.2: complete Magikarp's roster challenge (runs >= 25) through
 ## 25 REAL runs (start -> lethal damage -> _finish_run), then prove
 ## the league encounter pool is global: magikarp is in NO zone's
 ## wild pool, so only the global leagueReady pool can produce it.
 func _c9_league_phase() -> void:
-	var runs0 := int(Profile.counter_value("runs"))
+	var runs0 := int(GameProfile.counter_value("runs"))
 	for i in range(25):
 		var ok := await _c9_start_run("bulbasaur")
 		if not ok:
@@ -1245,9 +1245,9 @@ func _c9_league_phase() -> void:
 			_c9_check("league: run %d finishes" % (i + 1), false, "state=" + String(_world.get("state")))
 			return
 		await _c9_cleanup_run()
-	_c9_check("league: 25 real runs counted", int(Profile.counter_value("runs")) >= runs0 + 25,
-		"runs=" + str(Profile.counter_value("runs")))
-	_c9_check("league: magikarp challenge complete via runs", bool(Profile.challenge_done("magikarp")))
+	_c9_check("league: 25 real runs counted", int(GameProfile.counter_value("runs")) >= runs0 + 25,
+		"runs=" + str(GameProfile.counter_value("runs")))
+	_c9_check("league: magikarp challenge complete via runs", bool(GameProfile.challenge_done("magikarp")))
 	# Roster kit + passive data reach unlocked species (P1.2 tail).
 	var entry: Dictionary = GameData.roster_entry(129)
 	_c9_check("league: magikarp kit == roster kit[4]",
@@ -1266,14 +1266,14 @@ func _c9_league_phase() -> void:
 	var p2 = _world.get("player")
 	p2.invulnerable = true
 	p2.moves.clear()
-	var old_league: Array = Profile.data.get("league", []).duplicate()
+	var old_league: Array = GameProfile.data.get("league", []).duplicate()
 	var magikarp_family := int(GameData.species("magikarp").get("family", -1))
 	var isolated_league: Array = []
 	for species in GameData.roster_species_keys():
 		var family := int(GameData.species(String(species)).get("family", -1))
 		if family != magikarp_family and not isolated_league.has(family):
 			isolated_league.append(family)
-	Profile.data["league"] = isolated_league
+	GameProfile.data["league"] = isolated_league
 	var seen := {}
 	for t in range(8):
 		_world._spawn_league()
@@ -1285,8 +1285,8 @@ func _c9_league_phase() -> void:
 		_world.set("_league_e", null)
 		if seen.has("magikarp"):
 			break
-	Profile.data["league"] = old_league
-	Profile.save_profile()
+	GameProfile.data["league"] = old_league
+	GameProfile.save_profile()
 	_c9_check("league: GLOBAL pool spawns magikarp (in no zone pool)", seen.has("magikarp"),
 		"seen=" + str(seen.keys()))
 	# leave the run alive for the guardian phase when running all
@@ -1385,16 +1385,16 @@ func _c9_guardian_phase() -> void:
 	_c9_check("guardian: candy entity waits for pickup",
 		_c23_pickup_value(w, 6) >= 1.0,
 		"lvl delta=" + str((p.level + p.pending_levels) - lvl0))
-	print("F3DBG before settle count=", Profile.counter_value("chests"), " boxes=", _c23b2_chest_marks(w))
+	print("F3DBG before settle count=", GameProfile.counter_value("chests"), " boxes=", _c23b2_chest_marks(w))
 	await _c9_settle_drafts()
-	print("F3DBG after settle count=", Profile.counter_value("chests"), " boxes=", _c23b2_chest_marks(w))
+	print("F3DBG after settle count=", GameProfile.counter_value("chests"), " boxes=", _c23b2_chest_marks(w))
 	_c9_check("c23b2 F3: captured guardian chest survives draft settle unopened",
 		guardian_chest_pos != null and not bool(guardian_chest.get("opened", true)))
 	# Open the captured reward by walking onto it (real proximity path).
 	var cps: Array = [guardian_chest_pos] if guardian_chest_pos != null else []
 	if not cps.is_empty():
 		var cp: Vector3 = cps[0]
-		var chests_before := int(Profile.counter_value("chests"))
+		var chests_before := int(GameProfile.counter_value("chests"))
 		p.global_position = Vector3(cp.x, w.height_at(cp.x, cp.z), cp.z)
 		p.reset_physics_interpolation()
 		var opened := false
@@ -1404,10 +1404,10 @@ func _c9_guardian_phase() -> void:
 				w._apply_draft_option(0)  # the world clock pauses in draft
 			# 'chests' is a lifetime counter: count_event writes it
 			# straight to the profile (like dodges/gold).
-			if int(Profile.counter_value("chests")) > chests_before:
+			if int(GameProfile.counter_value("chests")) > chests_before:
 				opened = true
 				break
-		print("F3DBG after walk count=", Profile.counter_value("chests"), " boxes=", _c23b2_chest_marks(w))
+		print("F3DBG after walk count=", GameProfile.counter_value("chests"), " boxes=", _c23b2_chest_marks(w))
 		_c9_check("guardian: chest opens on walk-over + counts", opened)
 		_c9_check("c23b2 F3: captured reward itself is marked opened", bool(guardian_chest.get("opened", false)))
 	else:
@@ -1424,8 +1424,8 @@ func _c9_guardian_phase() -> void:
 			break
 	_c9_check("guardian: run ends", dead)
 	_c9_check("guardian: lifetime 'burned' flushed at run end",
-		int(Profile.counter_value("burned")) >= 1,
-		"burned=" + str(Profile.counter_value("burned")))
+		int(GameProfile.counter_value("burned")) >= 1,
+		"burned=" + str(GameProfile.counter_value("burned")))
 	await _c9_cleanup_run()
 
 func _c23b2_chest_marks(w: Node) -> Array:
@@ -1473,7 +1473,7 @@ func _c9_slam_phase() -> void:
 	e.queue_free()
 	await _c9_frames(2)
 	# 'slams' is counted via count_event -> the profile counter.
-	var slams0 := int(Profile.counter_value("slams"))
+	var slams0 := int(GameProfile.counter_value("slams"))
 	# Primer touch early: latches the touch layer visible so the
 	# dash BUTTON can take the dive input later (a synthetic
 	# KEY_SHIFT does not satisfy is_key_pressed(KEY_SHIFT) — it
@@ -1508,7 +1508,7 @@ func _c9_slam_phase() -> void:
 		await _c9_frames(10)
 		_c9_gui_touch(dash_area, dc, false)
 		var slammed := await _c9_wait(func() -> bool:
-			return int(Profile.counter_value("slams")) > slams0, 1800)
+			return int(GameProfile.counter_value("slams")) > slams0, 1800)
 		_c9_check("slam: real dive (jump key -> dash button) fires a slam", slammed)
 	else:
 		_c9_check("slam: real dive reaches apex", false, "vy/height never qualified")
@@ -1846,7 +1846,7 @@ func _c9_ult_phase() -> void:
 	await _c9_wait(func() -> bool: return foe != null and foe.rig != null and foe.rig.fitted, 1800)
 	foe.max_hp = 100000.0
 	foe.hp = 100000.0
-	var cnt0 := int(Profile.counter_value("ultimates"))
+	var cnt0 := int(GameProfile.counter_value("ultimates"))
 	ult.charge = 1.0  # fixture: full bar (accumulation proven above)
 	var gauge = w.get("_ult_circle")
 	var ev := InputEventMouseButton.new()
@@ -1855,9 +1855,9 @@ func _c9_ult_phase() -> void:
 	gauge.gui_input.emit(ev)  # the real signal path -> pressed -> latch
 	ult.update(0.016)         # consumes the latch -> fire()
 	_c9_check("ult: BUTTON fires the ult (uses/counter/charge)",
-		ult.uses == 1 and int(Profile.counter_value("ultimates")) == cnt0 + 1
+		ult.uses == 1 and int(GameProfile.counter_value("ultimates")) == cnt0 + 1
 			and ult.charge == 0.0,
-		"uses=" + str(ult.uses) + " counter=" + str(Profile.counter_value("ultimates")))
+		"uses=" + str(ult.uses) + " counter=" + str(GameProfile.counter_value("ultimates")))
 	_c9_check("ult: cast pose held on the rig (ultPoseT .6)",
 		float(p.rig.ult_pose_value()) > 0.5, "pose=" + str(p.rig.ult_pose_value()))
 	_c9_check("ult: cast iframes == active + .6",
@@ -1927,16 +1927,16 @@ func _c9_ult_phase() -> void:
 	_c9_check("ult: KeyR fires through the real input path", key_fired,
 		"uses=" + str(ult.uses))
 	_c9_check("ult: counter incremented again",
-		int(Profile.counter_value("ultimates")) == cnt0 + 2,
-		"counter=" + str(Profile.counter_value("ultimates")))
+		int(GameProfile.counter_value("ultimates")) == cnt0 + 2,
+		"counter=" + str(GameProfile.counter_value("ultimates")))
 	# autoUlt: setting on, full bar, enemy in 16 -> self-fires.
 	settle.call()
 	for i in range(30):
 		ult.update(0.1)
-	Profile.set_setting("autoUlt", true)
+	GameProfile.set_setting("autoUlt", true)
 	ult.charge = 1.0
 	var auto_fired := await _c9_wait(func() -> bool: return ult.uses == uses0 + 2, 240)
-	Profile.set_setting("autoUlt", false)
+	GameProfile.set_setting("autoUlt", false)
 	_c9_check("ult: autoUlt fires when ready + enemy near", auto_fired,
 		"uses=" + str(ult.uses))
 	await _c9_cleanup_run()
@@ -2060,18 +2060,18 @@ func _c9_revive_phase() -> void:
 	# end — the boost/ui2/c19 pattern. The buy still goes
 	# through the real lab_buy and the revive still fires
 	# in-run; assertions unchanged.
-	var snap: Dictionary = JSON.parse_string(JSON.stringify(Profile.data))
-	var lab_fixture: Dictionary = (Profile.data.get("lab", {}) as Dictionary).duplicate()
+	var snap: Dictionary = JSON.parse_string(JSON.stringify(GameProfile.data))
+	var lab_fixture: Dictionary = (GameProfile.data.get("lab", {}) as Dictionary).duplicate()
 	lab_fixture.erase("revive")
-	Profile.data["lab"] = lab_fixture
-	Profile.save_profile()
-	Profile.add_stardust(6000)  # fixture funding via the award API
-	_c9_check("revive: lab revive purchasable", bool(Profile.lab_buy("revive")))
+	GameProfile.data["lab"] = lab_fixture
+	GameProfile.save_profile()
+	GameProfile.add_stardust(6000)  # fixture funding via the award API
+	_c9_check("revive: lab revive purchasable", bool(GameProfile.lab_buy("revive")))
 	var ok := await _c9_start_run("bulbasaur")
 	if not ok:
 		_c9_check("revive: run boots", false)
-		Profile.data = snap
-		Profile.save_profile()
+		GameProfile.data = snap
+		GameProfile.save_profile()
 		return
 	var w = _world
 	var p = w.get("player")
@@ -2146,8 +2146,8 @@ func _c9_revive_phase() -> void:
 	_c9_check("revive: ui.damageFlash fired", float(w.get("_dmg_flash")) > 0.5,
 		"dmg_flash=" + str(w.get("_dmg_flash")))
 	await _c9_cleanup_run()
-	Profile.data = snap
-	Profile.save_profile()
+	GameProfile.data = snap
+	GameProfile.save_profile()
 
 ## ------------------------------------------------------------ cycle 14
 ## Shrine phase: interactables exist per populate, altar tiers
@@ -3397,11 +3397,11 @@ func _c9_audio_phase() -> void:
 	var sfx_i := AudioServer.get_bus_index("SFX")
 	var mus_i := AudioServer.get_bus_index("Music")
 	var cry_i := AudioServer.get_bus_index("Cries")
-	_c9_check("audio: sfx bus = setting x .55", absf(db_to_linear(AudioServer.get_bus_volume_db(sfx_i)) - float(Profile.setting("sfx")) * 0.55) < 0.02,
+	_c9_check("audio: sfx bus = setting x .55", absf(db_to_linear(AudioServer.get_bus_volume_db(sfx_i)) - float(GameProfile.setting("sfx")) * 0.55) < 0.02,
 		"lin=" + str(db_to_linear(AudioServer.get_bus_volume_db(sfx_i))))
-	_c9_check("audio: music bus = setting x .32", absf(db_to_linear(AudioServer.get_bus_volume_db(mus_i)) - float(Profile.setting("music")) * 0.32) < 0.02,
+	_c9_check("audio: music bus = setting x .32", absf(db_to_linear(AudioServer.get_bus_volume_db(mus_i)) - float(GameProfile.setting("music")) * 0.32) < 0.02,
 		"lin=" + str(db_to_linear(AudioServer.get_bus_volume_db(mus_i))))
-	_c9_check("audio: cries bus = setting x .45", absf(db_to_linear(AudioServer.get_bus_volume_db(cry_i)) - float(Profile.setting("cries")) * 0.45) < 0.02,
+	_c9_check("audio: cries bus = setting x .45", absf(db_to_linear(AudioServer.get_bus_volume_db(cry_i)) - float(GameProfile.setting("cries")) * 0.45) < 0.02,
 		"lin=" + str(db_to_linear(AudioServer.get_bus_volume_db(cry_i))))
 	_c9_check("audio: voice pool is the bundle's 26", int(A.call("sfx_voice_count")) == 26,
 		"n=" + str(A.call("sfx_voice_count")))
@@ -3432,17 +3432,17 @@ func _c9_audio_phase() -> void:
 	_c9_check("audio: boss loop is the bundle's 8.96 s", absf(float(A.call("stream_length", "track:boss")) - 8.97) < 0.2,
 		"len=" + str(A.call("stream_length", "track:boss")))
 	# Settings apply live (music slider to zero and back).
-	var mus0 := float(Profile.setting("music"))
-	Profile.set_setting("music", 0.0)
+	var mus0 := float(GameProfile.setting("music"))
+	GameProfile.set_setting("music", 0.0)
 	_world.call("_apply_audio_settings")
 	await _c16_pump(6)
 	_c9_check("audio: music=0 silences the music bus", db_to_linear(AudioServer.get_bus_volume_db(mus_i)) < 0.001,
 		"lin=" + str(db_to_linear(AudioServer.get_bus_volume_db(mus_i))))
-	Profile.set_setting("music", mus0)
+	GameProfile.set_setting("music", mus0)
 	_world.call("_apply_audio_settings")
 	# Hidden mute: (unfocused && muteHidden) ramps the master.
-	var mh0 := bool(Profile.setting("muteHidden"))
-	Profile.set_setting("muteHidden", true)
+	var mh0 := bool(GameProfile.setting("muteHidden"))
+	GameProfile.set_setting("muteHidden", true)
 	_world.notification(NOTIFICATION_APPLICATION_FOCUS_OUT)
 	await _c16_pump(50)
 	_c9_check("audio: focus-out + muteHidden mutes master", db_to_linear(AudioServer.get_bus_volume_db(0)) < 0.05,
@@ -3451,12 +3451,12 @@ func _c9_audio_phase() -> void:
 	var restored := false
 	for i in range(600):
 		await get_tree().process_frame
-		if absf(float(A.get("_master_eff")) - float(Profile.setting("master"))) < 0.05:
+		if absf(float(A.get("_master_eff")) - float(GameProfile.setting("master"))) < 0.05:
 			restored = true
 			break
 	_c9_check("audio: focus-in restores master", restored,
 		"eff=" + str(A.get("_master_eff")) + " lin=" + str(db_to_linear(AudioServer.get_bus_volume_db(0))) + " mute=" + str(A.get("_hidden_mute")) + " focused=" + str(_world.get("_window_focused")))
-	Profile.set_setting("muteHidden", mh0)
+	GameProfile.set_setting("muteHidden", mh0)
 	_world.call("_apply_audio_settings")
 	# ok() throttle: five same-frame hit() calls land ONE play.
 	A.call("hit", 1.0)  # pre-warm the buffer render
@@ -3662,21 +3662,21 @@ func _c9_audio_phase() -> void:
 ## with an injected clock, then through the real panel button.
 ## The resident profile is snapshotted and restored.
 func _c9_shop_phase() -> void:
-	var snap: Dictionary = JSON.parse_string(JSON.stringify(Profile.data))
+	var snap: Dictionary = JSON.parse_string(JSON.stringify(GameProfile.data))
 	var expect := [["rare-candy", 150, 4], ["lucky-egg", 250, 4], ["amulet-coin", 250, 4],
 		["honey", 450, 3], ["shiny-stone", 900, 2], ["master-ball", 1800, 1]]
-	var cat_ok := Profile.SHOP_ITEMS.size() == 6
+	var cat_ok := GameProfile.SHOP_ITEMS.size() == 6
 	for i in range(expect.size()):
-		var it: Dictionary = Profile.SHOP_ITEMS[i]
+		var it: Dictionary = GameProfile.SHOP_ITEMS[i]
 		cat_ok = cat_ok and String(it["id"]) == String(expect[i][0]) and int(it["price"]) == int(expect[i][1]) and int(it["daily"]) == int(expect[i][2])
 	_c9_check("shop: catalog matches the bundle (6 items)", cat_ok)
-	var anchor := Profile._shop_anchor_unix()
+	var anchor := GameProfile._shop_anchor_unix()
 	_c9_check("shop: day numbering (anchor=1, +1d=2, -1s=0)",
-		int(Profile.shop_day_number(anchor)) == 1 and int(Profile.shop_day_number(anchor + 86400.0)) == 2 and int(Profile.shop_day_number(anchor - 1.0)) == 0)
-	_c9_check("shop: reset countdown", int(Profile.shop_seconds_to_reset(anchor + 1000.0)) == 85400,
-		"s=" + str(Profile.shop_seconds_to_reset(anchor + 1000.0)))
+		int(GameProfile.shop_day_number(anchor)) == 1 and int(GameProfile.shop_day_number(anchor + 86400.0)) == 2 and int(GameProfile.shop_day_number(anchor - 1.0)) == 0)
+	_c9_check("shop: reset countdown", int(GameProfile.shop_seconds_to_reset(anchor + 1000.0)) == 85400,
+		"s=" + str(GameProfile.shop_seconds_to_reset(anchor + 1000.0)))
 	var fake := anchor + 3.0 * 86400.0 + 3600.0  # day 4, 01:00 UTC
-	Profile.add_stardust(100000)
+	GameProfile.add_stardust(100000)
 	# Cycle 21.1 fixture hermeticity: the counts below are
 	# absolute (bag == 1 after one buy, == 4 at quota, == 9
 	# at cap), so the phase must start from an EMPTY bag —
@@ -3684,53 +3684,53 @@ func _c9_shop_phase() -> void:
 	# resident) failed every one of them in the C21.1
 	# instrumented suite while the empty-bag VM resident
 	# passed. The phase snapshot restores the resident bag.
-	Profile.data["bag"] = {}
-	Profile.data["shop"] = {"day": int(Profile.shop_day_number(fake)), "n": {}}
-	Profile.save_profile()
-	var sd0 := Profile.stardust()
-	var err := String(Profile.shop_buy("rare-candy", fake))
-	_c9_check("shop: first buy succeeds at base price", err == "" and Profile.stardust() == sd0 - 150 and Profile.bag_count("rare-candy") == 1,
-		"err=" + err + " sd=" + str(Profile.stardust()))
-	_c9_check("shop: price escalates +50% per same-day buy", int(Profile.shop_price("rare-candy", fake)) == 225,
-		"p=" + str(Profile.shop_price("rare-candy", fake)))
+	GameProfile.data["bag"] = {}
+	GameProfile.data["shop"] = {"day": int(GameProfile.shop_day_number(fake)), "n": {}}
+	GameProfile.save_profile()
+	var sd0 := GameProfile.stardust()
+	var err := String(GameProfile.shop_buy("rare-candy", fake))
+	_c9_check("shop: first buy succeeds at base price", err == "" and GameProfile.stardust() == sd0 - 150 and GameProfile.bag_count("rare-candy") == 1,
+		"err=" + err + " sd=" + str(GameProfile.stardust()))
+	_c9_check("shop: price escalates +50% per same-day buy", int(GameProfile.shop_price("rare-candy", fake)) == 225,
+		"p=" + str(GameProfile.shop_price("rare-candy", fake)))
 	for k in range(3):
-		Profile.shop_buy("rare-candy", fake)
-	_c9_check("shop: quota fills at the daily cap", Profile.bag_count("rare-candy") == 4)
-	var sd_full := Profile.stardust()
-	err = String(Profile.shop_buy("rare-candy", fake))
-	_c9_check("shop: 5th buy is soldout, no charge", err == "soldout" and Profile.stardust() == sd_full, "err=" + err)
+		GameProfile.shop_buy("rare-candy", fake)
+	_c9_check("shop: quota fills at the daily cap", GameProfile.bag_count("rare-candy") == 4)
+	var sd_full := GameProfile.stardust()
+	err = String(GameProfile.shop_buy("rare-candy", fake))
+	_c9_check("shop: 5th buy is soldout, no charge", err == "soldout" and GameProfile.stardust() == sd_full, "err=" + err)
 	# Bag cap: honey 3/day across three fake days -> 9 = cap.
 	for d in range(3):
 		var fd := fake + float(d) * 86400.0
 		for k in range(3):
-			Profile.shop_buy("honey", fd)
-	_c9_check("shop: honey bag reaches the cap of 9", Profile.bag_count("honey") == 9,
-		"bag=" + str(Profile.bag_count("honey")))
-	err = String(Profile.shop_buy("honey", fake + 3.0 * 86400.0))
+			GameProfile.shop_buy("honey", fd)
+	_c9_check("shop: honey bag reaches the cap of 9", GameProfile.bag_count("honey") == 9,
+		"bag=" + str(GameProfile.bag_count("honey")))
+	err = String(GameProfile.shop_buy("honey", fake + 3.0 * 86400.0))
 	_c9_check("shop: next-day buy at cap is bagfull", err == "bagfull", "err=" + err)
-	Profile.data["stardust"] = 0
-	Profile.save_profile()
-	err = String(Profile.shop_buy("master-ball", fake + 4.0 * 86400.0))
+	GameProfile.data["stardust"] = 0
+	GameProfile.save_profile()
+	err = String(GameProfile.shop_buy("master-ball", fake + 4.0 * 86400.0))
 	_c9_check("shop: empty purse is poor", err == "poor", "err=" + err)
-	err = String(Profile.shop_buy("nope", fake))
+	err = String(GameProfile.shop_buy("nope", fake))
 	_c9_check("shop: unknown id rejected", err == "unknown", "err=" + err)
 	# Persistence + sanitization.
-	var f := FileAccess.open("user://profile.json", FileAccess.READ)
+	var f := FileAccess.open("user://GameProfile.json", FileAccess.READ)
 	var parsed: Dictionary = JSON.parse_string(f.get_as_text())
 	f.close()
 	_c9_check("shop: bag + shop day persisted to disk", int((parsed.get("bag", {}) as Dictionary).get("honey", 0)) == 9 and int((parsed.get("shop", {}) as Dictionary).get("day", 0)) == 6,
 		"shop=" + str(parsed.get("shop", {})))
-	Profile.data["shop"] = {"bogus": true}
-	Profile.save_profile()
+	GameProfile.data["shop"] = {"bogus": true}
+	GameProfile.save_profile()
 	# Cold-load simulation: load_profile() is _loaded-guarded,
 	# so reset the guard to re-run the real sanitize path.
-	Profile._loaded = false
-	Profile.load_profile()
-	_c9_check("shop: malformed shop state is sanitized on load", not Profile.data.has("shop"))
+	GameProfile._loaded = false
+	GameProfile.load_profile()
+	_c9_check("shop: malformed shop state is sanitized on load", not GameProfile.data.has("shop"))
 	# The real panel: six rows, buying through the actual button.
-	Profile.data["shop"] = {"day": int(Profile.shop_day_number(Profile.shop_now())), "n": {}}
-	Profile.add_stardust(500)
-	Profile.save_profile()
+	GameProfile.data["shop"] = {"day": int(GameProfile.shop_day_number(GameProfile.shop_now())), "n": {}}
+	GameProfile.add_stardust(500)
+	GameProfile.save_profile()
 	_world.call("_refresh_shop")
 	_world.get("_shop_panel").visible = true
 	var btns: Array = []
@@ -3740,13 +3740,13 @@ func _c9_shop_phase() -> void:
 				btns.append(c)
 	_c9_check("shop: panel builds six buy buttons", btns.size() == 6, "n=" + str(btns.size()))
 	_c9_check("shop: countdown names the UTC reset", String(_world.get("_shop_countdown").text).contains("UTC"))
-	var bag0 := Profile.bag_count("rare-candy")
+	var bag0 := GameProfile.bag_count("rare-candy")
 	var pw0 := int(_world.get("audio").call("count_of", "power"))
 	if btns.size() == 6:
 		(btns[0] as Button).pressed.emit()
 		await _c16_pump(4)
-		_c9_check("shop: panel buy moves the bag + plays power()", Profile.bag_count("rare-candy") == bag0 + 1 and int(_world.get("audio").call("count_of", "power")) > pw0,
-			"bag=" + str(Profile.bag_count("rare-candy")))
+		_c9_check("shop: panel buy moves the bag + plays power()", GameProfile.bag_count("rare-candy") == bag0 + 1 and int(_world.get("audio").call("count_of", "power")) > pw0,
+			"bag=" + str(GameProfile.bag_count("rare-candy")))
 	_world.get("_shop_panel").visible = false
 	# Sound panel: the master slider drives the setting + bus.
 	# Cycle 18: the panel is now the 6-section settings screen —
@@ -3761,14 +3761,14 @@ func _c9_shop_phase() -> void:
 	if sliders.size() == 4:
 		(sliders[0] as HSlider).value = 0.25
 		await _c16_pump(10)
-		_c9_check("shop: master slider writes setting + bus", absf(float(Profile.setting("master")) - 0.25) < 0.001 and absf(db_to_linear(AudioServer.get_bus_volume_db(0)) - 0.25) < 0.03,
-			"set=" + str(Profile.setting("master")) + " lin=" + str(db_to_linear(AudioServer.get_bus_volume_db(0))))
+		_c9_check("shop: master slider writes setting + bus", absf(float(GameProfile.setting("master")) - 0.25) < 0.001 and absf(db_to_linear(AudioServer.get_bus_volume_db(0)) - 0.25) < 0.03,
+			"set=" + str(GameProfile.setting("master")) + " lin=" + str(db_to_linear(AudioServer.get_bus_volume_db(0))))
 		(sliders[0] as HSlider).value = 0.8
 		await _c16_pump(10)
 	_world.get("_sound_panel").visible = false
 	# Restore the resident profile byte-for-byte in content.
-	Profile.data = snap
-	Profile.save_profile()
+	GameProfile.data = snap
+	GameProfile.save_profile()
 	_world.call("_apply_audio_settings")
 
 
@@ -3781,38 +3781,38 @@ func _c9_shop_phase() -> void:
 # passive/vitamin contributions cancel out.
 # ------------------------------------------------------------------
 func _c18_boost_phase() -> void:
-	var snap: Dictionary = JSON.parse_string(JSON.stringify(Profile.data))
+	var snap: Dictionary = JSON.parse_string(JSON.stringify(GameProfile.data))
 	_c9_cleanup_run()
 	await _c9_frames(5)
 	_c9_check("boost: lucky-egg desc is the bundle's +25% XP",
-		String(Profile.SHOP_ITEMS[1]["desc"]).contains("25%"),
-		String(Profile.SHOP_ITEMS[1]["desc"]))
+		String(GameProfile.SHOP_ITEMS[1]["desc"]).contains("25%"),
+		String(GameProfile.SHOP_ITEMS[1]["desc"]))
 	_c9_check("boost: amulet-coin desc is the bundle's +50% gold",
-		String(Profile.SHOP_ITEMS[2]["desc"]).contains("50%"),
-		String(Profile.SHOP_ITEMS[2]["desc"]))
+		String(GameProfile.SHOP_ITEMS[2]["desc"]).contains("50%"),
+		String(GameProfile.SHOP_ITEMS[2]["desc"]))
 	_c9_check("boost: master-ball desc is the sure first capture",
-		String(Profile.SHOP_ITEMS[5]["desc"]).contains("必定成功"),
-		String(Profile.SHOP_ITEMS[5]["desc"]))
-	var anchor := Profile._shop_anchor_unix()
+		String(GameProfile.SHOP_ITEMS[5]["desc"]).contains("必定成功"),
+		String(GameProfile.SHOP_ITEMS[5]["desc"]))
+	var anchor := GameProfile._shop_anchor_unix()
 	var fake := anchor + 30.0 * 86400.0 + 3600.0  # a fresh fake day
-	Profile.add_stardust(100000)
+	GameProfile.add_stardust(100000)
 	# Cycle 21.1 fixture hermeticity (same resident-bag
 	# family as the shop phase): the stocking checks assert
 	# bag_count == 1 per item and the slots check asserts
 	# the pre-buy width 2, so start from an empty bag and
 	# an unbought Lab bag row; the snapshot restores both.
-	Profile.data["bag"] = {}
-	var boost_lab: Dictionary = (Profile.data.get("lab", {}) as Dictionary).duplicate()
+	GameProfile.data["bag"] = {}
+	var boost_lab: Dictionary = (GameProfile.data.get("lab", {}) as Dictionary).duplicate()
 	boost_lab.erase("bag")
-	Profile.data["lab"] = boost_lab
-	Profile.data["shop"] = {"day": int(Profile.shop_day_number(fake)), "n": {}}
-	Profile.save_profile()
+	GameProfile.data["lab"] = boost_lab
+	GameProfile.data["shop"] = {"day": int(GameProfile.shop_day_number(fake)), "n": {}}
+	GameProfile.save_profile()
 	for id in ["lucky-egg", "rare-candy", "master-ball", "honey", "shiny-stone", "amulet-coin"]:
-		var err := String(Profile.shop_buy(id, fake))
+		var err := String(GameProfile.shop_buy(id, fake))
 		_c9_check("boost: shop_buy stocks the bag (" + id + ")",
-			err == "" and Profile.bag_count(id) == 1, "err=" + err)
-	_c9_check("boost: bag slots = 2 before the Lab row", Profile.bag_slots() == 2,
-		"slots=" + str(Profile.bag_slots()))
+			err == "" and GameProfile.bag_count(id) == 1, "err=" + err)
+	_c9_check("boost: bag slots = 2 before the Lab row", GameProfile.bag_slots() == 2,
+		"slots=" + str(GameProfile.bag_slots()))
 	# Baseline run (no boosts) for the multiplier ratios.
 	_world.start_game("bulbasaur")
 	await _c9_frames(10)
@@ -3838,9 +3838,9 @@ func _c18_boost_phase() -> void:
 	_c9_check("boost: run started through the loadout",
 		String(_world.get("state")) == "playing" and p != null)
 	_c9_check("boost: egg + coin spent at start",
-		Profile.bag_count("lucky-egg") == 0 and Profile.bag_count("amulet-coin") == 0)
+		GameProfile.bag_count("lucky-egg") == 0 and GameProfile.bag_count("amulet-coin") == 0)
 	_c9_check("boost: the refused candy stays in the bag",
-		Profile.bag_count("rare-candy") == 1)
+		GameProfile.bag_count("rare-candy") == 1)
 	_c9_check("boost: xp_mult = baseline x1.25 (lucky-egg)",
 		absf(float(p.get("xp_mult")) - xp0 * 1.25) < 0.001,
 		"xp=" + str(p.get("xp_mult")) + " base=" + str(xp0))
@@ -3854,7 +3854,7 @@ func _c18_boost_phase() -> void:
 	await _c9_frames(10)
 	p = _world.get("player")
 	_c9_check("boost: candy spent, run starts at level 3",
-		Profile.bag_count("rare-candy") == 0 and int(p.get("level")) == 3,
+		GameProfile.bag_count("rare-candy") == 0 and int(p.get("level")) == 3,
 		"lv=" + str(p.get("level")))
 	await _c9_settle_drafts()
 	_c9_check("boost: candy's 2 drafts settled through the real draft flow",
@@ -3916,7 +3916,7 @@ func _c18_boost_phase() -> void:
 		for t in range(12):
 			_world.call("_throw_ball", se)
 			await _c9_frames(4)
-			if (Profile.data.get("shinies", []) as Array).has(sp_key):
+			if (GameProfile.data.get("shinies", []) as Array).has(sp_key):
 				caught = true
 				break
 			if is_instance_valid(se) and not bool(se.get("is_weakened")):
@@ -3925,16 +3925,16 @@ func _c18_boost_phase() -> void:
 					se.call("take_damage", 99999.0)
 					att3 += 1
 		_c9_check("boost: shiny captured + recorded in the shiny dex", caught,
-			"shinies=" + str(Profile.data.get("shinies", [])))
+			"shinies=" + str(GameProfile.data.get("shinies", [])))
 	_c9_cleanup_run()
 	await _c9_frames(5)
 	# The Lab 'bag' row's consumer: buying it widens the cap.
-	Profile.add_stardust(100000)
-	var lok := Profile.lab_buy("bag")
+	GameProfile.add_stardust(100000)
+	var lok := GameProfile.lab_buy("bag")
 	_c9_check("boost: Lab bag row buys and slots become 3",
-		lok and Profile.bag_slots() == 3, "ok=" + str(lok))
-	Profile.data = snap
-	Profile.save_profile()
+		lok and GameProfile.bag_slots() == 3, "ok=" + str(lok))
+	GameProfile.data = snap
+	GameProfile.save_profile()
 
 # ------------------------------------------------------------------
 # Cycle 18: UI round 2 — pause freeze, settings driving the
@@ -3959,7 +3959,7 @@ func _c18_sliders_by_key(n: Node, key: String) -> HSlider:
 	return null
 
 func _c18_ui2_phase() -> void:
-	var snap: Dictionary = JSON.parse_string(JSON.stringify(Profile.data))
+	var snap: Dictionary = JSON.parse_string(JSON.stringify(GameProfile.data))
 	_c9_cleanup_run()
 	await _c9_frames(5)
 	# Loadout from the menu: a locked tile shows its detail
@@ -4112,8 +4112,8 @@ func _c18_ui2_phase() -> void:
 	_c9_check("ui2: mini boss bar shows the alpha", bar_shown,
 		"name=" + (String((bars[0]["name"] as Label).text) if bars.size() > 0 else "<none>"))
 	var expect_goal := ""
-	for key in Profile.challenge_order():
-		if not Profile.challenge_done(key) and not Profile.in_league(
+	for key in GameProfile.challenge_order():
+		if not GameProfile.challenge_done(key) and not GameProfile.in_league(
 				int(GameData.species(key).get("family", 0))):
 			expect_goal = key
 			break
@@ -4214,8 +4214,8 @@ func _c18_ui2_phase() -> void:
 		_c18_frac_count(_world.get("_result_box")) == mini((_world.get("run_move_dmg") as Dictionary).size(), 8),
 		"bars=" + str(_c18_frac_count(_world.get("_result_box"))))
 	_c9_cleanup_run()
-	Profile.data = snap
-	Profile.save_profile()
+	GameProfile.data = snap
+	GameProfile.save_profile()
 
 # ------------------------------------------------------------------
 # Cycle 19 built the UI polish assertions below (token
@@ -4292,7 +4292,7 @@ func _c20_tex_hue_delta(ta: Texture2D, tb: Texture2D) -> float:
 ## rollChestItem modals, altar charge/drain, ice-heal in
 ## take_damage, guardian summon under the modelled filter.
 func _c21_phase() -> void:
-	var snap: Dictionary = JSON.parse_string(JSON.stringify(Profile.data))
+	var snap: Dictionary = JSON.parse_string(JSON.stringify(GameProfile.data))
 	var w = _world
 	# --- data: the mined def set ---
 	_c9_check("c21: items.json carries the 126 mined defs",
@@ -4315,13 +4315,13 @@ func _c21_phase() -> void:
 		and String(w.call("zone_def", 4)["cn"]) == "火山岛"
 		and (w.call("zone_def", 4)["guardians"] as Array) == ["magmar", "rapidash", "charizard"])
 	_c9_check("c21: archive rejects vitamin-era keys, accepts def keys",
-		not Profile.archive_item("protein", true))
+		not GameProfile.archive_item("protein", true))
 	# --- a live run for the item flows ---
 	var ok := await _c9_start_run("bulbasaur")
 	_c9_check("c21: run boots", ok)
 	if not ok:
-		Profile.data = snap
-		Profile.save_profile()
+		GameProfile.data = snap
+		GameProfile.save_profile()
 		return
 	var p = w.get("player")
 	# guardian summon under the modelled-only filter
@@ -4382,14 +4382,14 @@ func _c21_phase() -> void:
 	# the VM and 2->3 on the NUC in the C21 closing runs).
 	# Isolate the row for this one assertion (the c19
 	# archive fixture's pattern), restore it right after.
-	var party_lab_snap: Dictionary = (Profile.data.get("lab", {}) as Dictionary).duplicate()
+	var party_lab_snap: Dictionary = (GameProfile.data.get("lab", {}) as Dictionary).duplicate()
 	var lab_no_party: Dictionary = party_lab_snap.duplicate()
 	lab_no_party.erase("party")
-	Profile.data["lab"] = lab_no_party
+	GameProfile.data["lab"] = lab_no_party
 	_c9_check("c21: ss-ticket raises the team cap",
 		int(w.call("_team_cap")) == 2 and p.add_item("ss-ticket")
 		and int(w.call("_team_cap")) == 3)
-	Profile.data["lab"] = party_lab_snap
+	GameProfile.data["lab"] = party_lab_snap
 	var teeth0 := int(w.call("_slots_cost"))
 	p.add_item("gold-teeth")
 	_c9_check("c21: gold-teeth discounts the slots cost by 8%",
@@ -4619,8 +4619,8 @@ func _c21_phase() -> void:
 	var g3_kit: bool = g3 != null and g3.species_id in ["scyther", "pinsir"]
 	if g3 == null:
 		await _c9_cleanup_run()
-		Profile.data = snap
-		Profile.save_profile()
+		GameProfile.data = snap
+		GameProfile.save_profile()
 		return
 	# Keep the observation window combat-free: the guardian
 	# chases, so park the player across the map — a dead
@@ -4692,13 +4692,13 @@ func _c21_phase() -> void:
 	_c9_check("c21 shiny: a defeated shiny guardian rises as a takeover target",
 		tk != null and is_instance_valid(tk) and tk.is_weakened)
 	if tk != null and is_instance_valid(tk):
-		var sd0: int = Profile.stardust()
+		var sd0: int = GameProfile.stardust()
 		w.player.global_position = tk.global_position + Vector3(1.5, 0, 0)
 		w.call("_throw_ball", tk)
 		await _wait_sim(w, 0.4)
 		_c9_check("c21 shiny: the takeover throw is guaranteed (stardust paid)",
-			Profile.stardust() > sd0 and w.get("_takeover_e") == null,
-			"sd " + str(sd0) + "->" + str(Profile.stardust()))
+			GameProfile.stardust() > sd0 and w.get("_takeover_e") == null,
+			"sd " + str(sd0) + "->" + str(GameProfile.stardust()))
 	# Consume the portal deliberately at this block boundary.
 	# Left live under the player's feet, its deferred zone
 	# switch can fire mid-phase and wipe the field (in the
@@ -4907,75 +4907,75 @@ func _c21_phase() -> void:
 	p.passive_id = saved_passive
 	p.crit_chance = saved_crit
 	await _c9_cleanup_run()
-	Profile.data = snap
-	Profile.save_profile()
+	GameProfile.data = snap
+	GameProfile.save_profile()
 
 func _c19_phase() -> void:
-	var snap: Dictionary = JSON.parse_string(JSON.stringify(Profile.data))
+	var snap: Dictionary = JSON.parse_string(JSON.stringify(GameProfile.data))
 	var w = _world
 	# --- Cycle 20: the TRUE shiny ladder (DIFF §7 correction;
 	# cycle 19's Be gold factor asserted an invented rule).
 	# Rungs on n UNIQUE shiny species owned. ---
-	Profile.data["shinies"] = []
-	Profile.data["shiny_bond"] = false
-	Profile.save_profile()
+	GameProfile.data["shinies"] = []
+	GameProfile.data["shiny_bond"] = false
+	GameProfile.save_profile()
 	_c9_check("c20: ladder is empty at zero shinies",
-		Profile.shiny_luck_bonus() == 0.0 and Profile.shiny_xp_bonus() == 0.0
-		and Profile.shiny_damage_bonus() == 0.0 and not Profile.has_shiny_charm()
-		and Profile.shiny_rate() == 1.0 and Profile.shiny_flee_time() == 120.0
-		and not Profile.shiny_bond_unlocked())
-	Profile.record_shiny("c20fake01")
+		GameProfile.shiny_luck_bonus() == 0.0 and GameProfile.shiny_xp_bonus() == 0.0
+		and GameProfile.shiny_damage_bonus() == 0.0 and not GameProfile.has_shiny_charm()
+		and GameProfile.shiny_rate() == 1.0 and GameProfile.shiny_flee_time() == 120.0
+		and not GameProfile.shiny_bond_unlocked())
+	GameProfile.record_shiny("c20fake01")
 	_c9_check("c20: no rung at one shiny (the first rung is n=2)",
-		Profile.shiny_luck_bonus() == 0.0 and Profile.shiny_xp_bonus() == 0.0)
-	Profile.record_shiny("c20fake02")
+		GameProfile.shiny_luck_bonus() == 0.0 and GameProfile.shiny_xp_bonus() == 0.0)
+	GameProfile.record_shiny("c20fake02")
 	_c9_check("c20: n=2 grants +3 Luck, rate still 1",
-		Profile.shiny_luck_bonus() == 3.0 and Profile.shiny_rate() == 1.0)
-	Profile.record_shiny("c20fake03")
-	Profile.record_shiny("c20fake04")
+		GameProfile.shiny_luck_bonus() == 3.0 and GameProfile.shiny_rate() == 1.0)
+	GameProfile.record_shiny("c20fake03")
+	GameProfile.record_shiny("c20fake04")
 	_c9_check("c20: n=4 grants +4% XP (charm not yet)",
-		absf(Profile.shiny_xp_bonus() - 0.04) < 0.0001 and not Profile.has_shiny_charm())
-	Profile.record_shiny("c20fake05")
-	Profile.record_shiny("c20fake06")
+		absf(GameProfile.shiny_xp_bonus() - 0.04) < 0.0001 and not GameProfile.has_shiny_charm())
+	GameProfile.record_shiny("c20fake05")
+	GameProfile.record_shiny("c20fake06")
 	_c9_check("c20: n=6 grants the Shiny Charm (rate 1.5, flee 150)",
-		Profile.has_shiny_charm() and Profile.shiny_rate() == 1.5
-		and Profile.shiny_flee_time() == 150.0)
+		GameProfile.has_shiny_charm() and GameProfile.shiny_rate() == 1.5
+		and GameProfile.shiny_flee_time() == 150.0)
 	for i in range(7, 11):
-		Profile.record_shiny("c20fake%02d" % i)
+		GameProfile.record_shiny("c20fake%02d" % i)
 	_c9_check("c20: n=10 grants +3% damage",
-		absf(Profile.shiny_damage_bonus() - 0.03) < 0.0001,
-		"n=" + str(Profile.shiny_count()))
+		absf(GameProfile.shiny_damage_bonus() - 0.03) < 0.0001,
+		"n=" + str(GameProfile.shiny_count()))
 	for i in range(11, 16):
-		Profile.record_shiny("c20fake%02d" % i)
+		GameProfile.record_shiny("c20fake%02d" % i)
 	_c9_check("c20: n=15 records the shiny-ally (Bond 2) unlock",
-		Profile.shiny_bond_unlocked() and Profile.shiny_count() == 15)
+		GameProfile.shiny_bond_unlocked() and GameProfile.shiny_count() == 15)
 	# --- Cycle 20.1 (audit N2): counter_value("birds") on
-	# a FLOAT-LOADED profile. JSON numbers load as floats
+	# a FLOAT-LOADED GameProfile. JSON numbers load as floats
 	# and Array.has() is type-strict: the shipped .has(int)
 	# read 0 for birds joined in prior sessions, so the
 	# legendary challenge goal birds>=3 (roster) could
 	# never complete. Seed the profile FILE with float
 	# league entries, force a real disk load, assert the
 	# counter, then put the phase's live dict back. ---
-	var pre_birds: Dictionary = Profile.data
-	var seed_f := FileAccess.open(Profile.PATH, FileAccess.WRITE)
+	var pre_birds: Dictionary = GameProfile.data
+	var seed_f := FileAccess.open(GameProfile.PATH, FileAccess.WRITE)
 	seed_f.store_string(JSON.stringify({"league": [144.0, 145.0, 146.0]}))
 	seed_f.close()
-	Profile._loaded = false
-	Profile.data = {}
-	Profile.load_profile()
+	GameProfile._loaded = false
+	GameProfile.data = {}
+	GameProfile.load_profile()
 	_c9_check("c20: birds counter counts float-loaded league entries (N2)",
-		absf(Profile.counter_value("birds") - 3.0) < 0.001,
-		"birds=" + str(Profile.counter_value("birds"))
-		+ " league=" + str(Profile.data.get("league", [])))
-	Profile.data = pre_birds
-	Profile._loaded = true
-	Profile.save_profile()
+		absf(GameProfile.counter_value("birds") - 3.0) < 0.001,
+		"birds=" + str(GameProfile.counter_value("birds"))
+		+ " league=" + str(GameProfile.data.get("league", [])))
+	GameProfile.data = pre_birds
+	GameProfile._loaded = true
+	GameProfile.save_profile()
 	# --- The rungs land in the REAL stat pipeline (the
 	# labStats consumer = player.recalc): boot a run on an
 	# empty dex, take baselines, then re-record rungs and
 	# watch the player's stats move by exactly the rungs. ---
-	Profile.data["shinies"] = []
-	Profile.data["shiny_bond"] = false
+	GameProfile.data["shinies"] = []
+	GameProfile.data["shiny_bond"] = false
 	# Cycle 20.2 (re-audit N10 evidence gap): seed the Lab
 	# dmg/xp bases ABOVE zero before the baselines below
 	# are read. At Lab 0 both bases are exactly 1.0, where
@@ -4986,30 +4986,30 @@ func _c19_phase() -> void:
 	# differ by 0.004 (xp) and 0.0024 x o (dmg), outside
 	# the 0.001 assertion tolerances. The phase snapshot
 	# restores the resident Lab afterwards.
-	var lab_seed: Dictionary = Profile.data.get("lab", {})
+	var lab_seed: Dictionary = GameProfile.data.get("lab", {})
 	lab_seed["dmg"] = maxi(int(lab_seed.get("dmg", 0)), 2)
 	lab_seed["xp"] = maxi(int(lab_seed.get("xp", 0)), 2)
-	Profile.data["lab"] = lab_seed
-	Profile.save_profile()
+	GameProfile.data["lab"] = lab_seed
+	GameProfile.save_profile()
 	var ok := await _c9_start_run("bulbasaur")
 	if not ok:
 		_c9_check("c20: run boots", false)
-		Profile.data = snap
-		Profile.save_profile()
+		GameProfile.data = snap
+		GameProfile.save_profile()
 		return
 	var p = w.get("player")
 	p.invulnerable = true
 	var luck0 := float(p.get("luck"))
 	var xp0 := float(p.get("xp_mult"))
 	var dmg0 := float(p.get("damage_mult"))
-	Profile.record_shiny("c20fake01")
-	Profile.record_shiny("c20fake02")
+	GameProfile.record_shiny("c20fake01")
+	GameProfile.record_shiny("c20fake02")
 	p.recalc()
 	_c9_check("c20: recalc applies the +3 Luck rung",
 		absf(float(p.get("luck")) - (luck0 + 3.0)) < 0.001,
 		"luck=" + str(p.get("luck")) + " base=" + str(luck0))
-	Profile.record_shiny("c20fake03")
-	Profile.record_shiny("c20fake04")
+	GameProfile.record_shiny("c20fake03")
+	GameProfile.record_shiny("c20fake04")
 	p.recalc()
 	# Cycle 20.1 (audit N10): labStats ADDS the rungs —
 	# xp_mult grows by +0.04, NOT x1.04 (the x1.04 fold
@@ -5018,13 +5018,13 @@ func _c19_phase() -> void:
 		absf(float(p.get("xp_mult")) - (xp0 + 0.04)) < 0.001,
 		"xp=" + str(p.get("xp_mult")) + " base=" + str(xp0))
 	for i in range(5, 11):
-		Profile.record_shiny("c20fake%02d" % i)
+		GameProfile.record_shiny("c20fake%02d" % i)
 	p.recalc()
 	# Additive damage: dmg = o * (1 + 0.04*lab + 0.03), so
 	# the delta over the baseline dmg0 = o * (1 + 0.04*lab)
 	# is 0.03 * dmg0 / (1 + 0.04*lab) — a x1.03 fold would
 	# overshoot by 0.03 * 0.04 * lab * o and fail.
-	var dmg_want := dmg0 + 0.03 * dmg0 / (1.0 + 0.04 * float(Profile.lab_level("dmg")))
+	var dmg_want := dmg0 + 0.03 * dmg0 / (1.0 + 0.04 * float(GameProfile.lab_level("dmg")))
 	_c9_check("c20: recalc applies the +3% damage rung (additive, N10)",
 		absf(float(p.get("damage_mult")) - dmg_want) < 0.001,
 		"dmg=" + str(p.get("damage_mult")) + " base=" + str(dmg0) + " want=" + str(dmg_want))
@@ -5033,8 +5033,8 @@ func _c19_phase() -> void:
 	# @1048868): P = (0.08 + min(0.08, luck/1000)) x shinyRate.
 	# Three configs separate the base rate, the luck term
 	# and the charm multiplier; every window is asserted. ---
-	Profile.data["shinies"] = []
-	Profile.save_profile()
+	GameProfile.data["shinies"] = []
+	GameProfile.save_profile()
 	p.recalc()
 	var la := float(p.get("luck"))
 	var pa := (0.08 + minf(0.08, la / 1000.0)) * 1.0
@@ -5049,7 +5049,7 @@ func _c19_phase() -> void:
 		absf(float(rb[0]) / 600.0 - 0.16) < 0.055 and bool(rb[1]),
 		"hits=" + str(rb[0]))
 	for i in range(1, 7):
-		Profile.record_shiny("c20fake%02d" % i)
+		GameProfile.record_shiny("c20fake%02d" % i)
 	var rc := _c20_roll_tally(w, 600)
 	_c9_check("c20: Shiny Charm multiplies the roll (P=0.24)",
 		absf(float(rc[0]) / 600.0 - 0.24) < 0.06 and bool(rc[1]),
@@ -5059,20 +5059,20 @@ func _c19_phase() -> void:
 	# --- The spawn pick (production function, synthetic
 	# pools): the id-25 fallback, the not-yet-shiny family
 	# preference, captureRate weights. ---
-	Profile.data["shinies"] = []
-	Profile.save_profile()
+	GameProfile.data["shinies"] = []
+	GameProfile.save_profile()
 	_c9_check("c20: pick falls back to dex 25 on an empty pool",
 		String(w._pick_shiny_species([])) == String(GameData.species_by_id(25).get("key", "")),
 		"pick=" + String(w._pick_shiny_species([])))
-	Profile.data["shinies"] = ["rattata"]
-	Profile.save_profile()
+	GameProfile.data["shinies"] = ["rattata"]
+	GameProfile.save_profile()
 	var pref_ok := true
 	for i in range(12):
 		if String(w._pick_shiny_species(["rattata", "pidgey"])) == "rattata":
 			pref_ok = false
 	_c9_check("c20: pick prefers families not yet shiny-caught", pref_ok)
-	Profile.data["shinies"] = []
-	Profile.save_profile()
+	GameProfile.data["shinies"] = []
+	GameProfile.save_profile()
 	# Cycle 20.1 (audit N16): band tightened to the BUNDLE
 	# weights — Cx(255) = 1.0, Cx(45) = 0.30, so caterpie
 	# wins 76.9% (600 picks: mean 461.5, sigma 10.3). The
@@ -5103,8 +5103,8 @@ func _c19_phase() -> void:
 	# assumed, since the roll above fails most stages. ---
 	_c9_cleanup_run()
 	await _c9_frames(5)
-	Profile.data["bag"] = {"shiny-stone": 1}
-	Profile.save_profile()
+	GameProfile.data["bag"] = {"shiny-stone": 1}
+	GameProfile.save_profile()
 	_world.start_game("bulbasaur", ["shiny-stone"])
 	var ok2 := await _c9_wait(func() -> bool:
 		var pl = _world.get("player")
@@ -5315,7 +5315,7 @@ func _c19_phase() -> void:
 				seed_sure = s
 			if seed_fail != 0 and seed_sure != 0:
 				break
-		var dust0 := Profile.stardust()
+		var dust0 := GameProfile.stardust()
 		# League state BEFORE the capture, normalised to
 		# ints: JSON loads numbers as floats and Array.has()
 		# is type-strict, so a raw has(family) read is blind
@@ -5325,10 +5325,10 @@ func _c19_phase() -> void:
 		# the league array (guarded by in_league), the
 		# captured dict and the captures counter (unguarded).
 		var league_before: Array = []
-		for x in (Profile.data.get("league", []) as Array):
+		for x in (GameProfile.data.get("league", []) as Array):
 			league_before.append(int(x))
-		var captures_before := Profile.counter_value("captures")
-		var captured_keys_before: Array = (Profile.data.get("captured", {}) as Dictionary).keys()
+		var captures_before := GameProfile.counter_value("captures")
+		var captured_keys_before: Array = (GameProfile.data.get("captured", {}) as Dictionary).keys()
 		captured_keys_before.sort()
 		w._rng.seed = seed_fail
 		w._throw_ball(se)
@@ -5348,21 +5348,21 @@ func _c19_phase() -> void:
 		_c9_check("c20: second throw is a sure capture (chance >= 1 clause)",
 			w.get("_shiny_e") == null)
 		_c9_check("c20: shiny capture grants +120 Stardust (new species)",
-			Profile.stardust() - dust0 == 120,
-			"delta=" + str(Profile.stardust() - dust0))
+			GameProfile.stardust() - dust0 == 120,
+			"delta=" + str(GameProfile.stardust() - dust0))
 		_c9_check("c20: shiny captured + recorded in the shiny dex",
-			(Profile.data.get("shinies", []) as Array).has(sp_key),
-			"shinies=" + str(Profile.data.get("shinies", [])))
+			(GameProfile.data.get("shinies", []) as Array).has(sp_key),
+			"shinies=" + str(GameProfile.data.get("shinies", [])))
 		var league_after: Array = []
-		for x in (Profile.data.get("league", []) as Array):
+		for x in (GameProfile.data.get("league", []) as Array):
 			league_after.append(int(x))
-		var captured_keys_after: Array = (Profile.data.get("captured", {}) as Dictionary).keys()
+		var captured_keys_after: Array = (GameProfile.data.get("captured", {}) as Dictionary).keys()
 		captured_keys_after.sort()
 		_c9_check("c20: shiny capture does NOT join the league",
 			league_after == league_before
-			and Profile.counter_value("captures") == captures_before
+			and GameProfile.counter_value("captures") == captures_before
 			and captured_keys_after == captured_keys_before,
-			"league=" + str(league_after) + " captures=" + str(Profile.counter_value("captures")))
+			"league=" + str(league_after) + " captures=" + str(GameProfile.counter_value("captures")))
 		# Weak-window expiry: a fresh shiny left weakened
 		# recovers to 40% HP and roams when the window ends;
 		# then the escape clock (shortened via the accepted
@@ -5399,8 +5399,8 @@ func _c19_phase() -> void:
 		var all_keys: Array = []
 		for k in GameData.roster_species_keys():
 			all_keys.append(String(k))
-		Profile.data["shinies"] = all_keys
-		Profile.save_profile()
+		GameProfile.data["shinies"] = all_keys
+		GameProfile.save_profile()
 		w._spawn_shiny()
 		var se3 = w.get("_shiny_e")
 		_c9_check("c20: third shiny spawns for the repeat check", se3 != null)
@@ -5412,8 +5412,8 @@ func _c19_phase() -> void:
 			while is_instance_valid(se3) and not bool(se3.get("is_weakened")) and att3 < 40:
 				se3.call("take_damage", 99999.0)
 				att3 += 1
-			var dust1 := Profile.stardust()
-			var n_before := Profile.shiny_count()
+			var dust1 := GameProfile.stardust()
+			var n_before := GameProfile.shiny_count()
 			for t in range(12):
 				if not is_instance_valid(se3) or w.get("_shiny_e") != se3:
 					break
@@ -5431,8 +5431,8 @@ func _c19_phase() -> void:
 			if bool(w.get("_choice_open")) and w.get("_pending_shiny_ally") == se3:
 				w._choice_pick(0)
 			_c9_check("c20: repeat capture grants +50 Stardust, dex unchanged",
-				Profile.stardust() - dust1 == 50 and Profile.shiny_count() == n_before,
-				"delta=" + str(Profile.stardust() - dust1) + " n=" + str(Profile.shiny_count()))
+				GameProfile.stardust() - dust1 == 50 and GameProfile.shiny_count() == n_before,
+				"delta=" + str(GameProfile.stardust() - dust1) + " n=" + str(GameProfile.shiny_count()))
 	# --- Guardian coins: plain wB, NO shiny factor. The
 	# shiny dex is FULL here — if any Be-style gold factor
 	# still fed wB, the killing blow would overpay. ---
@@ -5472,8 +5472,8 @@ func _c19_phase() -> void:
 			== String(w.call("_type_icon", String(GameData.move(String(p.moves[0]["key"])).get("type", "")))),
 		"icon=" + String((w.get("_move_slot_icon") as UiIcon).icon))
 	# Lab MAX chip (real buy to max through the Lab API).
-	Profile.add_stardust(100000)
-	Profile.lab_buy("bag")
+	GameProfile.add_stardust(100000)
+	GameProfile.lab_buy("bag")
 	w.call("_refresh_lab")
 	var lab_labels: Array = []
 	_c19_labels(w.get("_lab_list"), lab_labels)
@@ -5507,29 +5507,29 @@ func _c19_phase() -> void:
 	# Fixture determinism (the phase snapshot restores all
 	# of this at the end): archive row unbought, no shelved
 	# items, no presets — whatever the resident profile had.
-	var lab_fx: Dictionary = (Profile.data.get("lab", {}) as Dictionary).duplicate()
+	var lab_fx: Dictionary = (GameProfile.data.get("lab", {}) as Dictionary).duplicate()
 	lab_fx.erase("archive")
-	Profile.data["lab"] = lab_fx
-	Profile.data["items_off"] = []
-	Profile.data["archive_presets"] = []
-	Profile.data["archive_preset_active"] = -1
-	Profile.save_profile()
+	GameProfile.data["lab"] = lab_fx
+	GameProfile.data["items_off"] = []
+	GameProfile.data["archive_presets"] = []
+	GameProfile.data["archive_preset_active"] = -1
+	GameProfile.save_profile()
 	# Cycle 21: the archive domain is the item-def set —
 	# these checks moved from vitamin keys to def keys.
 	_c9_check("c19: archive locked at lab level 0",
-		Profile.archive_capacity() == 0
-		and not Profile.archive_item("leftovers", true))
+		GameProfile.archive_capacity() == 0
+		and not GameProfile.archive_item("leftovers", true))
 	_c9_check("c19: archive lab row buys to capacity 5",
-		Profile.lab_buy("archive") and Profile.archive_capacity() == 5)
+		GameProfile.lab_buy("archive") and GameProfile.archive_capacity() == 5)
 	_c9_check("c19: archive + unarchive round-trip",
-		Profile.archive_item("leftovers", true) and Profile.is_archived("leftovers")
-		and not Profile.item_in_pool("leftovers")
-		and Profile.archive_item("leftovers", false) and Profile.item_in_pool("leftovers"))
+		GameProfile.archive_item("leftovers", true) and GameProfile.is_archived("leftovers")
+		and not GameProfile.item_in_pool("leftovers")
+		and GameProfile.archive_item("leftovers", false) and GameProfile.item_in_pool("leftovers"))
 	for k in ["leftovers", "scope-lens", "kings-rock", "metal-coat", "charcoal"]:
-		Profile.archive_item(String(k), true)
+		GameProfile.archive_item(String(k), true)
 	_c9_check("c19: archive refuses past capacity",
-		not Profile.archive_item("amulet-coin", true)
-		and Profile.archived_items().size() == 5)
+		not GameProfile.archive_item("amulet-coin", true)
+		and GameProfile.archived_items().size() == 5)
 	var pool: Array = w.call("_item_pool_keys")
 	var maxed := 0
 	var hp_now = w.get("player")
@@ -5541,14 +5541,14 @@ func _c19_phase() -> void:
 		pool.size() == 126 - 5 - maxed and not pool.has("leftovers") and pool.has("amulet-coin"),
 		"pool=" + str(pool.size()) + " maxed=" + str(maxed))
 	_c9_check("c19: preset saves the current archive",
-		Profile.archive_preset_save("c19预设")
-		and Profile.archive_presets().size() == 1)
-	for k in Profile.archived_items():
-		Profile.archive_item(String(k), false)
-	var missed := Profile.archive_preset_apply(0)
+		GameProfile.archive_preset_save("c19预设")
+		and GameProfile.archive_presets().size() == 1)
+	for k in GameProfile.archived_items():
+		GameProfile.archive_item(String(k), false)
+	var missed := GameProfile.archive_preset_apply(0)
 	_c9_check("c19: preset apply restores the archived set",
-		missed == 0 and Profile.archived_items().size() == 5
-		and Profile.archive_preset_active() == 0,
+		missed == 0 and GameProfile.archived_items().size() == 5
+		and GameProfile.archive_preset_active() == 0,
 		"missed=" + str(missed))
 	w.call("_lab_set_mode", "items")
 	var ilabels: Array = []
@@ -5670,8 +5670,8 @@ func _c19_phase() -> void:
 		+ " a_banner=" + str((w.get("_banner") as Label).modulate.a)
 		+ " a_back=" + str((w.get("_banner_back") as Control).modulate.a))
 	await _c9_cleanup_run()
-	Profile.data = snap
-	Profile.save_profile()
+	GameProfile.data = snap
+	GameProfile.save_profile()
 
 func _c18_frac_count(n: Node) -> int:
 	var c := 0
@@ -5683,9 +5683,9 @@ func _c18_frac_count(n: Node) -> int:
 
 ## C23: run real brain under accelerated cadence, never mute its timer.
 func _c23_phase() -> void:
-	var snap: Dictionary = Profile.data.duplicate(true)
+	var snap: Dictionary = GameProfile.data.duplicate(true)
 	var w = _world
-	Profile.data["biomes"] = {"forest":1}
+	GameProfile.data["biomes"] = {"forest":1}
 	var ok := await _c9_start_run("bulbasaur", 2)
 	_c9_check("c23: run boots", ok)
 	if not ok:
@@ -5746,21 +5746,21 @@ func _c23_phase() -> void:
 		w.set("run_time", 1.0/3.0)
 		_c9_check("c23 score rounds before multiplier, preserves half point", float(w.call("run_score", false)) == 1.5)
 		w.set("run_tier", 0)
-	Profile.data.erase("biomes")
-	Profile.data["counters"] = {"tier_forest":1}
-	Profile.save_profile()
-	Profile._loaded = false
-	Profile.load_profile()
-	_c9_check("c23 legacy normal clear migrates as one, not two", Profile.biome_tier("forest") == 1 and Profile.biome_tier_cap("forest") == 1)
-	Profile.reset_all()
-	_c9_check("c23 reset biomes unlocks initial forest", Profile.biome_unlocked("forest") and not Profile.biome_unlocked("graveyard"))
-	Profile.data["biomes"] = {"forest":0}
-	_c9_check("c23 biomes: unlocked uncleared cap zero", Profile.biome_unlocked("forest") and Profile.biome_tier_cap("forest") == 0 and not Profile.biome_unlocked("graveyard"))
-	Profile.record_biome_clear("forest",0)
-	_c9_check("c23 biomes: normal clear opens hard and next biome", Profile.biome_tier_cap("forest") == 1 and Profile.biome_unlocked("graveyard") and Profile.counter_value("tier_forest") == 1)
-	Profile.record_biome_clear("forest",2)
-	Profile.record_biome_clear("forest",0)
-	_c9_check("c23 biomes: highest clear survives lower clear", Profile.biome_tier("forest") == 3 and Profile.biome_tier_cap("forest") == 2 and Profile.counter_value("hard") == 1 and Profile.counter_value("night") == 1)
+	GameProfile.data.erase("biomes")
+	GameProfile.data["counters"] = {"tier_forest":1}
+	GameProfile.save_profile()
+	GameProfile._loaded = false
+	GameProfile.load_profile()
+	_c9_check("c23 legacy normal clear migrates as one, not two", GameProfile.biome_tier("forest") == 1 and GameProfile.biome_tier_cap("forest") == 1)
+	GameProfile.reset_all()
+	_c9_check("c23 reset biomes unlocks initial forest", GameProfile.biome_unlocked("forest") and not GameProfile.biome_unlocked("graveyard"))
+	GameProfile.data["biomes"] = {"forest":0}
+	_c9_check("c23 biomes: unlocked uncleared cap zero", GameProfile.biome_unlocked("forest") and GameProfile.biome_tier_cap("forest") == 0 and not GameProfile.biome_unlocked("graveyard"))
+	GameProfile.record_biome_clear("forest",0)
+	_c9_check("c23 biomes: normal clear opens hard and next biome", GameProfile.biome_tier_cap("forest") == 1 and GameProfile.biome_unlocked("graveyard") and GameProfile.counter_value("tier_forest") == 1)
+	GameProfile.record_biome_clear("forest",2)
+	GameProfile.record_biome_clear("forest",0)
+	_c9_check("c23 biomes: highest clear survives lower clear", GameProfile.biome_tier("forest") == 3 and GameProfile.biome_tier_cap("forest") == 2 and GameProfile.counter_value("hard") == 1 and GameProfile.counter_value("night") == 1)
 	w.set("zone", 1)
 	w.set("boss_spawned", false)
 	w.summon_guardian()
@@ -5900,12 +5900,12 @@ func _c23_phase() -> void:
 		_c9_check("c23 F1 full cast reaches complete dizzy rage="+str(rage), seen_dizzy and dizzy_seconds >= 2.46 and held, "dizzy_seconds="+str(dizzy_seconds))
 	w.set("run_tier",1)
 	w.set("gold",100.0)
-	var dust_before := Profile.stardust()
+	var dust_before := GameProfile.stardust()
 	w.call("_finish_run",false)
-	_c9_check("c23 stardust consumer tier1", Profile.stardust()-dust_before == 7)
+	_c9_check("c23 stardust consumer tier1", GameProfile.stardust()-dust_before == 7)
 	await _c9_cleanup_run()
-	Profile.data = snap
-	Profile.save_profile()
+	GameProfile.data = snap
+	GameProfile.save_profile()
 
 ## C23: pending entity value, used by payment checks before walk-over collection.
 func _c23_pickup_value(w: Node, kind: int) -> float:

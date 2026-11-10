@@ -1,4 +1,4 @@
-extends SceneTree
+﻿extends SceneTree
 # Behavioral cost/commit/deferral checks; supports an isolated mutant script.
 var checks := 0
 var fails := 0
@@ -83,10 +83,10 @@ func _initialize() -> void:
 	var reward: Array = w.rewards[0]
 	ck(reward[0]=="blessing" and reward[2]==4 and reward[3]==3 and reward[4]==1 and reward[5]==1.5,"dome legendary3 choose1 power1.5")
 	# Cost lands in the actual Player.recalc temp-mod pipeline.
-	var old_data := Profile.data.duplicate(true)
-	var old_loaded := Profile._loaded
-	Profile._loaded = true
-	Profile.data = {"lab":{},"shinies":[],"counters":{}}
+	var old_data := GameProfile.data.duplicate(true)
+	var old_loaded := GameProfile._loaded
+	GameProfile._loaded = true
+	GameProfile.data = {"lab":{},"shinies":[],"counters":{}}
 	var p = load("res://scripts/player.gd").new()
 	p.species_id = "bulbasaur"
 	p.base_species = "bulbasaur"
@@ -114,8 +114,8 @@ func _initialize() -> void:
 	ck(is_equal_approx(helix.position.y,.45) and helix.rotation==Vector3.ZERO and dome_node.visible,"cached props restore at new run")
 	helix.free()
 	dome_node.free()
-	Profile.data = old_data
-	Profile._loaded = old_loaded
+	GameProfile.data = old_data
+	GameProfile._loaded = old_loaded
 	finish()
 
 func finish() -> void:

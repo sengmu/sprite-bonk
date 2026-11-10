@@ -1,4 +1,4 @@
-class_name Profile
+class_name GameProfile
 extends RefCounted
 ## Persistent meta profile (MECHANICS §7.3 shape, local subset):
 ## {stardust, totalStardust, league[], captured{}, seen[], lab{}} in

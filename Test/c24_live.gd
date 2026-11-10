@@ -1,4 +1,4 @@
-extends SceneTree
+﻿extends SceneTree
 var checks := 0
 var fails := 0
 func ck(ok: bool, msg: String) -> void:
@@ -9,10 +9,10 @@ func ck(ok: bool, msg: String) -> void:
 func _initialize() -> void:
 	call_deferred("run")
 func run() -> void:
-	var existed := FileAccess.file_exists(Profile.PATH)
-	var disk := FileAccess.get_file_as_bytes(Profile.PATH) if existed else PackedByteArray()
-	Profile._loaded = true
-	Profile.data = {"league":[], "captured":{}, "shinies":[], "stardust":0, "totalStardust":0}
+	var existed := FileAccess.file_exists(GameProfile.PATH)
+	var disk := FileAccess.get_file_as_bytes(GameProfile.PATH) if existed else PackedByteArray()
+	GameProfile._loaded = true
+	GameProfile.data = {"league":[], "captured":{}, "shinies":[], "stardust":0, "totalStardust":0}
 	var w = load("res://scenes/main.tscn").instantiate()
 	var override := OS.get_environment("C24_LIVE_WORLD_SCRIPT")
 	if override != "":
@@ -68,11 +68,11 @@ func run() -> void:
 			ck(w._pending_shiny_ally == null, "swap clears pending")
 			ck(w._shiny_ally == (e if i == 1 else old), "swap choice respected")
 			ck(get_nodes_in_group("allies").size() == 1, "one shiny ally after swap")
-	ck(Profile.stardust() == 220, "shiny real capture first120 repeat50 twice")
-	ck(Profile.data.captured.is_empty() and Profile.data.league.is_empty(), "shiny no normal capture or Liga")
-	var dust_before: int = Profile.stardust()
+	ck(GameProfile.stardust() == 220, "shiny real capture first120 repeat50 twice")
+	ck(GameProfile.data.captured.is_empty() and GameProfile.data.league.is_empty(), "shiny no normal capture or Liga")
+	var dust_before: int = GameProfile.stardust()
 	w._throw_ball(w._shiny_ally)
-	ck(Profile.stardust() == dust_before and w._shiny_ally.is_in_group("allies"), "already caught ally cannot be thrown again")
+	ck(GameProfile.stardust() == dust_before and w._shiny_ally.is_in_group("allies"), "already caught ally cannot be thrown again")
 	var ally = w._shiny_ally
 	ally.bond_level = 2
 	ally.ally_kills = 24
@@ -97,9 +97,9 @@ func run() -> void:
 		classic.capture_attempts = 3
 		classic.is_weakened = true
 		w._throw_ball(classic)
-		ck(Profile.skin_available(key,"classic") and Profile.stardust() == 420, "real Classic capture records and pays200")
+		ck(GameProfile.skin_available(key,"classic") and GameProfile.stardust() == 420, "real Classic capture records and pays200")
 		ck(w._shiny_ally == ally and get_nodes_in_group("allies").size() == 1, "Classic never creates ally")
-		ck(Profile.data.league.is_empty() and Profile.data.captured.is_empty(), "Classic never Liga or normal capture")
+		ck(GameProfile.data.league.is_empty() and GameProfile.data.captured.is_empty(), "Classic never Liga or normal capture")
 	var normal_a = w._spawn_enemy_at("rattata",Vector3(3,0,3),1.0,false)
 	normal_a.make_ally()
 	var normal_b = w._spawn_enemy_at("rattata",Vector3(4,0,4),1.0,false)
@@ -107,8 +107,8 @@ func run() -> void:
 	w._master_ball = true
 	w._throw_ball(normal_b)
 	ck(normal_b.mode == Enemy.MODE_ALLY and get_nodes_in_group("allies").size() == 3, "shiny extra slot allows two normal allies at cap2")
-	Profile.data["counters"] = {"runs":2}
-	ck(Profile.challenge_done("bulbasaur"), "Liga fixture actually eligible")
+	GameProfile.data["counters"] = {"runs":2}
+	ck(GameProfile.challenge_done("bulbasaur"), "Liga fixture actually eligible")
 	w.state = "playing"
 	w.running = true
 	w._league_done = false
@@ -166,9 +166,9 @@ func run() -> void:
 	w.queue_free()
 	await process_frame
 	if existed:
-		var f := FileAccess.open(Profile.PATH,FileAccess.WRITE)
+		var f := FileAccess.open(GameProfile.PATH,FileAccess.WRITE)
 		f.store_buffer(disk)
 	else:
-		DirAccess.remove_absolute(Profile.PATH)
+		DirAccess.remove_absolute(GameProfile.PATH)
 	print("C24 LIVE SUMMARY checks=%d fails=%d" % [checks,fails])
 	quit(0 if fails == 0 else 1)

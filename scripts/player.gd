@@ -209,20 +209,20 @@ func recalc() -> void:
 	var sp: Dictionary = GameData.species(species_id)
 	var o := 1.0 + (float(sp.get("evoStage", 0)) + float(growth)) * 0.12
 	var old_max := max_hp
-	max_hp = round((70.0 + 45.0 * _share("hp")) * o) + float(vit.get("hp_flat", 0.0)) + float(Profile.lab_level("hp")) * 8.0
-	armor = 6.0 * _share("def") + 3.0 * _share("spd") + float(vit.get("armor_flat", 0.0)) + float(Profile.lab_level("armor")) * 2.0
-	regen = 0.25 + 0.25 * _share("hp") + float(vit.get("regen_flat", 0.0)) + float(Profile.lab_level("regen")) * 0.2
-	speed_mult = (0.92 + 0.12 * _share("spe")) * (1.0 + (float(vit.get("speed_pct", 0.0)) + float(Profile.lab_level("spd")) * 2.5) / 100.0)
+	max_hp = round((70.0 + 45.0 * _share("hp")) * o) + float(vit.get("hp_flat", 0.0)) + float(GameProfile.lab_level("hp")) * 8.0
+	armor = 6.0 * _share("def") + 3.0 * _share("spd") + float(vit.get("armor_flat", 0.0)) + float(GameProfile.lab_level("armor")) * 2.0
+	regen = 0.25 + 0.25 * _share("hp") + float(vit.get("regen_flat", 0.0)) + float(GameProfile.lab_level("regen")) * 0.2
+	speed_mult = (0.92 + 0.12 * _share("spe")) * (1.0 + (float(vit.get("speed_pct", 0.0)) + float(GameProfile.lab_level("spd")) * 2.5) / 100.0)
 	phys = (0.82 + 0.2 * _share("atk")) * (1.0 + float(vit.get("phys_pct", 0.0)) / 100.0)
 	spec = (0.82 + 0.2 * _share("spa")) * (1.0 + float(vit.get("spec_pct", 0.0)) / 100.0)
-	damage_mult = o * (1.0 + float(Profile.lab_level("dmg")) * 0.04 + Profile.shiny_damage_bonus())
-	crit_chance = 0.05 + float(vit.get("crit_pct", 0.0)) / 100.0 + float(Profile.lab_level("crit")) * 0.01
+	damage_mult = o * (1.0 + float(GameProfile.lab_level("dmg")) * 0.04 + GameProfile.shiny_damage_bonus())
+	crit_chance = 0.05 + float(vit.get("crit_pct", 0.0)) / 100.0 + float(GameProfile.lab_level("crit")) * 0.01
 	evasion = minf(0.6, 0.02 + 0.02 * _share("spe"))
-	atk_speed = 1.0 + (float(vit.get("atkspd_pct", 0.0)) + float(Profile.lab_level("atkspd")) * 2.0) / 100.0
-	area_mult = 1.0 + float(Profile.lab_level("area")) * 0.03
-	luck = float(vit.get("luck_flat", 0.0)) + float(Profile.lab_level("luck")) * 5.0
-	xp_mult = 1.0 + (float(vit.get("xp_pct", 0.0)) + float(Profile.lab_level("xp")) * 5.0) / 100.0
-	gold_mult = 1.0 + (float(vit.get("gold_pct", 0.0)) + float(Profile.lab_level("gold")) * 8.0) / 100.0
+	atk_speed = 1.0 + (float(vit.get("atkspd_pct", 0.0)) + float(GameProfile.lab_level("atkspd")) * 2.0) / 100.0
+	area_mult = 1.0 + float(GameProfile.lab_level("area")) * 0.03
+	luck = float(vit.get("luck_flat", 0.0)) + float(GameProfile.lab_level("luck")) * 5.0
+	xp_mult = 1.0 + (float(vit.get("xp_pct", 0.0)) + float(GameProfile.lab_level("xp")) * 5.0) / 100.0
+	gold_mult = 1.0 + (float(vit.get("gold_pct", 0.0)) + float(GameProfile.lab_level("gold")) * 8.0) / 100.0
 	# Cycle 20: the shiny perk ladder's stat rungs (bundle
 	# labStats @1578843 sums them into the permanent stat
 	# block): n>=2 -> +3 Luck, n>=4 -> +4% XP, n>=10 -> +3%
@@ -232,8 +232,8 @@ func recalc() -> void:
 	# rung adds here; the damage rung adds inside the
 	# damage factor above, summed with the Lab dmg adds
 	# exactly as labStats sums them (NOT a x1.03 fold).
-	luck += Profile.shiny_luck_bonus()
-	xp_mult += Profile.shiny_xp_bonus()
+	luck += GameProfile.shiny_luck_bonus()
+	xp_mult += GameProfile.shiny_xp_bonus()
 	# Cycle 9: roster passive stat mods (bundle ability table,
 	# assets/data/abilities.json). The cycle-7 hardcoded
 	# "photosynthesis +1.5 regen" is REPLACED by whatever the
@@ -252,7 +252,7 @@ func recalc() -> void:
 	lifesteal = 0.0
 	difficulty_mult = 1.0
 	enemy_amount_mult = 1.0
-	pickup_range = 6.0 + float(vit_levels.get("bug", 0)) + float(Profile.lab_level("magnet")) * 0.6
+	pickup_range = 6.0 + float(vit_levels.get("bug", 0)) + float(GameProfile.lab_level("magnet")) * 0.6
 	powerup_mult = 1.0
 	passive_extra = {}
 	for m in GameData.passive_mods(passive_id):
@@ -289,7 +289,7 @@ func recalc() -> void:
 	# C23 pack §2.4 is authoritative where the older data snapshot differs.
 	var pickup_adds := {"magnet-pull":4.0,"long-tongue":4.0,"static-wool":3.0,"keen-eye":2.0,"beacon":2.0,"gem-hoarder":2.0}
 	if pickup_adds.has(passive_id):
-		pickup_range = 6.0 + float(vit_levels.get("bug",0)) + float(Profile.lab_level("magnet"))*0.6 + float(pickup_adds[passive_id])
+		pickup_range = 6.0 + float(vit_levels.get("bug",0)) + float(GameProfile.lab_level("magnet"))*0.6 + float(pickup_adds[passive_id])
 	if base_species == "magneton" and passive_id == "pickup":
 		pickup_range += 2.0  # existing pickup table gives +2, pack proves +4 for magneton
 	# Cycle 14: blessing temp mods LAST, in push order (the bundle's
@@ -503,11 +503,11 @@ func _spawn_rig() -> void:
 	add_child(rig)
 	rig.setup(species_id)
 	# C24: selected family look survives evolution and run restart.
-	if Profile.skin_for(base_species) in ["shiny", "classic"]:
+	if GameProfile.skin_for(base_species) in ["shiny", "classic"]:
 		rig.apply_shiny()  # Classic hue is a documented 3D port choice.
 
 func move_slots() -> int:
-	return 3 + Profile.lab_level("slot-move")
+	return 3 + GameProfile.lab_level("slot-move")
 
 func has_move(key: String) -> bool:
 	for m in moves:

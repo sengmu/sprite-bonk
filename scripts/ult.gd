@@ -153,7 +153,7 @@ func rate() -> float:
 	if p != null and is_instance_valid(p) \
 			and String(p.get("passive_id")) == "lunar-blessing":
 		r *= 1.3
-	r *= 1.0 + 0.04 * float(Profile.lab_level("ult"))
+	r *= 1.0 + 0.04 * float(GameProfile.lab_level("ult"))
 	return r
 
 # ------------------------------------------------------------- charging
@@ -237,7 +237,7 @@ func update(dt: float) -> void:
 			if GameAudio.instance:
 				GameAudio.instance.deny()  # cycle 16: the deny veil's sound
 	elif (down and _hold_ok and ready() and active <= 0.0) \
-			or (bool(Profile.setting("autoUlt")) and ready() \
+			or (bool(GameProfile.setting("autoUlt")) and ready() \
 				and active <= 0.0 and _enemy_near(16.0)):
 		fire()
 
@@ -337,7 +337,7 @@ func fire() -> void:
 	# player.onUltimate() is a poke-flute item hook — no-op here.
 	p.set("_invuln_t", maxf(float(p.get("_invuln_t")), active + 0.6))
 	Input.vibrate_handheld(320)  # eo(.8, 320) rumble approximation
-	var quiet := bool(Profile.setting("autoUlt"))
+	var quiet := bool(GameProfile.setting("autoUlt"))
 	if not quiet:
 		# Cycle 16: the bundle ducks the music under the ult
 		# (duck(.35, dur + .6) @1397336) and plays the def's own
@@ -346,7 +346,7 @@ func fire() -> void:
 			GameAudio.instance.duck(0.35, active + 0.6)
 		if p.get("rig") != null:
 			p.get("rig").play_ult_pose()  # ultPoseT = .6
-		if bool(Profile.setting("ultPose")):
+		if bool(GameProfile.setting("ultPose")):
 			world.hitstop(0.32)
 			world.show_ult_cutin(display_name(ult_name()), tint_color())
 		world.show_ult_look(tint_color(), active + 0.3)

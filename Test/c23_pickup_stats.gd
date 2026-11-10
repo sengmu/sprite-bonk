@@ -1,4 +1,4 @@
-extends SceneTree
+﻿extends SceneTree
 # Real Player.recalc integration; optional isolated mutant supplied via env.
 var checks := 0
 var fails := 0
@@ -17,7 +17,7 @@ func _initialize() -> void:
 	call_deferred("run")
 
 func clean() -> void:
-	Profile.data = {"lab": {}, "shinies": [], "counters": {}}
+	GameProfile.data = {"lab": {}, "shinies": [], "counters": {}}
 	GameData._roster["1"]["passive"] = "photosynthesis"
 	p.set("species_id", "bulbasaur")
 	p.set("base_species", "bulbasaur")
@@ -30,9 +30,9 @@ func clean() -> void:
 	p.call("recalc")
 
 func run() -> void:
-	var old_loaded := Profile._loaded
-	var old_profile := Profile.data.duplicate(true)
-	Profile._loaded = true
+	var old_loaded := GameProfile._loaded
+	var old_profile := GameProfile.data.duplicate(true)
+	GameProfile._loaded = true
 	GameData.roster_for_species("bulbasaur")
 	var old_one: Dictionary = GameData._roster["1"].duplicate(true)
 	var old_magnet: Dictionary = GameData._roster["81"].duplicate(true)
@@ -64,7 +64,7 @@ func run() -> void:
 		near(float(p.get("pickup_range")), 6.0+float(spec.extra), "item pickup range " + str(spec.items))
 	for lv in [1,3,5]:
 		clean()
-		Profile.data["lab"] = {"magnet":lv}
+		GameProfile.data["lab"] = {"magnet":lv}
 		p.call("recalc")
 		near(float(p.get("pickup_range")), 6.0+.6*lv, "lab magnet level%d" % lv)
 	for lv in [1,3,5]:
@@ -74,7 +74,7 @@ func run() -> void:
 		near(float(p.get("pickup_range")), 6.0+lv, "bug pickup vitamin level%d" % lv)
 	clean()
 	GameData._roster["1"]["passive"] = "static-wool"
-	Profile.data["lab"] = {"magnet":3}
+	GameProfile.data["lab"] = {"magnet":3}
 	p.set("vit_levels", {"bug":2})
 	p.set("items", {"honey":1,"exp-share":1})
 	p.call("recalc")
@@ -83,8 +83,8 @@ func run() -> void:
 	p.free()
 	GameData._roster["1"] = old_one
 	GameData._roster["81"] = old_magnet
-	Profile.data = old_profile
-	Profile._loaded = old_loaded
+	GameProfile.data = old_profile
+	GameProfile._loaded = old_loaded
 	print("C23 PICKUP STATS SUMMARY checks=%d fails=%d" % [checks,fails])
 	quit(0 if fails == 0 else 1)
 

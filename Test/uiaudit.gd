@@ -1,4 +1,4 @@
-extends Node
+﻿extends Node
 ## UI-overlap audit captures (cycle 21 follow-up, 2026-10-27).
 ## The user reports HUD overlaps on his real Seeker while the
 ## phonehud geometry gate passes. This harness drives the
@@ -79,10 +79,10 @@ func _teleport_near(p: Dictionary, off: float) -> void:
 
 func _run() -> void:
 	DirAccess.make_dir_recursive_absolute("res://Test/out/ui_audit_c21")
-	Profile.load_profile()
-	var snap: Dictionary = JSON.parse_string(JSON.stringify(Profile.data))
+	GameProfile.load_profile()
+	var snap: Dictionary = JSON.parse_string(JSON.stringify(GameProfile.data))
 	if _scale > 0.0:
-		Profile.set_setting("touchScale", _scale)
+		GameProfile.set_setting("touchScale", _scale)
 	get_window().size = _win
 	await _frames(8)
 	var ps: PackedScene = load("res://scenes/main.tscn")
@@ -102,7 +102,7 @@ func _run() -> void:
 	var tc0: Object = _world.get("touch_controls")
 	print("UIAUDIT boot vp=", vp, " win=", _win,
 		" factor=", _world.call("_phone_factor"),
-		" touchScale=", Profile.setting("touchScale"),
+		" touchScale=", GameProfile.setting("touchScale"),
 		" scale_s=", (tc0.get("_scale_s") if tc0 else "?"))
 	# ---- menu-context screens --------------------------------
 	if _want("settings"):
@@ -223,7 +223,7 @@ func _run() -> void:
 	_finish(snap)
 
 func _finish(snap: Dictionary) -> void:
-	Profile.data = snap
-	Profile.save_profile()
+	GameProfile.data = snap
+	GameProfile.save_profile()
 	print("UIAUDIT DONE snaps=", _snaps)
 	get_tree().quit()

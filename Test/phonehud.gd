@@ -1,4 +1,4 @@
-extends Node
+﻿extends Node
 ## Phone-resolution HUD gate. Cycle 19 hotfix origin:
 ## boots the real world at phone-class windows with the
 ## phone UI factor and asserts the HUD clusters' VISUAL
@@ -261,15 +261,15 @@ func _banner_up() -> bool:
 func _run() -> void:
 	# Cycle 20.2: load BEFORE the snapshot (a pre-load
 	# snapshot restores {} and WIPES the resident).
-	Profile.load_profile()
-	var snap: Dictionary = JSON.parse_string(JSON.stringify(Profile.data))
+	GameProfile.load_profile()
+	var snap: Dictionary = JSON.parse_string(JSON.stringify(GameProfile.data))
 	if _touch_scale > 0.0:
-		Profile.set_setting("touchScale", _touch_scale)
+		GameProfile.set_setting("touchScale", _touch_scale)
 	# UI-mobile P3: P7 corner / classic pins (the snapshot
 	# taken above restores the resident's own values).
-	Profile.set_setting("hudScale", _hud if _hud > 0.0 else 1.0)
-	Profile.set_setting("minimapScale", _mm if _mm > 0.0 else 1.0)
-	Profile.set_setting("classicLayout", _classic)
+	GameProfile.set_setting("hudScale", _hud if _hud > 0.0 else 1.0)
+	GameProfile.set_setting("minimapScale", _mm if _mm > 0.0 else 1.0)
+	GameProfile.set_setting("classicLayout", _classic)
 	var win := _win
 	var factor := -1.0
 	if _mode == "phone":
@@ -316,7 +316,7 @@ func _run() -> void:
 	p.invulnerable = true
 	await _frames(30)
 	var tc0: Object = _world.get("touch_controls")
-	print("PHONEHUD scale dump touchScale=", Profile.setting("touchScale"),
+	print("PHONEHUD scale dump touchScale=", GameProfile.setting("touchScale"),
 		" scale_s=", (tc0.get("_scale_s") if tc0 else -1),
 		" tc_visible=", (tc0.get("visible") if tc0 else false))
 	# ---- state 1: hud_start, banner up -------------------
@@ -769,8 +769,8 @@ func _assert_modal(vp: Vector2, name: String) -> void:
 			str(sr) + " vp=" + str(vp))
 
 func _finish(snap: Dictionary) -> void:
-	Profile.data = snap
-	Profile.save_profile()
+	GameProfile.data = snap
+	GameProfile.save_profile()
 	print("PHONEHUD DONE checks=", _checks, " fails=", _fails)
 	get_tree().quit(1 if _fails > 0 else 0)
 
@@ -1031,8 +1031,8 @@ func _p1_phone_block(vp: Vector2) -> void:
 		and _p1_find_label(status, ally_label),
 		"vit=" + String(GameData.VITAMINS[vk]["label"]) + " ally=" + ally_label)
 	_check("P1: status page carries the run block (stardust)",
-		status != null and _p1_find_label(status, str(Profile.stardust())),
-		"dust=" + str(Profile.stardust()))
+		status != null and _p1_find_label(status, str(GameProfile.stardust())),
+		"dust=" + str(GameProfile.stardust()))
 	await _p1_snap("pause_status")
 	# The pause is a modal: the banner clock must not move.
 	var acc := 0.0
@@ -1136,7 +1136,7 @@ func _p1_two_thumb(vp: Vector2) -> void:
 
 func _p1_two_thumb_run(vp: Vector2) -> void:
 	await _p1_settle_drafts()
-	Profile.set_setting("camAssist", false)
+	GameProfile.set_setting("camAssist", false)
 	var tc: Object = _world.get("touch_controls")
 	for i in range(300):
 		if tc != null and (tc as Control).visible:
@@ -1154,7 +1154,7 @@ func _p1_two_thumb_run(vp: Vector2) -> void:
 		_check("P1: touch layer up for the two-thumb test", false,
 			"state=" + String(_world.get("state")) + " modals=" + str(open))
 		return
-	var cs := float(Profile.setting("camSpeed"))
+	var cs := float(GameProfile.setting("camSpeed"))
 	var layer_off := (tc as Control).get_global_rect().position
 	var jp: Vector2 = layer_off + Vector2(tc.call("_joy_home"))
 	var cp := Vector2(vp.x * 0.62, vp.y * 0.62)
@@ -1371,8 +1371,8 @@ func _p2_state(vp: Vector2, st: String) -> void:
 	# 1.372. The tier edge sits at the formula's crossing and
 	# the exact-formula check below pins every vw instead.
 	var s_t := hero.scale.x
-	var hs := float(Profile.setting("hudScale"))
-	var mms := float(Profile.setting("minimapScale"))
+	var hs := float(GameProfile.setting("hudScale"))
+	var mms := float(GameProfile.setting("minimapScale"))
 	var s_full := float(_world.call("_kr")) * hs
 	# UI-mobile P3 (plan P7): s_mm also fits the column
 	# (minimap + kills) above the thumb cluster — binds only
@@ -1564,7 +1564,7 @@ func _p2_parity() -> void:
 	var want := {
 		"zone_en": String(zrow["en"]),
 		"elapsed": String(_world.call("_fmt_elapsed", float(_world.get("elapsed")))),
-		"dust": str(Profile.stardust()),
+		"dust": str(GameProfile.stardust()),
 		"zone_idx": "第 %d/%d 区" % [zone, zones.size()],
 		"tier": "难度：普通",
 		"species_en": String(_world.call("_hud_info_for", String(pl.species_id))["en"]),
@@ -1736,8 +1736,8 @@ func _p3_cluster_top(x0: float, x1: float) -> float:
 ## uncapped column (conservative).
 func _p3_s_mm_want() -> float:
 	var ui_rect := (_world.get("_ui_root") as Control).get_global_rect()
-	var s := float(_world.call("_kr")) * float(Profile.setting("hudScale"))
-	var mmw := 176.0 * float(Profile.setting("minimapScale"))
+	var s := float(_world.call("_kr")) * float(GameProfile.setting("hudScale"))
+	var mmw := 176.0 * float(GameProfile.setting("minimapScale"))
 	var w := minf(s, 1.30)
 	var ct := _p3_cluster_top(ui_rect.end.x - 12.0 - mmw * w, ui_rect.end.x - 12.0)
 	if ct < INF:
@@ -2239,28 +2239,28 @@ func _p3_phone_block(vp: Vector2) -> void:
 				for ch in row.get_children():
 					if ch is Button:
 						sw = ch
-	var v0 := bool(Profile.setting("camAssist"))
+	var v0 := bool(GameProfile.setting("camAssist"))
 	var v1 := v0
 	var aim1 := false
 	if sw != null:
 		sw.emit_signal("pressed")
 		await _p1_pframes(2)
-		v1 = bool(Profile.setting("camAssist"))
+		v1 = bool(GameProfile.setting("camAssist"))
 		aim1 = bool(tc.get("_aim_on"))
 		sw.emit_signal("pressed")
 		await _p1_pframes(2)
 	_check("P3: aim toggle lives in the pause quick row",
-		sw != null and v1 != v0 and aim1 == v1 and bool(Profile.setting("camAssist")) == v0,
+		sw != null and v1 != v0 and aim1 == v1 and bool(GameProfile.setting("camAssist")) == v0,
 		"found=" + str(sw != null) + " v0=" + str(v0) + " v1=" + str(v1) + " tc_aim=" + str(aim1))
 	_world._close_pause()
 	await _p1_pframes(6)
 	# ---- a camera swipe sliding across the lock keeps turning
 	# (lock moved onto the arc = into the right thumb's path)
 	await _p3_sample_ready()
-	Profile.set_setting("camAssist", false)
+	GameProfile.set_setting("camAssist", false)
 	var btns: Dictionary = tc.get("_buttons")
 	var lr := _vis_rect((btns["lock"] as Dictionary)["area"] as Control)
-	var cs := float(Profile.setting("camSpeed"))
+	var cs := float(GameProfile.setting("camSpeed"))
 	var st0 := Vector2(lr.position.x - 70.0, lr.get_center().y)
 	var y0 := float(_world.get("cam_yaw"))
 	for attempt in range(4):
@@ -2331,7 +2331,7 @@ func _p3_layout_sig() -> Dictionary:
 	var obj = _world.get("_obj_pill")
 	var ph = _world.get("_portrait_hit")
 	return {
-		"classic": bool(Profile.setting("classicLayout")),
+		"classic": bool(GameProfile.setting("classicLayout")),
 		"pause_btn": ((btns["pause"] as Dictionary)["area"] as Control).visible,
 		"aim_btn": ((btns["aim"] as Dictionary)["area"] as Control).visible,
 		"lock": str(_vis_rect((btns["lock"] as Dictionary)["area"] as Control).position.round()),
@@ -2382,7 +2382,7 @@ func _p3_classic_state(vp: Vector2, st: String) -> void:
 	var topc := _world.get("_top_card") as Control
 	var mmf := hud.get_node_or_null("MinimapFrame") as Control
 	var ui_rect := (_world.get("_ui_root") as Control).get_global_rect()
-	var s := float(_world.call("_kr")) * float(Profile.setting("hudScale"))
+	var s := float(_world.call("_kr")) * float(GameProfile.setting("hudScale"))
 	var want := minf(s, (ui_rect.size.x - 24.0) / 1368.0)
 	var vis_ok := true
 	for nm in ["_pw_row", "_zone_en", "_elapsed_label", "_dust_label"]:
@@ -2609,7 +2609,7 @@ func _p4_state(vp: Vector2, st: String, prompt_state: bool) -> void:
 	_check("P4: moves row over vitamins row, lock slot ends row 1 (" + st + ")", order_ok)
 	# -- s_bl = min(s, 1.35), narrowed only to keep the rows out
 	# of the centre rect and the bubble's span >= 300 (floor 0.8)
-	var s := float(_world.call("_kr")) * float(Profile.setting("hudScale"))
+	var s := float(_world.call("_kr")) * float(GameProfile.setting("hudScale"))
 	var want := minf(s, 1.35)
 	# centre rect (plan B0.2): rows past 0.30·vw must keep their
 	# top at/below 0.85·vh (rows design height 82)
@@ -2747,7 +2747,7 @@ func _p4_bubble(st: String, r_bl: Rect2, ui_rect: Rect2) -> void:
 ## Classic (D6) and desktop: the 21.3.2 BL cluster untouched.
 func _p4_legacy_state(st: String, tag: String) -> void:
 	var bl := _world.get("_bl_cluster") as Control
-	var s := float(_world.call("_kr")) * float(Profile.setting("hudScale"))
+	var s := float(_world.call("_kr")) * float(GameProfile.setting("hudScale"))
 	var rows = _world.get("_bl_rows")
 	var tri = _world.get("_prompt_tri")
 	_check(tag + ": legacy BL cluster unchanged (" + st + ")",

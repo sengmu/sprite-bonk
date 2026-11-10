@@ -1,4 +1,4 @@
-extends Node
+﻿extends Node
 ## UI alignment capture (cycle 17; extended cycle 18). Boots
 ## the real world and snaps the screens the round restyles:
 ## menu, lab, shop, settings, loadout, in-run HUD (bare and
@@ -52,18 +52,18 @@ func _run() -> void:
 	# bought + two items shelved on a snapshot-restored
 	# profile (the standing tool leaves the resident
 	# profile byte-identical).
-	var snap: Dictionary = JSON.parse_string(JSON.stringify(Profile.data))
-	Profile.add_stardust(100000)
-	Profile.lab_buy("archive")
-	Profile.lab_buy("archive")
-	Profile.archive_item("protein", true)
-	Profile.archive_item("iron", true)
+	var snap: Dictionary = JSON.parse_string(JSON.stringify(GameProfile.data))
+	GameProfile.add_stardust(100000)
+	GameProfile.lab_buy("archive")
+	GameProfile.lab_buy("archive")
+	GameProfile.archive_item("protein", true)
+	GameProfile.archive_item("iron", true)
 	_world._lab_set_mode("items")
 	await _frames(6)
 	await _snap("labitems")
 	_world._lab_set_mode("upgrades")
-	Profile.data = snap
-	Profile.save_profile()
+	GameProfile.data = snap
+	GameProfile.save_profile()
 	(_world.get("_lab_panel") as Control).visible = false
 	(_world.get("_shop_panel") as Control).visible = true
 	_world._refresh_shop()

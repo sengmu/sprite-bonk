@@ -682,7 +682,7 @@ var _kill_chain_t := -10.0
 
 func _ready() -> void:
 	_rng.seed = 7
-	Profile.load_profile()
+	GameProfile.load_profile()
 	_pal = ZONES[0]["pal"]
 	# Cycle 17: the UI font stacks live in UiTheme (Fredoka /
 	# Smiley display, Nunito / Noto-Heavy body); _font keeps its
@@ -3487,10 +3487,10 @@ func _build_hud() -> void:
 	touch_controls = TouchControls.new()
 	outer_root.add_child(touch_controls)
 	touch_controls.ult_pressed.connect(_on_ult_button)
-	cam_dist = float(Profile.setting("camDist"))
-	touch_controls.apply_scale(float(Profile.setting("touchScale")))
-	touch_controls.fixed_stick = bool(Profile.setting("fixedStick"))
-	touch_controls.set_aim_state(bool(Profile.setting("camAssist")))
+	cam_dist = float(GameProfile.setting("camDist"))
+	touch_controls.apply_scale(float(GameProfile.setting("touchScale")))
+	touch_controls.fixed_stick = bool(GameProfile.setting("fixedStick"))
+	touch_controls.set_aim_state(bool(GameProfile.setting("camAssist")))
 	# UI-mobile P2 (plan T6 / I1 / I2): the weather chip is
 	# tappable on phone. The chip sits under the joystick
 	# zone (left 52%, STOP), so its hit area lives on the
@@ -3529,7 +3529,7 @@ func _build_hud() -> void:
 	# shop / unlock / wallet) never pass _apply_ui_scale — place
 	# the modal family and the menu once at boot.
 	if _p5_on:
-		var s5 := _kr() * float(Profile.setting("hudScale"))
+		var s5 := _kr() * float(GameProfile.setting("hudScale"))
 		for c in _p5_spec.keys():
 			_p5_place_modal(c, s5)
 		_p5_layout_menu(s5)
@@ -3612,7 +3612,7 @@ func _on_player_evolved() -> void:
 	audio.cry(player.species_id)
 	audio.duck(0.2, 1.5)
 	_apply_starter_hud(player.species_id)
-	Profile.count("evolutions")
+	GameProfile.count("evolutions")
 	run_evos += 1  # cycle 18: results fact grid
 	add_trauma(0.6)  # bundle: evolution reveal -> shake(0.6) (@1475986)
 	# Cycle 9 (audit §2): the bundle's morph runs a timed effect
@@ -3853,10 +3853,10 @@ func _build_menu(root: Control) -> void:
 	_menu_intro_items.append(kitem[0])
 	var ksub: Label = kitem[1]
 	var refresh_ksub := func() -> void:
-		ksub.text = "当前：%s" % ("开" if bool(Profile.setting("shakeOn")) else "关")
+		ksub.text = "当前：%s" % ("开" if bool(GameProfile.setting("shakeOn")) else "关")
 	(kitem[0] as Button).pressed.connect(func() -> void:
 		audio.click()
-		Profile.set_setting("shakeOn", not bool(Profile.setting("shakeOn")))
+		GameProfile.set_setting("shakeOn", not bool(GameProfile.setting("shakeOn")))
 		refresh_ksub.call())
 	refresh_ksub.call()
 	# Cycle 19 (audit punch #18): the right side of the menu
@@ -3901,7 +3901,7 @@ func _build_menu(root: Control) -> void:
 	resources.name = "Resources"
 	resources.position = Vector2(820, 26) if not _p5_on else Vector2(698, 8)
 	resources.add_theme_constant_override("separation", 10)
-	for entry in [["星尘 %d  +" % Profile.stardust(), "lab"], ["累计 %d  +" % int(Profile.data.get("totalStardust", 0)), "shop"]]:
+	for entry in [["星尘 %d  +" % GameProfile.stardust(), "lab"], ["累计 %d  +" % int(GameProfile.data.get("totalStardust", 0)), "shop"]]:
 		var pill := UiTheme.make_button(String(entry[0]), "ghost", "normal")
 		var dest: String = entry[1]
 		pill.pressed.connect(func() -> void:
@@ -4072,25 +4072,25 @@ func _refresh_wallet_ui() -> void:
 
 func _refresh_meta() -> void:
 	if _meta_status:
-		_meta_status.text = "星尘 %d · 联盟 %d 只" % [Profile.stardust(), (Profile.data.get("league", []) as Array).size()]
+		_meta_status.text = "星尘 %d · 联盟 %d 只" % [GameProfile.stardust(), (GameProfile.data.get("league", []) as Array).size()]
 	# Cycle 19: mm-badge counts (audit punch #18) — Lab rows
 	# buyable right now, shop quota left today, challenges
 	# completed.
 	if not _menu_badges.is_empty():
 		var lab_n := 0
-		for id in Profile.LAB_ORDER:
-			var cst := Profile.lab_cost(id)
-			if cst >= 0 and Profile.stardust() >= cst:
+		for id in GameProfile.LAB_ORDER:
+			var cst := GameProfile.lab_cost(id)
+			if cst >= 0 and GameProfile.stardust() >= cst:
 				lab_n += 1
 		_set_badge("lab", lab_n)
-		var counts := Profile.shop_bought_today(Profile.shop_now())
+		var counts := GameProfile.shop_bought_today(GameProfile.shop_now())
 		var shop_n := 0
-		for it in Profile.SHOP_ITEMS:
+		for it in GameProfile.SHOP_ITEMS:
 			shop_n += maxi(0, int(it["daily"]) - int(counts.get(String(it["id"]), 0)))
 		_set_badge("shop", shop_n)
 		var done_n := 0
-		for key in Profile.challenge_order():
-			if Profile.challenge_done(key):
+		for key in GameProfile.challenge_order():
+			if GameProfile.challenge_done(key):
 				done_n += 1
 		_set_badge("unlock", done_n)
 	_refresh_starter_unlocks()
@@ -4101,7 +4101,7 @@ func _refresh_starter_unlocks() -> void:
 		return
 	for c in _starter_unlock_box.get_children():
 		c.queue_free()
-	for fam in Profile.data.get("league", []):
+	for fam in GameProfile.data.get("league", []):
 		var key := GameData.species_key_for_family(int(fam))
 		if key == "" or key in ["bulbasaur", "charmander", "squirtle"]:
 			continue
@@ -4169,7 +4169,7 @@ func _refresh_lab() -> void:
 	for c in _lab_list.get_children():
 		_lab_list.remove_child(c)
 		c.queue_free()
-	_lab_info.text = "星尘 %d · 累计 %d" % [Profile.stardust(), int(Profile.data.get("totalStardust", 0))]
+	_lab_info.text = "星尘 %d · 累计 %d" % [GameProfile.stardust(), int(GameProfile.data.get("totalStardust", 0))]
 	var columns := HBoxContainer.new()
 	columns.add_theme_constant_override("separation", 20)
 	_lab_list.add_child(columns)
@@ -4190,11 +4190,11 @@ func _refresh_lab() -> void:
 					var other := grid.get_child(j) as Control
 					grid.draw_line(node.position + Vector2(33, 27), other.position + Vector2(33, 27), UiTheme.INK_DEEP, 5, true))
 	grid.resized.connect(func() -> void: grid.queue_redraw())
-	for id in Profile.LAB_ORDER:
-		var lv := Profile.lab_level(id)
+	for id in GameProfile.LAB_ORDER:
+		var lv := GameProfile.lab_level(id)
 		var b := UiTheme.make_button("", "ghost", "small")
 		b.custom_minimum_size = Vector2(66, 78)
-		b.tooltip_text = String(Profile.LAB[id]["label"])
+		b.tooltip_text = String(GameProfile.LAB[id]["label"])
 		var accent := UiTheme.GREEN_DEEP if lv > 0 else UiTheme.MUTED
 		if id == _lab_selected:
 			accent = UiTheme.ORANGE
@@ -4205,7 +4205,7 @@ func _refresh_lab() -> void:
 			var lock_icon := UiIcon.new("lock", UiTheme.TEXT, 14)
 			lock_icon.position = Vector2(44, 36)
 			b.add_child(lock_icon)
-		_label_in(b, "已满" if Profile.lab_cost(id) < 0 else "%d级" % lv, Vector2(0, 52), Vector2(66, 24), 13, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER)
+		_label_in(b, "已满" if GameProfile.lab_cost(id) < 0 else "%d级" % lv, Vector2(0, 52), Vector2(66, 24), 13, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER)
 		var selected: String = id
 		b.pressed.connect(func() -> void:
 			_lab_selected = selected
@@ -4219,9 +4219,9 @@ func _refresh_lab() -> void:
 	_lab_detail = VBoxContainer.new()
 	_lab_detail.add_theme_constant_override("separation", 8)
 	detail.add_child(_lab_detail)
-	var cfg: Dictionary = Profile.LAB[_lab_selected]
-	var level := Profile.lab_level(_lab_selected)
-	var cost := Profile.lab_cost(_lab_selected)
+	var cfg: Dictionary = GameProfile.LAB[_lab_selected]
+	var level := GameProfile.lab_level(_lab_selected)
+	var cost := GameProfile.lab_cost(_lab_selected)
 	var hero := UiBadge.new(_lab_icon(_lab_selected), UiTheme.GREEN_DEEP, 84)
 	hero.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_lab_detail.add_child(hero)
@@ -4231,9 +4231,9 @@ func _refresh_lab() -> void:
 	_mk_label(_lab_detail, "最高等级  %d" % int(cfg["max"]), 17, UiTheme.TEXT)
 	_mk_label(_lab_detail, "升级消耗  %d 星尘" % cost if cost >= 0 else "已达最高等级", 17, UiTheme.TEXT)
 	var buy := UiTheme.make_button("升级" if cost >= 0 else "已满", "orange", "big")
-	buy.disabled = cost < 0 or Profile.stardust() < cost
+	buy.disabled = cost < 0 or GameProfile.stardust() < cost
 	buy.pressed.connect(func() -> void:
-		if Profile.lab_buy(_lab_selected):
+		if GameProfile.lab_buy(_lab_selected):
 			audio.coin()
 			if player and is_instance_valid(player):
 				player.recalc()
@@ -4274,8 +4274,8 @@ func _refresh_lab_items() -> void:
 		return
 	for c in _lab_items_list.get_children():
 		c.queue_free()
-	var cap := Profile.archive_capacity()
-	var arch := Profile.archived_items()
+	var cap := GameProfile.archive_capacity()
+	var arch := GameProfile.archived_items()
 	var head := _mk_label(_lab_items_list, "档案 %d/%d" % [arch.size(), cap], 16, UiTheme.GOLD)
 	head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	if cap <= 0:
@@ -4286,7 +4286,7 @@ func _refresh_lab_items() -> void:
 	hint2.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	# Presets: save the current set (max 3), apply, delete
 	# (deleting a preset never changes the Archive itself).
-	var presets := Profile.archive_presets()
+	var presets := GameProfile.archive_presets()
 	var prow := HBoxContainer.new()
 	prow.add_theme_constant_override("separation", 6)
 	prow.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -4296,11 +4296,11 @@ func _refresh_lab_items() -> void:
 		var pd: Dictionary = presets[i]
 		var idx := i
 		var ab := UiTheme.make_button(
-			String(pd.get("name", "预设")) + ("（使用中）" if Profile.archive_preset_active() == i else ""),
+			String(pd.get("name", "预设")) + ("（使用中）" if GameProfile.archive_preset_active() == i else ""),
 			"green", "small")
-		ab.disabled = Profile.archive_preset_active() == i
+		ab.disabled = GameProfile.archive_preset_active() == i
 		ab.pressed.connect(func() -> void:
-			var missed := Profile.archive_preset_apply(idx)
+			var missed := GameProfile.archive_preset_apply(idx)
 			audio.click()
 			if missed > 0:
 				show_banner("预设应用完成，%d 件未能归档（档案已满）" % missed, 2.5)
@@ -4308,14 +4308,14 @@ func _refresh_lab_items() -> void:
 		prow.add_child(ab)
 		var db := UiTheme.make_button("删", "ghost", "small")
 		db.pressed.connect(func() -> void:
-			Profile.archive_preset_delete(idx)
+			GameProfile.archive_preset_delete(idx)
 			audio.click()
 			_refresh_lab_items())
 		prow.add_child(db)
 	var sb := UiTheme.make_button("存为预设", "ghost", "small")
-	sb.disabled = presets.size() >= Profile.ARCHIVE_PRESET_MAX
+	sb.disabled = presets.size() >= GameProfile.ARCHIVE_PRESET_MAX
 	sb.pressed.connect(func() -> void:
-		if Profile.archive_preset_save("预设 %d" % (Profile.archive_presets().size() + 1)):
+		if GameProfile.archive_preset_save("预设 %d" % (GameProfile.archive_presets().size() + 1)):
 			audio.coin()
 		else:
 			audio.deny()
@@ -4345,7 +4345,7 @@ func _refresh_lab_items() -> void:
 		var captured: String = k
 		var captured_arch: bool = is_arch
 		b.pressed.connect(func() -> void:
-			if Profile.archive_item(captured, not captured_arch):
+			if GameProfile.archive_item(captured, not captured_arch):
 				audio.click()
 				_refresh_lab_items()
 			else:
@@ -4360,17 +4360,17 @@ func _apply_audio_settings() -> void:
 	if audio == null:
 		return
 	audio.set_volumes({
-		"master": float(Profile.setting("master")),
-		"music": float(Profile.setting("music")),
-		"sfx": float(Profile.setting("sfx")),
-		"cries": float(Profile.setting("cries"))})
+		"master": float(GameProfile.setting("master")),
+		"music": float(GameProfile.setting("music")),
+		"sfx": float(GameProfile.setting("sfx")),
+		"cries": float(GameProfile.setting("cries"))})
 	_update_hidden_mute()
 
 func _update_hidden_mute() -> void:
 	if audio == null:
 		return
 	# Their rule: (hidden || unfocused) && muteHidden.
-	audio.set_hidden_mute((not _window_focused) and bool(Profile.setting("muteHidden")))
+	audio.set_hidden_mute((not _window_focused) and bool(GameProfile.setting("muteHidden")))
 
 var _window_focused := true
 
@@ -4456,7 +4456,7 @@ func _build_shop_panel(root: Control) -> void:
 func _refresh_shop_countdown() -> void:
 	if _shop_countdown == null:
 		return
-	var secs := Profile.shop_seconds_to_reset(Profile.shop_now())
+	var secs := GameProfile.shop_seconds_to_reset(GameProfile.shop_now())
 	_shop_countdown.text = "今日名额刷新倒计时：%d 小时 %d 分（00:00 UTC）" % [secs / 3600, (secs % 3600) / 60]
 
 func _refresh_shop() -> void:
@@ -4464,16 +4464,16 @@ func _refresh_shop() -> void:
 		return
 	for c in _shop_list.get_children():
 		c.queue_free()
-	var now := Profile.shop_now()
-	var counts := Profile.shop_bought_today(now)
-	_shop_info.text = "✦ 星尘 %d（累计 %d）" % [Profile.stardust(), int(Profile.data.get("totalStardust", 0))]
+	var now := GameProfile.shop_now()
+	var counts := GameProfile.shop_bought_today(now)
+	_shop_info.text = "✦ 星尘 %d（累计 %d）" % [GameProfile.stardust(), int(GameProfile.data.get("totalStardust", 0))]
 	_refresh_shop_countdown()
-	for it in Profile.SHOP_ITEMS:
+	for it in GameProfile.SHOP_ITEMS:
 		var id := String(it["id"])
 		var bought := int(counts.get(id, 0))
 		var daily := int(it["daily"])
-		var in_bag := Profile.bag_count(id)
-		var price := Profile.shop_price(id, now)
+		var in_bag := GameProfile.bag_count(id)
+		var price := GameProfile.shop_price(id, now)
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 8)
 		var name_l := _mk_label(row, "%s\n%s" % [String(it["name"]), String(it["desc"])], 13)
@@ -4486,9 +4486,9 @@ func _refresh_shop() -> void:
 		# muted sub-label in the meta column — it used to be a
 		# second line INSIDE the buy button, which also made
 		# every button a different width.
-		var meta_txt := "背包 %d/%d · 今日 %d/%d" % [in_bag, Profile.SHOP_BAG_CAP, bought, daily]
+		var meta_txt := "背包 %d/%d · 今日 %d/%d" % [in_bag, GameProfile.SHOP_BAG_CAP, bought, daily]
 		if bought < daily and bought + 1 < daily:
-			meta_txt += "\n下一份 ✦ %d" % int(round(float(it["price"]) * (1.0 + Profile.SHOP_PRICE_STEP * float(bought + 1))))
+			meta_txt += "\n下一份 ✦ %d" % int(round(float(it["price"]) * (1.0 + GameProfile.SHOP_PRICE_STEP * float(bought + 1))))
 		elif bought < daily:
 			meta_txt += "\n今日最后一份"
 		var meta_l := _mk_label(row, meta_txt, 13, Color(0.8, 0.85, 0.95))
@@ -4498,17 +4498,17 @@ func _refresh_shop() -> void:
 		if bought >= daily:
 			b.text = "今日售罄"
 			b.disabled = true
-		elif in_bag >= Profile.SHOP_BAG_CAP:
+		elif in_bag >= GameProfile.SHOP_BAG_CAP:
 			b.text = "背包已满"
 			b.disabled = true
-		elif Profile.stardust() < price:
+		elif GameProfile.stardust() < price:
 			b.text = "✦ %d（星尘不足）" % price
 			b.disabled = true
 		else:
 			b.text = "购买 ✦ %d" % price
 		var captured_id: String = id
 		b.pressed.connect(func() -> void:
-			var err := Profile.shop_buy(captured_id)
+			var err := GameProfile.shop_buy(captured_id)
 			if err == "":
 				audio.power()
 				_refresh_meta()
@@ -4638,7 +4638,7 @@ func _st_slider(parent: Container, label: String, key: String,
 	slider.min_value = mn
 	slider.max_value = mx
 	slider.step = step
-	slider.value = float(Profile.setting(key))
+	slider.value = float(GameProfile.setting(key))
 	slider.custom_minimum_size = Vector2(220, 0)
 	if _p5_on:
 		# The pause page's quick row is narrower than the settings
@@ -4652,7 +4652,7 @@ func _st_slider(parent: Container, label: String, key: String,
 	var val_l := _mk_label(hb, fmt % (slider.value * disp), 13, UiTheme.MUTED)
 	val_l.custom_minimum_size = Vector2(52, 0)
 	slider.value_changed.connect(func(v: float) -> void:
-		Profile.set_setting(key, v)
+		GameProfile.set_setting(key, v)
 		val_l.text = fmt % (v * disp)
 		if apply.is_valid():
 			apply.call())
@@ -4669,11 +4669,11 @@ func _p5_slider_len() -> float:
 func _st_switch(parent: Container, label: String, key: String,
 		apply: Callable = Callable()) -> Button:
 	var hb := _st_row(parent, label)
-	var sw := UiTheme.make_switch(bool(Profile.setting(key)))
+	var sw := UiTheme.make_switch(bool(GameProfile.setting(key)))
 	sw.pressed.connect(func() -> void:
 		audio.click()
-		var nv := not bool(Profile.setting(key))
-		Profile.set_setting(key, nv)
+		var nv := not bool(GameProfile.setting(key))
+		GameProfile.set_setting(key, nv)
 		UiTheme.set_switch(sw, nv)
 		if apply.is_valid():
 			apply.call())
@@ -4695,14 +4695,14 @@ func _settings_page_gfx() -> void:
 	var hb := _st_row(_settings_page, "帧率上限")
 	var opts := ["关", "30", "60", "90", "120"]
 	var vals := [0, 30, 60, 90, 120]
-	var cur := vals.find(int(Profile.setting("fpsCap")))
+	var cur := vals.find(int(GameProfile.setting("fpsCap")))
 	var seg := UiTheme.make_segmented(opts, maxi(cur, 0))
 	for b in seg.get_children():
 		var bb := b as Button
 		bb.pressed.connect(func() -> void:
 			audio.click()
 			var i := int(bb.get_meta("seg_i"))
-			Profile.set_setting("fpsCap", vals[i])
+			GameProfile.set_setting("fpsCap", vals[i])
 			Engine.max_fps = int(vals[i])
 			UiTheme.set_segmented(seg, i))
 	hb.add_child(seg)
@@ -4714,17 +4714,17 @@ func _settings_page_controls() -> void:
 	_st_switch(_settings_page, "镜头辅助（瞄准）", "camAssist",
 		func() -> void:
 			if touch_controls:
-				touch_controls.set_aim_state(bool(Profile.setting("camAssist"))))
+				touch_controls.set_aim_state(bool(GameProfile.setting("camAssist"))))
 	_st_switch(_settings_page, "固定摇杆", "fixedStick",
 		func() -> void:
 			if touch_controls:
-				touch_controls.fixed_stick = bool(Profile.setting("fixedStick")))
+				touch_controls.fixed_stick = bool(GameProfile.setting("fixedStick")))
 	_st_slider(_settings_page, "触控按钮大小", "touchScale", 0.7, 1.5, 0.05, "%.2f",
 		func() -> void:
 			if touch_controls:
-				touch_controls.apply_scale(float(Profile.setting("touchScale"))))
+				touch_controls.apply_scale(float(GameProfile.setting("touchScale"))))
 	_st_slider(_settings_page, "镜头距离", "camDist", 4.5, 20.0, 0.5, "%.1f",
-		func() -> void: cam_dist = float(Profile.setting("camDist")))
+		func() -> void: cam_dist = float(GameProfile.setting("camDist")))
 	_st_slider(_settings_page, "镜头灵敏度", "camSpeed", 0.5, 2.0, 0.1, "%.1f")
 	_st_switch(_settings_page, "镜头 Y 轴反转", "invertY")
 
@@ -4790,7 +4790,7 @@ func _settings_page_account() -> void:
 				if is_instance_valid(resetb):
 					resetb.text = "重置存档")
 		else:
-			Profile.reset_all()
+			GameProfile.reset_all()
 			get_tree().reload_current_scene())
 	_settings_page.add_child(resetb)
 	var legal_button := UiTheme.make_button("隐私政策与服务条款", "ghost")
@@ -4877,15 +4877,15 @@ func _refresh_unlock_panel() -> void:
 	for c in _unlock_list.get_children():
 		c.queue_free()
 	_unlock_info.text = "联盟 %d 只 · 累计击杀 %d · 完成对局 %d · 阿尔法 %d · 守护者 %d · 收服 %d" % [
-		(Profile.data.get("league", []) as Array).size(),
-		int(Profile.counter_value("kills")), int(Profile.counter_value("runs")),
-		int(Profile.counter_value("alphas")), int(Profile.counter_value("bosses")),
-		int(Profile.counter_value("captures"))]
-	for key in Profile.challenge_order():
-		var cfg: Dictionary = Profile.challenges()[key]
+		(GameProfile.data.get("league", []) as Array).size(),
+		int(GameProfile.counter_value("kills")), int(GameProfile.counter_value("runs")),
+		int(GameProfile.counter_value("alphas")), int(GameProfile.counter_value("bosses")),
+		int(GameProfile.counter_value("captures"))]
+	for key in GameProfile.challenge_order():
+		var cfg: Dictionary = GameProfile.challenges()[key]
 		var sd: Dictionary = GameData.species(key)
-		var in_league := Profile.in_league(int(sd.get("family", 0)))
-		var done := Profile.challenge_done(key)
+		var in_league := GameProfile.in_league(int(sd.get("family", 0)))
+		var done := GameProfile.challenge_done(key)
 		var status := "已加入联盟 ★" if in_league else ("挑战完成 · 等待遭遇 ✓" if done else "进行中")
 		var head := _mk_label(_unlock_list, "%s（%s）· %s" % [
 			String(ModelRig.SPECIES[key]["label"]), String(cfg["rank"]), status],
@@ -4893,7 +4893,7 @@ func _refresh_unlock_panel() -> void:
 		head.custom_minimum_size = Vector2(0 if _p5_on else 600, 0)
 		if _p5_on:
 			head.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		for p in Profile.challenge_parts(key):
+		for p in GameProfile.challenge_parts(key):
 			var pd := p as Dictionary
 			var txt := "　%s：%d / %d" % [String(pd["desc"]), int(float(pd["value"])), int(float(pd["goal"]))]
 			if bool(pd.get("unsupported", false)):
@@ -5025,7 +5025,7 @@ func _draft_candidates() -> Array:
 		if int(m["level"]) < p.move_cap() and not banished_keys.has("move:" + mk):
 			cands.append({"kind": "move_up", "key": mk, "w": 2.0})
 	# Vitamins (§2.3: owned x2; new ones need a free vitamin slot).
-	var vit_slots := 3 + Profile.lab_level("slot-vit")
+	var vit_slots := 3 + GameProfile.lab_level("slot-vit")
 	for vk in GameData.VITAMINS.keys():
 		var owned := int(p.vit_levels.get(vk, 0))
 		if owned >= p.vit_cap() or banished_keys.has("vit:" + vk):
@@ -5067,7 +5067,7 @@ func _draft_draw(cands: Array, n: int) -> Array:
 	return out
 
 func _draft_option_count() -> int:
-	return 4 if Profile.lab_level("choice4") > 0 else 3
+	return 4 if GameProfile.lab_level("choice4") > 0 else 3
 
 func _step_level_up() -> void:
 	var lv := player.level - player.pending_levels + 1
@@ -5660,7 +5660,7 @@ func spawn_pickup(kind: int, pos: Vector3, value := 1.0) -> int:
 	return pickup_manager().spawn(kind, pos, value)
 
 func count_gold_pickup(value: float) -> void:
-	Profile.count("gold", value)
+	GameProfile.count("gold", value)
 
 func start_game(p_species: String, boosts: Array = [], requested_tier: int = 0) -> void:
 	if state != "menu":
@@ -5674,7 +5674,7 @@ func start_game(p_species: String, boosts: Array = [], requested_tier: int = 0) 
 		zone = _live_zone
 		_pal = ZONES[_live_zone - 1]["pal"]
 		_apply_zone_data(_zone_data(_live_zone))
-	run_tier = clampi(requested_tier, 0, Profile.biome_tier_cap("forest"))
+	run_tier = clampi(requested_tier, 0, GameProfile.biome_tier_cap("forest"))
 	state = "playing"
 	running = true
 	elapsed = 0.0
@@ -5722,12 +5722,12 @@ func start_game(p_species: String, boosts: Array = [], requested_tier: int = 0) 
 	_fog = PackedByteArray()
 	_fog.resize(48 * 48)
 	_snap_done.clear()
-	for sp in Profile.challenge_order():
-		if Profile.challenge_done(sp):
+	for sp in GameProfile.challenge_order():
+		if GameProfile.challenge_done(sp):
 			_snap_done[sp] = true
-	_snap_seen = (Profile.data.get("seen", []) as Array).size()
-	_snap_captured = (Profile.data.get("captured", {}) as Dictionary).size()
-	_snap_league = (Profile.data.get("league", []) as Array).size()
+	_snap_seen = (GameProfile.data.get("seen", []) as Array).size()
+	_snap_captured = (GameProfile.data.get("captured", {}) as Dictionary).size()
+	_snap_league = (GameProfile.data.get("league", []) as Array).size()
 	_party_sig = ""
 	_pill_sig = ""
 	_goal_species = ""
@@ -5787,7 +5787,7 @@ func start_game(p_species: String, boosts: Array = [], requested_tier: int = 0) 
 		portal_node.queue_free()
 		portal_node = null
 	_inter_reset()
-	_bless_rng.seed = 14014 + int(Profile.data.get("counts", {}).get("runs", 0))
+	_bless_rng.seed = 14014 + int(GameProfile.data.get("counts", {}).get("runs", 0))
 	revive_used = false
 	# Cycle 21: stage-event state resets per run.
 	_event_kind = ""
@@ -5800,9 +5800,9 @@ func start_game(p_species: String, boosts: Array = [], requested_tier: int = 0) 
 	_zone_t = 0.0
 	_takeover_e = null
 	banished_keys.clear()
-	rerolls_left = 2 + Profile.lab_level("reroll")
-	skips_left = 2 + Profile.lab_level("skip")
-	banishes_left = 1 + Profile.lab_level("banish")
+	rerolls_left = 2 + GameProfile.lab_level("reroll")
+	skips_left = 2 + GameProfile.lab_level("skip")
+	banishes_left = 1 + GameProfile.lab_level("banish")
 	_league_e = null
 	_league_done = false
 	_league_spawn_at = _rng.randf_range(50.0, 120.0)  # §5.2 first encounter window
@@ -5821,7 +5821,7 @@ func start_game(p_species: String, boosts: Array = [], requested_tier: int = 0) 
 		_pause_panel.visible = false
 	if _bigmap_panel:
 		_bigmap_panel.visible = false
-	Profile.record_species_played(p_species)  # roster 'speciesPlayed' counter
+	GameProfile.record_species_played(p_species)  # roster 'speciesPlayed' counter
 	player = Player.new()
 	player.process_priority = -10  # physics before the world's camera read
 	add_child(player)
@@ -6043,7 +6043,7 @@ func _spawn_league() -> void:
 	var ready: Array = []
 	for sp in GameData.roster_species_keys():
 		var sd: Dictionary = GameData.species(String(sp))
-		if not Profile.in_league(int(sd.get("family", 0))) and Profile.challenge_done(String(sp)):
+		if not GameProfile.in_league(int(sd.get("family", 0))) and GameProfile.challenge_done(String(sp)):
 			ready.append(String(sp))
 	if ready.is_empty():
 		_league_done = true
@@ -6056,7 +6056,7 @@ func _spawn_league() -> void:
 	# spawnTarget @1049996). Our species data has no rarity
 	# field — the class proxy is captureRate <= 45 (DIFF §21).
 	if int(GameData.species(sp).get("captureRate", 255)) <= 45 \
-			and _rng.randf() < 0.03 * Profile.shiny_rate():
+			and _rng.randf() < 0.03 * GameProfile.shiny_rate():
 		e.shiny = true
 		if e.rig:
 			e.rig.apply_shiny()
@@ -6065,7 +6065,7 @@ func _spawn_league() -> void:
 	# Cycle 16: encounter fanfare + the species' cry.
 	audio.encounter()
 	audio.cry(sp)
-	Profile.mark_seen(sp)
+	GameProfile.mark_seen(sp)
 	show_banner("野生的 %s 出现了！打倒它后靠近%s，收服进联盟" % [String(ModelRig.SPECIES[sp]["label"]), _ik()], 4.0)
 
 ## Kill rewards (§4.4): XP by the enemy's own formula, gold 0.2/kill
@@ -6089,11 +6089,11 @@ func _award_kill(e: Enemy) -> void:
 		if _kill_chain >= 2:
 			audio.streak(_kill_chain)
 	kills += 1
-	Profile.count("kills")  # §3 lifetime counter (rattata/scyther)
-	Profile.count("kills_" + String(ZONES[zone - 1]["tiles"]))  # bundle tally(): count('kills_' + biome) (@741800)
+	GameProfile.count("kills")  # §3 lifetime counter (rattata/scyther)
+	GameProfile.count("kills_" + String(ZONES[zone - 1]["tiles"]))  # bundle tally(): count('kills_' + biome) (@741800)
 	if e.flag == 2:
 		_run_alphas += 1
-		Profile.count("alphas")
+		GameProfile.count("alphas")
 	if player and is_instance_valid(player):
 		pickup_manager().drops(e)
 	if _kill_chain >= 25:
@@ -6162,7 +6162,7 @@ func summon_guardian() -> void:
 	# rollLegendShiny @1053012: 3% x shinyRate, not in
 	# endless — we have no endless mode). A shiny guardian
 	# triggers the guaranteed-capture takeover on defeat.
-	if _rng.randf() < 0.03 * Profile.shiny_rate():
+	if _rng.randf() < 0.03 * GameProfile.shiny_rate():
 		guardian.shiny = true
 		if guardian.rig:
 			guardian.rig.apply_shiny()
@@ -6204,11 +6204,11 @@ func _on_guardian_killed(e: Enemy) -> void:
 	_boss_charge = {}
 	_award_kill(e)
 	bosses += 1
-	Profile.count("bosses")
-	Profile.count("boss_" + String(ZONES[zone - 1]["tiles"]))  # §3 boss_<biome> (cubone)
-	Profile.record_biome_clear(String(ZONES[zone - 1]["tiles"]), run_tier)  # local guardian-clear adaptation; pack §1.2 write site unknown
+	GameProfile.count("bosses")
+	GameProfile.count("boss_" + String(ZONES[zone - 1]["tiles"]))  # §3 boss_<biome> (cubone)
+	GameProfile.record_biome_clear(String(ZONES[zone - 1]["tiles"]), run_tier)  # local guardian-clear adaptation; pack §1.2 write site unknown
 	if zone == 4:
-		Profile.count("legendaries")  # onBossKilled: final-stage guardian counts as legendary (@1460549)
+		GameProfile.count("legendaries")  # onBossKilled: final-stage guardian counts as legendary (@1460549)
 	add_trauma(0.8)  # bundle: boss killed -> shake(0.8) (@1460549)
 	hitstop(0.5)     # bundle: boss killed -> hitstop(.5) (@1460549)
 	audio.boom(1.0)  # cycle 16: boss-kill boom + the coin reward below
@@ -7054,7 +7054,7 @@ func _chest_value() -> float:
 
 ## Cycle 21: the ally cap = 2 + Lab party + ss-ticket.
 func _team_cap() -> int:
-	var t := 2 + Profile.lab_level("party")
+	var t := 2 + GameProfile.lab_level("party")
 	if player and is_instance_valid(player):
 		t += player.item_count("ss-ticket")
 	return t
@@ -7150,7 +7150,7 @@ func _item_pool_keys() -> Array:
 		return out
 	for k in GameData.item_keys():
 		var key := String(k)
-		if Profile.item_in_pool(key) and player.item_count(key) < GameData.item_max(key):
+		if GameProfile.item_in_pool(key) and player.item_count(key) < GameData.item_max(key):
 			out.append(key)
 	return out
 
@@ -9277,7 +9277,7 @@ func _event_tick(delta: float) -> void:
 	if _event_kind == "eclipse" and not _event_shiny_rolled and _event_left < 28.0:
 		_event_shiny_rolled = true
 		if _shiny_e == null and state == "playing" and player:
-			var p := minf(0.9, (0.2 + minf(0.08, player.luck / 1000.0)) * Profile.shiny_rate())
+			var p := minf(0.9, (0.2 + minf(0.08, player.luck / 1000.0)) * GameProfile.shiny_rate())
 			if _rng.randf() < p:
 				_spawn_shiny(_event_pool_keys())
 
@@ -10965,15 +10965,15 @@ func _finish_run(victory: bool) -> void:
 	# §3 lifetime counters settle at run end (cycle 8): 'runs' counts
 	# completed runs win or lose (roster descs, news @99636+); best_*
 	# records merge with 'max' semantics (hA @1567900).
-	Profile.count("runs")
-	Profile.count_max("maxTime", run_time)
+	GameProfile.count("runs")
+	GameProfile.count_max("maxTime", run_time)
 	if player and is_instance_valid(player):
-		Profile.count_max("best_healed", player.healed_run)
-		Profile.count("healed", player.healed_run)
-	Profile.count_max("best_burned", float(run_counts.get("burned", 0)))
-	Profile.count_max("best_poisoned", float(run_counts.get("poisoned", 0)))
-	Profile.count_max("best_alphas", float(_run_alphas))
-	Profile.count_max("best_kills", float(kills))
+		GameProfile.count_max("best_healed", player.healed_run)
+		GameProfile.count("healed", player.healed_run)
+	GameProfile.count_max("best_burned", float(run_counts.get("burned", 0)))
+	GameProfile.count_max("best_poisoned", float(run_counts.get("poisoned", 0)))
+	GameProfile.count_max("best_alphas", float(_run_alphas))
+	GameProfile.count_max("best_kills", float(kills))
 	# Cycle 9: the per-run event counts merge into the lifetime
 	# counters with hA's two modes — 'add' into the lifetime total
 	# AND 'max' into the best_* record. Cycle 8 merged only
@@ -10983,12 +10983,12 @@ func _finish_run(victory: bool) -> void:
 	for k in ["burned", "poisoned", "slept", "frozen", "paralyzed", "confused", "crits", "soaked", "reactions", "rocks", "berries", "fossil_helix", "fossil_dome"]:
 		var v := float(run_counts.get(k, 0))
 		if v > 0.0:
-			Profile.count(k, v)
-		Profile.count_max("best_" + k, v)
-	Profile.save_profile()
+			GameProfile.count(k, v)
+		GameProfile.count_max("best_" + k, v)
+	GameProfile.save_profile()
 	var dust := int(round(float(_gold_to_dust(gold)) * (1.0 + float(run_tier) * 0.75)))
 	if dust > 0:
-		Profile.add_stardust(dust)
+		GameProfile.add_stardust(dust)
 	# §8 classic score (tier 0): kills*2 + time*3 + damage/200 +
 	# (stage-1)*1500 + bosses*800 + victory 6000.
 	var score := run_score(victory)
@@ -11007,7 +11007,7 @@ func _on_player_died() -> void:
 		show_banner("最大复活生效！", 3.0)
 		return
 	# Lab revive (§6.2): one in-run resurrection at 35% HP.
-	if Profile.lab_level("revive") > 0 and not revive_used:
+	if GameProfile.lab_level("revive") > 0 and not revive_used:
 		revive_used = true
 		player.revive(0.35)
 		audio.heal()  # cycle 16
@@ -11040,13 +11040,13 @@ func add_trauma(power: float, at: Vector3 = Vector3(1.0e18, 0, 0)) -> void:
 	# Cycle 9: the bundle's shake() reads the profile settings
 	# FIRST (@1447934): shakeOn off = no shake at all, and the
 	# raise scales by screenShake (default 1). Cycle 8 had neither.
-	if not bool(Profile.setting("shakeOn")):
+	if not bool(GameProfile.setting("shakeOn")):
 		return
 	var factor := 1.0
 	if at.x < 1.0e17 and player and is_instance_valid(player):
 		factor = clampf(1.0 - player.global_position.distance_to(at) / 40.0, 0.0, 1.0)
 	var cap := TRAUMA_CAP_SMALL if power < 0.15 else TRAUMA_CAP_BIG
-	trauma = maxf(trauma, minf(cap, trauma + power * factor * 0.55 * float(Profile.setting("screenShake"))))
+	trauma = maxf(trauma, minf(cap, trauma + power * factor * 0.55 * float(GameProfile.setting("screenShake"))))
 
 ## Hitstop (cycle 9): bundle hitstop(e) sets hitstopT = max
 ## (@1448302); while it runs, the world clock, spawner, projectiles
@@ -11087,7 +11087,7 @@ func spawn_floater(pos: Vector3, text: String, color: Color) -> void:
 
 func count_max_level() -> void:
 	if player and is_instance_valid(player):
-		Profile.count_max("maxLevel", float(player.level))
+		GameProfile.count_max("maxLevel", float(player.level))
 
 ## Photosynthesis leech throttle (bundle photoT, 0.2 s): heals
 ## 0.4% of max HP per grass-hit window.
@@ -11438,7 +11438,7 @@ func ally_shoot(ally: Enemy, foe: Enemy) -> void:
 ## Profile; per-run events accumulate here and merge as best_* at
 ## run end (the original's 'add' vs 'max' counter modes).
 func count_event(counter: String, n: float = 1.0) -> void:
-	Profile.count(counter, n)
+	GameProfile.count(counter, n)
 
 func count_run_event(counter: String) -> void:
 	run_counts[counter] = int(run_counts.get(counter, 0)) + 1
@@ -12049,7 +12049,7 @@ func _refresh_boss_tag() -> void:
 func _reskin_boss_visibility() -> void:
 	# After this frame's camera / rig animation updates, before canvas rendering.
 	if _boss_card != null and _boss_card.is_visible_in_tree():
-		_boss_card.modulate.a = 0.0 if _boss_body_overlaps_header() else float(Profile.setting("bossOpacity"))
+		_boss_card.modulate.a = 0.0 if _boss_body_overlaps_header() else float(GameProfile.setting("bossOpacity"))
 
 func _boss_body_overlaps_header() -> bool:
 	if _cam == null or guardian == null or not is_instance_valid(guardian):
@@ -12114,7 +12114,7 @@ func _refresh_hud() -> void:
 	_timer_label.text = _fmt_time(ZONE_TIME - elapsed)
 	_elapsed_label.text = _fmt_elapsed(elapsed)
 	_kills_label.text = "击杀 %d" % kills
-	_dust_label.text = str(Profile.stardust())
+	_dust_label.text = str(GameProfile.stardust())
 	_gold_label.text = str(int(gold))
 	# Cycle 21: next-ball price (bundle wallet(): the price
 	# is chestCost(); the element dims when unaffordable).
@@ -12331,8 +12331,8 @@ func _unhandled_input(event: InputEvent) -> void:
 ## Drag -> camera (mouse and touch share it). Cycle 18
 ## settings: sensitivity multiplier + Y invert.
 func _cam_rotate(rel: Vector2) -> void:
-	var cs := float(Profile.setting("camSpeed"))
-	var iy := -1.0 if bool(Profile.setting("invertY")) else 1.0
+	var cs := float(GameProfile.setting("camSpeed"))
+	var iy := -1.0 if bool(GameProfile.setting("invertY")) else 1.0
 	cam_yaw -= rel.x * 0.005 * cs
 	cam_pitch = clampf(cam_pitch + rel.y * 0.005 * cs * iy, 0.12, 1.25)
 
@@ -12583,7 +12583,7 @@ func _process(delta: float) -> void:
 	# target (or travel direction) — a gentle 2.5/s damp, and
 	# manual drags still win while they happen (the drag
 	# writes cam_yaw directly in _unhandled_input).
-	if bool(Profile.setting("camAssist")) and running \
+	if bool(GameProfile.setting("camAssist")) and running \
 			and state in ["playing", "guardian", "portal"] \
 			and player and is_instance_valid(player):
 		var face := Vector3.ZERO
@@ -12673,8 +12673,8 @@ func _process(delta: float) -> void:
 			if touch_controls.consume_touch_lock():
 				_toggle_target_lock()
 			if touch_controls.consume_touch_aim():
-				var na := not bool(Profile.setting("camAssist"))
-				Profile.set_setting("camAssist", na)
+				var na := not bool(GameProfile.setting("camAssist"))
+				GameProfile.set_setting("camAssist", na)
 				touch_controls.set_aim_state(na)
 				show_banner("镜头辅助：%s" % ("开" if na else "关"), 1.5)
 		# UI-mobile P3 (plan I4): the objective drawer never
@@ -12911,38 +12911,38 @@ func _throw_ball(e: Enemy) -> void:
 			# the bundle's pink capture beam.
 			_shiny_e = null
 			_takeover_e = null
-			var is_new := not Profile.has_shiny(e.species_id)
-			Profile.record_shiny(e.species_id)
+			var is_new := not GameProfile.has_shiny(e.species_id)
+			GameProfile.record_shiny(e.species_id)
 			var grant := 120 if is_new else 50
-			Profile.add_stardust(grant)
+			GameProfile.add_stardust(grant)
 			captured += 1
 			_shiny_beam(e.global_position)
 			_offer_shiny_ally(e)
-			show_banner("闪光的 %s 被收服了！星尘 +%d（闪光图鉴 %d 只）\n%s" % [label, grant, Profile.shiny_count(), _skin_unlock_note(e.species_id)], 3.5)
+			show_banner("闪光的 %s 被收服了！星尘 +%d（闪光图鉴 %d 只）\n%s" % [label, grant, GameProfile.shiny_count(), _skin_unlock_note(e.species_id)], 3.5)
 			_refresh_meta()
 		elif e.classic:
 			_classic_e = null
-			var grant := Profile.record_classic(e.species_id)
+			var grant := GameProfile.record_classic(e.species_id)
 			captured += 1
 			e.capture_remove()
 			show_banner("经典闪光 %s 被收服！星尘 +%d；家族经典皮肤已记录" % [label, grant], 3.5)
 			_refresh_meta()
 		elif is_league:
 			var sd: Dictionary = GameData.species(e.species_id)
-			Profile.join_league(int(sd.get("family", 0)), e.species_id)
+			GameProfile.join_league(int(sd.get("family", 0)), e.species_id)
 			captured += 1
 			if _league_e == e:
 				_league_e = null
 				_league_done = true
 			e.capture_remove()
-			show_banner("%s 加入了联盟！（联盟共 %d 只）" % [label, (Profile.data.get("league", []) as Array).size()], 3.5)
+			show_banner("%s 加入了联盟！（联盟共 %d 只）" % [label, (GameProfile.data.get("league", []) as Array).size()], 3.5)
 			_refresh_meta()
 		else:
 			# Cycle 9: no frozen power/cooldown snapshot — the ally
 			# record recomputes both live (Enemy.ally_power_now /
 			# ally_cd_now, bundle power(e) @519822).
 			e.make_ally()
-			Profile.count("alphaCaught")  # roster counter (Ditto gate)
+			GameProfile.count("alphaCaught")  # roster counter (Ditto gate)
 			captured += 1
 			show_banner("%s 成了你的队友！（本局为你而战）" % label, 3.5)
 	else:
@@ -13008,7 +13008,7 @@ func debug_spawn_alpha_now() -> void:
 	_spawn_alpha()
 
 func debug_give_stardust(n: int) -> void:
-	Profile.add_stardust(n)
+	GameProfile.add_stardust(n)
 	_refresh_meta()
 
 func debug_spawn_pack() -> void:
@@ -13023,13 +13023,13 @@ func debug_spawn_pack() -> void:
 
 # ------------------------------------------------------------- cycle 8 debug
 func debug_add_counter(counter: String, n: float) -> void:
-	Profile.count(counter, n)
+	GameProfile.count(counter, n)
 
 func debug_counter(counter: String) -> float:
-	return Profile.counter_value(counter)
+	return GameProfile.counter_value(counter)
 
 func debug_challenge_done(species_key: String) -> bool:
-	return Profile.challenge_done(species_key)
+	return GameProfile.challenge_done(species_key)
 
 func debug_trauma() -> float:
 	return trauma
@@ -13139,7 +13139,7 @@ func _collect_scale(container: Control) -> void:
 			_register_one(ctl)
 
 func _apply_ui_scale() -> void:
-	var s := _kr() * float(Profile.setting("hudScale"))
+	var s := _kr() * float(GameProfile.setting("hudScale"))
 	var vp := get_viewport().get_visible_rect().size
 	for n in _ui_scale_nodes:
 		var c := n as Control
@@ -13463,7 +13463,7 @@ func _layout_hud() -> void:
 	var vh := _ui_root.size.y
 	if vh <= 1.0:
 		vh = vp.y
-	var s := _kr() * float(Profile.setting("hudScale"))
+	var s := _kr() * float(GameProfile.setting("hudScale"))
 	var s_top := s
 	# UI-mobile P3 (plan D6): the new phone layout unless the
 	# player picked the classic one (= the 21.3.2 geometry:
@@ -13480,7 +13480,7 @@ func _layout_hud() -> void:
 	# unclamped factor 1.925 cannot fit the row at all.
 	# Desktop at 1280 (factor 1) keeps s_top == s, so
 	# the shipped desktop pins survive.
-	var mm_w := 176.0 * float(Profile.setting("minimapScale"))
+	var mm_w := 176.0 * float(GameProfile.setting("minimapScale"))
 	# UI-mobile P2 (plan §B2): on phone the top band is
 	# [hero 340 | card 560] with the right column on its
 	# own scale s_mm = min(s, 1.30); s_t (s_top here) =
@@ -14004,7 +14004,7 @@ func _weather_explain() -> String:
 ## switch (设置→界面) returns the phone HUD to the 21.3.2
 ## geometry. Desktop (factor 1) is always "classic".
 func _new_layout() -> bool:
-	return _phone_factor() > 1.01 and not bool(Profile.setting("classicLayout"))
+	return _phone_factor() > 1.01 and not bool(GameProfile.setting("classicLayout"))
 
 ## Flip-only mode switch (called from _layout_hud): the touch
 ## cluster layout, the resident goal card / pill stack vs
@@ -14034,7 +14034,7 @@ func _p3_apply_mode(on: bool) -> void:
 			_cutin_panel.offset_right = 230
 			_cutin_panel.offset_top = 120
 			_cutin_panel.offset_bottom = 184
-			_set_scaled(_cutin_panel, _kr() * float(Profile.setting("hudScale")))
+			_set_scaled(_cutin_panel, _kr() * float(GameProfile.setting("hudScale")))
 	_pill_sig = ""
 	_obj_sig = ""
 	call_deferred("_refresh_event_pills")
@@ -14534,7 +14534,7 @@ func _p4_apply_mode(on: bool) -> void:
 		_bl_cluster.offset_right = 460
 		_bl_cluster.offset_top = -118
 		_bl_cluster.offset_bottom = 0
-		var s := _kr() * float(Profile.setting("hudScale"))
+		var s := _kr() * float(GameProfile.setting("hudScale"))
 		var vp := get_viewport().get_visible_rect().size
 		if s > 1.0:
 			s = minf(s, minf(vp.x * 0.96 / 460.0, vp.y * 0.96 / 118.0))
@@ -15130,19 +15130,19 @@ func _badge_on_goal(hidden: int, s_top: float, vw: float) -> void:
 
 func _apply_visibility_settings() -> void:
 	if _hud_root:
-		_hud_root.modulate.a = float(Profile.setting("hudOpacity"))
+		_hud_root.modulate.a = float(GameProfile.setting("hudOpacity"))
 	if _boss_card:
-		_boss_card.modulate.a = float(Profile.setting("bossOpacity"))
+		_boss_card.modulate.a = float(GameProfile.setting("bossOpacity"))
 	for bar in _mini_bars:
-		(bar["panel"] as Panel).modulate.a = float(Profile.setting("bossOpacity"))
+		(bar["panel"] as Panel).modulate.a = float(GameProfile.setting("bossOpacity"))
 	_apply_minimap_scale()
-	Engine.max_fps = int(Profile.setting("fpsCap"))
+	Engine.max_fps = int(GameProfile.setting("fpsCap"))
 	_layout_hud()
 
 func _apply_minimap_scale() -> void:
 	if _minimap == null:
 		return
-	var s := float(Profile.setting("minimapScale"))
+	var s := float(GameProfile.setting("minimapScale"))
 	var w := 168.0 * s
 	_minimap.offset_left = -16.0 - w
 	_minimap.offset_right = -16.0
@@ -15170,7 +15170,7 @@ func _apply_boosts(boosts: Array) -> void:
 	var applied: Array = []
 	for raw in boosts:
 		var id := String(raw)
-		if not Profile.bag_consume(id):
+		if not GameProfile.bag_consume(id):
 			continue
 		applied.append(id)
 		match id:
@@ -15198,7 +15198,7 @@ func _apply_boosts(boosts: Array) -> void:
 		return
 	player.recalc()
 	var names: Array = []
-	for it in Profile.SHOP_ITEMS:
+	for it in GameProfile.SHOP_ITEMS:
 		if applied.has(String(it["id"])):
 			names.append(String(it["name"]))
 	_later(1.2, func() -> void:
@@ -15225,7 +15225,7 @@ func _roll_shiny_director() -> void:
 	var luck := 0.0
 	if player != null and is_instance_valid(player):
 		luck = player.luck
-	var p := (0.08 + minf(0.08, luck / 1000.0)) * Profile.shiny_rate()
+	var p := (0.08 + minf(0.08, luck / 1000.0)) * GameProfile.shiny_rate()
 	_shiny_at = elapsed + _rng.randf_range(40.0, 420.0) if _rng.randf() < p else INF
 
 ## spawnShiny species pick (bundle main @1051777): the
@@ -15243,7 +15243,7 @@ func _pick_shiny_species(pool: Array, prefer_fresh: bool = true) -> String:
 			cands.append(String(k))
 	if cands.is_empty():
 		return String(GameData.species_by_id(25).get("key", "pikachu"))
-	var shiny_fams := Profile.shiny_families()
+	var shiny_fams := GameProfile.shiny_families()
 	var fresh: Array = []
 	for k in cands:
 		if not shiny_fams.has(int(GameData.species(String(k)).get("family", 0))):
@@ -15294,7 +15294,7 @@ func _spawn_shiny(pool_override: Array = []) -> void:
 	e.add_child(lamp)
 	_attach_shiny_sparkles(e)
 	_shiny_e = e
-	_shiny_escape = Profile.shiny_flee_time()
+	_shiny_escape = GameProfile.shiny_flee_time()
 	audio.cry(sp)
 	show_banner("闪光的 %s 出现了！打弱它再投球收服！" % String(ModelRig.SPECIES[sp]["label"]), 4.0)
 
@@ -15476,8 +15476,8 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 				dl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	# Completed-task rows (challenges finished DURING the run).
 	var new_done: Array = []
-	for sp in Profile.challenge_order():
-		if Profile.challenge_done(sp) and not _snap_done.has(sp):
+	for sp in GameProfile.challenge_order():
+		if GameProfile.challenge_done(sp) and not _snap_done.has(sp):
 			new_done.append(sp)
 	if not new_done.is_empty():
 		_result_section_title("完成的挑战")
@@ -15486,13 +15486,13 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 			row.text = "★ %s 挑战完成" % String(ModelRig.SPECIES[sp]["label"])
 	# Dex lines (totals + this run's deltas).
 	_result_section_title("图鉴")
-	var seen_now := (Profile.data.get("seen", []) as Array).size()
-	var cap_now := (Profile.data.get("captured", {}) as Dictionary).size()
-	var league_now := (Profile.data.get("league", []) as Array).size()
+	var seen_now := (GameProfile.data.get("seen", []) as Array).size()
+	var cap_now := (GameProfile.data.get("captured", {}) as Dictionary).size()
+	var league_now := (GameProfile.data.get("league", []) as Array).size()
 	_mk_label(_result_box, "已见 %d（+%d） · 已收服 %d（+%d） · 联盟 %d（+%d） · 闪光 %d" % [
 		seen_now, seen_now - _snap_seen, cap_now, cap_now - _snap_captured,
 		league_now, league_now - _snap_league,
-		(Profile.data.get("shinies", []) as Array).size()], 13, UiTheme.MUTED)
+		(GameProfile.data.get("shinies", []) as Array).size()], 13, UiTheme.MUTED)
 	if _p5_on:
 		_p5_wrap_page(_result_box, false)
 	# Bar fills size once the panel has laid out.
@@ -15695,16 +15695,16 @@ func _pause_fill_quick() -> void:
 	_st_switch(quick, "镜头辅助（瞄准）", "camAssist",
 		func() -> void:
 			if touch_controls:
-				touch_controls.set_aim_state(bool(Profile.setting("camAssist"))))
+				touch_controls.set_aim_state(bool(GameProfile.setting("camAssist"))))
 	_st_switch(quick, "固定摇杆", "fixedStick",
 		func() -> void:
 			if touch_controls:
-				touch_controls.fixed_stick = bool(Profile.setting("fixedStick")))
+				touch_controls.fixed_stick = bool(GameProfile.setting("fixedStick")))
 	_st_switch(quick, "大招自动释放", "autoUlt")
 	_st_slider(quick, "触控按钮大小", "touchScale", 0.7, 1.5, 0.05, "%.2f",
 		func() -> void:
 			if touch_controls:
-				touch_controls.apply_scale(float(Profile.setting("touchScale"))))
+				touch_controls.apply_scale(float(GameProfile.setting("touchScale"))))
 
 ## UI-mobile P1.5 (plan §B4 P1.5): the pause "状态" page —
 ## the one-tap home for the values the phone HUD collapses
@@ -15813,7 +15813,7 @@ func _pause_fill_status() -> void:
 			"区域：%s %s · 第 %d/%d 区" % [String(zrow["cn"]), String(zrow["en"]), zone, ZONES.size()],
 			"难度：普通",
 			"用时：%s" % _fmt_elapsed(elapsed),
-			"星尘：%d" % Profile.stardust(),
+			"星尘：%d" % GameProfile.stardust(),
 			"金币：%d" % int(gold),
 			"击杀：%d" % kills,
 			"咆哮 ×%d" % run_roars]:
@@ -16200,8 +16200,8 @@ func _refresh_goal_card() -> void:
 	if _goal_card == null:
 		return
 	var target := ""
-	for key in Profile.challenge_order():
-		if not Profile.challenge_done(key) and not Profile.in_league(
+	for key in GameProfile.challenge_order():
+		if not GameProfile.challenge_done(key) and not GameProfile.in_league(
 				int(GameData.species(key).get("family", 0))):
 			target = key
 			break
@@ -16215,7 +16215,7 @@ func _refresh_goal_card() -> void:
 	if target != _goal_species:
 		_goal_species = target
 		_goal_pic.texture = UiTheme.portrait(target)
-	var parts := Profile.challenge_parts(target)
+	var parts := GameProfile.challenge_parts(target)
 	var first_inc: Dictionary = {}
 	var done_parts := 0
 	for p in parts:
@@ -16415,7 +16415,7 @@ func _update_mini_bars(delta: float) -> void:
 ## team bar (slot 0 = the starting hero; tap a bench member
 ## to swap it in — drag-reorder is replaced by tap-to-swap,
 ## named), the species tile grid with lock progress, and
-## the bag-boost toggles capped by Profile.bag_slots().
+## the bag-boost toggles capped by GameProfile.bag_slots().
 func _build_loadout(root: Control) -> void:
 	_loadout_panel = Control.new()
 	_loadout_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -16517,7 +16517,7 @@ func _build_loadout(root: Control) -> void:
 func _ls_playable(sp: String) -> bool:
 	if STARTER_HUD.has(sp):
 		return true
-	return Profile.in_league(int(GameData.species(sp).get("family", 0)))
+	return GameProfile.in_league(int(GameData.species(sp).get("family", 0)))
 
 func _open_loadout(sp: String) -> void:
 	_ls_species = sp
@@ -16536,21 +16536,21 @@ func _loadout_fill_archive() -> void:
 		return
 	for c in _ls_archive_row.get_children():
 		c.queue_free()
-	if Profile.archive_capacity() <= 0:
+	if GameProfile.archive_capacity() <= 0:
 		return
 	_mk_label(_ls_archive_row, "档案预设", 12, UiTheme.MUTED)
-	var presets := Profile.archive_presets()
+	var presets := GameProfile.archive_presets()
 	if presets.is_empty():
 		_mk_label(_ls_archive_row, "（在研究室 · 物品档案中保存）", 12, UiTheme.MUTED)
 		return
 	for i in range(presets.size()):
 		var idx := i
 		var b := UiTheme.make_button(String((presets[i] as Dictionary).get("name", "预设")), "ghost", "small")
-		b.disabled = Profile.archive_preset_active() == i
+		b.disabled = GameProfile.archive_preset_active() == i
 		if b.disabled:
 			b.text += "（使用中）"
 		b.pressed.connect(func() -> void:
-			Profile.archive_preset_apply(idx)
+			GameProfile.archive_preset_apply(idx)
 			audio.click()
 			_loadout_fill_archive())
 		_ls_archive_row.add_child(b)
@@ -16715,7 +16715,7 @@ func _loadout_fill_detail() -> void:
 	# Lock progress for unplayable species.
 	if not _ls_playable(sp):
 		_mk_dlabel(_ls_detail, "解锁条件（联盟挑战）", 15, Color(1, 0.7, 0.5))
-		for p in Profile.challenge_parts(sp):
+		for p in GameProfile.challenge_parts(sp):
 			var pd2 := p as Dictionary
 			_mk_label(_ls_detail, "%s：%d / %d%s" % [
 				String(pd2["desc"]), int(float(pd2["value"])), int(float(pd2["goal"])),
@@ -16752,7 +16752,7 @@ func _loadout_fill_team() -> void:
 	for c in _ls_team.get_children():
 		(c as Node).queue_free()
 	var bench: Array = []
-	for fam in Profile.data.get("league", []):
+	for fam in GameProfile.data.get("league", []):
 		for k in GameData.roster_species_keys():
 			var sd: Dictionary = GameData.species(k)
 			if int(sd.get("family", 0)) == int(fam) and int(sd.get("id", 0)) == int(fam):
@@ -16851,11 +16851,11 @@ const LS_ITEM_ICONS := {"rare-candy": "candy", "lucky-egg": "egg",
 func _loadout_fill_bag() -> void:
 	for c in _ls_bagrow.get_children():
 		(c as Node).queue_free()
-	var cap := Profile.bag_slots()
+	var cap := GameProfile.bag_slots()
 	_ls_cap_label.text = "背包带入 %d/%d（开局时消耗 · 研究室可扩到 3）" % [_ls_boosts.size(), cap]
-	for it in Profile.SHOP_ITEMS:
+	for it in GameProfile.SHOP_ITEMS:
 		var id := String(it["id"])
-		var n := Profile.bag_count(id)
+		var n := GameProfile.bag_count(id)
 		if n <= 0:
 			continue
 		var b := UiTheme.make_icon_button(String(LS_ITEM_ICONS.get(id, "bag")),
@@ -16870,8 +16870,8 @@ func _loadout_fill_bag() -> void:
 func _loadout_toggle_boost(id: String) -> void:
 	if _ls_boosts.has(id):
 		_ls_boosts.erase(id)
-	elif _ls_boosts.size() >= Profile.bag_slots():
-		_ls_cap_label.text = "背包带入已满（%d 件）" % Profile.bag_slots()
+	elif _ls_boosts.size() >= GameProfile.bag_slots():
+		_ls_cap_label.text = "背包带入已满（%d 件）" % GameProfile.bag_slots()
 		_ls_cap_label.add_theme_color_override("font_color", Color(1, 0.55, 0.45))
 		return
 	else:
@@ -16886,11 +16886,11 @@ func _loadout_start() -> void:
 # Original @1051478 excludes families already covered by classics (pack prose inverted).
 func _classic_pool(pool: Array) -> Array:
 	var out: Array = []
-	var covered := Profile.classic_covered_members()
+	var covered := GameProfile.classic_covered_members()
 	for key in pool:
 		var sp: Dictionary = GameData.species(String(key))
 		var missing := false
-		for member in Profile.classic_members(String(key)):
+		for member in GameProfile.classic_members(String(key)):
 			if not covered.has(member):
 				missing = true
 		if not bool(sp.get("legendary", false)) and not bool(sp.get("mythical", false)) \
@@ -16899,7 +16899,7 @@ func _classic_pool(pool: Array) -> Array:
 	return out
 
 func _classic_chance(luck: float) -> float:
-	return (.025 + minf(.025, luck / 3000.0)) * Profile.shiny_rate()
+	return (.025 + minf(.025, luck / 3000.0)) * GameProfile.shiny_rate()
 
 func _roll_classic_director() -> void:
 	_classic_at = INF
@@ -16921,8 +16921,8 @@ func _spawn_classic() -> void:
 	if e.rig:
 		e.rig.apply_shiny()  # Documented 3D equivalent; no PMD atlas in this port.
 	_classic_e = e
-	_classic_escape = Profile.shiny_flee_time()
-	Profile.mark_seen(sp)
+	_classic_escape = GameProfile.shiny_flee_time()
+	GameProfile.mark_seen(sp)
 	audio.cry(sp)
 	show_banner("经典闪光 %s 出现了！打弱后投球收服" % String(ModelRig.SPECIES[sp]["label"]), 4.0)
 
@@ -16934,7 +16934,7 @@ func _make_shiny_ally(e: Enemy) -> void:
 	e.status_kind = ""
 	e.shiny = true
 	e.classic = false
-	e.bond_level = 2 if Profile.shiny_bond_unlocked() else 0
+	e.bond_level = 2 if GameProfile.shiny_bond_unlocked() else 0
 	e.ally_slot = 10 + _shiny_serial % 100
 	_shiny_serial += 1
 
@@ -16967,7 +16967,7 @@ func _settle_shiny_swap(keep: bool) -> void:
 
 func _skin_unlock_note(species_key: String) -> String:
 	var family := int(GameData.species(species_key).get("family", -1))
-	return "家族闪光皮肤已解锁" if Profile.in_league(family) else "家族加入联盟后可使用此闪光皮肤"
+	return "家族闪光皮肤已解锁" if GameProfile.in_league(family) else "家族加入联盟后可使用此闪光皮肤"
 
 # Original capture update @1047800+: idle/done gates BEFORE consuming clocks.
 # Resolve only one encounter per tick: shiny, Classic, then Liga.
