@@ -51,11 +51,8 @@ func _draw() -> void:
 		var bpl = world.get("player")
 		if bpl and is_instance_valid(bpl):
 			draw_circle(_w2m_abs(bpl.global_position), 5.0, Color.WHITE)
-		var bfont := get_theme_default_font()
-		draw_string(bfont, center + Vector2(-4, -radius + 14), "N", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(1, 0.6, 0.6))
-		draw_string(bfont, center + Vector2(-4, radius - 4), "S", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(0.8, 0.8, 0.9))
-		draw_string(bfont, center + Vector2(-radius + 5, 4), "W", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(0.8, 0.8, 0.9))
-		draw_string(bfont, center + Vector2(radius - 14, 4), "E", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(0.8, 0.8, 0.9))
+		# U1 1:1 round 4: no cardinal letters — the reference
+		# minimap (U1_final.jpg) is a clean disc.
 		return
 	# Objective markers (absolute positions, clamped into the disc).
 	var altar: Vector3 = world.get("altar_pos")
@@ -126,9 +123,4 @@ func _draw() -> void:
 		var pp := _w2m_abs(player.global_position)
 		draw_circle(pp, 5.0, Color.WHITE)
 		draw_circle(pp, 5.0, Color(0.2, 0.5, 1.0, 0.0))
-	# Cardinal letters.
-	var font := get_theme_default_font()
-	draw_string(font, center + Vector2(-4, -radius + 14), "N", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(1, 0.6, 0.6))
-	draw_string(font, center + Vector2(-4, radius - 4), "S", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(0.8, 0.8, 0.9))
-	draw_string(font, center + Vector2(-radius + 5, 4), "W", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(0.8, 0.8, 0.9))
-	draw_string(font, center + Vector2(radius - 14, 4), "E", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(0.8, 0.8, 0.9))
+	# U1 1:1 round 4: no cardinal letters (see blind path above).

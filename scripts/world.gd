@@ -488,6 +488,7 @@ var _lab_detail: VBoxContainer
 var _boss_card: Panel
 var _boss_name_label: Label
 var _boss_tag_label: Label
+var _boss_tag_chip: Panel  # U1 1:1 round 4: cream chip behind the tag
 var _boss_hp_lag: Panel
 var _boss_hp_fill: Panel
 var _boss_hp_num: Label
@@ -507,7 +508,8 @@ var _bl_cluster: Control    # cycle 19 hotfix: BL cluster as ONE unit
 var _bl_rows: Control
 var _bl_move_slots: Array = []  # {panel, lv, key, sweep}
 var _bl_vit_slots: Array = []   # {panel, lv, key}
-var _bl_lock: Panel
+var _bl_lock: Panel  # first lock slot (kept for the P4 checks)
+var _bl_locks: Array = []  # U1 1:1 round 4: extra lock slots (2nd..nth)
 var _bl_legacy: Array = []
 var _bl_sig := ""
 var _bl_font_sig := ""
@@ -3059,29 +3061,40 @@ func _build_hud() -> void:
 	# ticks at 66.6%/33.3% of the track, and the foot row
 	# (types · statuses · roar count; the constructor's foot
 	# carries btypes/bdebuffs, UI_SPEC §2.4).
+	# U1 1:1 round 4: the reference boss bar (U1_final.jpg)
+	# is one row — red track + HP number + phase ticks +
+	# a cream 守护者 chip at the track's right end. No
+	# portrait, no name row, no static type foot: the foot
+	# row now shows ONLY while a boss move is announced
+	# (the 2.2 s telegraph, set in the refresh below).
 	_boss_pic = TextureRect.new()
 	_boss_pic.position = Vector2(10, 8)
 	_boss_pic.size = Vector2(38, 38)
 	_boss_pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_boss_pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_boss_pic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_boss_pic.visible = false
 	_boss_card.add_child(_boss_pic)
 	_boss_foot = _label_in(_boss_card, "", Vector2(14, 50), Vector2(432, 16), 12, UiTheme.HUD_DIM, HORIZONTAL_ALIGNMENT_LEFT, true)
 	_boss_foot.hide()
 	_boss_name_label = _label_in(_boss_card, "", Vector2(56, 5), Vector2(254, 22), 16, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT, true)
 	_boss_name_label.add_theme_font_override("font", _font_display)
-	_boss_tag_label = _label_in(_boss_card, "守护者", Vector2(316, 5), Vector2(128, 22), 12, UiTheme.HUD_DIM, HORIZONTAL_ALIGNMENT_RIGHT, true)
-	var boss_track := _panel(_boss_card, Vector2(14, 30), Vector2(432, 16), Color(0.1, 0.1, 0.16, 0.9), 8, Color(0, 0, 0, 0), 0, true)
+	_boss_name_label.visible = false
+	var boss_track := _panel(_boss_card, Vector2(14, 15), Vector2(432, 16), Color(0.1, 0.1, 0.16, 0.9), 8, Color(0, 0, 0, 0), 0, true)
 	_boss_hp_lag = _panel(boss_track, Vector2(1, 1), Vector2(430, 14), Color(1.0, 0.82, 0.78, 0.8), 7)
 	_boss_hp_fill = _panel(boss_track, Vector2(1, 1), Vector2(430, 14), Color(0.93, 0.3, 0.22), 7)
-	_boss_hp_num = _label_in(_boss_card, "", Vector2(14, 30), Vector2(432, 16), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
+	_boss_hp_num = _label_in(_boss_card, "", Vector2(14, 15), Vector2(432, 16), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
 	_boss_hp_num.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.55))
 	_boss_hp_num.add_theme_constant_override("shadow_offset_x", 1)
 	_boss_hp_num.add_theme_constant_override("shadow_offset_y", 1)
 	for frac in [0.666, 0.333]:
-		var tick := _panel(_boss_card, Vector2(14 + 432.0 * frac - 1, 30), Vector2(2, 16), Color(1, 1, 1, 0.45), 0)
+		var tick := _panel(_boss_card, Vector2(14 + 432.0 * frac - 1, 15), Vector2(2, 16), Color(1, 1, 1, 0.45), 0)
 		tick.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_boss_ticks.append(tick)  # cycle 21: shown only for kit bosses
+	# The tag chip rides ON the track's right end (added
+	# after the track so it draws above it), dark ink text.
+	_boss_tag_chip = _panel(_boss_card, Vector2(316, 12), Vector2(128, 22), UiTheme.CREAM, 11)
+	_boss_tag_label = _label_in(_boss_card, "守护者", Vector2(316, 12), Vector2(128, 22), 12, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, true)
 
 	# Cycle 18: the two .bossbar.mini bars (constructor
 	# @2020582 — the cycle-10 ledger correction). Feed:
@@ -12264,6 +12277,10 @@ func _update_hud_bars(delta: float) -> void:
 				if run_roars > 0:
 					foot.append("咆哮 ×%d" % run_roars)
 				_boss_foot.text = " · ".join(foot)
+			# U1 1:1 round 4: the foot shows ONLY for the move
+			# announcement — the reference bar has no static
+			# type row; the telegraph itself is kept.
+			_boss_foot.visible = _boss_move_t > 0.0 and _boss_move_name != ""
 		var bf := clampf(guardian.hp / maxf(guardian.max_hp, 1.0), 0.0, 1.0)
 		if bf >= _boss_lag:
 			_boss_lag = bf
@@ -12298,8 +12315,10 @@ func _refresh_boss_tag() -> void:
 	if _boss_tag_label:
 		# Keep the compact right-hand tag readable even during a move announcement.
 		_boss_tag_label.text = "狂怒！" if _boss_enraged else ("传说守护者" if zone == 4 else "守护者")
+		# U1 1:1 round 4: the tag sits on a cream chip —
+		# dark ink normally, red while enraged.
 		_boss_tag_label.add_theme_color_override("font_color",
-			Color(1, 0.35, 0.3) if _boss_enraged else UiTheme.HUD_DIM)
+			Color(1, 0.35, 0.3) if _boss_enraged else UiTheme.TEXT)
 
 func _reskin_boss_visibility() -> void:
 	# After this frame's camera / rig animation updates, before canvas rendering.
@@ -14098,12 +14117,17 @@ func _apply_top_card_phone(on: bool) -> void:
 		[_gold_label, Rect2(90, 0, 36, 36)],
 		[_ball_icon, Rect2(132, 9, 18, 18)],
 		[_ball_price_label, Rect2(152, 0, 60, 36)],
-		[_hud_hp_track, Rect2(94, 90, 232, 20)],
+		[_hud_hp_track, Rect2(94, 33, 232, 20)],
 		[_hud_hp_lag, Rect2(1, 1, 230, 18)],
 		[_hud_hp_fill, Rect2(1, 1, 230, 18)],
 		[_hud_hp_num, Rect2(0, 0, 232, 20)],
 		[_hud_shield_fill, Rect2(1, 1, 0, 18)],
-		[_party_row, Rect2(94, 114, 240, 44)],
+		# U1 1:1 round 4: the info plate (name + type chips +
+		# evo line) is gone on phone — the reference hero
+		# cluster is one compact pill: medallion + Lv badge
+		# + the HP track centred beside it. The party row
+		# rides up under the track (was 114, under the plate).
+		[_party_row, Rect2(94, 60, 240, 44)],
 	]
 	for i in range(_pips.size()):
 		# U1 1:1 round 3: pips drop to the third row — the
@@ -14131,7 +14155,10 @@ func _apply_top_card_phone(on: bool) -> void:
 	# item are restored on phone (reference U1_final.jpg) —
 	# only the English name, elapsed clock and power row stay
 	# collapsed (parity via the pause status page).
-	for c in [_pw_row, _zone_en, _elapsed_label]:
+	# U1 1:1 round 4: the hero info plate joins them — the
+	# reference cluster is medallion + Lv + HP only (the
+	# name / chips / evo line live on the pause status page).
+	for c in [_pw_row, _zone_en, _elapsed_label, _hero_info]:
 		if c != null:
 			(c as Control).visible = not on
 	if _mm_expand:
@@ -14205,14 +14232,15 @@ func _p2_restore_fonts() -> void:
 		if l != null and (l as Label).has_meta("p2_desk_fs"):
 			(l as Label).add_theme_font_size_override("font_size", int(l.get_meta("p2_desk_fs")))
 
-## Hero cluster box (plan Z1): phone 340 x HP bottom (110,
-## the 20-tall track) or party bottom (158) when allies are
-## up; desktop keeps 454 x 216.
+## Hero cluster box (plan Z1): phone 340 x HP bottom (86,
+## the medallion's bottom — the 20-tall track rides centred
+## beside it since U1 1:1 round 4) or party bottom (104)
+## when allies are up; desktop keeps 454 x 216.
 func _p2_hero_box() -> void:
 	if _hero_cluster == null:
 		return
 	if _p2_on == 1:
-		var h := 158.0 if _party_row != null and _party_row.visible else 110.0
+		var h := 104.0 if _party_row != null and _party_row.visible else 86.0
 		_hero_cluster.size = Vector2(340, h)
 	else:
 		_hero_cluster.size = Vector2(454, 216)
@@ -14833,7 +14861,7 @@ func _p4_apply_mode(on: bool) -> void:
 
 ## Rows' design width (the cluster width: no ult gap).
 func _p4_rows_w() -> float:
-	var nm := _bl_move_slots.size() + (1 if _bl_lock.visible else 0)
+	var nm := _bl_move_slots.size() + _bl_locks.size() + (1 if _bl_lock.visible else 0)
 	var w := maxf(nm * P4_MOVE_STEP - 4.0, _bl_vit_slots.size() * P4_VIT_STEP - 4.0)
 	return maxf(w, 46.0)
 
@@ -14858,6 +14886,11 @@ func _p4_refresh_slots(relayout: bool) -> void:
 		var p := (d as Dictionary)["panel"] as Control
 		_bl_rows.remove_child(p)
 		p.queue_free()
+	for lp in _bl_locks:
+		var lpc := lp as Control
+		_bl_rows.remove_child(lpc)
+		lpc.queue_free()
+	_bl_locks.clear()
 	_bl_move_slots.clear()
 	_bl_vit_slots.clear()
 	var i := 0
@@ -14886,8 +14919,27 @@ func _p4_refresh_slots(relayout: bool) -> void:
 		pnl.add_child(sw)
 		_bl_move_slots.append({"panel": pnl, "lv": lv, "key": key, "sweep": sw})
 		i += 1
-	_bl_lock.visible = locked
+	# U1 1:1 round 4: the row always shows 5 move slots
+	# (reference U1_final.jpg: 4 locks + 1 leaf at Lv.1) —
+	# learned moves first, lock panels fill the rest; past
+	# 5, learned moves extend the row (never hidden) and at
+	# least one lock stays while more can be learned.
+	var display_n := maxi(5, player.moves.size() + (1 if locked else 0))
+	var n_locks := display_n - player.moves.size()
+	_bl_lock.visible = n_locks > 0
 	_bl_lock.position = Vector2(i * P4_MOVE_STEP, 0)
+	for k in range(1, n_locks):
+		var lp := Panel.new()
+		lp.position = Vector2((i + k) * P4_MOVE_STEP, 0)
+		lp.size = Vector2(46, 46)
+		lp.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		lp.add_theme_stylebox_override("panel", _style(Color(0.10, 0.07, 0.20, 0.92), 23, Color(1, 1, 1, 0.25), 1, true))
+		_bl_rows.add_child(lp)
+		var lic := UiIcon.new("lock", Color(0.85, 0.85, 0.9), 22)
+		lic.position = Vector2(12, 12)
+		lic.size = Vector2(22, 22)
+		lp.add_child(lic)
+		_bl_locks.append(lp)
 	var j := 0
 	for vk in player.vit_levels.keys():
 		var vd: Dictionary = GameData.VITAMINS.get(vk, {})

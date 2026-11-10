@@ -1463,7 +1463,7 @@ func _p2_state(vp: Vector2, st: String) -> void:
 	_check("P2: party row only with allies (" + st + ")",
 		party.is_visible_in_tree() == (na > 0),
 		"allies=" + str(na) + " visible=" + str(party.is_visible_in_tree()))
-	var want_h := 158.0 if na > 0 else 110.0
+	var want_h := 104.0 if na > 0 else 86.0
 	_check("P2: hero cluster box = 340 x HP/party bottom (" + st + ")",
 		absf(hero.size.x - 340.0) < 0.5 and absf(hero.size.y - want_h) < 0.5,
 		"size=" + str(hero.size) + " want_h=" + str(want_h))
@@ -1652,10 +1652,14 @@ func _p2_phone_block(vp: Vector2) -> void:
 		var lv0 := int(pl.level)
 		pl.level = maxi(1, evo_lv - 10)
 		await _p1_pframes(30)
-		var far_vis := evo.is_visible_in_tree()
+		# U1 1:1 round 4: the evo label lives inside the hero
+		# info plate, hidden on phone — read its own flag,
+		# not in-tree visibility (the tick logic is what's
+		# under test: off far, on near).
+		var far_vis := evo.visible
 		pl.level = evo_lv - 2
 		await _p1_pframes(30)
-		var near_vis := evo.is_visible_in_tree()
+		var near_vis := evo.visible
 		pl.level = lv0
 		await _p1_pframes(20)
 		_check("P2: evo line only within 3 levels",
@@ -1667,7 +1671,7 @@ func _p2_phone_block(vp: Vector2) -> void:
 	var party := _world.get("_party_row") as Control
 	var hero := _world.get("_hero_cluster") as Control
 	_check("P2: party row shows with an ally",
-		_p2_allies() == 0 or (party.is_visible_in_tree() and absf(hero.size.y - 158.0) < 0.5),
+		_p2_allies() == 0 or (party.is_visible_in_tree() and absf(hero.size.y - 104.0) < 0.5),
 		"allies=" + str(_p2_allies()) + " vis=" + str(party.is_visible_in_tree())
 		+ " hero=" + str(hero.size))
 
@@ -2595,6 +2599,14 @@ func _p4_state(vp: Vector2, st: String, prompt_state: bool) -> void:
 	if lk is Control and (lk as Control).is_visible_in_tree():
 		lock_r = _vis_rect(lk as Control)
 		slot_rs.append(lock_r)
+	# U1 1:1 round 4: the extra lock slots (2nd..nth) count
+	# as row slots too; the last one ends row 1.
+	for lp in _world.get("_bl_locks"):
+		var lpc := lp as Control
+		if lpc != null and lpc.is_visible_in_tree():
+			var lr := _vis_rect(lpc)
+			slot_rs.append(lr)
+			lock_r = lr
 	var right := -INF
 	var encl := true
 	for r in slot_rs:
@@ -2611,7 +2623,7 @@ func _p4_state(vp: Vector2, st: String, prompt_state: bool) -> void:
 		and not ms_leg.is_visible_in_tree(),
 		"bl=" + str(r_bl) + " deep=" + str(deep) + " rows_right=" + str(right)
 		+ " legacy_move_slot=" + str(ms_leg.is_visible_in_tree()))
-	# moves row above vitamins row; lock slot ends row 1
+	# moves row above vitamins row; lock slots end row 1
 	var order_ok := true
 	for a in ms:
 		for b in vs:
@@ -2621,7 +2633,7 @@ func _p4_state(vp: Vector2, st: String, prompt_state: bool) -> void:
 			var ra := _vis_rect(a["panel"])
 			order_ok = order_ok and ra.end.x <= lock_r.position.x + 0.5 \
 				and absf(ra.position.y - lock_r.position.y) < 1.0
-	_check("P4: moves row over vitamins row, lock slot ends row 1 (" + st + ")", order_ok)
+	_check("P4: moves row over vitamins row, lock slots end row 1 (" + st + ")", order_ok)
 	# -- s_bl = min(s, 1.35), narrowed only to keep the rows out
 	# of the centre rect and the bubble's span >= 300 (floor 0.8)
 	var s := float(_world.call("_kr")) * float(GameProfile.setting("hudScale"))
