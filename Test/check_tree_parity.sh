@@ -2,7 +2,7 @@
 # Tree-hash parity check, VM vs NUC (cycle 21: kept script;
 # chore from the C20.2 re-audit follow-ups).
 #
-# Compares sha256 manifests of scripts/ + Test/ (excluding
+# Compares sha256 manifests of scripts/ + Test/ + assets/ui/ (excluding
 # Test/out/, which is per-host evidence) between this VM tree
 # (source of truth) and the NUC station copy. Any file that
 # differs, is missing on either side, or exists ONLY on the
@@ -18,7 +18,7 @@ HOST=$(hostname -s | tr 'A-Z' 'a-z')
 LOG="Test/out/tree_parity_${HOST}.log"
 mkdir -p Test/out .tmp
 export TMPDIR="${TMPDIR:-$PWD/.tmp}"
-MANIFEST_CMD='find scripts Test -type f ! -path "Test/out/*" ! -name "*.uid" -print0 | sort -z | xargs -0 sha256sum | sed "s| \./| |" | sort -k2'
+MANIFEST_CMD='find scripts Test assets/ui -type f ! -path "Test/out/*" ! -name "*.uid" -print0 | sort -z | xargs -0 sha256sum | sed "s| \./| |" | sort -k2'
 eval "$MANIFEST_CMD" > .tmp/parity_local.txt
 ssh -o ProxyCommand="python3 $HOME/workspace/tools/tsproxy.py 100.124.16.117 22" \
     -o UserKnownHostsFile="$HOME/workspace/tools/known_nuc" \

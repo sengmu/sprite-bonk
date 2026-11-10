@@ -74,6 +74,53 @@ static func rarity_color(i: int) -> Color:
 static func glass_color(alpha: float = GLASS_A) -> Color:
 	return Color(INK.r, INK.g, INK.b, 1.0)
 
+# Approved asset registry. Source PNGs are copied byte-for-byte.
+static var _ui_textures: Dictionary = {}
+static func asset(category: String, key: String) -> Texture2D:
+	var path := "res://assets/ui/%s/%s.png" % [category, key]
+	if not _ui_textures.has(path):
+		_ui_textures[path] = load(path)
+	return _ui_textures[path] as Texture2D
+
+static func art(key: String, extent: Vector2) -> TextureRect:
+	var node := TextureRect.new()
+	node.texture = asset("decorations", key)
+	node.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	node.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	node.custom_minimum_size = extent
+	node.size = extent
+	node.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return node
+
+static func scaled_texture(key: String) -> Texture2D:
+	var cache_key := "scaled/" + key
+	if not _ui_textures.has(cache_key):
+		var image := asset("textures", key).get_image()
+		image.resize(image.get_width() / 4, image.get_height() / 4, Image.INTERPOLATE_LANCZOS)
+		_ui_textures[cache_key] = ImageTexture.create_from_image(image)
+	return _ui_textures[cache_key]
+
+static func panel_underlay(node: Control) -> void:
+	var box := panel_texture(0)
+	node.draw.connect(func() -> void: node.draw_style_box(box, Rect2(Vector2.ZERO, node.size)))
+
+static func panel_texture(margin: int = 14) -> StyleBoxTexture:
+	var box := StyleBoxTexture.new()
+	box.texture = scaled_texture("panel_9patch")
+	box.set_texture_margin_all(28)
+	box.axis_stretch_horizontal = StyleBoxTexture.AXIS_STRETCH_MODE_STRETCH
+	box.axis_stretch_vertical = StyleBoxTexture.AXIS_STRETCH_MODE_STRETCH
+	for side in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
+		box.set_expand_margin(side, 3)
+		box.set_content_margin(side, margin)
+	return box
+
+static func badge_base() -> StyleBoxTexture:
+	var box := StyleBoxTexture.new()
+	box.texture = asset("badges", "badge_star_empty")
+	# The empty star remains behind the existing move glyph.
+	return box
+
 # ---------------------------------------------------------------- fonts
 ## Display stack: Fredoka SemiBold (headings/numbers, OFL) ->
 ## Smiley Sans （得意黑， OFL — the CJK display face; M PLUS
@@ -179,17 +226,22 @@ const BTN_KINDS := {
 	"ghost": CREAM,
 }
 
-static func _btn_box(bg: Color, radius: int, border: Color, bw: int, pad: int) -> StyleBoxFlat:
-	var s := StyleBoxFlat.new()
-	s.bg_color = bg
-	s.set_corner_radius_all(64)
-	s.set_border_width_all(2)
-	s.border_width_bottom = 5
-	s.border_width_top = 3
-	s.border_color = bg.darkened(0.18)
-	s.shadow_size = 5
-	s.shadow_color = Color(0.29, 0.21, 0.10, 0.23)
-	s.shadow_offset = Vector2(0, 2)
+static func _btn_box(bg: Color, radius: int, border: Color, bw: int, pad: int) -> StyleBoxTexture:
+	var s := StyleBoxTexture.new()
+	var key := "button_cream"
+	if bg.g > bg.r * 1.12 and bg.b < bg.g * 0.7:
+		key = "button_green"
+	elif bg.r > bg.g * 1.3 and bg.b < bg.g * 0.8:
+		key = "button_orange"
+	s.texture = scaled_texture(key)
+	s.texture_margin_left = 48
+	s.texture_margin_right = 48
+	s.texture_margin_top = 24
+	s.texture_margin_bottom = 24
+	# Destination borders at quarter scale; source slicing remains native.
+	s.axis_stretch_horizontal = StyleBoxTexture.AXIS_STRETCH_MODE_STRETCH
+	s.axis_stretch_vertical = StyleBoxTexture.AXIS_STRETCH_MODE_STRETCH
+	s.modulate_color = Color(1, 1, 1, bg.a)
 	s.content_margin_left = pad
 	s.content_margin_right = pad
 	s.content_margin_top = 4
@@ -234,7 +286,7 @@ static func make_button(text: String, kind: String = "ghost",
 	var dis := base
 	dis.a *= 0.45
 	b.add_theme_stylebox_override("disabled", _btn_box(dis, radius, border, bw, pad))
-	b.add_theme_stylebox_override("focus", _btn_box(Color(0, 0, 0, 0), radius, GOLD, 2, pad))
+	b.add_theme_stylebox_override("focus", flat_box(Color(0, 0, 0, 0), 24, GOLD, 2))
 	b.add_theme_color_override("font_color", TEXT)
 	b.add_theme_color_override("font_hover_color", TEXT)
 	b.add_theme_color_override("font_pressed_color", TEXT)
@@ -324,17 +376,10 @@ static func set_icon_button_text(b: Button, text: String) -> void:
 ## whose face is glass with a colored 2px rim — the accent
 ## carries rarity or type; hover lifts the rim to full color.
 static func card_box(accent: Color, hover: bool = false,
-		radius: int = 32, alpha: float = 0.99) -> StyleBoxFlat:
-	var s := StyleBoxFlat.new()
-	s.bg_color = glass_color(alpha if not hover else 0.97)
-	s.set_corner_radius_all(radius)
-	s.set_border_width_all(2)
-	s.border_color = Color(accent.r, accent.g, accent.b, 1.0 if hover else 0.75)
-	s.shadow_size = 8
-	s.shadow_color = Color(0.29, 0.21, 0.10, 0.23)
-	s.shadow_offset = Vector2(0, 5)
-	s.set_content_margin_all(0)
-	return s
+		radius: int = 32, alpha: float = 0.99) -> StyleBoxTexture:
+	var box := panel_texture(0)
+	box.modulate_color = Color.WHITE if not hover else Color(1, 0.97, 0.88)
+	return box
 
 static func make_card(accent: Color, min_size: Vector2) -> Button:
 	var b := Button.new()
