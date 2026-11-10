@@ -3,7 +3,7 @@
 用户指令（2026-11-11 01:07）：各界面与效果图做 1:1，没 1:1 不要停；唯一豁免 = 3D 模型本体（还没做，占位保持，hero 形象差异不算未对齐）；缺插画素材找 Grok Bot 美术总监拿（经 Projects Manager 会话派单，先喂游戏简介）。
 
 ## 基线
-- 仓库 main = ca065613c640b4019a0535640459b6b788ae1b24（U1 round 2 深色 HUD＋小地图提亮，2026-11-11；上一基线 089b31d）
+- 仓库 main = 2a5e099（U1 round 3 顶卡恢复＋小地图提亮＋紫色大招，2026-11-11；上一基线 ca06561）
 - 参考：design/ui-reference/v2/（U1–U6 横屏定稿）、design/ui-reference/v3/（S07–S24 + A01–A18 图版 + INVENTORY.md）
 - 验收口径：横屏 2340×1080 phonehud；每屏产出 design/ui-reference/compare/<屏>.png 并排图才算验收物
 
@@ -22,6 +22,7 @@ U1 → U3 → U5 → U4 → U6，然后 S07–S24 按号推进。
 - todo 0 菜单重叠：已清。phonehud 2340 1536/0。提交 089b31d。实拍 Test/out/menu_fix0.png。
 - U1 局内 HUD（2026-11-11 03:06，第 1 轮）：**未关闭**。主题方向已裁定（见下）＋钱包图标空白已修（ui_icon.gd 预加载，phonehud 2340 1536/0）；其余 7 项未动。compare/U1.png（参考 vs fix1 实拍）已入仓；实拍 Test/out/phone_hud_touch_2340x1080_s150_i0_hudstart.png、boss 态 Test/out/phone_hud_touch_2340x1080_s150_i0.png。提交 2555678。
 - U1 局内 HUD（2026-11-11 04:2x，第 2 轮）：**未关闭**。深色 HUD 施工单落地（见下节）＋小地图烘焙提亮；phonehud 2340 **1552/0**（Test/out/u1_fix2_phonehud_2340.log，.done rc=0；1552 vs 1536 的 +16 全是 full_prompt 场景同名断言的重复计数，非新增检查）；compare/U1.png 已刷新（参考 vs fix2 实拍，顶栏/横幅/Boss 卡已深色）。提交 ca06561。桌面 4 红经 A/B 定性为 clean main 既有（见下节），非本轮回归、未动检查。剩余项：第 2、3（签＋萤尘未放回）、4（待 2340 boss 态截图）、5（击杀 +1）、6、7、8。
+- U1 局内 HUD（2026-11-11 05:4x，第 3 轮）：**未关闭**。第 3 项已清（顶卡第二行重排＋钱包三项，phonehud 2340 **1545/0**，见下节）；第 5 项小地图已提亮（烘焙改真色＋浅绿 lerp 0.45，实拍已接近参考亮度）；第 7 项大招钮已改紫底＋「必」（UltGauge._draw 紫盘）；第 4 项已取 2340 boss 态图（mobile_p2_boss_2340x1080_s150_i0.png，本轮 _p2_snap 角列表加 2340）但对条未闭合（见下节）；桌面 4 红与 fix2 批逐条相同（P5 模态几何×3＋P1 alpha 横幅文案），既有、非回归。compare/U1.png 已刷新（参考 vs fix3 实拍）。提交 2a5e099。剩余项：第 2、4（Boss 卡对条余项）、6、8。
 
 ## U1 第 1 项裁定：HUD 走深色药丸（2026-11-11 03:06）
 - 证据：v2 定稿 U1_final.jpg（2026-11-10 23:04 归档「approved」，晚于奶油换皮关账 ad460f9 10:27）顶栏/技能行/Boss 条均为深色药丸、白字；同批 U2_final.jpg 菜单是奶油——**v2 语言 = 菜单奶油、HUD 深色**，与用户 2026-11-11 01:07「按效果图 1:1」指令一致。
@@ -45,14 +46,23 @@ U1 → U3 → U5 → U4 → U6，然后 S07–S24 按号推进。
 - 复跑脚本留痕（未提交，供下轮复用）：Test/u1_fix2_run.sh（2340）、Test/u1_fix2_desktop_run.sh（桌面）；`.import` churn 一律不提交。
 - 断点：本轮只提交 fix2 检查点；第 3 项放回（签＋萤尘）、第 4 项 boss 态截图、第 5 项击杀 +1、第 2/6/7/8 项均未动代码，见下一轮。
 
-## 下一轮：U1（局内 HUD）第 3 轮——差异清单（2026-11-11 02:05 列，04:4x 更新）
-对照 design/ui-reference/v2/U1_final.jpg，compare/U1.png（fix2 实拍）现状：
+## U1 第 3 轮进展（2026-11-11 05:4x，提交 2a5e099）
+- 第 3 项**已清**：顶卡手机布局重排（卡宽保持 560，不动「P2: top card design width 560」断言）：区名 rect 150→120、计时器 220→180（中心 280→230）、钱包 pill 156→220（x392→328）容下三项（萤尘 icon＋label、金币、宝箱价）；第二行恢复区域签（18,40,74,22）＋难度签（98,40,44,22，新增 `_tier_chip_label` 变量）＋天气签（148,40,48,26）；pips 下移第三行 y64，危险段重定中心 171+i*17（对齐计时器中心 230）；隐藏列表只剩 `_pw_row/_zone_en/_elapsed_label`。签 label 进 `_p2_fit_fonts/_p2_restore_fonts`（区/难度签 11→下限 14px、萤尘 15→f24），P2 glance floor 全绿。检查改向（非放水）：phonehud.gd「collapsed top-band items hidden」去掉区/难度签/萤尘，新增「restored top-band items visible」同等严格断言可见；`_p2_snap` 角列表加 2340（只多取图，不动断言）。phonehud 2340 **1545/0**（Test/out/u1_fix3_phonehud_2340.log，.done rc=0；1545 vs 1552 的 −7 已对账：本轮 full_prompt 态横幅未起、11 条横幅 disjoint 检查未跑（fix2 有 10 条），＋4 条新增 restored-visible＝−7，非回归；P2 sub-floor labels 全空）。
+- 第 5 项小地图**已提亮**：`_bake_minimap` 改真色（因子 1.0、navy 0）＋向浅草绿 lerp 0.45＋lift 基底 1.0；fix3 实拍小地图已亮绿、接近参考。击杀 pill「+1」**评估结论＝按设计保留**：Plan Z3 折叠是已批准行为（目标 pill 折叠进击杀 pill 的 +N，phonehud 显式断言折叠态全绿）；参考无 +1 是概念渲染简化，不改折叠阈（改阈会动 P3 右列栈与「隐藏项可达」检查）。
+- 第 7 项大招钮**已改**：`UltGauge._draw` 底盘由 `badge_star_empty` 星形贴图改紫盘（0.55,0.28,0.88）＋浅紫 rim，充能 sweep 与 deny veil 不动；「必」字（桌面 label＋触屏 `_ult_glyph`）现读于紫底上。右下角 faint 圆圈**已查清来源、非缺陷**：左下是左摇杆底环，右下是 interact「!」钮的待机透明态（`_interact_fill_a()`，无可互动物时淡）；参考渲染略去触屏件，不列入差异。
+- 第 4 项 Boss 条：2340 boss 态图已取（Test/out/mobile_p2_boss_2340x1080_s150_i0.png），机制三断言全绿（guardian summoned / boss card visible / banner up，fix3 log L723–725；卡几何 [P:(508.8,137.8), S:(798.4,79.8)]）；但该帧卡片处 alpha=0（守护者躯体重叠 header 的按设计淡出，reskin 门行为），图中只见精英 mini 条。对条改用 2400 旧档 boss 图（Test/out/mobile_p2_boss_2400x1080_s150_i0.png，卡片本体自 10-28 未动）：红轨＋白字血量＋相位 tick **与参考一致**；差异两处：①参考「守护者」是奶油签，现为深卡上的灰字文本；②参考无名无类型行，现卡面有「穿山王 Sandslash」名＋「地面」行。改签为奶油签是小改，但去名/去类型行涉及已批准的卡面信息（cycle 10），**留下一轮裁定**，本轮不动卡片。
+- 桌面 A/B：fix3 桌面批 710 检 4 红（Test/out/u1_fix3_phonehud_desktop.log，.done rc=1），与 fix2 批逐条相同（P5 模态几何 wallet/menu 680×420、lab/upgrades 与 lab/items 840×560；P1 alpha 横幅文案）——既有、非回归。
+- 解析门：world.gd / ult_gauge.gd / phonehud.gd 在 NUC `--check-only` 均 rc=0（VM 副本同命令 rc=1 是 autoload 未解析的既有环境 artifact，clean main 同样 rc=1，diff 证明零新增错误）。
+- 复跑脚本留痕（未提交，供下轮复用）：Test/u1_fix3_run.sh（2340）、Test/u1_fix3_desktop_run.sh（桌面）、Test/make_compare_u1.py（compare 拼图）；`.import` churn 一律不提交（提交前 `git checkout -- addons/` 已清）。
+
+## 下一轮：U1（局内 HUD）第 4 轮——差异清单（2026-11-11 05:5x 更新）
+对照 design/ui-reference/v2/U1_final.jpg，compare/U1.png（fix3 实拍）现状：
 1. ~~顶栏配色~~→ **已清（第 2 轮，深色药丸，提交 ca06561，phonehud 2340 1552/0）。**
-2. 顶左簇：参考紧凑一体（头像＋等级徽＋血条）；现为大卡（名＋双属性签，血条分离在下方）。名字／头像占位种属属下一轮，不列入本次。
-3. 顶中：缺「区域 1/4」「普通」签；~~右侧资源计数图标为空白方块~~**已修（第 1 轮）**；且只有 2 项（参考 3 项：萤尘／金币／宝箱）。**主活**：`_apply_top_card_phone`（world.gd:14063）把 `_zone_chip/_tier_chip/_dust_icon/_dust_label` 显式 hidden；放回需重排手机顶卡第二行（pips y46、天气签、危险段 y64 抢位；钱包 pill 现 x392 w156，加萤尘须加宽）。先出重排方案再改，改完跑 phonehud 2340。
-4. Boss 血条：**机制已证无缺陷**（见上节纠正）。待取 2340 boss 态截图再对条（红轨 8420＋「守护者」签）；取图路线二选一见上节。
-5. 小地图：提亮已改（0.85/0.08），实拍仍偏深——目检 compare 判定；击杀 pill「+1」：评估 `_p3_z_over` 折叠阈，让目标 pill 在 2340 不折叠（勿删 badge，会断 P2「隐藏项可达」检查）。
-6. 左下技能栏：参考 5 格一排（4 锁＋1 叶 1级）；现仅左下角两枚小圆钮（星 1级 ＋ 锁）。核 `_p4_refresh_slots`（world.gd:14818）补锁逻辑：是否常驻 5 格。
-7. 右下按钮组：大招钮现为橙星（参考紫底「必」字）；`UltGauge`（`_ult_circle`，world.gd:3331） medal 绘制须改紫底＋「必」字已白；右下角 faint 圆圈（右摇杆？）参考无，查来源。
-8. 观察项：菜单 Resources pill 长数字（累计 400908）疑超 pill 宽——U1 轮复核（测试档数字偏大，真机档再看）。
-断点：第 3 轮从第 3 项（顶卡第二行重排）起工；本轮 fix2 检查点已提交 ca06561 并推送（见轮次记录）。
+2. 顶左簇：参考紧凑一体（头像＋等级徽＋血条）；现为大卡（名＋双属性签，血条分离在下方）。名字／头像占位种属属下一轮，不列入本次。**主活**：英雄簇改紧凑单 pill（头像＋Lv 徽＋血条一体），须核 `_p2_hero_box`（340×110/158）与 P2「hero cluster box = 340 x HP/party bottom」断言是否随之改向。
+3. ~~顶中签＋萤尘~~→ **已清（第 3 轮，提交 2a5e099，phonehud 2340 1545/0）。**
+4. Boss 血条：红轨＋白字＋tick 已与参考一致；余两处：①「守护者」签改奶油签（小改，`_boss_tag_label` 加签底）；②名＋类型行去留待裁定（参考无名，现卡面 cycle 10 已批准信息）。先裁定②再动手；另 2340 boss 态图本轮已取但卡片处 alpha=0（按设计淡出），对条以 2400 档图为准。
+5. ~~小地图提亮~~→ **已清（第 3 轮，烘焙真色＋浅绿 lerp）。**击杀 pill「+1」：按设计保留（Z3 折叠，见第 3 轮评估），不再列为差异。余：小地图 N/W/E/S 罗盘字母参考无——是否去掉，下一轮目检定（小项）。
+6. 左下技能栏：参考 5 格一排（4 锁＋1 叶 1级）；现仅左下角两枚小圆钮（星 1级 ＋ 锁）。设计问题先定：参考 5 格是固定 5 格还是 MOVE_CAP（=8）？P4 检查以 `_bl_move_slots.size() == pl.moves.size()` 断言已学招式数，补锁格须用独立数组（不动 `_bl_move_slots`）并同步 `_p4_rows_w` 宽度。定 5 格再施工。
+7. ~~右下大招钮紫底「必」~~→ **已清（第 3 轮，UltGauge 紫盘）。**faint 圆圈已查清（摇杆底环＋interact 待机透明），非差异。
+8. 观察项：菜单 Resources pill 长数字（累计 400908）疑超 pill 宽——用 fix3 批的菜单态截图复核（测试档数字偏大，真机档再看）。
+断点：第 4 轮从第 2 项（顶左簇紧凑化）起工；第 6 项先定 5 格口径再施工；第 4 项②先裁定再动手。本轮 fix3 检查点已提交 2a5e099（待推送，见下）。
