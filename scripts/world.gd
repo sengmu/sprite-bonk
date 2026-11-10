@@ -3452,6 +3452,9 @@ func _build_hud() -> void:
 
 	_build_menu(root)
 	_build_wallet_panel(root)
+	_refresh_wallet_ui()
+	if wallet.is_wallet_connected():
+		wallet.fetch_balance()
 	_build_result(root)
 	_build_draft(root)
 	_build_blessing(root)
@@ -3874,7 +3877,6 @@ func _build_menu(root: Control) -> void:
 	_menu_hero_box.add_theme_constant_override("separation", 6)
 	_menu_hero.add_child(_menu_hero_box)
 	_menu_hero_show("bulbasaur")
-	_refresh_wallet_ui()
 	_refresh_meta()
 	# UI-mobile P5: every menu piece rides one design Control
 	# (desktop: full rect, scale 1 — positions unchanged; phone:

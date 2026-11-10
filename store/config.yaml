@@ -61,43 +61,41 @@ release:
   catalog:
     en-US:
       name: SpriteBonk
-      short_description: "Survive the Viridian Forest, summon the guardian, and clear the portal — a 3D monster-taming survival arena."
+      short_description: "3D monster-taming survival arena. Play as guest."
       long_description: |
-        SpriteBonk is a 3D survival arena set in the Viridian Forest. Pick your
-        starter partner, roam a terraced forest arena, fight off waves of wild
-        monsters, then activate the Boss Altar to face a guardian trio —
-        Scyther, Pinsir or Nidoking — and escape through the portal before the
-        10-minute zone timer runs out and the Final Swarm begins.
+        SpriteBonk is a fast-paced 3D monster-taming survival arena. Choose your
+        elemental companion, explore wild biomes, fend off endless monster waves,
+        activate ancient elemental altars to defeat powerful zone guardians, and
+        escape through the portal before the 10-minute swarm overwhelms you.
 
         Features:
-        - Three starters with distinct moves (Vine Whip, Ember, Water Gun)
-        - Stage flow: roam -> altar -> guardian -> portal -> next zone
-        - Optional Solana wallet connect (read-only): play as a guest with no
-          wallet, or connect to show your address and SOL balance
-        - No account, no ads, no in-app purchases in this release
+        - Unique elemental starters with custom signature moves and evolutions
+        - Full stage progression: roam -> activate altar -> defeat guardian -> portal
+        - In-run ability draft, elemental reactions, and rogue-lite upgrades
+        - Native Solana Mobile Wallet Adapter (MWA) support: connect your wallet or play as guest
+        - No intrusive ads, no forced accounts, fair progression
 
-        On-chain features ($SPRT token and Genesis NFT eligibility) are
-        planned for a later season update and are not part of this release.
-      new_in_version: "Initial release: Zone 1 — Viridian Forest, 3 starters, guardian trio, optional read-only wallet connect."
+        On-chain features ($SPRT token and Genesis NFT eligibility) are planned
+        for a later season update and are not part of this release.
+      new_in_version: "Initial release: 3 elemental starters, 4 biomes, guardian bosses, and native Solana Mobile Wallet Adapter."
     zh-CN:
       name: SpriteBonk
-      short_description: "在常磐森林求生、召唤守护者、冲进传送门——3D 怪物生存竞技场。"
+      short_description: "3D 幻兽生存竞技场，击退兽潮，逃出生天。游客免登秒开。"
       long_description: |
-        《SpriteBonk》是一款以常磐森林为舞台的 3D 生存竞技场游戏。选择你的初始
-        伙伴，在梯田状的森林竞技场中漫游，击退一波波野生怪物，然后激活 Boss
-        祭坛，直面守护者三巨头——飞天螳螂、凯罗斯或尼多王——并在 10 分钟区域
-        倒计时结束、终局兽潮降临之前，从传送门逃出生天。
+        《SpriteBonk》是一款快节奏 3D 幻兽生存竞技场游戏。选择你的元素伙伴，
+        探索原野秘境，击退汹涌的野生怪物潮，激活远古祭坛迎战区域终极守护者，
+        在 10 分钟倒计时兽潮降临前冲入传送门逃出生天。
 
         特色：
-        - 三只初始伙伴，招式各异（藤鞭、火花、水枪）
-        - 关卡流程：漫游 -> 祭坛 -> 守护者 -> 传送门 -> 下一区域
-        - 可选 Solana 钱包连接（只读）：游客无需钱包即可游玩；连接后可显示
-          地址与 SOL 余额
-        - 本版本无账号、无广告、无内购
+        - 三大元素初始伙伴，拥有专属标志招式与阶段进化形态
+        - 完整关卡循环：旷野漫游 -> 激活祭坛 -> 击破守护者 -> 传送门进阶
+        - 局内三选一技能构筑、元素克制反应与实验室深度强化
+        - 支持原生 Solana 移动钱包 (MWA) 授权连接，亦可游客极速免登畅玩
+        - 纯粹游戏体验，无强制弹窗广告，无复杂账号绑定
 
         链上功能（$SPRT 代币与 Genesis NFT 资格）将在后续赛季更新中推出，
         不属于本版本内容。
-      new_in_version: "首发版本：第 1 区·常磐森林、3 只初始伙伴、守护者三巨头、可选只读钱包连接。"
+      new_in_version: "首发版本：3 大元素伙伴、4 大生态地带、守护者试炼与 Solana MWA 原生钱包支持。"
 solana_mobile_dapp_publisher_portal:
   google_store_package: ""
   testing_instructions: "Guest play needs no account or wallet: launch the app, pick any starter, play. Wallet connect (optional, read-only) is on the main menu — use 'Connect Wallet', paste any Solana address, and the menu shows the address and its SOL balance. No transactions are possible in this build."
