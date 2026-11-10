@@ -75,9 +75,23 @@ jobs:
           # 检查导出的 APK
           ls -lh build/android/
 
-      - name: 归档并导出 SpriteBonk APK
+      - name: 归档并导出 SpriteBonk APK (Artifact)
         uses: actions/upload-artifact@v4
+        continue-on-error: true
         with:
           name: SpriteBonk-Android-APK
           path: build/android/*.apk
           retention-days: 14
+
+      - name: 创建 GitHub Release 并直接发布 APK
+        uses: softprops/action-gh-release@v2
+        if: success()
+        with:
+          tag_name: "v1.0.0-ci-${{ github.run_number }}"
+          name: "SpriteBonk Android CI Build #${{ github.run_number }}"
+          body: "GitHub Actions 自动构建产物 (Commit: ${{ github.sha }})"
+          draft: false
+          prerelease: true
+          files: build/android/SpriteBonk-debug.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
