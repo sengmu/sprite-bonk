@@ -4297,6 +4297,7 @@ func _build_wallet_panel(root: Control) -> void:
 	vb.add_child(row)
 	var cbtn := UiTheme.make_button("连接", "green", "big")
 	cbtn.pressed.connect(func() -> void:
+		audio.click()
 		if wallet.is_wallet_connected():
 			wallet.disconnect_wallet()
 		elif _wallet_edit.text.strip_edges() != "":
@@ -4314,10 +4315,14 @@ func _build_wallet_panel(root: Control) -> void:
 			_wallet_balance.text = "授权未完成：%s" % reason
 	)
 	var copy := UiTheme.make_button("复制地址", "blue", "big")
-	copy.pressed.connect(func() -> void: DisplayServer.clipboard_set(wallet.address if wallet.is_wallet_connected() else _wallet_edit.text))
+	copy.pressed.connect(func() -> void:
+		audio.click()
+		DisplayServer.clipboard_set(wallet.address if wallet.is_wallet_connected() else _wallet_edit.text))
 	row.add_child(copy)
 	var xbtn := UiTheme.make_button("关闭", "orange", "big")
-	xbtn.pressed.connect(func() -> void: _wallet_panel.visible = false)
+	xbtn.pressed.connect(func() -> void:
+		audio.click()
+		_wallet_panel.visible = false)
 	xbtn.set_meta("p5_primary", true)
 	row.add_child(xbtn)
 	for btn in row.get_children():
@@ -4520,7 +4525,7 @@ func _refresh_lab() -> void:
 	buy.disabled = cost < 0 or GameProfile.stardust() < cost
 	buy.pressed.connect(func() -> void:
 		if GameProfile.lab_buy(_lab_selected):
-			audio.coin()
+			audio.sparkle()
 			if player and is_instance_valid(player):
 				player.recalc()
 			_refresh_lab()
@@ -5835,11 +5840,14 @@ func _build_result(root: Control) -> void:
 	rcol.add_child(actions)
 	var again := UiTheme.make_button("再次出发", "green", "big")
 	again.pressed.connect(func() -> void:
+		audio.click()
 		_result_panel.hide()
 		_open_loadout(_menu_hero_sp))
 	actions.add_child(again)
 	var b := UiTheme.make_button("返回菜单", "ghost", "big")
-	b.pressed.connect(func() -> void: get_tree().reload_current_scene())
+	b.pressed.connect(func() -> void:
+		audio.click()
+		get_tree().reload_current_scene())
 	actions.add_child(b)
 	if _p5_on:
 		scroll.custom_minimum_size = Vector2(0, 0)

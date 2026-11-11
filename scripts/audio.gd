@@ -209,6 +209,20 @@ func _play(name: String, stream: AudioStreamWAV, pitch := 1.0, vol_db := 0.0) ->
 	p.play()
 	_count(name)
 
+## Produced original SFX files live here (see
+## design/audio-requirements.md; generator assets/audio/
+## generate_sfx.py). A key with a produced file plays the file;
+## keys without one still fall back to the legacy synth recipes
+## below, which are dev placeholders pending their production
+## round and must all be gone before launch (M5 reskin gate).
+const SFX_DIR := "res://assets/audio/sfx/"
+
+func _file_stream(name: String) -> AudioStreamWAV:
+	var path := SFX_DIR + name + ".wav"
+	if not ResourceLoader.exists(path):
+		return null
+	return load(path) as AudioStreamWAV
+
 ## Render-on-first-use lookup (recipes below). "track:<name>"
 ## resolves to the BGM song cache (rendered from the base
 ## track for the pitched variants).
@@ -217,7 +231,9 @@ func stream_for(name: String) -> AudioStreamWAV:
 		return _track_stream(name.trim_prefix("track:"))
 	if _streams.has(name):
 		return _streams[name]
-	var s: AudioStreamWAV = _render_sfx(name)
+	var s: AudioStreamWAV = _file_stream(name)
+	if s == null:
+		s = _render_sfx(name)
 	_streams[name] = s
 	return s
 
@@ -771,6 +787,12 @@ func coin() -> void:
 	if _ok("coin", 0.05):
 		_sfx("coin")
 
+## Stardust-priced purchases (lab): airier than coin so the two
+## currencies never sound alike (audio requirements EC-06).
+func sparkle() -> void:
+	if _ok("sparkle", 0.05):
+		_sfx("sparkle")
+
 func power() -> void:
 	_sfx("power")
 
@@ -830,6 +852,18 @@ func shot(type: String) -> void:
 	if not _render_sfx_has(key):
 		key = "shot_default"
 	_play("shot_" + type, stream_for(key))
+
+## Ultimate cast one-shots per starter family (audio
+## requirements SK-08): 1 grass / 4 fire / 7 water. Replaces the
+## borrowed shot/boom pairing the ult code used before.
+func ult_cast(fam: int) -> void:
+	if not _ok("ult", 0.1):
+		return
+	match fam:
+		1: _sfx("ult_grass")
+		4: _sfx("ult_fire")
+		7: _sfx("ult_water")
+		_: _sfx("ult_grass")
 
 func _render_sfx_has(key: String) -> bool:
 	return key in ["shot_fire", "shot_water", "shot_electric", "shot_grass",

@@ -363,12 +363,7 @@ func _cast(fam: int, ctx: Dictionary) -> void:
 	# (the real def sfx live in unported move kits; typed
 	# generic sounds stand in).
 	if GameAudio.instance:
-		match fam:
-			1: GameAudio.instance.shot("grass")
-			4:
-				GameAudio.instance.boom(1.0)
-				GameAudio.instance.shot("fire")
-			7: GameAudio.instance.shot("water")
+		GameAudio.instance.ult_cast(fam)
 	match fam:
 		1: _cast_roots(ctx)
 		4: _cast_blaze(ctx)
