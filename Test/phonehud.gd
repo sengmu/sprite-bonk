@@ -3401,6 +3401,10 @@ func _p5_menu_block(vp: Vector2) -> void:
 			_check("P5: menu inside UI area", _inside(mr, _p5_ui_rect()),
 				str(mr) + " ui=" + str(_p5_ui_rect()))
 			var ts := _p5_text_scan(mdc)
+			var wordmark := mdc.get_node_or_null("MenuLogo/LogoArt/Wordmark") as Label
+			_check("P5: U2 wordmark keeps its cream face",
+				wordmark != null and UiTheme.luminance(wordmark.get_theme_color("font_color")) >= 0.8,
+				str(wordmark.get_theme_color("font_color")) if wordmark != null else "wordmark missing")
 			_check("P5: menu text",
 				float(ts[0]) >= P5_TEXT - 0.01 and (float(ts[2]) == INF or float(ts[2]) >= P5_TAG - 0.01),
 				"min=" + str(snappedf(float(ts[0]), 0.1)) + " '" + String(ts[1]) + "' tag_min="

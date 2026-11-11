@@ -108,6 +108,18 @@ func _draw() -> void:
 			_poly([Vector2(6, 18), Vector2(15.5, 8.5), Vector2(19, 5), Vector2(18.5, 10.5), Vector2(9, 20)], color)
 			_line([Vector2(5, 15), Vector2(9, 19)], 2.6)
 			_circ(4.2, 19.8, 1.7)
+		"brand_leaf":
+			_poly([Vector2(3, 22), Vector2(3, 13), Vector2(6, 7), Vector2(13, 3),
+				Vector2(23, 1), Vector2(21, 12), Vector2(17, 19), Vector2(10, 22)], color)
+			_poly([Vector2(6, 19), Vector2(6, 13), Vector2(9, 8), Vector2(15, 5),
+				Vector2(20, 4), Vector2(18, 12), Vector2(14, 17)], Color("8eaf35"))
+			draw_line(_p(6, 19), _p(18, 6), Color("b9cc66"), _u(1.3), true)
+		"phone_shake":
+			_poly([Vector2(9, 3), Vector2(19, 6), Vector2(15, 22), Vector2(5, 19)], Color("e9efcc"))
+			_line([Vector2(9, 3), Vector2(19, 6), Vector2(15, 22), Vector2(5, 19)], 2.3, true)
+			_circ(10.8, 18.2, 0.7)
+			_line([Vector2(4, 5), Vector2(2, 8), Vector2(2, 11)], 1.5)
+			_line([Vector2(21, 10), Vector2(22, 13), Vector2(21, 16)], 1.5)
 		"wind":
 			# U1 1:1 round 10: a bold "3" swirl with two speed
 			# lines (reference U1_final.jpg dash glyph) — the

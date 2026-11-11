@@ -4023,7 +4023,7 @@ func _build_menu(root: Control) -> void:
 			(_menu_badges[badge_key] as Control).hide()
 		var shake_row := _panel(_menu_panel, Vector2(8, 348), Vector2(296, 52), UiTheme.CREAM, 15, Color("e8c48a"), 2)
 		shake_row.name = "MenuShake"
-		var shake_icon := UiBadge.new("shake", UiTheme.TEXT, 36)
+		var shake_icon := UiIcon.new("phone_shake", Color("365b28"), 36)
 		shake_icon.position = Vector2(12, 8)
 		shake_icon.size = Vector2(36, 36)
 		shake_row.add_child(shake_icon)
@@ -4069,15 +4069,31 @@ func _build_menu(root: Control) -> void:
 		if c != _menu_design and c.name != "MenuForestBackground":
 			(c as Node).reparent(_menu_design, false)
 	if _p5_on:
-		var menu_logo := TextureRect.new()
+		var menu_logo := Control.new()
 		menu_logo.name = "MenuLogo"
-		menu_logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		menu_logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT
-		menu_logo.texture = load("res://assets/menu/logo.png")
 		menu_logo.position = Vector2(8, 0)
 		menu_logo.size = Vector2(310, 85)
 		menu_logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_menu_design.add_child(menu_logo)
+		var logo_art := Control.new()
+		logo_art.name = "LogoArt"
+		logo_art.size = Vector2(286, 68)
+		logo_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		menu_logo.add_child(logo_art)
+		var wordmark := _mk_label(logo_art, "SpriteBonk", 50, Color("fffbed"), true)
+		wordmark.name = "Wordmark"
+		wordmark.size = Vector2(260, 64)
+		wordmark.position = Vector2(0, 2)
+		wordmark.add_theme_font_override("font", UiTheme.display_font())
+		wordmark.add_theme_color_override("font_outline_color", Color("4d2d1d"))
+		wordmark.add_theme_constant_override("outline_size", 14)
+		wordmark.add_theme_color_override("font_shadow_color", Color("4d2d1d"))
+		wordmark.add_theme_constant_override("shadow_outline_size", 10)
+		wordmark.add_theme_constant_override("shadow_offset_y", 3)
+		var logo_leaf := UiIcon.new("brand_leaf", Color("45611f"), 36)
+		logo_leaf.position = Vector2(250, -2)
+		logo_leaf.size = Vector2(36, 36)
+		logo_art.add_child(logo_leaf)
 		var hint_pad := TextureRect.new()
 		hint_pad.name = "MenuHintPad"
 		hint_pad.texture = load("res://assets/menu/v2-dpad.svg") as Texture2D
@@ -4196,7 +4212,16 @@ func _build_menu(root: Control) -> void:
 			for button_state in ["normal", "hover", "pressed"]:
 				pill.add_theme_stylebox_override(button_state, menu_pill_face)
 			pill.custom_minimum_size = Vector2(162, 45)
-			var resource_icon := UiIcon.new("spark", Color("aa4ace") if dest == "lab" else UiTheme.GOLD, 25)
+			var resource_icon: Control
+			if dest == "lab":
+				resource_icon = UiIcon.new("spark", Color("aa4ace"), 25)
+			else:
+				var total_star := TextureRect.new()
+				total_star.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+				total_star.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+				total_star.texture = UiTheme.asset("decorations", "star_filled")
+				resource_icon = total_star
+			resource_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			resource_icon.position = Vector2(12, 10)
 			resource_icon.size = Vector2(25, 25)
 			pill.add_child(resource_icon)
@@ -13803,6 +13828,9 @@ func _p5_menu_reference_layout(width: float) -> void:
 			node.set_meta("p5_h0", extent.y)
 		node.size = extent
 		var art := node.get_node_or_null("MenuEntryArt") as Control
+		var logo_art := node.get_node_or_null("LogoArt") as Control
+		if logo_art:
+			logo_art.scale = Vector2.ONE * extent.x / 286.0
 		if node is Label:
 			node.add_theme_font_override("font", UiTheme.body_font())
 		if art:
