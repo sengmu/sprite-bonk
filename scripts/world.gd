@@ -3916,25 +3916,39 @@ func _build_menu(root: Control) -> void:
 	_wallet_status = witem[1]
 	var menu_pill_face: StyleBoxTexture
 	if _p5_on:
+		((witem[0] as Button).get_child(1) as Label).add_theme_font_size_override("font_size", 16)
 		menu_pill_face = StyleBoxTexture.new()
 		menu_pill_face.texture = UiTheme.asset("textures", "button_cream")
 		menu_pill_face.set_content_margin_all(0)
 		for button_state in ["normal", "hover", "pressed"]:
-			(witem[0] as Button).add_theme_stylebox_override(button_state, menu_pill_face)
+			(witem[0] as Button).add_theme_stylebox_override(button_state, StyleBoxEmpty.new())
+		var wallet_face := Panel.new()
+		wallet_face.name = "MenuWalletFace"
+		wallet_face.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		wallet_face.show_behind_parent = true
+		wallet_face.add_theme_stylebox_override("panel", _style(Color("fff3dd"), 10, Color("e4bd77"), 2))
+		(witem[0] as Button).add_child(wallet_face)
 		((witem[0] as Button).get_child(0) as Control).hide()
 		var wallet_art := TextureRect.new()
 		wallet_art.name = "MenuWalletArt"
 		wallet_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		wallet_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		wallet_art.texture = load("res://assets/menu/v2-icon-wallet.svg") as Texture2D
+		var wallet_atlas := AtlasTexture.new()
+		wallet_atlas.atlas = load("res://assets/menu/u2-art-wallet.png")
+		wallet_atlas.region = Rect2(126, 182, 995, 909)
+		wallet_art.texture = wallet_atlas
 		wallet_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		wallet_art.position = Vector2(13, 3)
 		wallet_art.size = Vector2(40, 40)
 		(witem[0] as Button).add_child(wallet_art)
-		var wallet_chip := _panel(witem[0], Vector2(198, 9), Vector2(91, 30),
-			Color(0.42, 0.40, 0.34), 15)
+		var wallet_chip := PanelContainer.new()
 		wallet_chip.name = "WalletChip"
-		var wallet_chip_text := _mk_label(wallet_chip, "未连接", 15, Color.WHITE)
+		wallet_chip.position = Vector2(198, 9)
+		wallet_chip.size = Vector2(91, 30)
+		wallet_chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		wallet_chip.add_theme_stylebox_override("panel", _style(Color(0.42, 0.40, 0.34), 15))
+		(witem[0] as Button).add_child(wallet_chip)
+		var wallet_chip_text := _mk_label(wallet_chip, "未连接", 11, Color.WHITE)
 		wallet_chip_text.name = "WalletChipText"
 		wallet_chip_text.add_theme_color_override("font_color", Color.WHITE)
 		wallet_chip_text.position = Vector2.ZERO
@@ -3990,10 +4004,10 @@ func _build_menu(root: Control) -> void:
 	# settings, defaults shakeOn true / screenShake 1 @1566819).
 	# Cycle 19: the shake glyph replaces "wind" (audit §2.3).
 	if _p5_on:
-		for entry in [[litem, Vector2(8, 134), "res://assets/menu/v2-icon-lab.svg", Vector2(84, 66), "MenuLab"],
-				[sitem, Vector2(160, 134), "res://assets/menu/v2-icon-shop.svg", Vector2(91, 72), "MenuShop"],
-				[uitem, Vector2(8, 240), "res://assets/menu/v2-icon-league.svg", Vector2(78, 68), "MenuChallenge"],
-				[snditem, Vector2(160, 240), "res://assets/menu/v2-icon-settings.svg", Vector2(74, 64), "MenuSettings"]]:
+		for entry in [[litem, Vector2(8, 134), "res://assets/menu/icon-lab.png", Vector2(84, 66), "MenuLab"],
+				[sitem, Vector2(160, 134), "res://assets/menu/u2-art-shop.png", Vector2(91, 72), "MenuShop"],
+				[uitem, Vector2(8, 240), "res://assets/menu/u2-art-league.png", Vector2(78, 68), "MenuChallenge"],
+				[snditem, Vector2(160, 240), "res://assets/menu/u2-art-settings.png", Vector2(74, 64), "MenuSettings"]]:
 			var item_button := entry[0][0] as Control
 			item_button.name = entry[4]
 			item_button.position = entry[1]
@@ -4001,7 +4015,7 @@ func _build_menu(root: Control) -> void:
 			item_button.size = Vector2(144, 100)
 			item_button.clip_contents = true
 			for state in ["normal", "hover", "pressed", "focus"]:
-				var tile_face := UiTheme.panel_texture(0)
+				var tile_face := _style(Color("fff3dd"), 10, Color("e4bd77"), 2)
 				item_button.add_theme_stylebox_override(state, tile_face)
 			var item_icon := item_button.get_child(0) as Control
 			item_icon.hide()
@@ -4010,6 +4024,12 @@ func _build_menu(root: Control) -> void:
 			art_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 			art_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 			art_icon.texture = load(entry[2]) as Texture2D
+			var art_regions := {"MenuLab": Rect2(321, 236, 609, 701), "MenuShop": Rect2(395, 262, 743, 486), "MenuChallenge": Rect2(38, 228, 1178, 825), "MenuSettings": Rect2(22, 86, 1208, 1090)}
+			if art_regions.has(entry[4]):
+				var atlas := AtlasTexture.new()
+				atlas.atlas = art_icon.texture
+				atlas.region = art_regions[entry[4]]
+				art_icon.texture = atlas
 			art_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			var art_size: Vector2 = entry[3]
 			art_icon.position = Vector2((144.0 - art_size.x) * 0.5, 3.0)
@@ -4019,22 +4039,28 @@ func _build_menu(root: Control) -> void:
 			item_title.position = Vector2(0, 70)
 			item_title.size = Vector2(144, 30)
 			item_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			item_title.add_theme_font_size_override("font_size", 18)
+			item_title.add_theme_font_size_override("font_size", 16)
 			(entry[0][1] as Label).hide()
 		for badge_key in ["lab", "shop", "unlock"]:
 			(_menu_badges[badge_key] as Control).hide()
 		var shake_row := _panel(_menu_panel, Vector2(8, 348), Vector2(296, 52), UiTheme.CREAM, 15, Color("e8c48a"), 2)
 		shake_row.name = "MenuShake"
-		var shake_icon := UiIcon.new("phone_shake", Color("365b28"), 36)
+		var shake_icon := TextureRect.new()
+		shake_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		shake_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		var shake_atlas := AtlasTexture.new()
+		shake_atlas.atlas = load("res://assets/menu/u2-art-vibrate.png")
+		shake_atlas.region = Rect2(126, 186, 995, 900)
+		shake_icon.texture = shake_atlas
 		shake_icon.name = "MenuShakeIcon"
 		shake_icon.position = Vector2(12, 8)
 		shake_icon.size = Vector2(36, 36)
 		shake_row.add_child(shake_icon)
-		var shake_label := _mk_label(shake_row, "画面震动", 20, UiTheme.TEXT)
+		var shake_label := _mk_label(shake_row, "画面震动", 16, UiTheme.TEXT)
 		shake_label.name = "MenuShakeText"
 		shake_label.position = Vector2(58, 8)
 		shake_label.size = Vector2(132, 36)
-		var shake_switch := UiTheme.make_switch(bool(GameProfile.setting("shakeOn")))
+		var shake_switch := UiTheme.make_switch(bool(GameProfile.setting("shakeOn")), 0.5)
 		shake_switch.name = "ShakeSwitch"
 		shake_switch.position = Vector2(196, 1)
 		shake_row.add_child(shake_switch)
@@ -4438,7 +4464,7 @@ func _refresh_wallet_ui() -> void:
 		var wallet_button := _wallet_status.get_parent() as Button
 		var title := wallet_button.get_child(1) as Label
 		title.text = "钱包"
-		var chip := wallet_button.get_node_or_null("WalletChip") as Panel
+		var chip := wallet_button.get_node_or_null("WalletChip") as Control
 		if chip:
 			chip.add_theme_stylebox_override("panel", _style(Color("78b52b") if connected else Color(0.42, 0.40, 0.34), 15))
 			(chip.get_node("WalletChipText") as Label).text = "● 已连接" if connected else "未连接"
@@ -13806,6 +13832,7 @@ func _p5_layout_menu(s: float) -> void:
 ## to the phone design surface so each iteration uses the same anchors.
 func _p5_menu_reference_layout(width: float) -> void:
 	var unit := Vector2(width / 1672.0, 450.0 / 941.0)
+	var column_unit := Vector2.ONE * unit.y
 	var rects := {
 		"MenuLogo": Rect2(68, 30, 490, 142),
 		"MenuWallet": Rect2(36, 176, 454, 82),
@@ -13825,8 +13852,9 @@ func _p5_menu_reference_layout(width: float) -> void:
 		if node == null:
 			continue
 		var rect: Rect2 = rects[key]
-		node.position = rect.position * unit
-		var extent := rect.size * unit
+		var node_unit := column_unit if key in ["MenuWallet", "MenuLab", "MenuShop", "MenuChallenge", "MenuSettings", "MenuShake"] else unit
+		node.position = rect.position * node_unit
+		var extent := rect.size * node_unit
 		if node is Button:
 			node.add_theme_font_override("font", UiTheme.body_font())
 			for child in node.get_children():
@@ -13848,8 +13876,8 @@ func _p5_menu_reference_layout(width: float) -> void:
 			title.position = Vector2(6, extent.y - title_height - 8)
 			title.size = Vector2(extent.x - 12, title_height)
 			title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-			art.size = Vector2(extent.x * 0.56, title.position.y - 14)
-			art.position = Vector2((extent.x - art.size.x) * 0.5, 8)
+			art.size = Vector2(extent.x * 0.68, title.position.y - 11)
+			art.position = Vector2((extent.x - art.size.x) * 0.5, 7)
 	var start := _menu_design.get_node("StartButton") as Control
 	(start.get_node("StartButtonArt") as Control).size = start.size
 	var caption := _menu_design.get_node("StartCaption") as Label
@@ -13874,20 +13902,28 @@ func _p5_menu_reference_layout(width: float) -> void:
 	_menu_starters.size.x = ceilf(_menu_starters.size.x) + 2.0
 	(_menu_starters.get_child(0) as HBoxContainer).add_theme_constant_override("separation", int(round(selection.size.x * 18.0 / 810.0)))
 	var wallet_button := _menu_design.get_node("MenuWallet") as Control
+	var wallet_face := wallet_button.get_node("MenuWalletFace") as Control
+	wallet_face.size = Vector2(wallet_button.size.x, 82.0 * column_unit.y)
+	var wallet_height := wallet_face.size.y
 	var chip := wallet_button.get_node("WalletChip") as Control
-	chip.position = Vector2(wallet_button.size.x - chip.size.x - 10.0, (wallet_button.size.y - chip.size.y) * 0.5)
+	chip.size = Vector2(70, 22)
+	chip.position = Vector2(wallet_button.size.x - chip.size.x - 10.0, (wallet_height - chip.size.y) * 0.5)
 	var wallet_art := wallet_button.get_node("MenuWalletArt") as Control
-	wallet_art.size = Vector2(32, 32)
-	wallet_art.position = Vector2(10, (wallet_button.size.y - wallet_art.size.y) * 0.5)
+	wallet_art.size = Vector2(28, 28)
+	wallet_art.position = Vector2(12, (wallet_height - wallet_art.size.y) * 0.5)
 	var wallet_title := wallet_button.get_child(1) as Label
-	wallet_title.size = Vector2(chip.position.x - 60.0, wallet_title.get_combined_minimum_size().y)
-	wallet_title.position = Vector2(52, (wallet_button.size.y - wallet_title.size.y) * 0.5)
+	wallet_title.size = Vector2(chip.position.x - 58.0, wallet_title.get_combined_minimum_size().y)
+	wallet_title.position = Vector2(50, (wallet_height - wallet_title.size.y) * 0.5)
 	wallet_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	var shake_row := _menu_design.get_node("MenuShake") as Control
 	var shake_switch := shake_row.get_node("ShakeSwitch") as Control
-	shake_switch.size = shake_switch.get_combined_minimum_size()
-	shake_row.size.y = shake_switch.size.y + 16.0
-	shake_switch.position = Vector2(shake_row.size.x - shake_switch.size.x - 10.0, 8)
+	var switch_tap_size := ceilf(P5_BTN_PX / _menu_design.scale.x)
+	shake_switch.custom_minimum_size = Vector2.ONE * switch_tap_size
+	shake_switch.size = shake_switch.custom_minimum_size
+	shake_row.size.y = maxf(shake_row.size.y, switch_tap_size)
+	shake_row.add_theme_stylebox_override("panel", _style(Color("fff3dd"), 10, Color("e4bd77"), 2))
+	shake_switch.position = Vector2(shake_row.size.x - shake_switch.size.x - 10.0, (shake_row.size.y - shake_switch.size.y) * 0.5)
+	UiTheme.set_switch(shake_switch, bool(GameProfile.setting("shakeOn")))
 	var shake_icon := shake_row.get_node("MenuShakeIcon") as Control
 	shake_icon.size = Vector2(32, 32)
 	shake_icon.position = Vector2(10, (shake_row.size.y - shake_icon.size.y) * 0.5)
@@ -13897,7 +13933,7 @@ func _p5_menu_reference_layout(width: float) -> void:
 	shake_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	if _menu_hint:
 		var backing := _menu_hint.get_meta("back") as Control
-		backing.position = Vector2(32, 836) * unit
+		backing.position = Vector2(32, 816) * unit
 		backing.size = Vector2(468, 66) * unit
 		_menu_hint.position = backing.position + Vector2(35, 3)
 		_menu_hint.size = Vector2(backing.size.x - 40.0, backing.size.y - 6.0)

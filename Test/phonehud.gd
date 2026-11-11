@@ -3452,15 +3452,20 @@ func _p5_menu_block(vp: Vector2) -> void:
 					drifting.append(entry_name)
 			_check("P5: menu entry positions survive relayout", drifting.is_empty(), str(drifting))
 			var inset_pairs: Array = []
+			var lab_rect := _vis_rect(mdc.get_node("MenuLab"))
+			_check("P5: left menu card keeps reference proportions",
+				absf(lab_rect.size.x / lab_rect.size.y - 224.0 / 185.0) < 0.02, str(lab_rect.size))
 			for entry_name in ["MenuLab", "MenuShop", "MenuChallenge", "MenuSettings"]:
 				var entry := mdc.get_node(entry_name) as Control
 				inset_pairs.append([entry.get_node("MenuEntryArt"), entry])
 				inset_pairs.append([entry.get_child(1), entry])
 			for content_path in ["MenuWallet/MenuWalletArt", "MenuWallet/WalletChip",
-					"MenuShake/MenuShakeIcon", "MenuShake/MenuShakeText", "MenuShake/ShakeSwitch"]:
+					"MenuShake/MenuShakeIcon", "MenuShake/MenuShakeText"]:
 				var content := mdc.get_node(content_path) as Control
-				inset_pairs.append([content, content.get_parent()])
-			inset_pairs.append([mdc.get_node("MenuWallet").get_child(1), mdc.get_node("MenuWallet")])
+				var content_back := mdc.get_node("MenuWallet/MenuWalletFace") if content_path.begins_with("MenuWallet/") else content.get_parent()
+				inset_pairs.append([content, content_back])
+			inset_pairs.append([mdc.get_node("MenuShake/ShakeSwitch/SwitchTrack"), mdc.get_node("MenuShake")])
+			inset_pairs.append([mdc.get_node("MenuWallet").get_child(1), mdc.get_node("MenuWallet/MenuWalletFace")])
 			inset_pairs.append([mdc.get_node("StartCaption"), mdc.get_node("StartCaptionBack")])
 			var crowded: Array[String] = []
 			for pair in inset_pairs:

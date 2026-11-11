@@ -535,8 +535,9 @@ static func _knob_texture() -> Texture2D:
 ## retints. State lives with the caller (Profile); set_switch
 ## repaints. The button's `toggled`-style presses are plain
 ## `pressed` — the caller flips its own state then repaints.
-static func make_switch(on: bool) -> Button:
+static func make_switch(on: bool, visual_scale: float = 1.0) -> Button:
 	var b := Button.new()
+	b.set_meta("sw_visual_scale", visual_scale)
 	b.custom_minimum_size = Vector2(54, 28)
 	b.text = ""
 	b.focus_mode = Control.FOCUS_NONE
@@ -549,21 +550,39 @@ static func make_switch(on: bool) -> Button:
 	return b
 
 static func set_switch(b: Button, on: bool) -> void:
-	var rk := int(round(14.0 * float(b.get_meta("sw_k", 1.0))))
+	var k := float(b.get_meta("sw_k", 1.0))
+	var visual_scale := float(b.get_meta("sw_visual_scale", 1.0))
+	var visual_k := k * visual_scale
+	var inset := Vector2.ZERO
+	var rk := int(round(14.0 * visual_k))
 	var track := flat_box(GREEN_DEEP if on else Color(INK_DEEP.r, INK_DEEP.g, INK_DEEP.b, 0.9), rk,
 		Color(1, 1, 1, 0.2), 1)
-	b.add_theme_stylebox_override("normal", track)
-	b.add_theme_stylebox_override("hover", track)
-	b.add_theme_stylebox_override("pressed", track)
+	if visual_scale < 1.0:
+		var painted := b.get_node_or_null("SwitchTrack") as Panel
+		if painted == null:
+			painted = Panel.new()
+			painted.name = "SwitchTrack"
+			painted.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			b.add_child(painted)
+			b.move_child(painted, 0)
+		painted.size = Vector2(54, 28) * visual_k
+		inset = (b.size.max(b.custom_minimum_size) - painted.size) * 0.5
+		painted.position = inset
+		painted.add_theme_stylebox_override("panel", track)
+		for state in ["normal", "hover", "pressed"]:
+			b.add_theme_stylebox_override(state, StyleBoxEmpty.new())
+	else:
+		b.add_theme_stylebox_override("normal", track)
+		b.add_theme_stylebox_override("hover", track)
+		b.add_theme_stylebox_override("pressed", track)
 	b.add_theme_stylebox_override("focus", flat_box(Color(0, 0, 0, 0), rk, GOLD, 2))
 	var knob := b.get_node_or_null("knob") as Panel
 	if knob:
 		# UI-mobile P5: phone modals grow the switch by k (meta
 		# sw_k, set by size_switch) — the knob scales with it.
-		var k := float(b.get_meta("sw_k", 1.0))
-		knob.size = Vector2(22, 22) * k
-		knob.position = Vector2(29 if on else 3, 3) * k
-		knob.add_theme_stylebox_override("panel", flat_box(Color.WHITE, int(round(11.0 * k))))
+		knob.size = Vector2(22, 22) * visual_k
+		knob.position = inset + Vector2(29 if on else 3, 3) * visual_k
+		knob.add_theme_stylebox_override("panel", flat_box(Color.WHITE, int(round(11.0 * visual_k))))
 	b.set_meta("sw_on", on)
 
 ## UI-mobile P5: resize a switch to k x its 54x28 design (the
