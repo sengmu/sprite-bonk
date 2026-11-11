@@ -22,7 +22,7 @@ func run() -> void:
 	await process_frame
 	var tracks := ["menu", "ingame1", "ingame2", "ingame3", "ingame4", "boss"]
 	for t in tracks:
-		var path := "res://assets/audio/music/bgm_" + t + ".ogg"
+		var path: String = "res://assets/audio/music/bgm_" + t + ".ogg"
 		ck(ResourceLoader.exists(path), t + " file exists")
 		a.play_track(t)
 		ck(a.current_track == t, t + " is current")
