@@ -2710,7 +2710,7 @@ func _p4_state(vp: Vector2, st: String, prompt_state: bool) -> void:
 			(0.15 * ui_rect.size.y - 12.0) / 192.0))
 	var cl := _p4_cluster_left()
 	if cl < INF and bl.size.x > 0.0:
-		var s_fit := (cl - ui_rect.position.x - 16.0 - P4_BUBBLE_MIN - 16.0 - 12.0) / bl.size.x
+		var s_fit := (cl - ui_rect.position.x - 16.0 - P4_BUBBLE_MIN - 16.0 - 23.0) / bl.size.x
 		want = maxf(minf(want, s_fit), P4_SBL_FLOOR)
 	_check("P4: s_bl = min(s, 1.35, bubble fit) (" + st + ")",
 		have and absf(bl.scale.x - want) < 0.002,
