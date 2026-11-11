@@ -2883,7 +2883,10 @@ func _build_hud() -> void:
 	# width gives the cluster's true scale as ~2.0). Width
 	# 232 -> 156 lands the edge at 0.190; height 78 -> 60 and
 	# y 8 -> 24 centre the slimmer pill on the medallion.
-	_hero_plate.size = Vector2(156, 60)
+	# U1 1:1 round 15 (coordinator): the round-14 capture's row
+	# scan reads the edge at 0.200, a final 12 px off — width
+	# 156 -> 144.
+	_hero_plate.size = Vector2(144, 60)
 	_hero_plate.add_theme_stylebox_override("panel", UiTheme.dark_glass(28, 0.92))
 	_hero_plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_hero_cluster.add_child(_hero_plate)
@@ -2918,7 +2921,10 @@ func _build_hud() -> void:
 	# "cream chip" read of U1_final.jpg was wrong (the cream
 	# chip under a learned skill slot is the reference's, this
 	# one is not). Same rect (61,4,56,26), colours flipped.
-	var lv_badge := _panel(_hero_cluster, Vector2(61, 4), Vector2(56, 26), Color(0.10, 0.07, 0.20, 0.92), 13, Color(0, 0, 0, 0), 0, true)
+	# U1 1:1 round 15 (coordinator): badge (61,4) -> (72,0) so it
+	# straddles the grown medallion's top-right rim the way the
+	# reference's does, instead of sitting inside the disc.
+	var lv_badge := _panel(_hero_cluster, Vector2(72, 0), Vector2(56, 26), Color(0.10, 0.07, 0.20, 0.92), 13, Color(0, 0, 0, 0), 0, true)
 	_lv_label = _label_in(lv_badge, "1级", Vector2(0, 0), Vector2(56, 26), 12, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
 	var info := Panel.new()
 	_hero_info = info
@@ -14498,10 +14504,13 @@ func _apply_top_card_phone(on: bool) -> void:
 		# reference's 0.0825..0.1669. New rect (85, 44, 98, 20):
 		# left end tucks behind the 108 medallion, right edge
 		# lands at 0.167, vertically centred on the plate.
-		[_hud_hp_track, Rect2(85, 44, 98, 20)],
-		[_hud_hp_lag, Rect2(1, 1, 96, 18)],
-		[_hud_hp_fill, Rect2(1, 1, 96, 18)],
-		[_hud_hp_num, Rect2(0, 0, 98, 20)],
+		# U1 1:1 round 15 (coordinator): round-14 row scan reads
+		# the bar's right edge at 0.172 vs the reference's
+		# 0.1669 — track width 98 -> 92.
+		[_hud_hp_track, Rect2(85, 44, 92, 20)],
+		[_hud_hp_lag, Rect2(1, 1, 90, 18)],
+		[_hud_hp_fill, Rect2(1, 1, 90, 18)],
+		[_hud_hp_num, Rect2(0, 0, 92, 20)],
 		[_hud_shield_fill, Rect2(1, 1, 0, 18)],
 		# U1 1:1 round 4: the info plate (name + type chips +
 		# evo line) is gone on phone — the reference hero

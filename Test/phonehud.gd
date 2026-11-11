@@ -1732,7 +1732,10 @@ func _p2_phone_block(vp: Vector2) -> void:
 	var party := _world.get("_party_row") as Control
 	var hero := _world.get("_hero_cluster") as Control
 	_check("P2: party row shows with an ally",
-		_p2_allies() == 0 or (party.is_visible_in_tree() and absf(hero.size.y - 104.0) < 0.5),
+		# U1 1:1 round 14: height pin follows the same ruling
+		# as the box pin above — 108 (the medallion) in both
+		# states; the party row's own bottom stays 104.
+		_p2_allies() == 0 or (party.is_visible_in_tree() and absf(hero.size.y - 108.0) < 0.5),
 		"allies=" + str(_p2_allies()) + " vis=" + str(party.is_visible_in_tree())
 		+ " hero=" + str(hero.size))
 
