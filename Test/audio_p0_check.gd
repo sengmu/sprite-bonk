@@ -36,8 +36,11 @@ func run() -> void:
 				k + " is file-backed (got: " + s.resource_path + ")")
 			ck(s.get_length() > 0.03, k + " has length")
 			ck(s.mix_rate == 44100, k + " is 44.1 kHz")
-	var fb := a.stream_for("slot_tick")
-	ck(fb != null, "fallback renders unproduced key slot_tick")
+	# Fallback mechanism probe: every production key is file-backed
+	# since the P1/P2 batch, so probe with a deliberately unknown key
+	# — the renderer must still answer (a silent buffer), not crash.
+	var fb := a.stream_for("probe_unproduced_key")
+	ck(fb != null, "fallback renders an unknown key")
 	if fb:
 		ck(fb.resource_path == "", "fallback is synth (no resource_path)")
 	var tr := a.stream_for("track:menu")

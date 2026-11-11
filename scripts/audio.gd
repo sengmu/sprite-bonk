@@ -826,6 +826,11 @@ func panel_open() -> void:
 	if _ok("panel", 0.05):
 		_sfx("panel_open")
 
+## UI-09 companion: a produced close slide for panels that want it.
+func panel_close() -> void:
+	if _ok("panel", 0.05):
+		_sfx("panel_close")
+
 ## EC-09: generic pickup-buff gain (magnet / repel / key / scrolls).
 func buff() -> void:
 	if _ok("buff", 0.08):
