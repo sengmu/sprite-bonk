@@ -352,6 +352,11 @@ func _run() -> void:
 		_p1_prompt_verb("chest")
 		_p1_interact_mode("chest", true)
 		await _p1_snap("chest_prompt_gold0")
+		# U1 1:1 round 7: capture-only 2340 chest shot — the
+		# interact button is READY here (solid orange disc),
+		# the state-matched对照 for the idle faint circle in
+		# the hud_start compare (same pattern as that snap).
+		await _snap("phone_hud_touch_" + _run_tag() + "_chest")
 		await _p2_snap("chest_prompt")
 		await _p4_snap("chest_prompt")
 		await _p1_paid_chest()
@@ -1443,7 +1448,11 @@ func _p2_state(vp: Vector2, st: String) -> void:
 	var tchip := _p2_tier_chip()
 	var hid := {
 		"pw_row": _world.get("_pw_row"), "zone_en": _world.get("_zone_en"),
-		"elapsed": _world.get("_elapsed_label")}
+		"elapsed": _world.get("_elapsed_label"),
+		# U1 1:1 round 7: the zone NAME is hidden on phone too
+		# (reference top bar has no place name) — same
+		# strictness, new target.
+		"zone_cn": _world.get("_zone_cn")}
 	var shown: Array = []
 	for k in hid.keys():
 		var c := hid[k] as Control

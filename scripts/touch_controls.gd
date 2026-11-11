@@ -83,8 +83,8 @@ var _ult_glyph: Label
 var _classic := true
 const MIN_HIT := 70.0
 const LOCK_ARC := Vector4(-300, -216, -236, -152)
-const INTERACT_FILL := Color(1, 0.85, 0.3, 0.20)
-const INTERACT_BORDER := Color(1, 0.85, 0.3, 0.85)
+const INTERACT_FILL := Color(0.96, 0.52, 0.08, 0.95)
+const INTERACT_BORDER := Color(0.96, 0.52, 0.08, 0.85)
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -133,7 +133,7 @@ func _ready() -> void:
 	_ult_glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_ult_glyph.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_ult_glyph.add_theme_font_override("font", UiTheme.display_font())
-	_ult_glyph.add_theme_font_size_override("font_size", 22)
+	_ult_glyph.add_theme_font_size_override("font_size", 48)
 	_ult_glyph.add_theme_color_override("font_color", Color(1, 1, 1, 0.92))
 	_ult_glyph.add_theme_color_override("font_outline_color", UiTheme.ORANGE.darkened(0.25))
 	_ult_glyph.add_theme_constant_override("outline_size", 4)
@@ -402,7 +402,7 @@ func _on_button_input(event: InputEvent, kind: String) -> void:
 		_held[kind] = true
 		_edges[kind] = true
 		var panel: Panel = _buttons[kind]["panel"]
-		(panel.get_theme_stylebox("panel") as StyleBoxFlat).bg_color.a = 0.42
+		(panel.get_theme_stylebox("panel") as StyleBoxFlat).bg_color.a = 1.0 if kind == "interact" else 0.42
 	elif up:
 		_held[kind] = false
 		var panel2: Panel = _buttons[kind]["panel"]
@@ -452,7 +452,7 @@ func set_interact_mode(m: int) -> void:
 	var sb := (rec["panel"] as Panel).get_theme_stylebox("panel") as StyleBoxFlat
 	var pressed := held("interact")
 	sb.bg_color = Color(INTERACT_FILL.r, INTERACT_FILL.g, INTERACT_FILL.b,
-		0.42 if pressed else _interact_fill_a())
+		1.0 if pressed else _interact_fill_a())
 	sb.border_color = Color(INTERACT_BORDER.r, INTERACT_BORDER.g,
 		INTERACT_BORDER.b, 0.30 if m == 0 else INTERACT_BORDER.a)
 	(rec["icon"] as Control).modulate.a = 0.45 if m == 0 else 1.0
@@ -525,7 +525,7 @@ func apply_scale(s: float) -> void:
 		ult_gauge.hit_pad = gpad
 		ult_gauge.queue_redraw()
 	if _ult_glyph != null:
-		_ult_glyph.add_theme_font_size_override("font_size", int(round(22.0 * _scale_s)))
+		_ult_glyph.add_theme_font_size_override("font_size", int(round(48.0 * _scale_s)))
 	# Cycle 21.3: the lane column's offsets are NOT the
 	# base x _scale_s products — re-derive them last.
 	_apply_column()

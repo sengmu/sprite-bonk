@@ -63,6 +63,23 @@ func _draw() -> void:
 	# texture read as an orange star and buried the glyph.
 	draw_circle(centre, r_out, Color(0.55, 0.28, 0.88))
 	draw_arc(centre, r_out - 1.5, 0.0, TAU, 48, Color(0.72, 0.50, 1.0), 3.0, true)
+	# U1 1:1 round 8: darker inner bed so the white 必 reads
+	# like the reference (dark purple centre, bold white
+	# glyph); the charge sweep / ready face / deny veil draw
+	# on top of it.
+	draw_circle(centre, r_out - 6.0, Color(0.38, 0.16, 0.68))
+	# U1 1:1 round 7: segmented charge ring (reference) — 12
+	# segments just outside the disc; lit ones track charge,
+	# unlit ones stay dim so the ring reads at any charge
+	# (at 0 charge the plain disc read as "missing ring").
+	var segs := 12
+	var r_ring := r_out + 3.0
+	var lit := int(floor(charge * float(segs) + 0.001))
+	for i in range(segs):
+		var a0 := TAU * float(i) / float(segs) + 0.06
+		var a1 := TAU * float(i + 1) / float(segs) - 0.06
+		var col := Color(0.88, 0.78, 1.0, 0.95) if i < lit else Color(0.75, 0.62, 1.0, 0.65)
+		draw_arc(centre, r_ring, a0, a1, 12, col, 5.0, true)
 	if charge >= 1.0:
 		# Ready: full bright face + pulsing rim in the ult tint.
 		var pulse := 0.75 + 0.25 * sin(_pulse * 6.0)

@@ -1062,8 +1062,8 @@ func _bake_minimap() -> void:
 			# green keeps the terrain variation but lands in
 			# the reference's brightness band.
 			var meadow := Color(0.60, 0.80, 0.40)
-			col = col.lerp(meadow, 0.45)
-			var lift := 1.0 + clampf(h, 0.0, 8.0) / 8.0 * 0.35
+			col = col.lerp(meadow, 0.25)
+			var lift := 1.0 + clampf(h, 0.0, 8.0) / 8.0 * 0.55
 			col = Color(col.r * lift, col.g * lift, col.b * lift, 1)
 			if rr > sz * 0.5 - 6.0:
 				col = Color(col.r * 0.75, col.g * 0.75, col.b * 0.75, 1)
@@ -14182,7 +14182,10 @@ func _apply_top_card_phone(on: bool) -> void:
 	# U1 1:1 round 4: the hero info plate joins them — the
 	# reference cluster is medallion + Lv + HP only (the
 	# name / chips / evo line live on the pause status page).
-	for c in [_pw_row, _zone_en, _elapsed_label, _hero_info]:
+	# U1 1:1 round 7: the zone NAME joins them — the
+	# reference top bar carries no place name (the zone
+	# chip "区域 1/4" already says where you are).
+	for c in [_pw_row, _zone_en, _elapsed_label, _hero_info, _zone_cn]:
 		if c != null:
 			(c as Control).visible = not on
 	if _mm_expand:
