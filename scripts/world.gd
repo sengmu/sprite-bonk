@@ -4293,12 +4293,14 @@ func _menu_intro() -> void:
 		if not is_instance_valid(c):
 			continue
 		var base_x := c.position.x
-		c.position.x = base_x + 16.0
+		if not _p5_on:
+			c.position.x = base_x + 16.0
 		c.modulate.a = 0.0
 		var tw := create_tween()
 		tw.tween_interval(0.05 * float(i))
 		tw.tween_property(c, "modulate:a", 1.0, 0.22)
-		tw.parallel().tween_property(c, "position:x", base_x, 0.22)
+		if not _p5_on:
+			tw.parallel().tween_property(c, "position:x", base_x, 0.22)
 
 ## Cycle 19 (audit punch #18): an mm-badge count chip on a
 ## menu item (hidden at zero). Returns the badge panel;
@@ -4328,12 +4330,13 @@ func _menu_hero_show(sp: String) -> void:
 	_menu_hero_sp = sp
 	if _p5_on and _menu_starters and _menu_starters.get_child_count() > 0:
 		var colors := {"bulbasaur": Color("e7f0d8"), "charmander": Color("fde6bd"), "squirtle": Color("e3d1f4")}
+		var rims := {"bulbasaur": Color("e8c48a"), "charmander": Color("e8c48a"), "squirtle": Color("e9c7ed")}
 		for child in _menu_starters.get_child(0).get_children():
 			if child is Button and child.has_meta("starter_species"):
 				var species := String(child.get_meta("starter_species"))
 				var selected := species == sp
 				var face := _style(colors.get(species, UiTheme.CREAM), 16,
-					UiTheme.GREEN_DEEP if selected else Color("e8c48a"), 3 if selected else 2)
+					UiTheme.GREEN_DEEP if selected else rims.get(species, Color("e8c48a")), 3 if selected else 2)
 				for button_state in ["normal", "hover", "pressed", "focus"]:
 					child.add_theme_stylebox_override(button_state, face)
 				(child.get_node("SelectedMark") as Control).visible = selected

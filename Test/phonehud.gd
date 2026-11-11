@@ -3441,6 +3441,16 @@ func _p5_menu_block(vp: Vector2) -> void:
 					break
 			_check("P5: menu pieces pairwise disjoint", clash == "" and pieces.size() >= 8,
 				"pieces=" + str(pieces.size()) + " " + clash)
+			var entry_positions := {}
+			for entry_name in ["MenuWallet", "MenuLab", "MenuShop", "MenuChallenge", "MenuSettings"]:
+				entry_positions[entry_name] = _p5_rect(mdc.get_node(entry_name)).position
+			_world.call("_apply_ui_scale")
+			await _frames(4)
+			var drifting: Array[String] = []
+			for entry_name in entry_positions:
+				if _p5_rect(mdc.get_node(entry_name)).position.distance_to(entry_positions[entry_name]) > 1.0:
+					drifting.append(entry_name)
+			_check("P5: menu entry positions survive relayout", drifting.is_empty(), str(drifting))
 		await _p5_snap("menu")
 	else:
 		_check("P5 desktop: menu design unscaled", mdc == null or absf(mdc.scale.x - 1.0) < 0.001,

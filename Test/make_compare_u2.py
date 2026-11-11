@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build design/ui-reference/compare/U2.png: v2 reference on the left,
 phonehud menu shot on the right, preserving both aspect ratios.
-Usage: make_compare_u2.py <shot-png> [shot-label]"""
+Usage: make_compare_u2.py <shot-png> [shot-label] [output-png]"""
 import sys
 from PIL import Image, ImageDraw, ImageFont
 
@@ -9,7 +9,7 @@ W = 1400
 BAR = 29
 BAR_COLOR = (26, 16, 48)
 REF = "design/ui-reference/v2/U2_final.jpg"
-OUT = "design/ui-reference/compare/U2.png"
+OUT = sys.argv[3] if len(sys.argv) > 3 else "design/ui-reference/compare/U2.png"
 
 shot_path = sys.argv[1]
 shot_label = sys.argv[2] if len(sys.argv) > 2 else "SHOT phonehud 2340x1080 s150 menu (u2_recheck)"
