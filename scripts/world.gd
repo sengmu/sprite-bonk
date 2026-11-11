@@ -13841,7 +13841,7 @@ func _p5_menu_reference_layout(width: float) -> void:
 		"MenuChallenge": Rect2(39, 475, 224, 182),
 		"MenuSettings": Rect2(271, 475, 220, 182),
 		"MenuShake": Rect2(36, 677, 460, 98),
-		"MenuPartnerHero": Rect2(650, 130, 430, 450),
+		"MenuPartnerHero": Rect2(673, 130, 384, 450),
 		"StarterSelection": Rect2(514, 590, 724, 308),
 		"StartButton": Rect2(1260, 686, 390, 166),
 		"StartCaption": Rect2(1280, 625, 350, 40),
@@ -17715,7 +17715,10 @@ func _normal_ally_count() -> int:
 
 func _menu_feature_portrait(sp: String) -> Texture2D:
 	if _p5_on:
-		return load("res://assets/menu/v2-mascot.png")
+		var portrait := AtlasTexture.new()
+		portrait.atlas = load("res://assets/menu/u2-art-mascot.png")
+		portrait.region = Rect2(89, 91, 947, 1109)
+		return portrait
 	if sp == "bulbasaur":
 		return load("res://assets/menu/fern-hero.png")
 	return _menu_card_portrait(sp)
