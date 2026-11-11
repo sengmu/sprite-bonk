@@ -399,6 +399,14 @@ func _run() -> void:
 		(_world.get("_boss_card") as Control).is_visible_in_tree())
 	_check("boss state: banner up", _banner_up())
 	_assert_state(vp, "boss", false)
+	# U1 1:1 round 5: the boss card fades (by design) while the
+	# guardian's body overlaps the header — for the card shot,
+	# step the guardian aside AFTER the assertions so the card
+	# renders at full alpha (a reachable play state: the player
+	# far from the guardian). The fight itself is untouched.
+	if g != null:
+		g.global_position += Vector3(60, 0, 0)
+		await _frames(6)
 	await _snap("phone_hud_touch_" + _run_tag())
 	await _p2_snap("boss")
 	await _p3_snap("boss")

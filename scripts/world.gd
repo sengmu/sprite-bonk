@@ -500,12 +500,14 @@ var _zone_cn: Label
 var _zone_en: Label
 var _top_card: Panel  # cycle 18: kept for the plate-overlap shift
 var _hero_cluster: Control  # cycle 19 hotfix: TL cluster as ONE unit
+var _hero_plate: Panel  # U1 1:1 round 5: dark pill backplate unifying the cluster
 var _hero_info: Panel       # cycle 19 hotfix: plate (gate reads it)
 var _bl_cluster: Control    # cycle 19 hotfix: BL cluster as ONE unit
 # UI-mobile P4 (plan §B4 P4): the phone BL two-row slots —
 # moves row (every learned move) over vitamins row; the
 # legacy row (4 empty slots, first-move card, lock) hides.
 var _bl_rows: Control
+var _bl_strip: Panel  # U1 1:1 round 5: dark pill band behind the slot rows
 var _bl_move_slots: Array = []  # {panel, lv, key, sweep}
 var _bl_vit_slots: Array = []   # {panel, lv, key}
 var _bl_lock: Panel  # first lock slot (kept for the P4 checks)
@@ -2863,6 +2865,16 @@ func _build_hud() -> void:
 	_hero_cluster.size = Vector2(454, 216)
 	_hero_cluster.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(_hero_cluster)
+	# U1 1:1 round 5: one dark pill behind medallion + Lv badge
+	# + HP track (reference U1_final.jpg) — the medallion stays
+	# proud of the pill's left edge; phone-only, sized in
+	# _p2_hero_box; desktop keeps the bare cluster.
+	_hero_plate = Panel.new()
+	_hero_plate.position = Vector2(56, 8)
+	_hero_plate.size = Vector2(284, 78)
+	_hero_plate.add_theme_stylebox_override("panel", UiTheme.dark_glass(28, 0.92))
+	_hero_plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_hero_cluster.add_child(_hero_plate)
 	_medal_panel = UiMedallion.new()
 	_medal_panel.position = Vector2(0, 0)
 	_medal_panel.size = Vector2(86, 86)
@@ -3333,6 +3345,15 @@ func _build_hud() -> void:
 	_bl_rows = Control.new()
 	_bl_rows.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_bl_rows.visible = false
+	# U1 1:1 round 5: the dark pill band the 5 move slots sit on
+	# (reference U1_final.jpg). Full-rect of the rows, so the P4
+	# "cluster is exactly the slot rows" geometry is unchanged;
+	# first child, so every slot draws over it.
+	_bl_strip = Panel.new()
+	_bl_strip.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_bl_strip.add_theme_stylebox_override("panel", UiTheme.dark_glass(20, 0.92))
+	_bl_strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_bl_rows.add_child(_bl_strip)
 	_bl_cluster.add_child(_bl_rows)
 	_bl_lock = Panel.new()
 	_bl_lock.size = Vector2(46, 46)
@@ -14239,6 +14260,8 @@ func _p2_restore_fonts() -> void:
 func _p2_hero_box() -> void:
 	if _hero_cluster == null:
 		return
+	if _hero_plate != null:
+		_hero_plate.visible = _p2_on == 1
 	if _p2_on == 1:
 		var h := 104.0 if _party_row != null and _party_row.visible else 86.0
 		_hero_cluster.size = Vector2(340, h)
@@ -14901,14 +14924,17 @@ func _p4_refresh_slots(relayout: bool) -> void:
 		pnl.position = Vector2(i * P4_MOVE_STEP, 0)
 		pnl.size = Vector2(46, 46)
 		pnl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		pnl.add_theme_stylebox_override("panel", UiTheme.badge_base())
+		# U1 1:1 round 5: learned slots read as the reference's
+		# green disc with a gold rim — type colour face, GOLD
+		# 2 px border (the badge texture's dark face hid the
+		# learned state); the type glyph goes white on it.
+		pnl.add_theme_stylebox_override("panel",
+			_style(UiTheme.type_color(t), 23, UiTheme.GOLD, 2, true))
 		_bl_rows.add_child(pnl)
-		var ic := UiIcon.new(_type_icon(t), UiTheme.type_color(t).lightened(0.25), 22)
-		ic.position = Vector2(12, 2)
+		var ic := UiIcon.new(_type_icon(t), Color(1, 1, 1, 0.95), 22)
+		ic.position = Vector2(12, 12)
 		ic.size = Vector2(22, 22)
 		pnl.add_child(ic)
-		var lv := _label_in(pnl, "%d级" % int(m["level"]), Vector2(0, 24), Vector2(46, 21),
-			14, Color(1, 1, 1, 0.92), HORIZONTAL_ALIGNMENT_CENTER)
 		# Cooldown sweep (UltGauge-style arc): the remaining
 		# fraction of the move's cooldown, drawn over the face.
 		var sw := Control.new()
@@ -14917,6 +14943,15 @@ func _p4_refresh_slots(relayout: bool) -> void:
 		sw.set_meta("frac", 0.0)
 		sw.draw.connect(_p4_draw_sweep.bind(sw))
 		pnl.add_child(sw)
+		# U1 1:1 round 5: the level rides a cream chip straddling
+		# the slot's bottom edge (reference "1级"), not text
+		# inside the slot. The chip label stays the dict's "lv"
+		# so the P4 level checks and _p4_fit_fonts keep reading
+		# it; it draws above the cooldown veil.
+		var chip := _panel(pnl, Vector2(3, 40), Vector2(40, 24),
+			UiTheme.CREAM, 12, Color(0, 0, 0, 0), 0, true)
+		var lv := _label_in(chip, "%d级" % int(m["level"]), Vector2(0, 0),
+			Vector2(40, 24), 14, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, true)
 		_bl_move_slots.append({"panel": pnl, "lv": lv, "key": key, "sweep": sw})
 		i += 1
 	# U1 1:1 round 4: the row always shows 5 move slots
