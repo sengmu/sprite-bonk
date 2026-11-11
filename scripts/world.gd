@@ -507,7 +507,7 @@ var _bl_cluster: Control    # cycle 19 hotfix: BL cluster as ONE unit
 # moves row (every learned move) over vitamins row; the
 # legacy row (4 empty slots, first-move card, lock) hides.
 var _bl_rows: Control
-var _bl_strip: Panel  # U1 1:1 round 5: dark pill band behind the slot rows
+var _bl_strip: Panel  # U1 1:1 round 6: dark band behind the move row only (rect set in _p4_layout_bl)
 var _bl_move_slots: Array = []  # {panel, lv, key, sweep}
 var _bl_vit_slots: Array = []   # {panel, lv, key}
 var _bl_lock: Panel  # first lock slot (kept for the P4 checks)
@@ -2896,8 +2896,11 @@ func _build_hud() -> void:
 	pb_ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_pause_badge.add_child(pb_ic)
 	_pause_badge.visible = false
-	var lv_badge := _panel(_hero_cluster, Vector2(50, 62), Vector2(44, 24), Color(0.10, 0.07, 0.20, 0.92), 12, Color(1, 1, 1, 0.35), 1, true)
-	_lv_label = _label_in(lv_badge, "1级", Vector2(0, 0), Vector2(44, 24), 12, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
+	# U1 1:1 round 6: the Lv badge is the reference's cream chip
+	# with dark ink text, straddling the medallion's top-right
+	# edge (was a dark pill at the bottom-right corner).
+	var lv_badge := _panel(_hero_cluster, Vector2(61, 4), Vector2(56, 26), UiTheme.CREAM, 13, Color(0, 0, 0, 0), 0, true)
+	_lv_label = _label_in(lv_badge, "1级", Vector2(0, 0), Vector2(56, 26), 12, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, true)
 	var info := Panel.new()
 	_hero_info = info
 	info.position = Vector2(94, 4)
@@ -3345,24 +3348,24 @@ func _build_hud() -> void:
 	_bl_rows = Control.new()
 	_bl_rows.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_bl_rows.visible = false
-	# U1 1:1 round 5: the dark pill band the 5 move slots sit on
-	# (reference U1_final.jpg). Full-rect of the rows, so the P4
-	# "cluster is exactly the slot rows" geometry is unchanged;
-	# first child, so every slot draws over it.
+	# U1 1:1 round 6: the dark band is a bar behind the move row
+	# only (reference U1_final.jpg) — it overhangs the outer
+	# slots by P4_STRIP_PAD and the slots protrude above/below
+	# it. Its rect is set in _p4_layout_bl (width tracks the
+	# slot count); first child, so every slot draws over it.
 	_bl_strip = Panel.new()
-	_bl_strip.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_bl_strip.add_theme_stylebox_override("panel", UiTheme.dark_glass(20, 0.92))
 	_bl_strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_bl_rows.add_child(_bl_strip)
 	_bl_cluster.add_child(_bl_rows)
 	_bl_lock = Panel.new()
-	_bl_lock.size = Vector2(46, 46)
-	_bl_lock.add_theme_stylebox_override("panel", _style(Color(0.10, 0.07, 0.20, 0.92), 23, Color(1, 1, 1, 0.25), 1, true))
+	_bl_lock.size = Vector2(P4_SLOT, P4_SLOT)
+	_bl_lock.add_theme_stylebox_override("panel", _style(Color(0.10, 0.07, 0.20, 0.92), 65, Color(1, 1, 1, 0.25), 1, true))
 	_bl_lock.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_bl_rows.add_child(_bl_lock)
-	var lock_ic2 := UiIcon.new("lock", Color(0.85, 0.85, 0.9), 22)
-	lock_ic2.position = Vector2(12, 12)
-	lock_ic2.size = Vector2(22, 22)
+	var lock_ic2 := UiIcon.new("lock", Color(0.85, 0.85, 0.9), 62)
+	lock_ic2.position = Vector2(34, 34)
+	lock_ic2.size = Vector2(62, 62)
 	_bl_lock.add_child(lock_ic2)
 	# Cycle 13: the 必 circle is a real button now (UltGauge) —
 	# charge sweep, ready pulse, and touch/mouse presses feed
@@ -14841,14 +14844,30 @@ func _p3_press_fx(target: Control, on: bool) -> void:
 
 # ------------------------------------------------ UI-mobile P4
 ## Plan §B4 P4 / D5: the BL cluster's phone rows. Row 1 = one
-## 46 slot per learned move (type icon + Lv + cooldown sweep),
+## 130 slot per learned move (type icon + Lv + cooldown sweep),
 ## a lock slot at its end while the lab still has locked move
 ## slots; row 2 = one 34 slot per drafted vitamin (icon + level).
 ## Display only (plan I1) — the pause status page is the other
 ## home of the same player data (same reads, same tick).
-const P4_ROWS_H := 82.0   # 46 + 2 + 34: Z7 top stays under the ts1 ring
-const P4_MOVE_STEP := 50.0
+## U1 1:1 round 6 (user ruling 2026-11-11 09:01): the move
+## slots follow the v2 reference literally — ~130 design px
+## (the 2340 shot measures ~126 screen px once the 0.30·vw
+## cap binds), overturning the approved P4 46 px layout.
+const P4_SLOT := 130.0
+const P4_ROWS_H := 192.0   # 130 + 28 + 34: Z7 top stays under the ts1 ring
+const P4_ROW_GAP := 28.0   # move row -> vitamin row: clears the Lv chip's overhang
+const P4_MOVE_STEP := 140.0
 const P4_VIT_STEP := 38.0
+const P4_VIT_SLOT := 34.0
+const P4_STRIP_PAD := 8.0  # dark band overhangs the outer slots by 8 px (reference)
+const P4_BAND_H := 80.0   # dark band height: the slots protrude above/below it (reference)
+## U1 1:1 round 6: the s_bl floor is a minimum legible SLOT size,
+## not a scale — the pre-round-6 floor kept a 46 slot at >= 36.8
+## logical px (46 x 0.8). Preserve that px floor at the new slot
+## size (36.8 / 130 ~= 0.28) so the B0.2 caps can bind again;
+## at 0.8 the floor overrode the caps and the rows overran the
+## centre rect and the bubble span (fix6 batch: 20 P4 fails).
+const P4_SBL_FLOOR := 0.28
 const P4_VIT_ICON := {"phys_pct": "sword", "spec_pct": "spark", "armor_flat": "shield",
 	"speed_pct": "speed", "hp_flat": "heart", "atkspd_pct": "hourglass", "crit_pct": "crit",
 	"xp_pct": "candy", "gold_pct": "coin", "regen_flat": "plus", "luck_flat": "luck"}
@@ -14882,11 +14901,14 @@ func _p4_apply_mode(on: bool) -> void:
 			s = minf(s, minf(vp.x * 0.96 / 460.0, vp.y * 0.96 / 118.0))
 		_set_scaled(_bl_cluster, s)
 
-## Rows' design width (the cluster width: no ult gap).
+## Rows' design width (the exact slot span: no ult gap).
+## U1 1:1 round 6: the span, not the trimmed width — the
+## cluster adds the band's 2x8 overhang on top of this.
 func _p4_rows_w() -> float:
 	var nm := _bl_move_slots.size() + _bl_locks.size() + (1 if _bl_lock.visible else 0)
-	var w := maxf(nm * P4_MOVE_STEP - 4.0, _bl_vit_slots.size() * P4_VIT_STEP - 4.0)
-	return maxf(w, 46.0)
+	var w := maxf(nm * P4_MOVE_STEP - (P4_MOVE_STEP - P4_SLOT),
+		_bl_vit_slots.size() * P4_VIT_STEP - (P4_VIT_STEP - P4_VIT_SLOT))
+	return maxf(w, P4_SLOT)
 
 ## Signature-gated rebuild (plan risk P11): moves (key, level),
 ## vitamins (key, level), the lock slot.
@@ -14921,19 +14943,20 @@ func _p4_refresh_slots(relayout: bool) -> void:
 		var key := String(m["key"])
 		var t := String(GameData.move(key).get("type", ""))
 		var pnl := Panel.new()
-		pnl.position = Vector2(i * P4_MOVE_STEP, 0)
-		pnl.size = Vector2(46, 46)
+		pnl.position = Vector2(P4_STRIP_PAD + i * P4_MOVE_STEP, 0)
+		pnl.size = Vector2(P4_SLOT, P4_SLOT)
 		pnl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		# U1 1:1 round 5: learned slots read as the reference's
 		# green disc with a gold rim — type colour face, GOLD
 		# 2 px border (the badge texture's dark face hid the
 		# learned state); the type glyph goes white on it.
+		# U1 1:1 round 6: the disc is P4_SLOT (130) now.
 		pnl.add_theme_stylebox_override("panel",
-			_style(UiTheme.type_color(t), 23, UiTheme.GOLD, 2, true))
+			_style(UiTheme.type_color(t), 65, UiTheme.GOLD, 2, true))
 		_bl_rows.add_child(pnl)
-		var ic := UiIcon.new(_type_icon(t), Color(1, 1, 1, 0.95), 22)
-		ic.position = Vector2(12, 12)
-		ic.size = Vector2(22, 22)
+		var ic := UiIcon.new(_type_icon(t), Color(1, 1, 1, 0.95), 62)
+		ic.position = Vector2(34, 34)
+		ic.size = Vector2(62, 62)
 		pnl.add_child(ic)
 		# Cooldown sweep (UltGauge-style arc): the remaining
 		# fraction of the move's cooldown, drawn over the face.
@@ -14948,10 +14971,13 @@ func _p4_refresh_slots(relayout: bool) -> void:
 		# inside the slot. The chip label stays the dict's "lv"
 		# so the P4 level checks and _p4_fit_fonts keep reading
 		# it; it draws above the cooldown veil.
-		var chip := _panel(pnl, Vector2(3, 40), Vector2(40, 24),
-			UiTheme.CREAM, 12, Color(0, 0, 0, 0), 0, true)
+		# U1 1:1 round 6: the chip is 94x40 at the 130 slot's
+		# bottom edge (y 108: 18 px of overhang, matching the
+		# reference); the vitamin row clears it via P4_ROW_GAP.
+		var chip := _panel(pnl, Vector2(18, 108), Vector2(94, 40),
+			UiTheme.CREAM, 20, Color(0, 0, 0, 0), 0, true)
 		var lv := _label_in(chip, "%d级" % int(m["level"]), Vector2(0, 0),
-			Vector2(40, 24), 14, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, true)
+			Vector2(94, 40), 14, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, true)
 		_bl_move_slots.append({"panel": pnl, "lv": lv, "key": key, "sweep": sw})
 		i += 1
 	# U1 1:1 round 4: the row always shows 5 move slots
@@ -14962,25 +14988,25 @@ func _p4_refresh_slots(relayout: bool) -> void:
 	var display_n := maxi(5, player.moves.size() + (1 if locked else 0))
 	var n_locks := display_n - player.moves.size()
 	_bl_lock.visible = n_locks > 0
-	_bl_lock.position = Vector2(i * P4_MOVE_STEP, 0)
+	_bl_lock.position = Vector2(P4_STRIP_PAD + i * P4_MOVE_STEP, 0)
 	for k in range(1, n_locks):
 		var lp := Panel.new()
-		lp.position = Vector2((i + k) * P4_MOVE_STEP, 0)
-		lp.size = Vector2(46, 46)
+		lp.position = Vector2(P4_STRIP_PAD + (i + k) * P4_MOVE_STEP, 0)
+		lp.size = Vector2(P4_SLOT, P4_SLOT)
 		lp.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		lp.add_theme_stylebox_override("panel", _style(Color(0.10, 0.07, 0.20, 0.92), 23, Color(1, 1, 1, 0.25), 1, true))
+		lp.add_theme_stylebox_override("panel", _style(Color(0.10, 0.07, 0.20, 0.92), 65, Color(1, 1, 1, 0.25), 1, true))
 		_bl_rows.add_child(lp)
-		var lic := UiIcon.new("lock", Color(0.85, 0.85, 0.9), 22)
-		lic.position = Vector2(12, 12)
-		lic.size = Vector2(22, 22)
+		var lic := UiIcon.new("lock", Color(0.85, 0.85, 0.9), 62)
+		lic.position = Vector2(34, 34)
+		lic.size = Vector2(62, 62)
 		lp.add_child(lic)
 		_bl_locks.append(lp)
 	var j := 0
 	for vk in player.vit_levels.keys():
 		var vd: Dictionary = GameData.VITAMINS.get(vk, {})
 		var pv := Panel.new()
-		pv.position = Vector2(j * P4_VIT_STEP, 48)
-		pv.size = Vector2(34, 34)
+		pv.position = Vector2(P4_STRIP_PAD + j * P4_VIT_STEP, P4_SLOT + P4_ROW_GAP)
+		pv.size = Vector2(P4_VIT_SLOT, P4_VIT_SLOT)
 		pv.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		pv.add_theme_stylebox_override("panel", _style(UiTheme.GREEN_DEEP, 17,
 			Color(1, 1, 1, 0.25), 1))
@@ -14998,22 +15024,29 @@ func _p4_refresh_slots(relayout: bool) -> void:
 	if relayout:
 		_layout_hud()
 
-## Plan Z7: anchor (12, vh - 12), width = the rows, s_bl =
-## min(s, 1.35) — narrowed only where the rows would cost the
-## bubble its 300 px span or reach the centre rect (plan B0.2:
-## x past 0.30·vw AND top above 0.85·vh); floor 0.8.
+## Plan Z7: anchor (12, vh - 12), width = the rows + the band's
+## 2x8 overhang, s_bl = min(s, 1.35) — narrowed only where the
+## rows would cost the bubble its 300 px span or reach the
+## centre rect (plan B0.2: x past 0.30·vw AND top above
+## 0.85·vh); floor P4_SBL_FLOOR (minimum legible slot size).
 func _p4_layout_bl(s: float, vw: float, vh: float) -> void:
 	if _p4_on != 1 or _bl_cluster == null:
 		return
 	var w := _p4_rows_w()
+	var cw := w + 2.0 * P4_STRIP_PAD
 	_bl_cluster.offset_left = 12.0
-	_bl_cluster.offset_right = 12.0 + w
+	_bl_cluster.offset_right = 12.0 + cw
 	_bl_cluster.offset_top = -12.0 - P4_ROWS_H
 	_bl_cluster.offset_bottom = -12.0
 	_bl_rows.position = Vector2.ZERO
-	_bl_rows.size = Vector2(w, P4_ROWS_H)
+	_bl_rows.size = Vector2(cw, P4_ROWS_H)
+	# U1 1:1 round 6: the band is the move row's bar only —
+	# overhangs the outer slots by P4_STRIP_PAD, slots
+	# protrude above/below it (reference U1_final.jpg).
+	_bl_strip.position = Vector2(0, (P4_SLOT - P4_BAND_H) * 0.5)
+	_bl_strip.size = Vector2(cw, P4_BAND_H)
 	var s_bl := minf(s, 1.35)
-	s_bl = minf(s_bl, maxf((0.30 * vw - 12.0) / w, (0.15 * vh - 12.0) / P4_ROWS_H))
+	s_bl = minf(s_bl, maxf((0.30 * vw - 12.0) / cw, (0.15 * vh - 12.0) / P4_ROWS_H))
 	# The cluster's geometry, visible or not: a layout pass
 	# under a modal (layer hidden) must not leave a stale s_bl
 	# once the layer is back (D6 round trip, it1 b).
@@ -15022,8 +15055,8 @@ func _p4_layout_bl(s: float, vw: float, vh: float) -> void:
 		if cl < INF:
 			var cl_ui: float = cl + touch_controls.get_global_rect().position.x \
 				- _ui_root.get_global_rect().position.x
-			s_bl = minf(s_bl, (cl_ui - 16.0 - 300.0 - 16.0 - 12.0) / w)
-	s_bl = maxf(s_bl, 0.8)
+			s_bl = minf(s_bl, (cl_ui - 16.0 - 300.0 - 16.0 - 12.0) / cw)
+	s_bl = maxf(s_bl, P4_SBL_FLOOR)
 	_set_scaled(_bl_cluster, s_bl)
 	_p4_fit_fonts(s_bl)
 
@@ -15047,11 +15080,11 @@ func _p4_fit_fonts(s_bl: float) -> void:
 		var lh := l.get_theme_font("font").get_height(px) + float(l.get_theme_constant("line_spacing"))
 		l.position = Vector2(0, slot_h - lh)
 		l.size = Vector2((l.get_parent() as Control).size.x, lh)
-		# "Lv.10" outgrows the 46 slot at the lifted sizes.
+		# "Lv.10" outgrows the 94 chip at the lifted sizes.
 		if (d as Dictionary).has("sweep"):
 			var lvn := _p4_lv_of(l.text)
 			l.text = "%d级" % lvn
-			if l.get_theme_font("font").get_string_size(l.text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, px).x > 44.0:
+			if l.get_theme_font("font").get_string_size(l.text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, px).x > (l.get_parent() as Control).size.x - 2.0:
 				l.text = str(lvn)
 
 func _p4_lv_of(t: String) -> int:

@@ -2490,8 +2490,9 @@ func _p3_snap(state: String) -> void:
 ## two slot rows — moves (every learned move: type icon + Lv +
 ## cooldown sweep, lock slot at the row end) over vitamins (one
 ## 34 slot each: icon + level) — at s_bl = min(s, 1.35) anchored
-## (12, vh - 12), width = the rows (no ult gap); the joystick
-## ring clamps to Z7's top; the prompt becomes the interaction
+## (12, vh - 12), width = the rows + the band's 2x8 overhang
+## (U1 1:1 round 6; floor P4_SBL_FLOOR = minimum legible slot
+## size in logical px, 36.8); the joystick ring clamps to Z7's
 ## bubble between the rows and the thumb cluster (right edge =
 ## cluster_left - 16, bottom = vh - 24, <= 2 lines, scale <= 1.4,
 ## a pointer toward the ❗ button). Parity: the slot rows and
@@ -2502,7 +2503,11 @@ func _p3_snap(state: String) -> void:
 ## (Array of {panel, lv, key[, sweep]}), _bl_lock, _bl_rows,
 ## _prompt_tri (Polygon2D on the prompt backing).
 const P4_BUBBLE_MIN := 300.0
-const P4_SBL_FLOOR := 0.8
+## U1 1:1 round 6: the s_bl floor is a minimum legible slot size
+## in logical px (pre-round-6: 46 x 0.8 = 36.8 px), not a scale —
+## 36.8 / 130 ~= 0.28 at the new slot size. Must track world's
+## P4_SBL_FLOOR exactly; the s_bl check asserts equality.
+const P4_SBL_FLOOR := 0.28
 
 func _p4_world() -> bool:
 	return _world.get("_bl_move_slots") is Array
@@ -2597,8 +2602,9 @@ func _p4_state(vp: Vector2, st: String, prompt_state: bool) -> void:
 	_check("P4: vitamins visible (" + st + ")", have and vbad.is_empty(),
 		"slots=" + str(vs.size()) + " vits=" + str(pl.vit_levels.size() if pl != null else -1)
 		+ " bad=" + str(vbad))
-	# -- the cluster IS the two rows: anchored (12, vh-12),
-	# width = the rows, no legacy / ult piece left in it --------
+	# -- the cluster IS the two rows + the band's 8 px overhang:
+	# anchored (12, vh-12), width = rows + 2x8, no legacy /
+	# ult piece left in it (U1 1:1 round 6) --------------------
 	var slot_rs: Array = []
 	for d in ms + vs:
 		slot_rs.append(_vis_rect((d as Dictionary)["panel"] as Control))
@@ -2626,7 +2632,7 @@ func _p4_state(vp: Vector2, st: String, prompt_state: bool) -> void:
 		have and not slot_rs.is_empty() and encl
 		and absf(r_bl.position.x - (ui_rect.position.x + 12.0)) <= 1.0
 		and absf(r_bl.end.y - (ui_rect.end.y - 12.0)) <= 1.0
-		and absf(r_bl.end.x - right) <= 1.0
+		and absf(r_bl.end.x - right - 8.0 * bl.scale.x) <= 1.0
 		and r_bl.grow(1.0).encloses(deep)
 		and not ms_leg.is_visible_in_tree(),
 		"bl=" + str(r_bl) + " deep=" + str(deep) + " rows_right=" + str(right)
@@ -2647,10 +2653,10 @@ func _p4_state(vp: Vector2, st: String, prompt_state: bool) -> void:
 	var s := float(_world.call("_kr")) * float(GameProfile.setting("hudScale"))
 	var want := minf(s, 1.35)
 	# centre rect (plan B0.2): rows past 0.30·vw must keep their
-	# top at/below 0.85·vh (rows design height 82)
+	# top at/below 0.85·vh (rows design height 192, U1 1:1 round 6)
 	if bl.size.x > 0.0:
 		want = minf(want, maxf((0.30 * ui_rect.size.x - 12.0) / bl.size.x,
-			(0.15 * ui_rect.size.y - 12.0) / 82.0))
+			(0.15 * ui_rect.size.y - 12.0) / 192.0))
 	var cl := _p4_cluster_left()
 	if cl < INF and bl.size.x > 0.0:
 		var s_fit := (cl - ui_rect.position.x - 16.0 - P4_BUBBLE_MIN - 16.0 - 12.0) / bl.size.x
