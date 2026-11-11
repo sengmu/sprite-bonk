@@ -16,7 +16,12 @@ func _initialize() -> void:
 	call_deferred("run")
 
 func run() -> void:
+	# GameAudio fills its noise buffer in _ready(); it must enter
+	# the tree before any stream_for() call, like in world.gd.
 	var a := GameAudio.new()
+	root.add_child(a)
+	await process_frame
+	await process_frame
 	var file_keys := ["click", "deny", "xp", "coin", "sparkle", "heal",
 		"chest", "charge", "bell", "whoosh", "shot_default", "shot_grass",
 		"shot_fire", "shot_water", "slash", "ult_grass", "ult_fire",
