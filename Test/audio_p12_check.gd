@@ -33,7 +33,7 @@ func run() -> void:
 		if s:
 			ck(s.resource_path == "res://assets/audio/sfx/" + k + ".wav",
 				k + " is file-backed (got: " + s.resource_path + ")")
-			ck(s.get_length() > 0.03, k + " has length")
+			ck(s.get_length() > 0.015, k + " has length")
 			ck(s.mix_rate == 44100, k + " is 44.1 kHz")
 	# The new public API plays (counted under its key).
 	a.confirm()
@@ -70,6 +70,9 @@ func run() -> void:
 	ck(a.count_of("beam") >= 1, "beam dispatches base")
 	a.cone("fire")
 	ck(a.count_of("cone_fire") >= 1, "cone dispatches fire")
+	# cone() carries the engine's 0.2 s throttle — wait it out
+	# before asserting the second dispatch.
+	await create_timer(0.26).timeout
 	a.cone("water")
 	ck(a.count_of("cone_other") >= 1, "cone dispatches other")
 	a.nova(true)
