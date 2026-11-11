@@ -90,11 +90,13 @@ func run() -> void:
 	a.ambience_weather("rain")
 	await process_frame
 	ck(a._amb_players[1].playing, "rain layer plays")
-	ck(a._amb_players[1].stream.resource_path.ends_with("amb_rain.ogg"),
+	ck(a._amb_players[1].stream != null
+		and a._amb_players[1].stream.resource_path.ends_with("amb_rain.ogg"),
 		"rain layer is the rain bed")
 	a.ambience_weather("fog")
 	await process_frame
-	ck(a._amb_players[1].stream.resource_path.ends_with("amb_wind.ogg"),
+	ck(a._amb_players[1].stream != null
+		and a._amb_players[1].stream.resource_path.ends_with("amb_wind.ogg"),
 		"fog layer is the wind bed")
 	a.ambience_weather("clear")
 	ck(not a._amb_players[1].playing, "clear weather stops the layer")
