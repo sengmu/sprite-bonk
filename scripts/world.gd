@@ -13841,7 +13841,7 @@ func _p5_menu_reference_layout(width: float) -> void:
 		"MenuChallenge": Rect2(39, 475, 224, 182),
 		"MenuSettings": Rect2(271, 475, 220, 182),
 		"MenuShake": Rect2(36, 677, 460, 98),
-		"MenuPartnerHero": Rect2(650, 90, 430, 450),
+		"MenuPartnerHero": Rect2(650, 112, 430, 450),
 		"StarterSelection": Rect2(514, 590, 724, 308),
 		"StartButton": Rect2(1260, 686, 390, 166),
 		"StartCaption": Rect2(1280, 625, 350, 40),
