@@ -69,3 +69,6 @@ U1 已 1:1 关闭（第 6 轮，提交 6d9ee7d，phonehud 2340 1545/0）。下�
 - Boss 卡淡出机制（world.gd:12325–12326, 12328）：`_boss_card.modulate.a = 0.0 if _boss_body_overlaps_header() else bossOpacity`；`_boss_body_overlaps_header()` 为守护者各 MeshInstance3D 投影包围盒（grow 16）与 `_p3_draw_rect(_boss_card)` 相交即淡出。生产逻辑按设计不动；取主卡可见图须在 harness boss 态让守护者离开 header 投影区再抓拍（或 reskin_boss.tscn 单独拍）。
 - 技能格构造（world.gd:14870 `_p4_refresh_slots`）：已学格 46×46 Panel＋`UiTheme.badge_base()`＋22px 类型 icon＋格内「N级」label（y24）；锁格同尺寸深色 `_style(...)`。第 5 轮：底带（`_bl_rows` 背后加深色药丸底板，勿动 `_p4_rows_w` 宽度断言）、已学格金边（badge stylebox 换金 rim）、格下奶油「1级」签（注意行锚点 (12, vh−12)，签须叠在底带下沿内、不扩行高）。
 - 英雄簇构造（world.gd:14239 `_p2_hero_box`）：簇盒手机 340×86（有队友 104）。第 5 轮：簇内加深色药丸底板（Panel 子件放最底层、dark_glass、尺寸随簇盒），头像圆可沿参考 protrude 于底板左缘；须过 P2 簇盒断言与 P5 重叠检查（底板不得与顶中卡相交）。
+
+## 订正（2026-11-11 10:1x，主控补录）
+- 第 6 轮台账提交 5d617a3 中引用的代码提交 6d9ee7d **不存在**（该轮超时中断，代码提交从未落盘；工作树改动完好留存）。真实代码提交为 067e15c（本提交），U1 关闭结论不变（phonehud 2340 1545/0，desktop 710/4 既有）。
