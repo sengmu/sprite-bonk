@@ -56,3 +56,12 @@
 ## 仍为合成占位（后续生产范围）
 
 P1/P2 的 key 仍走旧合成回退：hover、shot_electric / shot_ice / shot_psychic / shot_ghost、beam、beam_ice、cone_fire / cone_other、nova、nova_ground、dodge、land、dive、slam、encounter、throw_ball、ball_open、ball_shake、slot_tick / slot_stop / slot_lever / slot_coins / slot_curse、zap、evolve_done、streak 等。随 P1/P2 生产单逐批替换；BGM（BGM-01…05）与伙伴声（CH-01/02）等用户定方向后另行生产。
+
+## 验收结果（NUC，2026-11-11，分支 audio/p0-sfx）
+
+- 解析门：audio.gd / world.gd / ult.gd / audio_p0_check.gd 全 rc=0（全批 9 个文件门亦全 rc=0）。
+- 定向检查 `Test/audio_p0_check.gd`：**143 项 / 0 失败、0 脚本错误**——35 个 key 全部断言为文件声源（resource_path 指向 assets/audio/sfx/、44.1 kHz、有长度），未生产 key 的合成回退仍可用，`track:menu` BGM 路径未受影响。（首版检查脚本曾因 GameAudio 未入树、_noise 缓冲为空报 _mnoise 越界——检查侧问题，已修，游戏代码未动。）
+- 全量 suite（cycle9）：首跑 **651 项 / 1 失败**，唯一红 = C9 断言「roots ult casts shot(grass)」钉的是 SK-08 明确要换掉的借用声；按批准口径把该断言重定向为「roots ult casts ult_grass」（基线/增量结构与强度不变，提交 cde4921）后复跑 **651 / 0**，新断言 PASS 在册。
+- bootsmoke rc=0（0 脚本错误）；neutral rc=0；定向 damage / pickups / pickup_stats / mutations 全 rc=0。
+- phonehud s070_i0：**1635 / 0**。phonehud a（2400×1080）：**1660 / 7**，7 条全是同一项 `P4: ring home unmoved`（ring_bottom 580.725 = 技能行顶限 z7_top，分毫不差）——即已裁定的摇杆给放大技能行让位项；本分支未动任何布局代码，属 main 在 2400 档的既有状态，其断言重定向随 U1 线的几何定版一并落，本批不改 phonehud。
+- 结论：P0 音效批验收通过，分支推送待用户试听后合 main。
