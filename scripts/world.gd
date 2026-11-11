@@ -4223,10 +4223,13 @@ func _build_menu(root: Control) -> void:
 		caption_back.name = "StartCaptionBack"
 		caption_back.size = Vector2(240, 24)
 		caption_back.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		caption_back.add_theme_stylebox_override("panel", _style(Color(1.0, 0.96, 0.80, 0.78), 12))
+		caption_back.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 		_menu_design.add_child(caption_back)
 		var start_caption := _mk_label(_menu_design, "进入出战配置", 16, UiTheme.TEXT)
 		start_caption.name = "StartCaption"
+		start_caption.add_theme_color_override("font_color", Color("fff8e6"))
+		start_caption.add_theme_color_override("font_outline_color", Color("67432b"))
+		start_caption.add_theme_constant_override("outline_size", 3)
 		start_caption.size = Vector2(240, 24)
 		start_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		start_caption.add_theme_font_override("font", _font_display)
