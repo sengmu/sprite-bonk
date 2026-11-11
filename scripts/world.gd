@@ -13786,11 +13786,17 @@ func _p5_menu_reference_layout(width: float) -> void:
 		node.position = rect.position * unit
 		var extent := rect.size * unit
 		if node is Button:
+			node.add_theme_font_override("font", UiTheme.body_font())
+			for child in node.get_children():
+				if child is Label:
+					child.add_theme_font_override("font", UiTheme.body_font())
 			extent.y = maxf(extent.y, ceilf(P5_BTN_PX / _menu_design.scale.x))
 			node.custom_minimum_size = extent
 			node.set_meta("p5_h0", extent.y)
 		node.size = extent
 		var art := node.get_node_or_null("MenuEntryArt") as Control
+		if node is Label:
+			node.add_theme_font_override("font", UiTheme.body_font())
 		if art:
 			art.size = Vector2(extent.x * 0.65, extent.y * 0.64)
 			art.position = Vector2((extent.x - art.size.x) * 0.5, 1)
@@ -13803,6 +13809,9 @@ func _p5_menu_reference_layout(width: float) -> void:
 	stone.position = _menu_design.position + Vector2(570, 490) * unit * _menu_design.scale
 	stone.size = Vector2(640, 185) * unit * _menu_design.scale
 	var selection := _menu_design.get_node("StarterSelection") as Control
+	for child in selection.get_children():
+		if child is Label:
+			child.add_theme_font_override("font", UiTheme.body_font())
 	(selection.get_node("StarterPanel") as Control).size = selection.size
 	(selection.get_node("StarterNext") as Control).position.x = selection.size.x - 44.0
 	_menu_starters.position = selection.size * Vector2(41.0 / 810.0, 71.0 / 280.0)
