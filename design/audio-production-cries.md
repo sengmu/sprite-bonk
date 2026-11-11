@@ -69,4 +69,29 @@ audio/bgm 分支，两线都合 main 后并入回归集）→ c23b 全批。
 
 ## 验收
 
-（待批次回填）
+NUC 全批（Test/audio_cry_batch.sh，树 = 本分支 0564e83）：
+
+- 解析门：audio.gd / audio_cry_check.gd 均 rc=0（首轮因
+  `bucket` 变量 Variant 推断失败已在 0564e83 以显式 String
+  类型修复，与 BGM 轮同型陷阱）。
+- **AUDIO_CRY DONE checks=648 fails=0**（逐物种文件解析、
+  44.1 kHz、时长界、回退链、抽样播放计数全过）。
+- 回归：audio_p0_check rc=0、audio_p12_check rc=0、
+  pickup_stats / pickup_mutations rc=0、bootsmoke rc=0
+  （0 脚本错误）、neutral rc=0。
+- phonehud s070_i0：**1651/0**。
+- phonehud a（2400 档）：**1644/7 — 7 红全部为 ring-home
+  家族**（本分支未含主线的环位断言处置，非叫声回归；
+  grep 核：非 ring-home 失败 = 0）。
+- suite：**651/1**，唯一红 = `c21 passive tentacles:
+  both neighbours were whipped (hp -1/…)` — 已定性的间歇
+  环境 flake 家族（ui-mobile 轮、接线检查点轮、SFX 两轮
+  均有同名红、数值逐轮不同）；本批 diff 不含任何
+  gameplay/伤害/被动代码，裁定 flake，首轮红留档不删。
+- 批次总标记 ALLDONE_FAILED 由 suite rc=1 与 2400 档
+  rc=1 驱动，构成如上，无未解释失败。
+
+合并门：等用户试听点头（样本随交付附上），与 audio/bgm
+同批合 main（两线分别动 audio.gd 的音乐段/叫声段，预计
+平凡合并）；合后 Test/audio_bgm_check.gd 并入常设回归集，
+届时音频占位清零（只剩旧合成渲染器待 M5 门禁删除）。
