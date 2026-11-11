@@ -107,4 +107,42 @@ hover（引擎内 0.04s 节流；触屏不触发）。
 
 ## 验收
 
-（待批次回填）
+验收在 NUC 上执行（2026-11-11 晚，分支 audio/p0-sfx）。批次脚本
+Test/audio_p12_batch.sh（解析门 → P0/P12 双检查 → c23b 全批）。
+
+批次过程（如实记录，含失败轮）：
+- 第 1 轮：解析门拦下——首版误用 Godot 4.4 的 LOOP_FORWARD 枚举，
+  4.3 的 OggVorbis 只有布尔 loop，已改。
+- 第 2 轮：解析全过、P0 检查 rc=0，P12 检查挂死——loop_begin 赋值
+  在 4.3 不存在，运行时错误使 _amb_stream 提前返回 null，检查解引用
+  空流后中止、未及 quit。已改纯布尔 loop + 检查侧空值防护后重跑。
+- 第 3 轮（定版）：全批 ALLDONE，数字如下。
+
+定版数字：
+- 解析门 7/7 rc=0（audio/world/ult/pickups/ui_theme + 双检查脚本）。
+- audio_p0_check rc=0（143 项）；audio_p12_check 211/0 rc=0
+  （43 个新键文件背书/44.1k/时长、新 API 播放计数、cone 分发、
+  shot 音量参数、环境层加载/循环/启停/天气切换全过）。
+- 定向批：damage / pickups / pickup_stats / pickup_mutations 全 rc=0；
+  bootsmoke rc=0（0 脚本错误）；neutral rc=0。
+- phonehud s070_i0（竖屏档）：1635/0。
+- phonehud a（2400×1080）：1644/7——7 红全部是同一项
+  `P4: ring home unmoved`（ring_bottom 580.73 vs 原 home 586），
+  即 U1 轮已裁定的摇杆避让新 home（主控 2026-11-11 裁定接受偏移、
+  断言改向钉新 home 属 U1 线几何活），与本批无关，非本批引入。
+- suite：首轮 650/1、单独复跑 651/1，两轮唯一红均为
+  `C9 FAIL c21 passive tentacles: both neighbours were whipped`
+  （hp 值两轮不同：-1/281720.47 与 -1/-1）。
+  裁定 = 既有间歇 flake 家族，非本批回归，依据三条：
+  ① 本批 diff 零玩法/伤害/被动代码（仅音频接线，逐项在上文列明）；
+  ② 同一断言在无音频改动的树上已有两次同签名失败记录
+  （design/ui-mobile-changes.md:74 的 C21DBG 诊断＝拥挤夹具里
+  环境目标吸收被动 tick；design/ui-reskin-changes.md:113 接线检查点
+  批 suite 658/1 唯一红也是它；C24 的 c21 passive static 为同族）；
+  ③ 两轮失败值不一致，符合环境吸收签名、不符合确定性破坏。
+  两轮首红均留档，不抹。
+
+里程碑复核（脚本实测）：audio.gd 全部 59 个 _render_sfx 分发臂与
+全部 _sfx 键均有原创文件背书——单发音效键空间 100% 文件化，
+旧合成回退仅剩未知键静默保护。仍为占位渲染的只剩 BGM 曲目与
+伙伴叫声（cry），按用户裁定等方向，本批未动。
