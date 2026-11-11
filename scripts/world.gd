@@ -3922,9 +3922,9 @@ func _build_menu(root: Control) -> void:
 			(witem[0] as Button).add_theme_stylebox_override(button_state, menu_pill_face)
 		((witem[0] as Button).get_child(0) as Control).hide()
 		var wallet_art := TextureRect.new()
-		wallet_art.texture = load("res://assets/menu/icon-wallet.png") as Texture2D
 		wallet_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		wallet_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		wallet_art.texture = load("res://assets/menu/v2-icon-wallet.svg") as Texture2D
 		wallet_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		wallet_art.position = Vector2(13, 3)
 		wallet_art.size = Vector2(40, 40)
@@ -4432,7 +4432,7 @@ func _refresh_wallet_ui() -> void:
 		var chip := wallet_button.get_node_or_null("WalletChip") as Panel
 		if chip:
 			chip.add_theme_stylebox_override("panel", _style(Color("78b52b") if connected else Color(0.42, 0.40, 0.34), 15))
-			(chip.get_node("WalletChipText") as Label).text = "已连接" if connected else "未连接"
+			(chip.get_node("WalletChipText") as Label).text = "● 已连接" if connected else "未连接"
 	if _wallet_balance == null:
 		_wallet_status.text = wallet.short_address() if connected else "游客模式"
 		return
