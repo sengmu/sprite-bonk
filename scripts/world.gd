@@ -2872,7 +2872,11 @@ func _build_hud() -> void:
 	# _p2_hero_box; desktop keeps the bare cluster.
 	_hero_plate = Panel.new()
 	_hero_plate.position = Vector2(56, 8)
-	_hero_plate.size = Vector2(284, 78)
+	# U1 1:1 round 13: plate width 284 -> 232 — measured on
+	# U1_final.jpg the pill's right edge sits at 0.192 of frame
+	# width (ours drew 0.226, a visible empty tail past the HP
+	# track's new right edge at cluster-local 248).
+	_hero_plate.size = Vector2(232, 78)
 	_hero_plate.add_theme_stylebox_override("panel", UiTheme.dark_glass(28, 0.92))
 	_hero_plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_hero_cluster.add_child(_hero_plate)
@@ -3035,7 +3039,10 @@ func _build_hud() -> void:
 	wpill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card.add_child(wpill)
 	_wallet_pill = wpill
-	var dust_ic := UiIcon.new("spark", UiTheme.GOLD, 18)
+	# U1 1:1 round 13: the reference's stardust sparkle is
+	# violet (sampled on U1_final.jpg ~ (196,107,226)), not
+	# gold — the coin keeps GOLD, the sparkle takes violet.
+	var dust_ic := UiIcon.new("spark", Color8(196, 107, 226), 18)
 	dust_ic.position = Vector2(10, 9)
 	dust_ic.size = Vector2(18, 18)
 	wpill.add_child(dust_ic)
@@ -3049,7 +3056,10 @@ func _build_hud() -> void:
 	_coin_icon = coin_ic
 	_gold_label = _label_in(wpill, "0", Vector2(115, 0), Vector2(54, 36), 15, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT, true)
 	_gold_label.add_theme_font_override("font", _font_display)
-	var ball_ic := UiIcon.new("ball", Color(0.95, 0.45, 0.45), 18)
+	# U1 1:1 round 13: "ball" draws the wooden-chest asset —
+	# the old salmon tint dyed it red; the reference chest
+	# reads natural wood, so the tint goes white.
+	var ball_ic := UiIcon.new("ball", Color.WHITE, 18)
 	ball_ic.position = Vector2(178, 9)
 	ball_ic.size = Vector2(18, 18)
 	wpill.add_child(ball_ic)
@@ -3069,11 +3079,16 @@ func _build_hud() -> void:
 	# appended to DIFF cycle 10).
 	_boss_card = Panel.new()
 	_boss_card.set_anchors_preset(Control.PRESET_CENTER_TOP)
-	_boss_card.offset_left = -230
-	_boss_card.offset_right = 230
+	# U1 1:1 round 13: the reference boss bar floats — no
+	# dark backing plate (the card keeps an empty stylebox
+	# and stays the children's anchor) — and the track widens
+	# toward the reference's 0.364 frame fraction (card
+	# 460 -> 500, track 432 -> 470).
+	_boss_card.offset_left = -250
+	_boss_card.offset_right = 250
 	_boss_card.offset_top = 102
 	_boss_card.offset_bottom = 148
-	_boss_card.add_theme_stylebox_override("panel", UiTheme.dark_glass(13, 0.92, Color(1, 1, 1, 0.25), 1, 0))
+	_boss_card.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	_boss_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_boss_card.visible = false
 	root.add_child(_boss_card)
@@ -3095,26 +3110,26 @@ func _build_hud() -> void:
 	_boss_pic.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_boss_pic.visible = false
 	_boss_card.add_child(_boss_pic)
-	_boss_foot = _label_in(_boss_card, "", Vector2(14, 50), Vector2(432, 16), 12, UiTheme.HUD_DIM, HORIZONTAL_ALIGNMENT_LEFT, true)
+	_boss_foot = _label_in(_boss_card, "", Vector2(14, 50), Vector2(470, 16), 12, UiTheme.HUD_DIM, HORIZONTAL_ALIGNMENT_LEFT, true)
 	_boss_foot.hide()
 	_boss_name_label = _label_in(_boss_card, "", Vector2(56, 5), Vector2(254, 22), 16, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT, true)
 	_boss_name_label.add_theme_font_override("font", _font_display)
 	_boss_name_label.visible = false
-	var boss_track := _panel(_boss_card, Vector2(14, 15), Vector2(432, 16), Color(0.1, 0.1, 0.16, 0.9), 8, Color(0, 0, 0, 0), 0, true)
-	_boss_hp_lag = _panel(boss_track, Vector2(1, 1), Vector2(430, 14), Color(1.0, 0.82, 0.78, 0.8), 7)
-	_boss_hp_fill = _panel(boss_track, Vector2(1, 1), Vector2(430, 14), Color(0.93, 0.3, 0.22), 7)
-	_boss_hp_num = _label_in(_boss_card, "", Vector2(14, 15), Vector2(432, 16), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
+	var boss_track := _panel(_boss_card, Vector2(14, 15), Vector2(470, 16), Color(0.1, 0.1, 0.16, 0.9), 8, Color(0, 0, 0, 0), 0, true)
+	_boss_hp_lag = _panel(boss_track, Vector2(1, 1), Vector2(468, 14), Color(1.0, 0.82, 0.78, 0.8), 7)
+	_boss_hp_fill = _panel(boss_track, Vector2(1, 1), Vector2(468, 14), Color(0.93, 0.3, 0.22), 7)
+	_boss_hp_num = _label_in(_boss_card, "", Vector2(14, 15), Vector2(470, 16), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
 	_boss_hp_num.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.55))
 	_boss_hp_num.add_theme_constant_override("shadow_offset_x", 1)
 	_boss_hp_num.add_theme_constant_override("shadow_offset_y", 1)
 	for frac in [0.666, 0.333]:
-		var tick := _panel(_boss_card, Vector2(14 + 432.0 * frac - 1, 15), Vector2(2, 16), Color(1, 1, 1, 0.45), 0)
+		var tick := _panel(_boss_card, Vector2(14 + 470.0 * frac - 1, 15), Vector2(2, 16), Color(1, 1, 1, 0.45), 0)
 		tick.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_boss_ticks.append(tick)  # cycle 21: shown only for kit bosses
 	# The tag chip rides ON the track's right end (added
 	# after the track so it draws above it), dark ink text.
-	_boss_tag_chip = _panel(_boss_card, Vector2(316, 12), Vector2(128, 22), UiTheme.CREAM, 11)
-	_boss_tag_label = _label_in(_boss_card, "守护者", Vector2(316, 12), Vector2(128, 22), 12, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, true)
+	_boss_tag_chip = _panel(_boss_card, Vector2(356, 12), Vector2(128, 22), UiTheme.CREAM, 11)
+	_boss_tag_label = _label_in(_boss_card, "守护者", Vector2(356, 12), Vector2(128, 22), 12, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, true)
 
 	# Cycle 18: the two .bossbar.mini bars (constructor
 	# @2020582 — the cycle-10 ledger correction). Feed:
@@ -12393,12 +12408,16 @@ func _update_hud_bars(delta: float) -> void:
 			_php_lag_hold -= delta
 			if _php_lag_hold <= 0.0:
 				_php_lag = maxf(frac, _php_lag - delta * 0.9)
-		_hud_hp_fill.size.x = 230.0 * frac
-		_hud_hp_lag.size.x = 230.0 * _php_lag
+		# U1 1:1 round 13: fill widths track the HP track's own
+		# inner width — desktop 232-2 = 230 (unchanged), phone
+		# 154-2 = 152 after the round-13 track narrowing.
+		var hp_inw := _hud_hp_track.size.x - 2.0
+		_hud_hp_fill.size.x = hp_inw * frac
+		_hud_hp_lag.size.x = hp_inw * _php_lag
 		_hud_hp_num.text = player.hp_hud_text()
 		_hud_hp_num.add_theme_color_override("font_color", Color(1.0, 0.42, 0.54) if player.wound_t > 0.0 else Color.WHITE)
 		if _hud_shield_fill:
-			_hud_shield_fill.size = Vector2(230.0 * player.shield_hud_fraction(), _hud_hp_fill.size.y)
+			_hud_shield_fill.size = Vector2(hp_inw * player.shield_hud_fraction(), _hud_hp_fill.size.y)
 		# Bundle classes low (<0.30) / mid (0.30-0.55): recolor the
 		# fill by band (CSS values were not captured; band thresholds
 		# are the bundle's).
@@ -12463,8 +12482,8 @@ func _update_hud_bars(delta: float) -> void:
 			_boss_lag_hold -= delta
 			if _boss_lag_hold <= 0.0:
 				_boss_lag = maxf(bf, _boss_lag - delta * 0.6)
-		_boss_hp_fill.size.x = 430.0 * bf
-		_boss_hp_lag.size.x = 430.0 * _boss_lag
+		_boss_hp_fill.size.x = 468.0 * bf
+		_boss_hp_lag.size.x = 468.0 * _boss_lag
 		_boss_hp_num.text = str(int(maxf(guardian.hp, 0.0)))
 	else:
 		_boss_shown = false
@@ -14453,10 +14472,14 @@ func _apply_top_card_phone(on: bool) -> void:
 		[_gold_label, Rect2(90, 0, 36, 36)],
 		[_ball_icon, Rect2(132, 9, 18, 18)],
 		[_ball_price_label, Rect2(152, 0, 60, 36)],
-		[_hud_hp_track, Rect2(94, 33, 232, 20)],
-		[_hud_hp_lag, Rect2(1, 1, 230, 18)],
-		[_hud_hp_fill, Rect2(1, 1, 230, 18)],
-		[_hud_hp_num, Rect2(0, 0, 232, 20)],
+		# U1 1:1 round 13: the phone HP track narrows to the
+		# reference's measure (U1_final.jpg: bar right edge at
+		# 0.167 of frame width; ours drew to 0.217) — the fill
+		# driver reads the track width, so only rects change.
+		[_hud_hp_track, Rect2(94, 33, 154, 20)],
+		[_hud_hp_lag, Rect2(1, 1, 152, 18)],
+		[_hud_hp_fill, Rect2(1, 1, 152, 18)],
+		[_hud_hp_num, Rect2(0, 0, 154, 20)],
 		[_hud_shield_fill, Rect2(1, 1, 0, 18)],
 		# U1 1:1 round 4: the info plate (name + type chips +
 		# evo line) is gone on phone — the reference hero
@@ -14500,6 +14523,13 @@ func _apply_top_card_phone(on: bool) -> void:
 	for c in [_pw_row, _zone_en, _elapsed_label, _hero_info, _zone_cn]:
 		if c != null:
 			(c as Control).visible = not on
+	# U1 1:1 round 13: the four stage pips join the collapsed
+	# set on phone — U1_final.jpg carries no pip row (the
+	# "区域 1/4" chip already states the stage); round 3 had
+	# parked them on a third row under the chips, which read
+	# as a stray dot row in every capture. Desktop keeps them.
+	for p in _pips:
+		(p as Control).visible = not on
 	if _mm_expand:
 		_mm_expand.visible = on
 	if _hud_name and _hud_name_full != "":
@@ -14822,7 +14852,9 @@ func _build_objective(root: Control, kpill: Control) -> void:
 	_obj_drawer.offset_right = -200
 	_obj_drawer.offset_top = 10
 	_obj_drawer.offset_bottom = 300
-	_obj_drawer.add_theme_stylebox_override("panel", UiTheme.dark_glass(16, 0.92))
+	# U1 1:1 round 13: fully opaque — at 0.92 the top bar's
+	# bright wallet icons ghosted through the open drawer.
+	_obj_drawer.add_theme_stylebox_override("panel", UiTheme.dark_glass(16, 1.0))
 	_obj_drawer.mouse_filter = Control.MOUSE_FILTER_STOP
 	_obj_drawer.visible = false
 	root.add_child(_obj_drawer)
