@@ -3594,6 +3594,9 @@ func _p5_run_block(vp: Vector2) -> void:
 	# blessing.
 	await _p5_ready()
 	await _p5_probe_banner()
+	# Banner probing yields two frames; settle a level-up arriving in that gap.
+	await _p1_settle_drafts()
+	_p4_freeze_xp(pl)
 	_world.offer_blessing("测试祭坛", 0, 3, 1)
 	await _p1_pframes(10)
 	if String(_world.get("state")) == "blessing":
