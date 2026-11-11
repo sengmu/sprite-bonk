@@ -607,7 +607,7 @@ func cry_stream_for(species_id: String) -> AudioStreamWAV:
 		return _cry_streams[species_id]
 	var s := _file_stream("cry_" + species_id)
 	if s == null:
-		var bucket := ["s", "m", "l"][abs(species_id.hash()) % 3]
+		var bucket: String = ["s", "m", "l"][abs(species_id.hash()) % 3]
 		s = _file_stream("cry_fallback_" + bucket)
 	if s == null:
 		s = _render_cry(species_id)
