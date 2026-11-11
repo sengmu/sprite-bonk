@@ -90,7 +90,7 @@ var _ult_glyph: Label
 var _classic := true
 const MIN_HIT := 70.0
 const INTERACT_FILL := Color(0.96, 0.52, 0.08, 0.95)
-const INTERACT_BORDER := Color(0.96, 0.52, 0.08, 0.85)
+const INTERACT_BORDER := Color(0.20, 0.12, 0.07, 0.95)
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -370,7 +370,8 @@ func _build_button(font: Font, kind: String, icon: String, size: int,
 	sb.set_corner_radius_all(999)
 	sb.set_border_width_all(3)
 	sb.border_width_bottom = 6
-	sb.border_color = UiTheme.CREAM
+	sb.border_color = {"dash": Color("28351c"), "jump": Color("20333f"),
+		"interact": INTERACT_BORDER}.get(kind, UiTheme.CREAM)
 	sb.shadow_size = 5
 	sb.shadow_offset = Vector2(0, 3)
 	sb.shadow_color = Color(0.25, 0.18, 0.09, 0.25)

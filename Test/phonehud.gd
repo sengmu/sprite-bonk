@@ -190,6 +190,8 @@ func _inside(r: Rect2, outer: Rect2) -> bool:
 func _snap(name: String) -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
+	if DisplayServer.get_name() == "headless":
+		return
 	await RenderingServer.frame_post_draw
 	var img := get_viewport().get_texture().get_image()
 	img.save_png("res://Test/out/" + name + ".png")
@@ -2751,7 +2753,7 @@ func _p4_state(vp: Vector2, st: String, prompt_state: bool) -> void:
 		hits.append("hero" + str(hero_r))
 	_check("P4: BL rows x thumb cluster / ring / hero disjoint (" + st + ")",
 		hits.is_empty(), "bl=" + str(r_bl) + " hits=" + str(hits))
-	# -- ring vs Z7 (plan: ts >= 1 needs no home lift) -----------
+	# -- ring vs Z7 (home is clamped by the slot rows) -----------
 	var tc: Object = _world.get("touch_controls")
 	if tc != null and (tc as Control).visible:
 		var rr := _vis_rect(tc.get("_base_ring") as Control)
@@ -2761,8 +2763,8 @@ func _p4_state(vp: Vector2, st: String, prompt_state: bool) -> void:
 		var ts := float(tc.get("_scale_s"))
 		if ts >= 0.999:
 			var raw := (tc as Control).get_global_rect().end.y - 134.0 * ts
-			_check("P4: ring home unmoved at touchScale >= 1 (" + st + ")",
-				absf(rr.end.y - raw) <= 1.0,
+			_check("P4: ring home matches the slot-row limit at touchScale >= 1 (" + st + ")",
+				absf(rr.end.y - minf(raw, r_bl.position.y)) <= 1.0,
 				"ring_bottom=" + str(rr.end.y) + " raw=" + str(raw) + " z7_top=" + str(r_bl.position.y))
 	# -- centre clear incl. the BL rows (and the bubble below) ---
 	var cr := Rect2(ui_rect.position.x + 0.30 * ui_rect.size.x,
