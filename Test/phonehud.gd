@@ -54,7 +54,8 @@
 ## the end; captures mobile_p2_<state>_<tag>.png.
 ## UI-mobile P3 (§B4 P3 + the P2-closure rulings): "P3: ..."
 ## assertions — objective pill + drawer (D4), portrait pause
-## (D1), aim out of the HUD (D2), lock on the arc, hit areas
+## (D1), aim out of the HUD (D2), lock in the pause menu
+## (U1 round 10 — no lock button on the HUD anymore), hit areas
 ## >= 70, I3 press feedback, side-by-side mini bars, cut-in in
 ## the centre stack; --layout=classic runs the D6 classic
 ## layout (21.3.2 geometry) and --hud= / --mm= pin hudScale /
@@ -1067,6 +1068,34 @@ func _p1_phone_block(vp: Vector2) -> void:
 		if qb != null:
 			quick = qb.get_child_count()
 	_check("P1: pause settings quick row", quick >= 4, "rows=" + str(quick))
+	# U1 1:1 round 10: the target lock lives in this quick row
+	# now (no tc-lock button on the HUD) — the switch mirrors
+	# the live lock state and re-syncs after each press.
+	var lock_sw: Button = null
+	if setp != null:
+		var qb2 := setp.find_child("QuickRow", true, false)
+		if qb2 != null:
+			for row in qb2.get_children():
+				if row is HBoxContainer and _p1_find_label(row, "锁定目标"):
+					for ch in (row as HBoxContainer).get_children():
+						if ch is Button:
+							lock_sw = ch as Button
+	_check("P1: pause quick row carries the target lock",
+		lock_sw != null and lock_sw.is_visible_in_tree(),
+		"switch=" + str(lock_sw))
+	var pl1 = _world.get("player")
+	var lock_of := func() -> bool:
+		var lt = pl1.get("lock_target") if pl1 != null else null
+		return lt != null and is_instance_valid(lt)
+	if lock_sw != null:
+		_check("P1: lock switch mirrors the live lock state",
+			bool(lock_sw.get_meta("sw_on", false)) == lock_of.call(),
+			"sw=" + str(bool(lock_sw.get_meta("sw_on", false))) + " locked=" + str(lock_of.call()))
+		lock_sw.emit_signal("pressed")
+		await _frames(4)
+		_check("P1: lock switch press re-syncs to the live lock state",
+			bool(lock_sw.get_meta("sw_on", false)) == lock_of.call(),
+			"sw=" + str(bool(lock_sw.get_meta("sw_on", false))) + " locked=" + str(lock_of.call()))
 	await _p1_snap("pause_settings")
 	# Quit needs a confirm: one press arms, scene stays.
 	var qbtn := _world.get("_pause_quit_btn") as Button
@@ -1751,8 +1780,11 @@ func _p3_new() -> bool:
 	return _mode == "phone" and not _classic
 
 func _p3_folded() -> bool:
-	var kb = _world.get("_kills_badge")
-	return kb is Control and (kb as Control).is_visible_in_tree()
+	# U1 1:1 round 10: the fold signal is the layout flag, not
+	# the kills badge — the "+N" badge is gone (clean kills
+	# pill per the reference; folded objectives live in the
+	# drawer, see _p3_obj_target).
+	return bool(_world.get("_obj_folded"))
 
 ## Lowest top (global y) of the visible touch elements whose
 ## x-range meets [x0, x1]; INF when the layer is hidden.
@@ -1845,9 +1877,13 @@ func _p3_state(vp: Vector2, st: String) -> void:
 				or (total > 1 and b.is_visible_in_tree() and bl.text == "+%d" % (total - 1))
 			bdet = "pill badge=" + (bl.text if b.is_visible_in_tree() else "<hidden>")
 		elif _p3_folded():
-			var kl := _world.get("_kills_badge_label") as Label
-			badge_ok = kl.text == "+%d" % total
-			bdet = "folded kills badge=" + kl.text
+			# U1 1:1 round 10: the kills pill is clean — no "+N"
+			# badge. The folded objectives are in the drawer
+			# (the tap test below asserts the drawer opens
+			# from the kills pill and lists them all).
+			var kb := _world.get("_kills_badge") as Control
+			badge_ok = kb != null and not kb.is_visible_in_tree()
+			bdet = "folded, kills badge hidden=" + str(badge_ok)
 		else:
 			badge_ok = total == 0
 			bdet = "no pill"
@@ -1861,8 +1897,8 @@ func _p3_state(vp: Vector2, st: String) -> void:
 	var roots: Array = []
 	if objc != null and objc.is_visible_in_tree():
 		roots.append(objc)
-	if _p3_folded():
-		roots.append(_world.get("_kills_badge"))
+	# U1 1:1 round 10: the kills badge is always hidden now —
+	# no text-size roots from it.
 	for r in roots:
 		for l in _p2_labels(r as Node):
 			if _p2_drawn(l) < floor_g - 0.01:
@@ -1886,33 +1922,17 @@ func _p3_state(vp: Vector2, st: String) -> void:
 			not titles.has("阿尔法") and not titles.has("阿尔法出没"), str(titles))
 	if not tc_vis:
 		return
-	# -- cluster: pause / aim gone, lock on the arc ------------
+	# -- cluster: pause / aim / lock gone ----------------------
+	# U1 1:1 round 10: lock joins pause + aim — no lock button
+	# on the combat HUD anymore (its home is the pause menu's
+	# quick row; the P1 pause block asserts it there).
 	var btns: Dictionary = tc.get("_buttons")
 	var gone := true
-	for k in ["pause", "aim"]:
+	for k in ["pause", "aim", "lock"]:
 		if btns.has(k) and ((btns[k] as Dictionary)["area"] as Control).visible:
 			gone = false
-	_check("P3: no pause / aim button in the thumb cluster (" + st + ")", gone)
+	_check("P3: no pause / aim / lock button in the thumb cluster (" + st + ")", gone)
 	var ts := float(tc.get("_scale_s"))
-	var lr := _vis_rect((btns["lock"] as Dictionary)["area"] as Control)
-	var tcr := (tc as Control).get_global_rect()
-	var want_c := tcr.end + Vector2(-268.0, -184.0) * ts
-	_check("P3: lock on the arc (" + st + ")", lr.get_center().distance_to(want_c) <= 1.5,
-		"lock=" + str(lr) + " want_centre=" + str(want_c))
-	var lock_t: Array = [["minimap", _vis_rect(mmf)], ["kills", _vis_rect(kills)]]
-	if objc != null and objc.is_visible_in_tree():
-		lock_t.append(["objective", _vis_rect(objc)])
-	var dr = _world.get("_obj_drawer")
-	if dr is Control and (dr as Control).is_visible_in_tree():
-		lock_t.append(["drawer", _vis_rect(dr as Control)])
-	if String(_world.get("_prompt").text) != "":
-		lock_t.append(["prompt", _prompt_rect()])
-	var lhits: Array = []
-	for t in lock_t:
-		if not _disjoint(lr, t[1] as Rect2):
-			lhits.append(String(t[0]) + str(t[1]))
-	_check("P3: lock clears all (" + st + ")", lhits.is_empty(),
-		"lock=" + str(lr) + " hits=" + str(lhits))
 	# -- touch targets >= 70; a hit never covers another's disc
 	var small: Array = []
 	var elems := _touch_elems()
@@ -1954,11 +1974,25 @@ func _p3_state(vp: Vector2, st: String) -> void:
 	_check("P3: portrait tap target >= 70 covers the portrait (" + st + ")", pok, pdet)
 	var pb = _world.get("_pause_badge")
 	var lv := _world.get("_lv_label") as Control
-	_check("P3: portrait wears the pause badge (" + st + ")",
-		pb is Control and (pb as Control).is_visible_in_tree()
-		and _disjoint(_vis_rect(pb as Control), _vis_rect(lv))
-		and _vis_rect(pb as Control).intersects(mr),
-		("badge=" + str(_vis_rect(pb as Control)) + " lv=" + str(_vis_rect(lv))) if pb is Control else "none")
+	# U1 1:1 round 10: the reference has no pause badge on the
+	# portrait — the badge node stays but must be hidden. The
+	# portrait-tap pause entry itself is covered by the check
+	# above.
+	_check("P3: no pause badge on the portrait (reference) (" + st + ")",
+		pb is Control and not (pb as Control).is_visible_in_tree(),
+		("badge=" + str(_vis_rect(pb as Control))) if pb is Control else "none")
+	# U1 1:1 round 10: the Lv badge is the reference's dark chip
+	# with white text (round 6's cream chip was a misread).
+	var lv_ok := false
+	var lv_det := "no _lv_label"
+	if lv != null:
+		var fc: Color = lv.get_theme_color("font_color")
+		var par := lv.get_parent() as Control
+		var sb := par.get_theme_stylebox("panel") as StyleBoxFlat if par != null else null
+		lv_ok = fc.r > 0.9 and fc.g > 0.9 and fc.b > 0.9 and sb != null \
+			and sb.bg_color.a > 0.4 and (sb.bg_color.r + sb.bg_color.g + sb.bg_color.b) < 0.9
+		lv_det = "font=" + str(fc) + " bg=" + (str(sb.bg_color) if sb != null else "none")
+	_check("P3: Lv badge dark chip, white text (" + st + ")", lv_ok, lv_det)
 
 ## Plan P3: 2+ alphas (side-by-side bars, "+N" past two) and
 ## the ult cut-in at the head of the centre stack.
@@ -2290,12 +2324,14 @@ func _p3_phone_block(vp: Vector2) -> void:
 		"found=" + str(sw != null) + " v0=" + str(v0) + " v1=" + str(v1) + " tc_aim=" + str(aim1))
 	_world._close_pause()
 	await _p1_pframes(6)
-	# ---- a camera swipe sliding across the lock keeps turning
-	# (lock moved onto the arc = into the right thumb's path)
+	# ---- a camera swipe sliding across the thumb cluster keeps
+	# turning (U1 1:1 round 10: the lock button is gone — the
+	# swipe now crosses the dash button, which sits on the
+	# arc where the lock was, in the right thumb's path).
 	await _p3_sample_ready()
 	GameProfile.set_setting("camAssist", false)
 	var btns: Dictionary = tc.get("_buttons")
-	var lr := _vis_rect((btns["lock"] as Dictionary)["area"] as Control)
+	var lr := _vis_rect((btns["dash"] as Dictionary)["area"] as Control)
 	var cs := float(GameProfile.setting("camSpeed"))
 	var st0 := Vector2(lr.position.x - 70.0, lr.get_center().y)
 	var y0 := float(_world.get("cam_yaw"))
@@ -2319,9 +2355,9 @@ func _p3_phone_block(vp: Vector2) -> void:
 		print("PHONEHUD INFO P3 camera sample interrupted attempt=", attempt + 1,
 			" state=", _world.get("state"))
 	var dy := float(_world.get("cam_yaw")) - y0
-	_check("P3: camera swipe across the lock keeps turning",
+	_check("P3: camera swipe across the thumb cluster keeps turning",
 		lr.has_point(st0 + Vector2(70, 0)) and dy <= -0.45 * cs and dy >= -0.75 * cs,
-		"lock=" + str(lr) + " from=" + str(st0) + " dyaw=" + str(dy) + " expect~" + str(-0.6 * cs))
+		"dash=" + str(lr) + " from=" + str(st0) + " dyaw=" + str(dy) + " expect~" + str(-0.6 * cs))
 	# ---- cleanup the injected events ------------------------
 	pl.xp_mult = xpm0
 	_world.set("_swarm", false)
@@ -2370,7 +2406,8 @@ func _p3_layout_sig() -> Dictionary:
 		"classic": bool(GameProfile.setting("classicLayout")),
 		"pause_btn": ((btns["pause"] as Dictionary)["area"] as Control).visible,
 		"aim_btn": ((btns["aim"] as Dictionary)["area"] as Control).visible,
-		"lock": str(_vis_rect((btns["lock"] as Dictionary)["area"] as Control).position.round()),
+		# U1 1:1 round 10: no "lock" key — the lock button left
+		# the HUD (its home is the pause menu's quick row).
 		"card_w": topc.size.x,
 		"card_s": snappedf(topc.scale.x, 0.001),
 		"hero_s": snappedf((_world.get("_hero_cluster") as Control).scale.x, 0.001),
@@ -2409,9 +2446,10 @@ func _p3_round_trip(tag: String) -> void:
 		str(s2) == str(s0), "before=" + str(s0) + " after=" + str(s2))
 
 ## D6 classic (21.3.2 geometry; the plan's one gate corner
-## 2400 s1.00): the pre-P2 top band fit, the pause / aim /
-## lock column, the resident goal card — and none of the
-## new layout's pieces.
+## 2400 s1.00): the pre-P2 top band fit, the pause / aim
+## column, the resident goal card — and none of the
+## new layout's pieces. (U1 1:1 round 10: the lock button
+## left the column — its home is the pause menu's quick row.)
 func _p3_classic_state(vp: Vector2, st: String) -> void:
 	var hud := _world.get("_hud_root") as Control
 	var hero := _world.get("_hero_cluster") as Control
@@ -2438,14 +2476,14 @@ func _p3_classic_state(vp: Vector2, st: String) -> void:
 		var ts := float(tc.get("_scale_s"))
 		var xs: Array = []
 		var ok := true
-		for k in ["pause", "aim", "lock"]:
+		for k in ["pause", "aim"]:
 			var ar := (btns[k] as Dictionary)["area"] as Control
 			var r := _vis_rect(ar)
 			xs.append(r.get_center().x)
 			ok = ok and ar.visible and absf(r.size.x - 56.0 * ts) < 0.6 \
 				and _vis_rect((btns[k] as Dictionary)["panel"] as Control).is_equal_approx(r)
-		ok = ok and absf(float(xs[0]) - float(xs[2])) < 0.6 and absf(float(xs[1]) - float(xs[2])) < 0.6
-		_check("P3 classic: thumb cluster keeps the pause / aim / lock column (" + st + ")",
+		ok = ok and absf(float(xs[0]) - float(xs[1])) < 0.6
+		_check("P3 classic: thumb cluster keeps the pause / aim column (" + st + ")",
 			ok, "centres_x=" + str(xs) + " ts=" + str(ts))
 	var obj = _world.get("_obj_pill")
 	var ph = _world.get("_portrait_hit")
@@ -2477,7 +2515,7 @@ func _p3_desktop_state(st: String) -> void:
 	var tc: Object = _world.get("touch_controls")
 	var btns: Dictionary = tc.get("_buttons") if tc != null else {}
 	var col := true
-	for k in ["pause", "aim", "lock"]:
+	for k in ["pause", "aim"]:
 		col = col and btns.has(k) and ((btns[k] as Dictionary)["area"] as Control).visible
 	_check("P3 desktop: no phone-layout pieces (" + st + ")",
 		not (obj is Control and (obj as Control).is_visible_in_tree()) and not _p3_folded()
@@ -2612,8 +2650,10 @@ func _p4_state(vp: Vector2, st: String, prompt_state: bool) -> void:
 		"slots=" + str(vs.size()) + " vits=" + str(pl.vit_levels.size() if pl != null else -1)
 		+ " bad=" + str(vbad))
 	# -- the cluster IS the two rows + the band's 8 px overhang:
-	# anchored (12, vh-12), width = rows + 2x8, no legacy /
-	# ult piece left in it (U1 1:1 round 6) --------------------
+	# anchored (23, vh-12), width = rows + 2x8, no legacy /
+	# ult piece left in it (U1 1:1 round 6; round 10 moved the
+	# anchor 12 -> 23 per the main-controller ruling: first
+	# slot's left edge 31 design px, reference U1_final.jpg) ---
 	var slot_rs: Array = []
 	for d in ms + vs:
 		slot_rs.append(_vis_rect((d as Dictionary)["panel"] as Control))
@@ -2639,7 +2679,7 @@ func _p4_state(vp: Vector2, st: String, prompt_state: bool) -> void:
 	var ms_leg := _world.get("_move_slot") as Control
 	_check("P4: BL cluster is exactly the slot rows (" + st + ")",
 		have and not slot_rs.is_empty() and encl
-		and absf(r_bl.position.x - (ui_rect.position.x + 12.0)) <= 1.0
+		and absf(r_bl.position.x - (ui_rect.position.x + 23.0)) <= 1.0
 		and absf(r_bl.end.y - (ui_rect.end.y - 12.0)) <= 1.0
 		and absf(r_bl.end.x - right - 8.0 * bl.scale.x) <= 1.0
 		and r_bl.grow(1.0).encloses(deep)
@@ -2662,9 +2702,11 @@ func _p4_state(vp: Vector2, st: String, prompt_state: bool) -> void:
 	var s := float(_world.call("_kr")) * float(GameProfile.setting("hudScale"))
 	var want := minf(s, 1.35)
 	# centre rect (plan B0.2): rows past 0.30·vw must keep their
-	# top at/below 0.85·vh (rows design height 192, U1 1:1 round 6)
+	# top at/below 0.85·vh (rows design height 192, U1 1:1 round 6;
+	# round 10: the left-margin term tracks the new 23 anchor,
+	# same bound, same strength — the bottom term stays 12.0)
 	if bl.size.x > 0.0:
-		want = minf(want, maxf((0.30 * ui_rect.size.x - 12.0) / bl.size.x,
+		want = minf(want, maxf((0.30 * ui_rect.size.x - 23.0) / bl.size.x,
 			(0.15 * ui_rect.size.y - 12.0) / 192.0))
 	var cl := _p4_cluster_left()
 	if cl < INF and bl.size.x > 0.0:

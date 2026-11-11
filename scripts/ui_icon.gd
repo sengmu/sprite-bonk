@@ -109,12 +109,16 @@ func _draw() -> void:
 			_line([Vector2(5, 15), Vector2(9, 19)], 2.6)
 			_circ(4.2, 19.8, 1.7)
 		"wind":
-			# U1 1:1 round 8: three bold speed lines (reference
-			# dash glyph) — the old arcs + lines read as an
-			# indistinct blob at button size (audit §2.3).
-			_line([Vector2(5, 7), Vector2(19, 7)], 2.6)
-			_line([Vector2(4, 12), Vector2(20, 12)], 2.6)
-			_line([Vector2(6, 17), Vector2(18, 17)], 2.6)
+			# U1 1:1 round 10: a bold "3" swirl with two speed
+			# lines (reference U1_final.jpg dash glyph) — the
+			# round-8 three straight lines read as a menu icon,
+			# not a swirl (main-controller ruling, local crops
+			# compared). Two C-bowls opening left, pinched at
+			# the middle; speed lines to their left.
+			_arc(15, 8, 5, -2.0, 2.0, 3.2)
+			_arc(15, 16, 5, -2.0, 2.0, 3.2)
+			_line([Vector2(3, 10), Vector2(9.5, 10)], 2.6)
+			_line([Vector2(3, 14.5), Vector2(9.5, 14.5)], 2.6)
 		"heart":
 			_circ(8.3, 9.2, 3.6)
 			_circ(15.7, 9.2, 3.6)

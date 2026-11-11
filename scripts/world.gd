@@ -2884,10 +2884,12 @@ func _build_hud() -> void:
 	_medal_glyph = _label_in(_medal_panel, "妙", Vector2(0, 0), Vector2(86, 86), 34, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
 	_medal_glyph.visible = _medal_panel.portrait == null
 	# UI-mobile P3 (plan H1 / D1): on phone a tap on the
-	# portrait pauses — a small "‖" badge says so. Plan text
-	# puts it "右下（Lv 徽对角）", but the Lv badge IS the
-	# bottom-right corner; it sits on the Lv badge's diagonal
-	# (top-left), 20 design px. Shown by _p3_apply_mode.
+	# portrait pauses — the plan put a small "‖" badge on the
+	# Lv badge's diagonal (top-left) to say so. U1 1:1 round
+	# 10 (main-controller ruling): the reference U1_final.jpg
+	# has no such badge, and it is persistent UI in the new
+	# phone layout — removed. The node stays (hidden) so the
+	# portrait-tap pause itself is untouched.
 	_pause_badge = _panel(_medal_panel, Vector2(-2, -2), Vector2(22, 22), Color(0.10, 0.07, 0.20, 0.92), 11, Color(1, 1, 1, 0.45), 1, true)
 	_pause_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var pb_ic := UiIcon.new("pause", Color(1, 1, 1, 0.92), 12)
@@ -2896,11 +2898,13 @@ func _build_hud() -> void:
 	pb_ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_pause_badge.add_child(pb_ic)
 	_pause_badge.visible = false
-	# U1 1:1 round 6: the Lv badge is the reference's cream chip
-	# with dark ink text, straddling the medallion's top-right
-	# edge (was a dark pill at the bottom-right corner).
-	var lv_badge := _panel(_hero_cluster, Vector2(61, 4), Vector2(56, 26), UiTheme.CREAM, 13, Color(0, 0, 0, 0), 0, true)
-	_lv_label = _label_in(lv_badge, "1级", Vector2(0, 0), Vector2(56, 26), 12, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, true)
+	# U1 1:1 round 10 (main-controller ruling): the Lv badge is
+	# the reference's DARK chip with white text — round 6's
+	# "cream chip" read of U1_final.jpg was wrong (the cream
+	# chip under a learned skill slot is the reference's, this
+	# one is not). Same rect (61,4,56,26), colours flipped.
+	var lv_badge := _panel(_hero_cluster, Vector2(61, 4), Vector2(56, 26), Color(0.10, 0.07, 0.20, 0.92), 13, Color(0, 0, 0, 0), 0, true)
+	_lv_label = _label_in(lv_badge, "1级", Vector2(0, 0), Vector2(56, 26), 12, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
 	var info := Panel.new()
 	_hero_info = info
 	info.position = Vector2(94, 4)
@@ -5022,7 +5026,7 @@ func _settings_page_keys() -> void:
 		_mk_dlabel(_settings_page, "操作", 20, UiTheme.SKY)
 		for row in [["移动", "左半屏拖动（摇杆）"], ["互动 / 邀伴", "右下「！」互动键"],
 				["跳跃 · 下砸（空中）", "↑ 键"], ["冲刺 · 滑铲", "风 键"],
-				["大招", "「必」键"], ["锁定最近敌人", "准星键"],
+				["大招", "「必」键"], ["锁定最近敌人", "暂停菜单「锁定目标」"],
 				["暂停", "点左上头像" if _new_layout() else "右下竖列暂停键"]]:
 			var thb := _st_row(_settings_page, String(row[0]))
 			_mk_label(thb, String(row[1]), 14, UiTheme.MUTED)
@@ -5046,7 +5050,7 @@ func _settings_page_hud() -> void:
 	_st_slider(_settings_page, "小地图大小", "minimapScale", 0.75, 1.5, 0.05, "%.2f",
 		func() -> void: _apply_visibility_settings())
 	# UI-mobile P3 (plan D6): the classic layout (21.3.2 HUD
-	# geometry + pause / aim / lock column) for 1-2 versions.
+	# geometry + pause / aim column) for 1-2 versions.
 	var csw := _st_switch(_settings_page, "经典布局（旧版 HUD 排布）", "classicLayout",
 		func() -> void: _apply_ui_scale())
 	csw.name = "ClassicLayoutSwitch"
@@ -12964,7 +12968,7 @@ func _process(delta: float) -> void:
 			and not _any_modal_open()
 		if touch_controls.visible != show_tc:
 			touch_controls.visible = show_tc
-		# Cycle 18 cluster buttons: pause / lock / aim edges.
+		# Cycle 18 cluster buttons: pause / aim edges.
 		if touch_controls.visible:
 			if touch_controls.consume_touch_pause() and state in ["playing", "guardian", "portal"]:
 				_open_pause()
@@ -13831,7 +13835,7 @@ func _layout_hud() -> void:
 	# Cycle 21.3 (audit F1a): clear a lane for the touch
 	# cluster — push the right column's left edge (the
 	# minimap frame's visual left) to the touch layer,
-	# which parks pause / aim / lock immediately left of
+	# which parks pause / aim immediately left of
 	# it. Converted through global origins; the two
 	# layers share the same inset offsets in practice.
 	if touch_controls != null:
@@ -13845,7 +13849,7 @@ func _layout_hud() -> void:
 	var s_card := s_top
 	if phone:
 		# Centred in [band_r, right bound]; the bound is the
-		# minimap, or the moved pause / aim / lock column
+		# minimap, or the moved pause / aim column
 		# where it rises into the card's band (touchScale
 		# 1.50 puts pause at y~42) — the card fits to it.
 		var right_b := mm_l - 12.0
@@ -14364,8 +14368,8 @@ func _p3_apply_mode(on: bool) -> void:
 	_p3_on = want
 	if touch_controls:
 		touch_controls.set_layout_classic(not on)
-	if _pause_badge:
-		_pause_badge.visible = on
+	# U1 1:1 round 10: the portrait pause badge stays hidden —
+	# the reference has none (see the build site above).
 	if _goal_card:
 		_goal_card.visible = not on and _goal_species != "" and state != "menu"
 	if _pill_box:
@@ -14607,7 +14611,13 @@ func _p3_place_objective(mm_bot: float, mm_l: float, s_col: float, vw: float, vh
 	var has := _obj_total > 0
 	_obj_folded = has and z < INF and top + h * s_col > z
 	_obj_pill.visible = has and not _obj_folded and state != "menu"
-	_kills_badge.visible = has and _obj_folded
+	# U1 1:1 round 10 (main-controller ruling 12:2x): the "+N"
+	# badge is OFF the kills pill for good — it was the folded
+	# objective's target count (Plan Z3), not a kill floater,
+	# and the reference kills pill is clean. The folded
+	# objectives now live only in the target drawer (S17),
+	# reached by tapping the kills pill (_p3_obj_target).
+	_kills_badge.visible = false
 	_p3_place_hit(_obj_hit, _p3_obj_target())
 	# The hit never reaches into the cluster below (it is a
 	# later touch-layer sibling and would steal the ult).
@@ -15027,18 +15037,25 @@ func _p4_refresh_slots(relayout: bool) -> void:
 	if relayout:
 		_layout_hud()
 
-## Plan Z7: anchor (12, vh - 12), width = the rows + the band's
+## Plan Z7: anchor (23, vh - 12), width = the rows + the band's
 ## 2x8 overhang, s_bl = min(s, 1.35) — narrowed only where the
 ## rows would cost the bubble its 300 px span or reach the
 ## centre rect (plan B0.2: x past 0.30·vw AND top above
 ## 0.85·vh); floor P4_SBL_FLOOR (minimum legible slot size).
+## U1 1:1 round 10 (main-controller ruling): the row's left
+## edge sits at 23 so the first slot's left edge is 31 design
+## px (reference U1_final.jpg) — the 12 px edge hugged the
+## screen edge. P4_SLOT / P4_MOVE_STEP untouched; the s_bl
+## cap's left-margin term tracks the new offset (23), so the
+## centre-clear rule still binds at 0.30·vw with the same
+## strength (phonehud assertion unchanged).
 func _p4_layout_bl(s: float, vw: float, vh: float) -> void:
 	if _p4_on != 1 or _bl_cluster == null:
 		return
 	var w := _p4_rows_w()
 	var cw := w + 2.0 * P4_STRIP_PAD
-	_bl_cluster.offset_left = 12.0
-	_bl_cluster.offset_right = 12.0 + cw
+	_bl_cluster.offset_left = 23.0
+	_bl_cluster.offset_right = 23.0 + cw
 	_bl_cluster.offset_top = -12.0 - P4_ROWS_H
 	_bl_cluster.offset_bottom = -12.0
 	_bl_rows.position = Vector2.ZERO
@@ -15049,7 +15066,7 @@ func _p4_layout_bl(s: float, vw: float, vh: float) -> void:
 	_bl_strip.position = Vector2(0, (P4_SLOT - P4_BAND_H) * 0.5)
 	_bl_strip.size = Vector2(cw, P4_BAND_H)
 	var s_bl := minf(s, 1.35)
-	s_bl = minf(s_bl, maxf((0.30 * vw - 12.0) / cw, (0.15 * vh - 12.0) / P4_ROWS_H))
+	s_bl = minf(s_bl, maxf((0.30 * vw - 23.0) / cw, (0.15 * vh - 12.0) / P4_ROWS_H))
 	# The cluster's geometry, visible or not: a layout pass
 	# under a modal (layer hidden) must not leave a stale s_bl
 	# once the layer is back (D6 round trip, it1 b).
@@ -15224,7 +15241,7 @@ func _layout_prompt(span_l: float, span_r: float, vw: float, vh: float, s: float
 	var fx_r := span_r - 4.0
 	# UI-mobile P3: on the new layout the cluster clamp also
 	# runs BEFORE the regime choice. The 21.3 order was safe
-	# only while the pause / aim / lock column narrowed the
+	# only while the pause / aim column narrowed the
 	# lane (span_r); with the column gone the clamp below
 	# could drive a "wide enough" span negative after the
 	# choice (P7 corner hud 1.30: BL 1151 wide, lock left
@@ -16109,6 +16126,20 @@ func _pause_fill_quick() -> void:
 		func() -> void:
 			if touch_controls:
 				touch_controls.set_aim_state(bool(GameProfile.setting("camAssist"))))
+	# U1 1:1 round 10 (main-controller ruling): the target-lock
+	# button left the combat HUD — its home is this quick row.
+	# The lock itself is live state (player.lock_target), not a
+	# Profile setting, so the switch is built by hand: it shows
+	# the live state on every rebuild and re-syncs its visual
+	# to the live state after each press (a press with no enemy
+	# in range leaves it off, honestly).
+	var lock_hb := _st_row(quick, "锁定目标")
+	var lock_sw := UiTheme.make_switch(player != null and is_instance_valid(player) and player.lock_target != null and is_instance_valid(player.lock_target))
+	lock_sw.pressed.connect(func() -> void:
+		audio.click()
+		_toggle_target_lock()
+		UiTheme.set_switch(lock_sw, player != null and is_instance_valid(player) and player.lock_target != null and is_instance_valid(player.lock_target)))
+	lock_hb.add_child(lock_sw)
 	_st_switch(quick, "固定摇杆", "fixedStick",
 		func() -> void:
 			if touch_controls:

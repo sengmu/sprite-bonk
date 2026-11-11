@@ -14,17 +14,24 @@ extends Control
 ##             hides the HUD one while touch is up), interact
 ##             (tc-act, exclamation icon), jump (tc-jump, icon
 ##             only), dash (tc-dash, icon only), aim (tc-aim —
-##             our camera-assist toggle, target icon), lock
-##             (tc-lock, crosshair icon), pause (tc-pause,
-##             icon only). No text labels where the bundle
-##             uses icons.
+##             our camera-assist toggle, target icon), pause
+##             (tc-pause, icon only). No text labels where the
+##             bundle uses icons. (tc-lock was here until U1
+##             round 10 — see the note below.)
+## U1 1:1 round 10 (main-controller ruling): tc-lock is GONE
+##   from the combat HUD — the reference has no lock button
+##   and the lock function moved to the pause menu's quick
+##   row (World._pause_fill_quick). The lock state itself
+##   (player.lock_target) and _toggle_target_lock are
+##   untouched; set_lock_state / consume_touch_lock stay as
+##   guarded no-ops for the old call sites.
 ## UI-mobile P3 (plan §B4 P3, D1/D2): the NEW layout drops
 ##   pause (-> tap the hero portrait) and aim (-> the pause
-##   panel's quick row) from the cluster, puts lock on the
-##   arc (-300,-216)-(-236,-152), and grows every hit area to
-##   >= 70 logical px around its centred visual (plan I2).
+##   panel's quick row) from the cluster, and grows every
+##   hit area to >= 70 logical px around its centred visual
+##   (plan I2).
 ##   The CLASSIC layout (D6) is the 21.3.2 cluster: the
-##   pause / aim / lock column, hit == visual. World picks
+##   pause / aim column, hit == visual. World picks
 ##   the layout (set_layout_classic); the layer boots classic.
 ##   touchScale [0.7-1.5] resizes every element in UNSCALED
 ##   space (offsets/sizes), never this layer itself — scaling
@@ -82,7 +89,6 @@ var _pulse_t := 0.0
 var _ult_glyph: Label
 var _classic := true
 const MIN_HIT := 70.0
-const LOCK_ARC := Vector4(-300, -216, -236, -152)
 const INTERACT_FILL := Color(0.96, 0.52, 0.08, 0.95)
 const INTERACT_BORDER := Color(0.96, 0.52, 0.08, 0.85)
 
@@ -107,8 +113,7 @@ func _ready() -> void:
 		Color(1, 1, 1, 0.13), Color(1, 1, 1, 0.55))
 	_build_button(f, "dash", "wind", 80, -216, -136, -224, -144,
 		Color(1, 1, 1, 0.13), Color(1, 1, 1, 0.55))
-	_build_button(f, "lock", "crit", 56, -118, -62, -316, -260,
-		Color(1, 1, 1, 0.13), Color(1, 1, 1, 0.55))
+	# U1 1:1 round 10: no lock button — see the header note.
 	_build_button(f, "aim", "target", 56, -118, -62, -384, -328,
 		Color(1, 1, 1, 0.13), Color(1, 1, 1, 0.55))
 	_build_button(f, "pause", "pause", 56, -118, -62, -452, -396,
@@ -178,7 +183,7 @@ func set_ring_bottom_limit(y: float) -> void:
 
 ## Cycle 21.3 (audit F1): the HUD right column's visual
 ## left edge, pushed by World._layout_hud in THIS layer's
-## local space. The pause / aim / lock column moves to
+## local space. The pause / aim column moves to
 ## sit immediately LEFT of it (right edge = _col_left -
 ## 10), out of the goal / event cards' text. Jump, dash,
 ## interact and the ult gauge never move (audit: their
@@ -206,7 +211,7 @@ func column_top() -> float:
 	if not _classic:
 		return INF
 	var m := INF
-	for kind in ["pause", "aim", "lock"]:
+	for kind in ["pause", "aim"]:
 		if _buttons.has(kind):
 			m = minf(m, ((_buttons[kind] as Dictionary)["area"] as Control).get_rect().position.y)
 	return m
@@ -248,8 +253,9 @@ func cluster_top_over(x0: float, x1: float) -> float:
 	return m
 
 ## UI-mobile P3 / D6: classic = the 21.3.2 cluster (pause /
-## aim / lock column, hit == visual); new = pause + aim gone,
-## lock on the arc, hit areas >= 70.
+## aim column, hit == visual); new = pause + aim gone,
+## hit areas >= 70. (Lock lived on the arc here until U1
+## round 10; it moved to the pause menu's quick row.)
 func set_layout_classic(on: bool) -> void:
 	_classic = on
 	for kind in ["pause", "aim"]:
@@ -265,7 +271,7 @@ func is_classic() -> bool:
 func _apply_column() -> void:
 	if _col_left == INF or size.x <= 1.0 or not _classic:
 		return
-	for kind in ["pause", "aim", "lock"]:
+	for kind in ["pause", "aim"]:
 		if not _buttons.has(kind):
 			continue
 		var rec: Dictionary = _buttons[kind]
@@ -373,7 +379,7 @@ func _build_button(font: Font, kind: String, icon: String, size: int,
 	area.add_child(panel)
 	var ic := UiIcon.new()
 	ic.icon = icon
-	ic.color = UiTheme.TEXT if kind in ["lock", "aim", "pause"] else Color.WHITE
+	ic.color = UiTheme.TEXT if kind in ["aim", "pause"] else Color.WHITE
 	ic.set_anchors_preset(Control.PRESET_CENTER)
 	var half := size * 0.30
 	ic.offset_left = -half
@@ -496,8 +502,6 @@ func apply_scale(s: float) -> void:
 		var rec: Dictionary = _buttons[kind]
 		var area: Control = rec["area"]
 		var bo: Vector4 = rec["base_off"]
-		if kind == "lock" and not _classic:
-			bo = LOCK_ARC
 		# UI-mobile P3 (plan I2): the hit area grows to >= 70
 		# about the visual; the panel insets back to the
 		# visual size (it is FULL_RECT inside the area).
