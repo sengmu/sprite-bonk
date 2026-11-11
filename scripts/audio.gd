@@ -659,6 +659,29 @@ const TRACK_SRC := {
 }
 const TRACK_BASE := {"ingame3": "ingame1", "ingame4": "ingame2"}
 
+## Production BGM (2026-11-11): original composed loops in
+## assets/audio/music/bgm_<name>.ogg (44.1 kHz stereo OGG q6,
+## -16 LUFS, peak-limited; generate_bgm.py). play_track prefers
+## these files; the sequencer render below is the dev fallback
+## for any track without a file and must be deleted with the
+## other placeholder renderers at the M5 gate. ingame3/ingame4
+## are real transposed renders, so file tracks always play at
+## pitch 1.0.
+const MUSIC_DIR := "res://assets/audio/music/"
+var _track_file_cache := {}
+
+func _file_track(name: String) -> AudioStreamOggVorbis:
+	if _track_file_cache.has(name):
+		return _track_file_cache[name]
+	var path := MUSIC_DIR + "bgm_" + name + ".ogg"
+	if not ResourceLoader.exists(path):
+		return null
+	var s := load(path) as AudioStreamOggVorbis
+	if s:
+		s.loop = true  # 4.3 OggVorbis: the bool is the whole API
+	_track_file_cache[name] = s
+	return s
+
 func _track_stream(name: String) -> AudioStreamWAV:
 	var base: String = TRACK_BASE.get(name, name)
 	var key := "track:" + base
@@ -763,11 +786,15 @@ func play_track(name: String) -> void:
 	if name == current_track:
 		return
 	current_track = name
-	var s := _track_stream(name)
+	var fs := _file_track(name)
 	var nxt := 1 - _music_active
 	var p := _music_players[nxt]
-	p.stream = s
-	p.pitch_scale = float(TRACK_SRC[name]["pitch"])
+	if fs:
+		p.stream = fs
+		p.pitch_scale = 1.0
+	else:
+		p.stream = _track_stream(name)
+		p.pitch_scale = float(TRACK_SRC[name]["pitch"])
 	p.volume_db = -60.0
 	p.play()
 	_music_fade[nxt] = 0.0
