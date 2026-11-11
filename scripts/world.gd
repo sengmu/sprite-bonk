@@ -3988,10 +3988,10 @@ func _build_menu(root: Control) -> void:
 	# settings, defaults shakeOn true / screenShake 1 @1566819).
 	# Cycle 19: the shake glyph replaces "wind" (audit §2.3).
 	if _p5_on:
-		for entry in [[litem, Vector2(8, 134), "res://assets/menu/icon-lab.png", Vector2(84, 66), "MenuLab"],
-				[sitem, Vector2(160, 134), "res://assets/menu/icon-shop.png", Vector2(91, 72), "MenuShop"],
-				[uitem, Vector2(8, 240), "res://assets/menu/icon-league.png", Vector2(78, 68), "MenuChallenge"],
-				[snditem, Vector2(160, 240), "res://assets/menu/icon-settings.png", Vector2(74, 64), "MenuSettings"]]:
+		for entry in [[litem, Vector2(8, 134), "res://assets/menu/v2-icon-lab.svg", Vector2(84, 66), "MenuLab"],
+				[sitem, Vector2(160, 134), "res://assets/menu/v2-icon-shop.svg", Vector2(91, 72), "MenuShop"],
+				[uitem, Vector2(8, 240), "res://assets/menu/v2-icon-league.svg", Vector2(78, 68), "MenuChallenge"],
+				[snditem, Vector2(160, 240), "res://assets/menu/v2-icon-settings.svg", Vector2(74, 64), "MenuSettings"]]:
 			var item_button := entry[0][0] as Control
 			item_button.name = entry[4]
 			item_button.position = entry[1]
@@ -4005,9 +4005,9 @@ func _build_menu(root: Control) -> void:
 			item_icon.hide()
 			var art_icon := TextureRect.new()
 			art_icon.name = "MenuEntryArt"
-			art_icon.texture = load(entry[2]) as Texture2D
 			art_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 			art_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			art_icon.texture = load(entry[2]) as Texture2D
 			art_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			var art_size: Vector2 = entry[3]
 			art_icon.position = Vector2((144.0 - art_size.x) * 0.5, 3.0)
