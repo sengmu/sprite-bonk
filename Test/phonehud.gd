@@ -2721,6 +2721,12 @@ func _p4_state(vp: Vector2, st: String, prompt_state: bool) -> void:
 	if cl < INF and bl.size.x > 0.0:
 		var s_fit := (cl - ui_rect.position.x - 16.0 - P4_BUBBLE_MIN - 16.0 - 23.0) / bl.size.x
 		want = maxf(minf(want, s_fit), P4_SBL_FLOOR)
+	var touch: Control = _world.get("touch_controls")
+	if touch != null:
+		var touch_scale := float(touch.get("_scale_s"))
+		if touch_scale >= 0.999:
+			var ring_bottom := touch.get_global_rect().end.y - 134.0 * touch_scale
+			want = maxf(P4_SBL_FLOOR, minf(want, (ui_rect.end.y - 12.0 - ring_bottom) / 192.0))
 	_check("P4: s_bl = min(s, 1.35, bubble fit) (" + st + ")",
 		have and absf(bl.scale.x - want) < 0.002,
 		"s_bl=" + str(bl.scale.x) + " want=" + str(want) + " W=" + str(bl.size.x))
@@ -2770,8 +2776,8 @@ func _p4_state(vp: Vector2, st: String, prompt_state: bool) -> void:
 		var ts := float(tc.get("_scale_s"))
 		if ts >= 0.999:
 			var raw := (tc as Control).get_global_rect().end.y - 134.0 * ts
-			_check("P4: ring home matches the slot-row limit at touchScale >= 1 (" + st + ")",
-				absf(rr.end.y - minf(raw, r_bl.position.y)) <= 1.0,
+			_check("P4: ring home unmoved at touchScale >= 1 (" + st + ")",
+				absf(rr.end.y - raw) <= 1.0,
 				"ring_bottom=" + str(rr.end.y) + " raw=" + str(raw) + " z7_top=" + str(r_bl.position.y))
 	# -- centre clear incl. the BL rows (and the bubble below) ---
 	var cr := Rect2(ui_rect.position.x + 0.30 * ui_rect.size.x,
@@ -3440,7 +3446,7 @@ func _p5_menu_block(vp: Vector2) -> void:
 			fc != null and _vis_rect(fc).position.distance_to(Vector2(358, 470)) < 1.5,
 			str(_vis_rect(fc).position) if fc else "none")
 	# The menu overlays, opened through their menu items.
-	for row in [["wallet", "连接钱包"], ["lab", "实验室"], ["shop", "萤尘商店"],
+	for row in [["wallet", "钱包"], ["lab", "实验室"], ["shop", "萤尘商店"],
 			["unlock", "伙伴营挑战"], ["sound", "设置"]]:
 		var nm := String(row[0])
 		var mb := _p5_menu_button(String(row[1]))

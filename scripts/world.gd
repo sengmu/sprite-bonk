@@ -15,6 +15,7 @@ const ALTAR_XZ := Vector2(0, -30)
 # §B4 P1.1; two-thumb rotation is pending device check).
 const MENU_HINT_KBD := "WASD 移动 · 自动攻击 · Shift 滑铲（空中=俯冲） · 空格跳跃 · 按住鼠标拖动转镜头 · 滚轮缩放\n到北边祭坛按 E 召唤守护者，击败它开启传送门"
 const MENU_HINT_TOUCH := "左半屏拖动移动 · 自动攻击 · 右下：互动 · ↑ 跳跃 · 风 冲刺（空中=俯冲） · 必 大招 · 点小地图开大地图\n到北边祭坛点互动召唤守护者，击败它开启传送门"
+const MENU_HINT_COMPACT := "拖动移动 · 自动攻击 · 点击互动"
 const SPAWN_XZ := Vector2(0, 6)
 const GUARDIAN_TRIO := ["scyther", "pinsir", "nidoking"]
 const GUARDIAN_HP_MULT := 25.0  # legacy; cycle 7 uses the live DPS budget below
@@ -3719,17 +3720,39 @@ func _menu_item(icon: String, accent: Color, title: String, x: float, y: float) 
 ## the pre-17 text-only button that showed none of this.
 func _starter_card(sp: String, unlocked: bool, w: float) -> Button:
 	var info := _hud_info_for(sp)
-	var b := UiTheme.make_card(info["medal"], Vector2(110, 112))
-	b.size = Vector2(110, 112)
+	var b := UiTheme.make_card(info["medal"], Vector2(110, 90 if _p5_on else 112))
+	b.size = Vector2(110, 90 if _p5_on else 112)
 	var portrait := TextureRect.new()
-	portrait.texture = UiTheme.portrait(sp)
+	if _p5_on and not unlocked:
+		var starter_art := {"bulbasaur": "stump", "charmander": "coal", "squirtle": "shell"}
+		portrait.texture = load("res://assets/menu/v2-starter-%s.svg" % starter_art.get(sp, "stump"))
+	else:
+		portrait.texture = UiTheme.portrait(sp)
+	if _p5_on:
+		b.set_meta("starter_species", sp)
 	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	portrait.position = Vector2(15, 4)
+	portrait.position = Vector2(15, 5) if _p5_on else Vector2(15, 4)
 	portrait.size = Vector2(80, 80)
+	if _p5_on and unlocked:
+		portrait.position = Vector2(25, 4)
+		portrait.size = Vector2(60, 60)
 	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(portrait)
-	_label_in(b, String(info["name"]), Vector2(0, 82), Vector2(110, 26), 17, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER)
+	if _p5_on:
+		var mark := Panel.new()
+		mark.name = "SelectedMark"
+		mark.position = Vector2(86, 2)
+		mark.size = Vector2(22, 22)
+		mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		mark.add_theme_stylebox_override("panel", _style(UiTheme.GREEN_DEEP, 11))
+		var check := UiIcon.new("check", Color.WHITE, 16)
+		check.position = Vector2(3, 3)
+		check.size = Vector2(16, 16)
+		mark.add_child(check)
+		b.add_child(mark)
+	if not _p5_on or unlocked:
+		_label_in(b, String(info["name"]), Vector2(0, 64 if _p5_on else 82), Vector2(110, 26), 17, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER)
 	b.pressed.connect(func() -> void:
 		audio.click()
 		audio.cry(sp)
@@ -3836,6 +3859,7 @@ func _build_menu(root: Control) -> void:
 	# _refresh_starter_unlocks; scrolled so a long roster can
 	# never push the rest of the menu off-screen.
 	_starter_unlock_box = VBoxContainer.new()
+	_starter_unlock_box.hide()
 	_starter_unlock_box.add_theme_constant_override("separation", 10)
 	_starter_unlock_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	if _p5_on:
@@ -3855,7 +3879,7 @@ func _build_menu(root: Control) -> void:
 	hint_back.add_theme_stylebox_override("panel", UiTheme.glass(10, 0.55))
 	hint_back.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_menu_panel.add_child(hint_back)
-	var hint := _mk_label(_menu_panel, MENU_HINT_KBD, 13, Color(0.84, 0.86, 0.94))
+	var hint := _mk_label(_menu_panel, MENU_HINT_COMPACT if _p5_on else MENU_HINT_KBD, 13, Color(0.84, 0.86, 0.94))
 	_menu_hint = hint  # UI-mobile P1.1: re-texted by _touch_text_sync
 	hint.position = Vector2(52, 672)
 	hint.size = Vector2(1170, 40)
@@ -3874,7 +3898,7 @@ func _build_menu(root: Control) -> void:
 		hint.size = Vector2(245, 42)
 		hint.add_theme_color_override("font_color", Color(1.0, 0.98, 0.86))
 		hint.add_theme_font_size_override("font_size", 13)
-		hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		hint.autowrap_mode = TextServer.AUTOWRAP_OFF
 		hint.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	# --- meta column (cycle 17): mm-item cards — the wallet
 	# subtitle carries the live wallet state, the Lab subtitle
@@ -3887,6 +3911,7 @@ func _build_menu(root: Control) -> void:
 		my = 85.0
 		mstep = 54.0
 	var witem := _menu_item("ball", UiTheme.SKY, "连接钱包（可选）", mx, my)
+	(witem[0] as Control).name = "MenuWallet"
 	_wallet_status = witem[1]
 	if _p5_on:
 		((witem[0] as Button).get_child(0) as Control).hide()
@@ -3957,41 +3982,56 @@ func _build_menu(root: Control) -> void:
 	# settings, defaults shakeOn true / screenShake 1 @1566819).
 	# Cycle 19: the shake glyph replaces "wind" (audit §2.3).
 	if _p5_on:
-		for entry in [[litem, Vector2(8, 140), "res://assets/menu/icon-lab.png", Vector2(70, 55)],
-				[sitem, Vector2(84, 140), "res://assets/menu/icon-shop.png", Vector2(76, 60)],
-				[uitem, Vector2(160, 140), "res://assets/menu/icon-league.png", Vector2(60, 52)],
-				[snditem, Vector2(236, 140), "res://assets/menu/icon-settings.png", Vector2(52, 45)]]:
+		for entry in [[litem, Vector2(8, 134), "res://assets/menu/icon-lab.png", Vector2(84, 66), "MenuLab"],
+				[sitem, Vector2(160, 134), "res://assets/menu/icon-shop.png", Vector2(91, 72), "MenuShop"],
+				[uitem, Vector2(8, 240), "res://assets/menu/icon-league.png", Vector2(78, 68), "MenuChallenge"],
+				[snditem, Vector2(160, 240), "res://assets/menu/icon-settings.png", Vector2(74, 64), "MenuSettings"]]:
 			var item_button := entry[0][0] as Control
+			item_button.name = entry[4]
 			item_button.position = entry[1]
-			item_button.custom_minimum_size = Vector2(70, 76)
-			item_button.size = Vector2(70, 76)
+			item_button.custom_minimum_size = Vector2(144, 100)
+			item_button.size = Vector2(144, 100)
 			item_button.clip_contents = true
 			for state in ["normal", "hover", "pressed", "focus"]:
-				var tile_face := _style(Color(1.0, 0.967, 0.87), 15,
-					Color(1.0, 1.0, 0.98, 0.94), 2)
-				tile_face.shadow_size = 4
-				tile_face.shadow_color = Color(0.24, 0.18, 0.09, 0.25)
-				tile_face.shadow_offset = Vector2(0, 3)
+				var tile_face := UiTheme.panel_texture(0)
 				item_button.add_theme_stylebox_override(state, tile_face)
 			var item_icon := item_button.get_child(0) as Control
 			item_icon.hide()
 			var art_icon := TextureRect.new()
+			art_icon.name = "MenuEntryArt"
 			art_icon.texture = load(entry[2]) as Texture2D
 			art_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 			art_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 			art_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			var art_size: Vector2 = entry[3]
-			art_icon.position = Vector2((70.0 - art_size.x) * 0.5, 1.0 - maxf(0.0, art_size.y - 45.0) * 0.55)
-			art_icon.size = art_size
+			art_icon.position = Vector2((144.0 - art_size.x) * 0.5, 3.0)
+			art_icon.size = Vector2(art_size.x, minf(art_size.y, 66.0))
 			item_button.add_child(art_icon)
 			var item_title := item_button.get_child(1) as Label
-			item_title.position = Vector2(0, 46)
-			item_title.size = Vector2(70, 28)
+			item_title.position = Vector2(0, 70)
+			item_title.size = Vector2(144, 30)
 			item_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			item_title.add_theme_font_size_override("font_size", 12)
+			item_title.add_theme_font_size_override("font_size", 18)
 			(entry[0][1] as Label).hide()
 		for badge_key in ["lab", "shop", "unlock"]:
 			(_menu_badges[badge_key] as Control).hide()
+		var shake_row := _panel(_menu_panel, Vector2(8, 348), Vector2(296, 52), UiTheme.CREAM, 15, Color("e8c48a"), 2)
+		shake_row.name = "MenuShake"
+		var shake_icon := UiBadge.new("shake", UiTheme.TEXT, 36)
+		shake_icon.position = Vector2(12, 8)
+		shake_icon.size = Vector2(36, 36)
+		shake_row.add_child(shake_icon)
+		var shake_label := _mk_label(shake_row, "画面震动", 20, UiTheme.TEXT)
+		shake_label.position = Vector2(58, 8)
+		shake_label.size = Vector2(132, 36)
+		var shake_switch := UiTheme.make_switch(bool(GameProfile.setting("shakeOn")))
+		shake_switch.name = "ShakeSwitch"
+		shake_switch.position = Vector2(196, 1)
+		shake_row.add_child(shake_switch)
+		shake_switch.pressed.connect(func() -> void:
+			var enabled := not bool(GameProfile.setting("shakeOn"))
+			GameProfile.set_setting("shakeOn", enabled)
+			UiTheme.set_switch(shake_switch, enabled))
 	# Cycle 19 (audit punch #18): the right side of the menu
 	# was empty scenery — a hero detail card (the original
 	# frames an ls-hero) follows starter hover/focus.
@@ -4047,11 +4087,11 @@ func _build_menu(root: Control) -> void:
 		hero_stone.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		hero_stone.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT
 		hero_stone.texture = load("res://assets/menu/v2-stone.png")
-		hero_stone.position = Vector2(288, 288)
-		hero_stone.size = Vector2(420, 72)
+		hero_stone.position = Vector2(312, 288)
+		hero_stone.size = Vector2(400, 72)
 		hero_stone.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_menu_design.add_child(hero_stone)
-		_menu_design.move_child(hero_stone, 1)
+		_menu_panel.add_child(hero_stone)
+		_menu_panel.move_child(hero_stone, 1)
 		var partner_hero := TextureRect.new()
 		partner_hero.name = "MenuPartnerHero"
 		partner_hero.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -4153,9 +4193,13 @@ func _build_menu(root: Control) -> void:
 			resource_icon.size = Vector2(25, 25)
 			pill.add_child(resource_icon)
 			var resource_text := _mk_label(pill, String(entry[0]), 18, UiTheme.TEXT)
+			resource_text.name = "ResourceText"
 			resource_text.position = Vector2(44, 6)
 			resource_text.size = Vector2(115, 32)
 			resource_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			var text_width := resource_text.get_minimum_size().x
+			resource_text.size.x = maxf(115.0, text_width)
+			pill.custom_minimum_size.x = maxf(162.0, 56.0 + text_width)
 		pill.pressed.connect(func() -> void:
 			if dest == "lab":
 				_lab_panel.show()
@@ -4167,29 +4211,22 @@ func _build_menu(root: Control) -> void:
 	_menu_design.add_child(resources)
 	_menu_intro()
 	if _p5_on:
-		var folded_items: Array[Control] = []
+		var starter_items: Array[Control] = []
 		for child in _menu_design.get_children():
 			var ctl := child as Control
 			if ctl and ctl.position.x >= 320 and ctl.position.x < 710 and ctl.position.y >= 290:
-				folded_items.append(ctl)
-		if _menu_starters and not folded_items.has(_menu_starters):
-			folded_items.append(_menu_starters)
-		for ctl in folded_items:
-			ctl.hide()
-		var fold := UiTheme.make_button("初始伙伴 · " + String(_hud_info_for(_menu_hero_sp)["name"]), "ghost", "small")
-		fold.name = "StarterFold"
-		fold.position = Vector2(320, 360)
-		fold.size = Vector2(390, 42)
-		fold.icon = UiTheme.portrait(_menu_hero_sp)
-		fold.expand_icon = true
-		fold.add_theme_constant_override("icon_max_width", 32)
-		fold.pressed.connect(func() -> void:
-			var expanded := not bool(fold.get_meta("expanded", false))
-			fold.set_meta("expanded", expanded)
-			for ctl in folded_items:
-				ctl.visible = expanded
-			fold.position.y = 246 if expanded else 360)
-		_menu_design.add_child(fold)
+				starter_items.append(ctl)
+		if _menu_starters and not starter_items.has(_menu_starters):
+			starter_items.append(_menu_starters)
+		var selection := Control.new()
+		selection.name = "StarterSelection"
+		selection.position = Vector2(320, 290)
+		selection.size = Vector2(420, 140)
+		selection.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_menu_design.add_child(selection)
+		for ctl in starter_items:
+			ctl.reparent(selection, false)
+			ctl.position -= selection.position
 	var hint_preferences := ConfigFile.new()
 	hint_preferences.load("user://menu_presentation.cfg")
 	var show_first_hint := not bool(hint_preferences.get_value("menu", "hint_seen", false))
@@ -4248,7 +4285,7 @@ func _set_badge(key: String, n: int) -> void:
 	var chip := _menu_badges.get(key) as PanelContainer
 	if chip == null:
 		return
-	chip.visible = n > 0
+	chip.visible = n > 0 and not _p5_on
 	if n > 0 and chip.get_child_count() > 0:
 		(chip.get_child(0) as Label).text = str(n)
 
@@ -4256,6 +4293,17 @@ func _set_badge(key: String, n: int) -> void:
 ## (portrait, names, type chips, six base stats, ult line).
 func _menu_hero_show(sp: String) -> void:
 	_menu_hero_sp = sp
+	if _p5_on and _menu_starters and _menu_starters.get_child_count() > 0:
+		var colors := {"bulbasaur": Color("e7f0d8"), "charmander": Color("fde6bd"), "squirtle": Color("e3d1f4")}
+		for child in _menu_starters.get_child(0).get_children():
+			if child is Button and child.has_meta("starter_species"):
+				var species := String(child.get_meta("starter_species"))
+				var selected := species == sp
+				var face := _style(colors.get(species, UiTheme.CREAM), 16,
+					UiTheme.GREEN_DEEP if selected else Color("e8c48a"), 3 if selected else 2)
+				for button_state in ["normal", "hover", "pressed", "focus"]:
+					child.add_theme_stylebox_override(button_state, face)
+				(child.get_node("SelectedMark") as Control).visible = selected
 	if _menu_hero_box == null:
 		return
 	for c in _menu_hero_box.get_children():
@@ -4344,6 +4392,14 @@ func _refresh_wallet_ui() -> void:
 	if _wallet_status == null or wallet == null:
 		return
 	var connected: bool = wallet.is_wallet_connected()
+	if _p5_on and _wallet_status.get_parent() is Button:
+		var wallet_button := _wallet_status.get_parent() as Button
+		var title := wallet_button.get_child(1) as Label
+		title.text = "钱包"
+		var chip := wallet_button.get_node_or_null("WalletChip") as Panel
+		if chip:
+			chip.add_theme_stylebox_override("panel", _style(Color("78b52b") if connected else Color(0.42, 0.40, 0.34), 15))
+			(chip.get_node("WalletChipText") as Label).text = "已连接" if connected else "未连接"
 	if _wallet_balance == null:
 		_wallet_status.text = wallet.short_address() if connected else "游客模式"
 		return
@@ -4393,6 +4449,7 @@ func _refresh_meta() -> void:
 func _refresh_starter_unlocks() -> void:
 	if _starter_unlock_box == null:
 		return
+	_starter_unlock_box.hide()
 	for c in _starter_unlock_box.get_children():
 		c.queue_free()
 	for fam in GameProfile.data.get("league", []):
@@ -4402,6 +4459,7 @@ func _refresh_starter_unlocks() -> void:
 		# Cycle 17: unlocks render as starter cards, like the
 		# base three (portrait / types / stats / 伙伴营解锁 tag).
 		_starter_unlock_box.add_child(_starter_card(key, true, 340.0 if _p5_on else 372.0))
+		_starter_unlock_box.show()
 
 # ------------------------------------------------------------- Lab (cycle 7)
 func _build_lab_panel(root: Control) -> void:
@@ -6196,7 +6254,8 @@ func _touch_text_sync() -> void:
 	if _altar_label:
 		_altar_label.text = "Boss 祭坛 · " + _ik() + " 召唤守护者"
 	if _menu_hint:
-		_menu_hint.text = MENU_HINT_TOUCH if on == 1 else MENU_HINT_KBD
+		_menu_hint.text = MENU_HINT_COMPACT if _p5_on else (MENU_HINT_TOUCH if on == 1 else MENU_HINT_KBD)
+		_menu_hint.tooltip_text = MENU_HINT_TOUCH if on == 1 else MENU_HINT_KBD
 	for k in _kbd_caps:
 		if is_instance_valid(k):
 			(k as Control).visible = on == 0
@@ -13605,6 +13664,10 @@ func _p5_tick() -> void:
 		return
 	_p5_dirty = false
 	_p5_vis_sig = sig
+	if _menu_design:
+		var shake_switch := _menu_design.get_node_or_null("MenuShake/ShakeSwitch") as Button
+		if shake_switch:
+			UiTheme.set_switch(shake_switch, bool(GameProfile.setting("shakeOn")))
 	for p in _p5_spec.keys():
 		if is_instance_valid(p) and (p as Control).is_visible_in_tree():
 			_p5_fit(p, float((p as Control).get_meta("p5_sm", (p as Control).scale.x)))
@@ -13640,6 +13703,11 @@ func _p5_layout_menu(s: float) -> void:
 	var start := _menu_design.get_node_or_null("StartButton") as Control
 	if start:
 		start.position = Vector2(maxf(328, w - 248), 348)
+		var selection := _menu_design.get_node_or_null("StarterSelection") as Control
+		if selection:
+			selection.size.x = minf(420.0, start.position.x - selection.position.x - 8.0)
+			(selection.get_node("StarterPanel") as Control).size.x = selection.size.x
+			(selection.get_node("StarterNext") as Control).position.x = selection.size.x - 44.0
 		var start_back := start.get_node_or_null("StartButtonArt") as Control
 		if start_back:
 			start_back.position = Vector2.ZERO
@@ -13651,6 +13719,14 @@ func _p5_layout_menu(s: float) -> void:
 			caption_back.position = Vector2(start.position.x, 318)
 	var resources := _menu_design.get_node_or_null("Resources") as Control
 	if resources:
+		for pill in resources.get_children():
+			var resource_text := pill.get_node_or_null("ResourceText") as Label
+			if resource_text:
+				var font := resource_text.get_theme_font("font")
+				var font_size := resource_text.get_theme_font_size("font_size")
+				var text_width := ceilf(font.get_string_size(resource_text.text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x)
+				resource_text.size.x = text_width
+				(pill as Control).custom_minimum_size.x = maxf(162.0, 56.0 + text_width)
 		resources.position = Vector2(maxf(328, w - resources.get_combined_minimum_size().x - 8), 8)
 	_p5_fit(_menu_design, sm)
 	if _menu_hint:
@@ -13673,6 +13749,77 @@ func _p5_layout_menu(s: float) -> void:
 				var pad := hb2.get_node_or_null("MenuHintPad") as Control
 				if pad:
 					pad.position.y = 3.0
+		if _p5_on:
+			_menu_hint.autowrap_mode = TextServer.AUTOWRAP_OFF
+			_menu_hint.position = Vector2(43, 412)
+			_menu_hint.size = Vector2(245, 32)
+			if hb2:
+				hb2.position = Vector2(8, 408)
+				hb2.size = Vector2(296, 36)
+
+	if _p5_on:
+		_p5_menu_reference_layout(w)
+
+## U2 reference is 1672 x 941. Map its measured control rectangles
+## to the phone design surface so each iteration uses the same anchors.
+func _p5_menu_reference_layout(width: float) -> void:
+	var unit := Vector2(width / 1672.0, 450.0 / 941.0)
+	var rects := {
+		"MenuLogo": Rect2(68, 30, 490, 142),
+		"MenuWallet": Rect2(36, 176, 454, 82),
+		"MenuLab": Rect2(39, 279, 224, 185),
+		"MenuShop": Rect2(271, 279, 220, 185),
+		"MenuChallenge": Rect2(39, 475, 224, 182),
+		"MenuSettings": Rect2(271, 475, 220, 182),
+		"MenuShake": Rect2(36, 677, 460, 98),
+		"MenuPartnerHero": Rect2(650, 90, 430, 450),
+		"StarterSelection": Rect2(514, 590, 724, 308),
+		"StartButton": Rect2(1260, 686, 390, 166),
+		"StartCaption": Rect2(1280, 625, 350, 40),
+		"StartCaptionBack": Rect2(1280, 625, 350, 40),
+	}
+	for key in rects:
+		var node := _menu_design.get_node_or_null(key) as Control
+		if node == null:
+			continue
+		var rect: Rect2 = rects[key]
+		node.position = rect.position * unit
+		var extent := rect.size * unit
+		if node is Button:
+			extent.y = maxf(extent.y, ceilf(P5_BTN_PX / _menu_design.scale.x))
+			node.custom_minimum_size = extent
+			node.set_meta("p5_h0", extent.y)
+		node.size = extent
+		var art := node.get_node_or_null("MenuEntryArt") as Control
+		if art:
+			art.size = Vector2(extent.x * 0.65, extent.y * 0.64)
+			art.position = Vector2((extent.x - art.size.x) * 0.5, 1)
+			var title := node.get_child(1) as Label
+			title.position = Vector2(0, extent.y * 0.69)
+			title.size = Vector2(extent.x, extent.y * 0.31)
+	var start := _menu_design.get_node("StartButton") as Control
+	(start.get_node("StartButtonArt") as Control).size = start.size
+	var stone := _menu_panel.get_node("MenuHeroStone") as Control
+	stone.position = _menu_design.position + Vector2(570, 490) * unit * _menu_design.scale
+	stone.size = Vector2(640, 185) * unit * _menu_design.scale
+	var selection := _menu_design.get_node("StarterSelection") as Control
+	(selection.get_node("StarterPanel") as Control).size = selection.size
+	(selection.get_node("StarterNext") as Control).position.x = selection.size.x - 44.0
+	_menu_starters.position = selection.size * Vector2(41.0 / 810.0, 71.0 / 280.0)
+	_menu_starters.size = selection.size * Vector2(666.0 / 810.0, 172.0 / 280.0)
+	_menu_starters.size.x = ceilf(_menu_starters.size.x) + 2.0
+	(_menu_starters.get_child(0) as HBoxContainer).add_theme_constant_override("separation", int(round(selection.size.x * 18.0 / 810.0)))
+	var wallet_button := _menu_design.get_node("MenuWallet") as Control
+	var chip := wallet_button.get_node("WalletChip") as Control
+	chip.position.x = wallet_button.size.x - chip.size.x - 6.0
+	var shake_row := _menu_design.get_node("MenuShake") as Control
+	(shake_row.get_node("ShakeSwitch") as Control).position.x = shake_row.size.x - 100.0
+	if _menu_hint:
+		var backing := _menu_hint.get_meta("back") as Control
+		backing.position = Vector2(32, 816) * unit
+		backing.size = Vector2(468, 66) * unit
+		_menu_hint.position = backing.position + Vector2(35, 3)
+		_menu_hint.size = Vector2(backing.size.x - 40.0, backing.size.y - 6.0)
 
 func _safe_insets() -> Vector4:
 	# Cycle 21.3 (audit F6): the gate's simulated insets win.
@@ -15082,6 +15229,14 @@ func _p4_layout_bl(s: float, vw: float, vh: float) -> void:
 				- _ui_root.get_global_rect().position.x
 			s_bl = minf(s_bl, (cl_ui - 16.0 - 300.0 - 16.0 - 12.0) / cw)
 	s_bl = maxf(s_bl, P4_SBL_FLOOR)
+	# Keep the joystick at its original home for normal touch sizes.
+	# Fit the rows below the ring while retaining the 12 px bottom inset.
+	if touch_controls != null:
+		var touch_scale: float = touch_controls.get("_scale_s")
+		if touch_scale >= 0.999:
+			var ring_bottom: float = touch_controls.get_global_rect().end.y - 134.0 * touch_scale
+			ring_bottom -= _ui_root.get_global_rect().position.y
+			s_bl = maxf(P4_SBL_FLOOR, minf(s_bl, (vh - 12.0 - ring_bottom) / P4_ROWS_H))
 	_set_scaled(_bl_cluster, s_bl)
 	_p4_fit_fonts(s_bl)
 
