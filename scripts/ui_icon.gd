@@ -170,8 +170,9 @@ func _draw() -> void:
 		"skull":
 			_circ(12, 10.4, 7.4)
 			_poly([Vector2(8.2, 15.5), Vector2(15.8, 15.5), Vector2(15.8, 20), Vector2(8.2, 20)], color)
-			_circ(9.2, 10.8, 1.9, Color(0.1, 0.07, 0.2, 1))
-			_circ(14.8, 10.8, 1.9, Color(0.1, 0.07, 0.2, 1))
+			var cutout: Color = get_meta("cutout_color", Color(0.1, 0.07, 0.2, 1))
+			_circ(9.2, 10.8, 1.9, cutout)
+			_circ(14.8, 10.8, 1.9, cutout)
 		"reroll":
 			_arc(12, 12, 7.6, -PI * 0.35, PI * 1.15)
 			_poly([Vector2(18.9, 5.6), Vector2(20.9, 11.4), Vector2(15.2, 10.6)], color)

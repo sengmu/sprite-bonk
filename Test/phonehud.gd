@@ -1185,6 +1185,13 @@ func _p1_two_thumb_run(vp: Vector2) -> void:
 	for i in range(300):
 		if tc != null and (tc as Control).visible:
 			break
+		# A draft already queued by the previous fixture can open
+		# after the initial settle. Resolve it before sampling input.
+		if String(_world.get("state")) == "draft":
+			await _p1_settle_drafts()
+			var player = _world.get("player")
+			if player != null:
+				player.xp_mult = 0.0
 		await get_tree().process_frame
 	if tc == null or not (tc as Control).visible:
 		var open: Array = []

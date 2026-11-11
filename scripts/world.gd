@@ -3181,16 +3181,21 @@ func _build_hud() -> void:
 	kpill.offset_right = -16
 	kpill.offset_top = 190
 	kpill.offset_bottom = 218
-	kpill.add_theme_stylebox_override("panel", _style(Color(0.10, 0.07, 0.20, 0.92), 14, Color(1, 1, 1, 0.25), 1, true))
+	var kills_face := _style(Color(1.0, 0.945, 0.815, 0.96), 14, Color("edcc92"), 1)
+	kills_face.shadow_color = Color(0.20, 0.13, 0.07, 0.35)
+	kills_face.shadow_size = 3
+	kills_face.shadow_offset = Vector2(0, 2)
+	kpill.add_theme_stylebox_override("panel", kills_face)
 	kpill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(kpill)
-	var kic := UiIcon.new("skull", Color(1, 0.78, 0.72), 16)
+	var kic := UiIcon.new("skull", Color("302117"), 16)
+	kic.set_meta("cutout_color", kills_face.bg_color)
 	kic.position = Vector2(12, 6)
 	kic.size = Vector2(16, 16)
 	kpill.add_child(kic)
 	# Cycle 21.3 (audit §5): left-aligned next to the icon
 	# (centred text left a dead gap after the skull).
-	_kills_label = _label_in(kpill, "击杀 0", Vector2(30, 0), Vector2(104, 28), 14, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT, true)
+	_kills_label = _label_in(kpill, "击杀 0", Vector2(30, 0), Vector2(104, 28), 14, Color("302117"), HORIZONTAL_ALIGNMENT_LEFT, true)
 	# Cycle 18: goal card + event-pill stack (UI_SPEC §2.3
 	# kgoal / §2.10 pills). The goal card's anatomy is the
 	# constructor's (portrait + name + "n left" + bar + next
