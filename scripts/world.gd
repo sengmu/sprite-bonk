@@ -3923,6 +3923,7 @@ func _build_menu(root: Control) -> void:
 			(witem[0] as Button).add_theme_stylebox_override(button_state, menu_pill_face)
 		((witem[0] as Button).get_child(0) as Control).hide()
 		var wallet_art := TextureRect.new()
+		wallet_art.name = "MenuWalletArt"
 		wallet_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		wallet_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		wallet_art.texture = load("res://assets/menu/v2-icon-wallet.svg") as Texture2D
@@ -4025,10 +4026,12 @@ func _build_menu(root: Control) -> void:
 		var shake_row := _panel(_menu_panel, Vector2(8, 348), Vector2(296, 52), UiTheme.CREAM, 15, Color("e8c48a"), 2)
 		shake_row.name = "MenuShake"
 		var shake_icon := UiIcon.new("phone_shake", Color("365b28"), 36)
+		shake_icon.name = "MenuShakeIcon"
 		shake_icon.position = Vector2(12, 8)
 		shake_icon.size = Vector2(36, 36)
 		shake_row.add_child(shake_icon)
 		var shake_label := _mk_label(shake_row, "画面震动", 20, UiTheme.TEXT)
+		shake_label.name = "MenuShakeText"
 		shake_label.position = Vector2(58, 8)
 		shake_label.size = Vector2(132, 36)
 		var shake_switch := UiTheme.make_switch(bool(GameProfile.setting("shakeOn")))
@@ -4333,7 +4336,7 @@ func _menu_hero_show(sp: String) -> void:
 		var colors := {"bulbasaur": Color("e7f0d8"), "charmander": Color("fde6bd"), "squirtle": Color("e3d1f4")}
 		var rims := {"bulbasaur": Color("e8c48a"), "charmander": Color("e8c48a"), "squirtle": Color("e9c7ed")}
 		for child in _menu_starters.find_children("*", "Button", true, false):
-			if child is Button and child.has_meta("starter_species"):
+			if child is Button and child.has_meta("starter_species") and not child.is_queued_for_deletion():
 				var species := String(child.get_meta("starter_species"))
 				var selected := species == sp
 				var face := _style(colors.get(species, UiTheme.CREAM), 16,
@@ -4341,6 +4344,8 @@ func _menu_hero_show(sp: String) -> void:
 				for button_state in ["normal", "hover", "pressed", "focus"]:
 					child.add_theme_stylebox_override(button_state, face)
 				(child.get_node("SelectedMark") as Control).visible = selected
+				if selected:
+					_menu_starters.ensure_control_visible(child)
 	if _menu_hero_box == null:
 		return
 	for c in _menu_hero_box.get_children():
@@ -13838,13 +13843,23 @@ func _p5_menu_reference_layout(width: float) -> void:
 		if node is Label:
 			node.add_theme_font_override("font", UiTheme.body_font())
 		if art:
-			art.size = Vector2(extent.x * 0.65, extent.y * 0.64)
-			art.position = Vector2((extent.x - art.size.x) * 0.5, 1)
 			var title := node.get_child(1) as Label
-			title.position = Vector2(0, extent.y * 0.69)
-			title.size = Vector2(extent.x, extent.y * 0.31)
+			var title_height := title.get_combined_minimum_size().y
+			title.position = Vector2(6, extent.y - title_height - 8)
+			title.size = Vector2(extent.x - 12, title_height)
+			title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			art.size = Vector2(extent.x * 0.56, title.position.y - 14)
+			art.position = Vector2((extent.x - art.size.x) * 0.5, 8)
 	var start := _menu_design.get_node("StartButton") as Control
 	(start.get_node("StartButtonArt") as Control).size = start.size
+	var caption := _menu_design.get_node("StartCaption") as Label
+	var caption_back := _menu_design.get_node("StartCaptionBack") as Control
+	var caption_center_y := caption.position.y + caption.size.y * 0.5 - 4.0
+	caption_back.size.y = caption.get_combined_minimum_size().y + 12.0
+	caption_back.position.y = caption_center_y - caption_back.size.y * 0.5
+	caption.position = caption_back.position + Vector2(8, 6)
+	caption.size = caption_back.size - Vector2(16, 12)
+	caption.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	var stone := _menu_panel.get_node("MenuHeroStone") as Control
 	stone.position = _menu_design.position + Vector2(570, 490) * unit * _menu_design.scale
 	stone.size = Vector2(640, 185) * unit * _menu_design.scale
@@ -13860,12 +13875,29 @@ func _p5_menu_reference_layout(width: float) -> void:
 	(_menu_starters.get_child(0) as HBoxContainer).add_theme_constant_override("separation", int(round(selection.size.x * 18.0 / 810.0)))
 	var wallet_button := _menu_design.get_node("MenuWallet") as Control
 	var chip := wallet_button.get_node("WalletChip") as Control
-	chip.position.x = wallet_button.size.x - chip.size.x - 6.0
+	chip.position = Vector2(wallet_button.size.x - chip.size.x - 10.0, (wallet_button.size.y - chip.size.y) * 0.5)
+	var wallet_art := wallet_button.get_node("MenuWalletArt") as Control
+	wallet_art.size = Vector2(32, 32)
+	wallet_art.position = Vector2(10, (wallet_button.size.y - wallet_art.size.y) * 0.5)
+	var wallet_title := wallet_button.get_child(1) as Label
+	wallet_title.size = Vector2(chip.position.x - 60.0, wallet_title.get_combined_minimum_size().y)
+	wallet_title.position = Vector2(52, (wallet_button.size.y - wallet_title.size.y) * 0.5)
+	wallet_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	var shake_row := _menu_design.get_node("MenuShake") as Control
-	(shake_row.get_node("ShakeSwitch") as Control).position.x = shake_row.size.x - 100.0
+	var shake_switch := shake_row.get_node("ShakeSwitch") as Control
+	shake_switch.size = shake_switch.get_combined_minimum_size()
+	shake_row.size.y = shake_switch.size.y + 16.0
+	shake_switch.position = Vector2(shake_row.size.x - shake_switch.size.x - 10.0, 8)
+	var shake_icon := shake_row.get_node("MenuShakeIcon") as Control
+	shake_icon.size = Vector2(32, 32)
+	shake_icon.position = Vector2(10, (shake_row.size.y - shake_icon.size.y) * 0.5)
+	var shake_text := shake_row.get_node("MenuShakeText") as Label
+	shake_text.size = Vector2(shake_switch.position.x - 62.0, shake_text.get_combined_minimum_size().y)
+	shake_text.position = Vector2(54, (shake_row.size.y - shake_text.size.y) * 0.5)
+	shake_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	if _menu_hint:
 		var backing := _menu_hint.get_meta("back") as Control
-		backing.position = Vector2(32, 816) * unit
+		backing.position = Vector2(32, 836) * unit
 		backing.size = Vector2(468, 66) * unit
 		_menu_hint.position = backing.position + Vector2(35, 3)
 		_menu_hint.size = Vector2(backing.size.x - 40.0, backing.size.y - 6.0)

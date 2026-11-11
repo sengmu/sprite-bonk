@@ -3451,6 +3451,22 @@ func _p5_menu_block(vp: Vector2) -> void:
 				if _p5_rect(mdc.get_node(entry_name)).position.distance_to(entry_positions[entry_name]) > 1.0:
 					drifting.append(entry_name)
 			_check("P5: menu entry positions survive relayout", drifting.is_empty(), str(drifting))
+			var inset_pairs: Array = []
+			for entry_name in ["MenuLab", "MenuShop", "MenuChallenge", "MenuSettings"]:
+				var entry := mdc.get_node(entry_name) as Control
+				inset_pairs.append([entry.get_node("MenuEntryArt"), entry])
+				inset_pairs.append([entry.get_child(1), entry])
+			for content_path in ["MenuWallet/MenuWalletArt", "MenuWallet/WalletChip",
+					"MenuShake/MenuShakeIcon", "MenuShake/MenuShakeText", "MenuShake/ShakeSwitch"]:
+				var content := mdc.get_node(content_path) as Control
+				inset_pairs.append([content, content.get_parent()])
+			inset_pairs.append([mdc.get_node("MenuWallet").get_child(1), mdc.get_node("MenuWallet")])
+			inset_pairs.append([mdc.get_node("StartCaption"), mdc.get_node("StartCaptionBack")])
+			var crowded: Array[String] = []
+			for pair in inset_pairs:
+				if not _inside(_vis_rect(pair[0]), _vis_rect(pair[1]).grow(-6.0)):
+					crowded.append(String(pair[0].name))
+			_check("P5: menu icons and text keep inner padding", crowded.is_empty(), str(crowded))
 		await _p5_snap("menu")
 	else:
 		_check("P5 desktop: menu design unscaled", mdc == null or absf(mdc.scale.x - 1.0) < 0.001,
@@ -3528,6 +3544,14 @@ func _p5_menu_roster() -> void:
 		if selected_count != 1 or not card.get_node("SelectedMark").visible or String(_world.get("_menu_hero_sp")) != species:
 			incorrect.append(species)
 	_check("P5: unlocked starter has the only selected mark", incorrect.is_empty(), str(incorrect))
+	scroll.scroll_horizontal = int(scroll.get_h_scroll_bar().max_value)
+	await _p1_pframes(4)
+	(tray.get_node("StarterNext") as Button).pressed.emit()
+	await _p1_pframes(4)
+	var first := _world.get("_first_starter_card") as Control
+	_check("P5: starter arrow brings its selected card into view",
+		String(_world.get("_menu_hero_sp")) == "bulbasaur" and _inside(_vis_rect(first), _vis_rect(scroll)),
+		"selected=" + String(_world.get("_menu_hero_sp")) + " card=" + str(_vis_rect(first)) + " scroll=" + str(_vis_rect(scroll)))
 	GameProfile.data["league"] = saved_league
 	_world.call("_refresh_starter_unlocks")
 	_world.call("_menu_hero_show", saved_hero)
