@@ -13755,6 +13755,8 @@ func _p5_layout_menu(s: float) -> void:
 		return
 	var sm := minf(s, (area.y - 8.0) / 450.0)
 	var w := floorf((area.x - 16.0) / sm)
+	if _p5_on:
+		w = minf(w, 1672.0 * 450.0 / 941.0)
 	_menu_design.size = Vector2(w, 450)
 	_menu_design.scale = Vector2(sm, sm)
 	_menu_design.position = ((area - Vector2(w, 450) * sm) * 0.5).floor()
@@ -13842,7 +13844,7 @@ func _p5_menu_reference_layout(width: float) -> void:
 		"MenuSettings": Rect2(271, 475, 220, 182),
 		"MenuShake": Rect2(36, 677, 460, 98),
 		"MenuPartnerHero": Rect2(673, 130, 384, 450),
-		"StarterSelection": Rect2(514, 590, 724, 308),
+		"StarterSelection": Rect2(560, 590, 678, 308),
 		"StartButton": Rect2(1260, 686, 390, 166),
 		"StartCaption": Rect2(1280, 625, 350, 40),
 		"StartCaptionBack": Rect2(1280, 625, 350, 40),
@@ -13901,6 +13903,16 @@ func _p5_menu_reference_layout(width: float) -> void:
 	_menu_starters.size = selection.size * Vector2(666.0 / 810.0, 172.0 / 280.0)
 	_menu_starters.size.x = ceilf(_menu_starters.size.x) + 2.0
 	(_menu_starters.get_child(0) as HBoxContainer).add_theme_constant_override("separation", int(round(selection.size.x * 18.0 / 810.0)))
+	for card in _menu_starters.get_child(0).get_children():
+		if card is Button and card.has_meta("starter_species"):
+			var card_extent := selection.size * Vector2(210.0 / 810.0, 172.0 / 280.0)
+			card.custom_minimum_size = card_extent
+			card.size = card_extent
+			card.set_meta("p5_h0", card_extent.y)
+			var portrait := card.get_child(0) as Control
+			portrait.position = Vector2(8, 5)
+			portrait.size = card_extent - Vector2(16, 10)
+			(card.get_node("SelectedMark") as Control).position.x = card_extent.x - 24.0
 	var wallet_button := _menu_design.get_node("MenuWallet") as Control
 	var wallet_face := wallet_button.get_node("MenuWalletFace") as Control
 	wallet_face.size = Vector2(wallet_button.size.x, 82.0 * column_unit.y)
@@ -13937,6 +13949,7 @@ func _p5_menu_reference_layout(width: float) -> void:
 		backing.size = Vector2(468, 66) * unit
 		_menu_hint.position = backing.position + Vector2(35, 3)
 		_menu_hint.size = Vector2(backing.size.x - 40.0, backing.size.y - 6.0)
+		backing.size.x = maxf(backing.size.x, _menu_hint.get_combined_minimum_size().x + 41.0)
 
 func _safe_insets() -> Vector4:
 	# Cycle 21.3 (audit F6): the gate's simulated insets win.
