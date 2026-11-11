@@ -3793,6 +3793,7 @@ func _build_menu(root: Control) -> void:
 	title.size = Vector2(600, 66)
 	UiTheme.outline(title, 6)
 	var sub := _mk_label(_menu_panel, "选择初始伙伴", 19, UiTheme.LILAC)
+	sub.name = "StarterHeading"
 	sub.position = Vector2(362, 430)
 	sub.size = Vector2(400, 26)
 	# UI-mobile P5 (plan §B3 G1-G6): the phone menu is laid out
@@ -4169,6 +4170,7 @@ func _build_menu(root: Control) -> void:
 		_menu_design.move_child(starter_back, 3)
 		for leaf_side in [false, true]:
 			var leaf_art := TextureRect.new()
+			leaf_art.name = "StarterLeafRight" if leaf_side else "StarterLeafLeft"
 			leaf_art.texture = load("res://assets/menu/v2-leaves.svg") as Texture2D
 			leaf_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 			leaf_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -4212,12 +4214,21 @@ func _build_menu(root: Control) -> void:
 		start_back.name = "StartButtonArt"
 		start_back.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		start_back.stretch_mode = TextureRect.STRETCH_SCALE
-		start_back.texture = load("res://assets/menu/start-button.png")
+		start_back.texture = UiTheme.asset("textures", "button_orange")
 		start_back.position = Vector2.ZERO
 		start_back.size = Vector2(240, 68)
 		start_back.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		start_back.show_behind_parent = true
 		start.add_child(start_back)
+		for leaf_side in [false, true]:
+			var leaf := TextureRect.new()
+			leaf.name = "StartLeafRight" if leaf_side else "StartLeafLeft"
+			leaf.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			leaf.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			leaf.texture = load("res://assets/menu/v2-leaves.svg")
+			leaf.flip_h = leaf_side
+			leaf.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			start.add_child(leaf)
 	if _p5_on:
 		var caption_back := Panel.new()
 		caption_back.name = "StartCaptionBack"
@@ -13885,6 +13896,10 @@ func _p5_menu_reference_layout(width: float) -> void:
 			art.position = Vector2((extent.x - art.size.x) * 0.5, 7)
 	var start := _menu_design.get_node("StartButton") as Control
 	(start.get_node("StartButtonArt") as Control).size = start.size
+	for leaf_side in [false, true]:
+		var leaf := start.get_node("StartLeafRight" if leaf_side else "StartLeafLeft") as Control
+		leaf.size = Vector2(21, 21)
+		leaf.position = Vector2(start.size.x - 40 if leaf_side else 19, (start.size.y - leaf.size.y) * 0.5)
 	var caption := _menu_design.get_node("StartCaption") as Label
 	var caption_back := _menu_design.get_node("StartCaptionBack") as Control
 	var caption_center_y := caption.position.y + caption.size.y * 0.5 - 4.0
@@ -13900,6 +13915,14 @@ func _p5_menu_reference_layout(width: float) -> void:
 	for child in selection.get_children():
 		if child is Label:
 			child.add_theme_font_override("font", UiTheme.body_font())
+	var heading := selection.get_node("StarterHeading") as Label
+	heading.size = heading.get_combined_minimum_size()
+	heading.position = Vector2((selection.size.x - heading.size.x) * 0.5, 10)
+	for leaf_side in [false, true]:
+		var leaf := selection.get_node("StarterLeafRight" if leaf_side else "StarterLeafLeft") as Control
+		leaf.size = Vector2(15, 15)
+		leaf.position = Vector2(heading.position.x + heading.size.x + 10 if leaf_side else heading.position.x - 25,
+			heading.position.y + (heading.size.y - leaf.size.y) * 0.5)
 	(selection.get_node("StarterPanel") as Control).size = selection.size
 	(selection.get_node("StarterNext") as Control).position.x = selection.size.x - 44.0
 	_menu_starters.position = selection.size * Vector2(41.0 / 810.0, 71.0 / 280.0)
