@@ -3501,6 +3501,38 @@ func _p5_menu_block(vp: Vector2) -> void:
 		if pnl != null and pnl.visible:
 			pnl.visible = false
 			await _p1_pframes(2)
+	if _p5_phone():
+		await _p5_menu_roster()
+
+func _p5_menu_roster() -> void:
+	var saved_league: Array = GameProfile.data.get("league", []).duplicate()
+	var saved_hero := String(_world.get("_menu_hero_sp"))
+	GameProfile.data["league"] = [19, 16, 27]
+	_world.call("_refresh_starter_unlocks")
+	await _p1_pframes(8)
+	var scroll := _world.get("_menu_starters") as ScrollContainer
+	var roster := _world.get("_starter_unlock_box") as BoxContainer
+	var tray := (_world.get("_menu_design") as Control).get_node("StarterSelection") as Control
+	_check("P5: unlocked roster stays in its tray",
+		roster.get_child_count() == 3 and _inside(_vis_rect(scroll), _vis_rect(tray)),
+		"roster=" + str(roster.get_child_count()) + " scroll=" + str(_vis_rect(scroll)))
+	var incorrect: Array[String] = []
+	for card in roster.get_children():
+		card.grab_focus()
+		await _p1_pframes(2)
+		var selected_count := 0
+		for button in scroll.find_children("*", "Button", true, false):
+			if button.has_meta("starter_species") and button.get_node("SelectedMark").visible:
+				selected_count += 1
+		var species := String(card.get_meta("starter_species"))
+		if selected_count != 1 or not card.get_node("SelectedMark").visible or String(_world.get("_menu_hero_sp")) != species:
+			incorrect.append(species)
+	_check("P5: unlocked starter has the only selected mark", incorrect.is_empty(), str(incorrect))
+	GameProfile.data["league"] = saved_league
+	_world.call("_refresh_starter_unlocks")
+	_world.call("_menu_hero_show", saved_hero)
+	scroll.scroll_horizontal = 0
+	await _p1_pframes(4)
 
 ## Loadout (opened by the harness's own boot path).
 func _p5_loadout(vp: Vector2) -> void:

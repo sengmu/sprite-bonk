@@ -595,7 +595,7 @@ var _lab_tab_items: Button
 var _unlock_panel: PanelContainer
 var _unlock_list: VBoxContainer
 var _unlock_info: Label
-var _starter_unlock_box: VBoxContainer
+var _starter_unlock_box: BoxContainer
 # Cycle 16: audio (scripts/audio.gd) + the meta daily shop panel
 # + the sound settings panel.
 var audio: GameAudio
@@ -3742,6 +3742,7 @@ func _starter_card(sp: String, unlocked: bool, w: float) -> Button:
 	if _p5_on:
 		var mark := Panel.new()
 		mark.name = "SelectedMark"
+		mark.visible = sp == _menu_hero_sp
 		mark.position = Vector2(86, 2)
 		mark.size = Vector2(22, 22)
 		mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -3858,7 +3859,7 @@ func _build_menu(root: Control) -> void:
 	# the family to profile.unlocked). Rebuilt by
 	# _refresh_starter_unlocks; scrolled so a long roster can
 	# never push the rest of the menu off-screen.
-	_starter_unlock_box = VBoxContainer.new()
+	_starter_unlock_box = HBoxContainer.new() if _p5_on else VBoxContainer.new()
 	_starter_unlock_box.hide()
 	_starter_unlock_box.add_theme_constant_override("separation", 10)
 	_starter_unlock_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -4331,7 +4332,7 @@ func _menu_hero_show(sp: String) -> void:
 	if _p5_on and _menu_starters and _menu_starters.get_child_count() > 0:
 		var colors := {"bulbasaur": Color("e7f0d8"), "charmander": Color("fde6bd"), "squirtle": Color("e3d1f4")}
 		var rims := {"bulbasaur": Color("e8c48a"), "charmander": Color("e8c48a"), "squirtle": Color("e9c7ed")}
-		for child in _menu_starters.get_child(0).get_children():
+		for child in _menu_starters.find_children("*", "Button", true, false):
 			if child is Button and child.has_meta("starter_species"):
 				var species := String(child.get_meta("starter_species"))
 				var selected := species == sp
