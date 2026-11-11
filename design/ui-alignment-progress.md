@@ -3,7 +3,7 @@
 用户指令（2026-11-11 01:07）：各界面与效果图做 1:1，没 1:1 不要停；唯一豁免 = 3D 模型本体（还没做，占位保持，hero 形象差异不算未对齐）；缺插画素材找 Grok Bot 美术总监拿（经 Projects Manager 会话派单，先喂游戏简介）。
 
 ## 基线
-- 仓库 main = dda683f（U1 round 4 紧凑英雄簇＋Boss 卡单行化＋5 技能格＋去罗盘字母，2026-11-11；上一基线 2a5e099）
+- 仓库 main = fc7a33d（U1 round 5 英雄簇药丸底＋技能底带／金边／奶油等级签＋Boss 卡实拍，2026-11-11；上一基线 dda683f）
 - 参考：design/ui-reference/v2/（U1–U6 横屏定稿）、design/ui-reference/v3/（S07–S24 + A01–A18 图版 + INVENTORY.md）
 - 验收口径：横屏 2340×1080 phonehud；每屏产出 design/ui-reference/compare/<屏>.png 并排图才算验收物
 
@@ -24,6 +24,7 @@ U1 → U3 → U5 → U4 → U6，然后 S07–S24 按号推进。
 - U1 局内 HUD（2026-11-11 04:2x，第 2 轮）：**未关闭**。深色 HUD 施工单落地（见下节）＋小地图烘焙提亮；phonehud 2340 **1552/0**（Test/out/u1_fix2_phonehud_2340.log，.done rc=0；1552 vs 1536 的 +16 全是 full_prompt 场景同名断言的重复计数，非新增检查）；compare/U1.png 已刷新（参考 vs fix2 实拍，顶栏/横幅/Boss 卡已深色）。提交 ca06561。桌面 4 红经 A/B 定性为 clean main 既有（见下节），非本轮回归、未动检查。剩余项：第 2、3（签＋萤尘未放回）、4（待 2340 boss 态截图）、5（击杀 +1）、6、7、8。
 - U1 局内 HUD（2026-11-11 05:4x，第 3 轮）：**未关闭**。第 3 项已清（顶卡第二行重排＋钱包三项，phonehud 2340 **1545/0**，见下节）；第 5 项小地图已提亮（烘焙改真色＋浅绿 lerp 0.45，实拍已接近参考亮度）；第 7 项大招钮已改紫底＋「必」（UltGauge._draw 紫盘）；第 4 项已取 2340 boss 态图（mobile_p2_boss_2340x1080_s150_i0.png，本轮 _p2_snap 角列表加 2340）但对条未闭合（见下节）；桌面 4 红与 fix2 批逐条相同（P5 模态几何×3＋P1 alpha 横幅文案），既有、非回归。compare/U1.png 已刷新（参考 vs fix3 实拍）。提交 2a5e099。剩余项：第 2、4（Boss 卡对条余项）、6、8。
 - U1 局内 HUD（2026-11-11 06:1x–06:5x，第 4 轮）：**未关闭**。第 2 项已改（英雄簇紧凑单 pill：手机隐藏 `_hero_info` 名＋签＋进化行，HP 轨上移至奖章旁居中 (94,33)、队伍行上提 (94,60)，簇盒 340×86／有队友 340×104；检查改向：P2 簇盒高 110/158→86/104）；第 4 项已清（Boss 卡单行化：头像＋名隐藏、红轨上移 y15、奶油「守护者」签覆于轨右端、签字深墨／狂怒红，静态类型 foot 行只在招式预告 2.2s 内显示；裁定②＝去名／去类型行——v2 定稿为准，招式预告是唯一保留的实战信息）；第 6 项已改（技能栏固定 5 格：已学在前、锁格补足，超 5 格已学招式续排不隐藏；`_bl_locks` 增量锁格，P4 检查改向计入）；第 5 项已清（小地图 N/W/E/S 罗盘字母两处全删）；第 8 项已查（菜单 Resources pill 按内容自适应宽——`get_combined_minimum_size` 定位，无固定宽溢出机制；2400 菜单实拍两 pill 均贴合，400908 长数字目视复核仍待带该数值的菜单截图）。解析门 world.gd / minimap.gd / phonehud.gd 在 NUC `--check-only` 均 rc=0（9 条 error 全是既有 SolanaSDK 4.4 扩展噪音）。重跑批 NUC **1545/0 rc=0**（Test/out/u1_fix4_phonehud_2340.log，.done OK，07:05）。compare/U1.png 已刷新（fix4 实拍 hud_start）。**提交 dda683f，已推送，ls-remote 核验 main=dda683f。**桌面批本轮补跑（Test/u1_fix4_desktop_run.sh，log `Test/out/u1_fix4_phonehud_desktop.log`，**710 检 4 红，与 fix2/fix3 批逐条相同**——P5 模态几何 wallet/menu 680×420、lab/upgrades 与 lab/items 840×560；P1 alpha 横幅文案——既有、非回归）。fix4 compare 目检结论（第 5 轮清单）：第 2 项残余确认（簇内仍无统一药丸底——奖章圆＋血条为两个独立件，参考为一体药丸，须加底板）、第 6 项残余确认（无底带、已学格无金边／无「1级」奶油签、格 46px 偏小）、第 4 项仍缺一张卡片可见的 2340 boss 态图（fix4 新图仍只见精英 mini 条，主卡 alpha 淡出未解）。复跑脚本留痕（未提交，供下轮复用）：Test/u1_fix4_run.sh、Test/u1_fix4_parse.sh、Test/u1_fix4_desktop_run.sh、Test/make_compare_u1.py。
+- U1 局内 HUD（2026-11-11 08:1x–08:5x，第 5 轮）：**未关闭**。第 2 项已清（英雄簇深色药丸底板 `_hero_plate` (56,8,284,78)，手机可见、桌面隐藏，`_p2_hero_box` 控显）；第 6 项已改（技能底带 `_bl_strip`＝rows 全幅深色药丸、已学格类型色底＋GOLD 2px 金边＋白字图标居中、「N级」由格内移至格下奶油签 (3,40,40,24)，仍为 dict `lv`、P4 检查与 `_p4_fit_fonts` 不动）；第 4 项已清（Boss 卡 2340 实拍：断言后 harness 把守护者挪开 +60x 再抓拍，主卡 alpha=1，红轨 33197＋白字＋tick＋奶油「守护者」签与参考一致，实拍 Test/out/mobile_p2_boss_2340x1080_s150_i0.png）。解析门 world.gd / phonehud.gd 在 NUC `--check-only` 均 rc=0。重跑批 NUC **1545/0 rc=0**（Test/out/u1_fix5_phonehud_2340.log，.done OK，08:41）。compare/U1.png 已刷新（fix5 实拍 hud_start）。桌面批本轮补跑（Test/u1_fix5_desktop_run.sh，log `Test/out/u1_fix5_phonehud_desktop.log`，**710 检 4 红，与 fix2/fix3/fix4 批逐条相同**——既有、非回归，已与 fix4 逐行 diff 对账）。**提交 fc7a33d，已推送，ls-remote 核验 main=fc7a33d。**剩余项：第 6 项格尺寸（须裁定）、第 2 项 Lv 徽色／位，见第 6 轮清单。复跑脚本留痕（未提交，供下轮复用）：Test/u1_fix5_run.sh、Test/u1_fix5_parse.sh、Test/u1_fix5_desktop_run.sh、Test/make_compare_u1.py。
 
 ## U1 第 1 项裁定：HUD 走深色药丸（2026-11-11 03:06）
 - 证据：v2 定稿 U1_final.jpg（2026-11-10 23:04 归档「approved」，晚于奶油换皮关账 ad460f9 10:27）顶栏/技能行/Boss 条均为深色药丸、白字；同批 U2_final.jpg 菜单是奶油——**v2 语言 = 菜单奶油、HUD 深色**，与用户 2026-11-11 01:07「按效果图 1:1」指令一致。
@@ -56,17 +57,18 @@ U1 → U3 → U5 → U4 → U6，然后 S07–S24 按号推进。
 - 解析门：world.gd / ult_gauge.gd / phonehud.gd 在 NUC `--check-only` 均 rc=0（VM 副本同命令 rc=1 是 autoload 未解析的既有环境 artifact，clean main 同样 rc=1，diff 证明零新增错误）。
 - 复跑脚本留痕（未提交，供下轮复用）：Test/u1_fix3_run.sh（2340）、Test/u1_fix3_desktop_run.sh（桌面）、Test/make_compare_u1.py（compare 拼图）；`.import` churn 一律不提交（提交前 `git checkout -- addons/` 已清）。
 
-## 下一轮：U1（局内 HUD）第 5 轮——差异清单（2026-11-11 06:5x 更新）
-对照 design/ui-reference/v2/U1_final.jpg，compare/U1.png（fix3 实拍）现状：
+## 下一轮：U1（局内 HUD）第 6 轮——差异清单（2026-11-11 08:5x 更新）
+对照 design/ui-reference/v2/U1_final.jpg，compare/U1.png（fix5 实拍）现状：
 1. ~~顶栏配色~~→ **已清（第 2 轮，深色药丸，提交 ca06561，phonehud 2340 1552/0）。**
-2. ~~顶左簇~~→ **已改（第 4 轮，紧凑单 pill，提交 dda683f，phonehud 2340 1545/0）。残余目检已确认（fix4 compare，2026-11-11 07:16）**：簇内仍无统一药丸底——奖章圆＋血条是两个独立件，参考为一体药丸。**第 5 轮主活**：给簇加深色药丸底板（头像＋Lv 徽＋血条一体，参考同款），注意 P5 重叠检查（底板不得与顶中卡相交）；名字／头像占位种属仍属后轮。
+2. ~~顶左簇~~→ **已改（第 5 轮，药丸底板，提交 fc7a33d，phonehud 2340 1545/0）。残余**：Lv 徽仍为深色 pill、位于奖章右下（参考为奶油签、位于头像右上）。**第 6 轮**：Lv 徽改奶油底＋深墨字、位置向参考靠拢（注意 P2 簇内布局与 `_p2_fit_fonts` 的 Lv 字号下限）。
 3. ~~顶中签＋萤尘~~→ **已清（第 3 轮，提交 2a5e099，phonehud 2340 1545/0）。**
-4. ~~Boss 血条~~→ **已改（第 4 轮，单行化＋奶油签，提交 dda683f，phonehud 2340 1545/0）。残余目检（fix4 新图 mobile_p2_boss_2340x1080_s150_i0.png，2026-11-11 06:56）**：仍只见精英 mini 条（比比鸟·头领，橙轨 1656），主卡仍不可见——alpha 淡出问题未解（守护者躯体重叠 header 的按设计淡出）。**第 5 轮**：取一张主卡可见的 2340 boss 态图再对条——二选一：①查淡出触发条件、在卡片 alpha=1 的帧抓拍；②用 Test/reskin_boss.tscn 单独拍 boss 态。2400 旧档图对条仍有效（红轨＋白字＋tick 与参考一致）。
+4. ~~Boss 血条~~→ **已清（第 5 轮，单行化＋奶油签＋2340 实拍对条，提交 fc7a33d，phonehud 2340 1545/0；实拍 Test/out/mobile_p2_boss_2340x1080_s150_i0.png：红轨 33197＋白字＋tick＋奶油「守护者」签与参考一致）。**
 5. ~~小地图提亮~~→ **已清（第 3 轮，烘焙真色＋浅绿 lerp）。**击杀 pill「+1」：按设计保留（Z3 折叠，见第 3 轮评估），不再列为差异。~~小地图 N/W/E/S 罗盘字母~~→ **已清（第 4 轮，两处全删，提交 dda683f）。**
-6. ~~左下技能栏~~→ **已改（第 4 轮，固定 5 格＋锁格，提交 dda683f，phonehud 2340 1545/0）。残余目检已确认（fix4 compare，2026-11-11 07:16）**：①无底带——参考 5 格坐落于一条深色药丸底带上，现 5 圆浮于场景；②已学格无金边、无「1级」奶油签——现首格为金牌「1级」在格内，参考为绿叶已学格＋金边＋格下奶油「1级」签；③格偏小（现 46 设计 px，参考格更大）。**第 5 轮主活**：加底带、已学格金边＋格下奶油「1级」签、格尺寸向参考靠拢（先核 `_p4_refresh_slots` 与 `_bl_locks` 构造，慎动 P4 断言）。
-7. ~~右下大招钮紫底「必」~~→ **已清（第 3 轮，UltGauge 紫盘）。**faint 圆圈已查清（摇杆底环＋interact 待机透明），非差异。
+6. ~~左下技能栏~~→ **已改（第 5 轮，底带＋金边＋奶油「1级」签，提交 fc7a33d，phonehud 2340 1545/0）。残余**：格尺寸——参考格约 130 设计 px（2340 档实测），现 46 设计 px（×s_bl 1.35≈62 屏 px），约 2.1×。**第 6 轮裁定项**：46px 是已批准 P4 手机布局（P4_MOVE_STEP 50、P4_ROWS_H 82、phonehud 内 82.0 硬编码），放大须联动改常量＋检查改向，且 s_bl 上限 1.35 会吃掉部分放大——须先裁定参考格尺寸是否按字面执行，还是概念渲染夸张、46px 布局为准。另：底带现与 rows 等幅（零 padding），参考底带外扩约 8px——若裁定放大，一并处理。
+7. ~~右下大招钮紫底「必」~~→ **已清（第 3 轮，UltGauge 紫盘）。**参考钮带双环纹、现为素紫盘——渲染 flourish，暂不列差异。
 8. ~~菜单 Resources 长数字~~→ **目视复核已做，确认溢出（2026-11-11 07:2x）**：2400 菜单实拍 `Test/out/mobile_p5_menu_2400x1080_s100_i0.png`（11-10 23:33，fix4 首批）右上「累计 300908 +」pill 右端超出 2400 视口、"+" 半截被裁；「萤尘 0 +」完整。先前「内容自适应宽、无溢出机制」结论作废——该行疑似从固定 x 向右排布、未右锚定。**属菜单（U2）域，非 U1 局内 HUD 阻塞项**；修法（右锚行尾／按视口宽限长）留 U2 轮或专项处理。另见同图两处既有菜单瑕疵（仅记录）：「选择初始伙伴」标题字形重叠、左下提示 pill 底部文字被视口底裁。
-断点：第 4 轮已提交 dda683f 并推送（ls-remote 核验 main=dda683f）；桌面批 u1_fix4 已绿对账（710/4，既有 4 红与 fix3 逐条相同）。第 5 轮从第 2 项底板＋第 6 项底带／金边／奶油签起工，第 4 项先取主卡可见的 boss 态图；第 8 项菜单溢出已确认、留 U2 轮修。U1 仍未关闭。
+补充观察（第 5 轮实拍）：Lv.1 首招为普通系撞击（tackle），已学格底色＝普通系米色、白 spark 图标对比偏弱——按类型色规则属实（参考绿叶为草系招式态），不列缺陷；维生素行存在时奶油等级签会与维生素格上下交叠（签 y40–64、维生素行 y48 起），仅在有维生素的对局出现，留待维生素态实拍复核。
+断点：第 5 轮已提交 fc7a33d 并推送（ls-remote 核验 main=fc7a33d）；桌面批 u1_fix5 已绿对账（710/4，既有 4 红与 fix4 逐条相同）。**同步铁律（2026-11-11 08:5x 实证）**：sync_to_nuc.sh 会把 VM 的 .git 整体 rsync 到 NUC——NUC 侧提交推送后，必须先把新提交取回 VM（本轮经 NUC .git 反向 rsync），再跑 sync_to_nuc；否则 NUC 的 .git 会被回滚到 VM 的旧 HEAD（本轮 fc7a33d 推送后、台账同步时 NUC .git 被滚回 05ab1e5，远端 fc7a33d 无恙，靠 `git reset --hard origin/main`＋重提台账恢复；VM 无 GitHub 直连，`git pull` 会报权限错、须走 NUC .git 反向 rsync）。第 6 轮从第 6 项格尺寸裁定＋第 2 项 Lv 徽奶油化起工；U1 仍未关闭。
 ## 第 5 轮侦察（2026-11-11 07:2x，只读，未动代码）
 - Boss 卡淡出机制（world.gd:12325–12326, 12328）：`_boss_card.modulate.a = 0.0 if _boss_body_overlaps_header() else bossOpacity`；`_boss_body_overlaps_header()` 为守护者各 MeshInstance3D 投影包围盒（grow 16）与 `_p3_draw_rect(_boss_card)` 相交即淡出。生产逻辑按设计不动；取主卡可见图须在 harness boss 态让守护者离开 header 投影区再抓拍（或 reskin_boss.tscn 单独拍）。
 - 技能格构造（world.gd:14870 `_p4_refresh_slots`）：已学格 46×46 Panel＋`UiTheme.badge_base()`＋22px 类型 icon＋格内「N级」label（y24）；锁格同尺寸深色 `_style(...)`。第 5 轮：底带（`_bl_rows` 背后加深色药丸底板，勿动 `_p4_rows_w` 宽度断言）、已学格金边（badge stylebox 换金 rim）、格下奶油「1级」签（注意行锚点 (12, vh−12)，签须叠在底带下沿内、不扩行高）。
