@@ -3913,7 +3913,13 @@ func _build_menu(root: Control) -> void:
 	var witem := _menu_item("ball", UiTheme.SKY, "连接钱包（可选）", mx, my)
 	(witem[0] as Control).name = "MenuWallet"
 	_wallet_status = witem[1]
+	var menu_pill_face: StyleBoxTexture
 	if _p5_on:
+		menu_pill_face = StyleBoxTexture.new()
+		menu_pill_face.texture = UiTheme.asset("textures", "button_cream")
+		menu_pill_face.set_content_margin_all(0)
+		for button_state in ["normal", "hover", "pressed"]:
+			(witem[0] as Button).add_theme_stylebox_override(button_state, menu_pill_face)
 		((witem[0] as Button).get_child(0) as Control).hide()
 		var wallet_art := TextureRect.new()
 		wallet_art.texture = load("res://assets/menu/icon-wallet.png") as Texture2D
@@ -4187,6 +4193,8 @@ func _build_menu(root: Control) -> void:
 		var dest: String = entry[1]
 		if _p5_on:
 			pill.text = ""
+			for button_state in ["normal", "hover", "pressed"]:
+				pill.add_theme_stylebox_override(button_state, menu_pill_face)
 			pill.custom_minimum_size = Vector2(162, 45)
 			var resource_icon := UiIcon.new("spark", Color("aa4ace") if dest == "lab" else UiTheme.GOLD, 25)
 			resource_icon.position = Vector2(12, 10)
