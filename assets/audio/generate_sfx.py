@@ -105,6 +105,9 @@ def notes(buf, seq, wave="sine", gain=0.5, note_dur=None, lp=None):
 
 def finish(x, target_peak=0.89):
     x = np.asarray(x, dtype=np.float64)
+    # Center the waveform: a 12 Hz high-pass strips the LF asymmetry
+    # that short low thuds otherwise leave as a DC offset (inaudible).
+    x = filt(x, "high", 12, order=2)
     # trim trailing near-silence, keep 12 ms tail
     idx = np.where(np.abs(x) > 0.004)[0]
     if len(idx):
@@ -339,6 +342,406 @@ def r_caught():  # CH-04 bond success phrase (original, distinct from level_up)
     notes(b, [(784, 0.14, 0.14), (988, 0.24, 0.14), (1319, 0.34, 0.26)], wave="sine", gain=0.5, lp=4200)
     return b
 
+# ---------------------------------------------------------------- P1/P2 batch
+# Second production batch (2026-11-11, user go-ahead): every remaining
+# one-shot key from the requirements list (P1 35 / P2 12 minus the BGM
+# and partner-cry rows, which stay held for the user's direction) plus
+# synthesized ambience loops. Same rule as P0: original designs from the
+# list's style notes, nothing copied from the original game's recipes.
+
+def r_hover():  # UI-12 desktop hover tick (wiring is touch-first light)
+    return sine(1900, 0.035) * exp_env(int(SR * 0.035), 0.012, 0.35)
+
+def r_shot_electric():  # SK-02 electric: crackle burst + descending zap
+    dur = 0.16
+    b = np.zeros(int(SR * dur))
+    place(b, band(noise(0.05), 2400, 7000) * exp_env(int(SR * 0.05), 0.02, 0.8), 0)
+    place(b, band(noise(0.04), 1800, 5200) * exp_env(int(SR * 0.04), 0.015, 0.7), 0.045)
+    place(b, square(1500, 0.09, glide_to=420) * exp_env(int(SR * 0.09), 0.035, 0.4), 0.01)
+    return b
+
+def r_shot_ice():  # SK-02 ice: crystalline partials + hp shimmer
+    dur = 0.22
+    b = np.zeros(int(SR * dur))
+    for f, g in [(1568, 0.5), (2349, 0.32), (3136, 0.2)]:
+        place(b, sine(f, 0.16) * exp_env(int(SR * 0.16), 0.05, g), 0)
+    place(b, band(noise(0.1), 5000, 11000) * exp_env(int(SR * 0.1), 0.03, 0.3), 0.01)
+    return b
+
+def r_shot_psychic():  # SK-02 psychic: wobbling glide
+    dur = 0.24
+    tt = t(dur)
+    wob = 1.0 + 0.06 * np.sin(2 * np.pi * 26 * tt)
+    base = sine(620, dur, glide_to=990) * wob
+    harm = sine(1240, dur, glide_to=1980) * 0.35
+    return (base + harm) * exp_env(int(SR * dur), 0.09, 0.55)
+
+def r_shot_ghost():  # SK-02 ghost: breathy descending wail
+    dur = 0.3
+    b = np.zeros(int(SR * dur))
+    place(b, band(noise(dur), 500, 1600) * env_adsr(int(SR * dur), 0.05, 0.1, 0.25, 0.12, 0.5), 0)
+    place(b, sine(392, dur, glide_to=185) * exp_env(int(SR * dur), 0.11, 0.4), 0.01)
+    return b
+
+def r_beam():  # SK-06 beam: sustained driven hum
+    dur = 0.34
+    b = saw(164, dur) * 0.5 + sine(82, dur) * 0.4 + sine(328, dur) * 0.22
+    return filt(b, "low", 2600) * env_adsr(int(SR * dur), 0.012, 0.05, 0.75, 0.07, 0.85)
+
+def r_beam_ice():  # SK-06 ice beam: hum + crystalline shimmer
+    dur = 0.34
+    shimmer = band(noise(dur), 4200, 9000) * 0.3 \
+        * env_adsr(int(SR * dur), 0.02, 0.08, 0.5, 0.08, 0.8)
+    return r_beam() + shimmer
+
+def r_cone_fire():  # SK-07 fire cone: low-mid breath of flame
+    dur = 0.32
+    b = band(noise(dur, pink=True), 240, 950) * env_adsr(int(SR * dur), 0.03, 0.08, 0.5, 0.1, 0.9)
+    return b + sine(98, dur) * exp_env(int(SR * dur), 0.12, 0.3)
+
+def r_cone_other():  # SK-07 cone (other types): mid breath
+    dur = 0.28
+    return band(noise(dur), 480, 1700) * env_adsr(int(SR * dur), 0.025, 0.06, 0.5, 0.09, 0.85)
+
+def r_nova():  # SK-05 nova: expanding ring chirp + swell
+    dur = 0.34
+    b = np.zeros(int(SR * dur))
+    place(b, sine(294, 0.26, glide_to=880) * exp_env(int(SR * 0.26), 0.1, 0.5), 0)
+    place(b, band(noise(0.24), 700, 2600) * env_adsr(int(SR * 0.24), 0.04, 0.09, 0.3, 0.09, 0.55), 0.02)
+    return b
+
+def r_nova_ground():  # SK-05 ground nova: lower, heavier
+    dur = 0.36
+    b = np.zeros(int(SR * dur))
+    place(b, sine(147, 0.3, glide_to=392) * exp_env(int(SR * 0.3), 0.12, 0.55), 0)
+    place(b, filt(noise(0.12), "low", 320) * exp_env(int(SR * 0.12), 0.05, 0.6), 0)
+    return b
+
+def r_dodge():  # CB-06 dodge: light high whoosh, quicker than whoosh()
+    dur = 0.13
+    return band(noise(dur), 1600, 4200) * env_adsr(int(SR * dur), 0.015, 0.04, 0.2, 0.05, 0.8)
+
+def r_land():  # CB-08 landing: soft thud
+    dur = 0.13
+    b = filt(noise(0.07), "low", 300) * exp_env(int(SR * 0.07), 0.03, 0.8)
+    return np.pad(b, (0, int(SR * dur) - len(b))) + sine(88, dur) * exp_env(int(SR * dur), 0.05, 0.4)
+
+def r_dive():  # CB-10 dive: descending rush
+    dur = 0.26
+    tt = t(dur)
+    sweep = band(noise(dur), 600, 2400) * (0.3 + 0.7 * tt / dur)
+    return sweep + sine(587, dur, glide_to=196) * exp_env(int(SR * dur), 0.1, 0.4)
+
+def r_slam():  # CB-10 slam: compact heavy impact (engine scales by size)
+    dur = 0.24
+    b = np.zeros(int(SR * dur))
+    place(b, sine(72, 0.2, glide_to=41) * exp_env(int(SR * 0.2), 0.09, 0.85), 0)
+    place(b, filt(noise(0.09), "low", 500) * exp_env(int(SR * 0.09), 0.035, 0.7), 0)
+    return b
+
+def r_encounter():  # CH-06 encounter alert: firm two-step
+    dur = 0.26
+    b = np.zeros(int(SR * dur))
+    notes(b, [(392, 0.0, 0.09), (587, 0.1, 0.15)], wave="tri", gain=0.55, lp=3200)
+    return b
+
+def r_throw_ball():  # CH-03 toss the wooden box: airy arc + soft knock
+    dur = 0.24
+    b = np.zeros(int(SR * dur))
+    place(b, band(noise(0.12), 900, 2600) * env_adsr(int(SR * 0.12), 0.03, 0.05, 0.2, 0.05, 0.5), 0)
+    place(b, filt(noise(0.03), "low", 700) * exp_env(int(SR * 0.03), 0.012, 0.6), 0.15)
+    return b
+
+def r_ball_open():  # CH-03 wooden box opens: latch + lid creak
+    dur = 0.3
+    b = np.zeros(int(SR * dur))
+    place(b, r_ball_click(), 0)
+    place(b, band(noise(0.1), 500, 1200) * env_adsr(int(SR * 0.1), 0.04, 0.04, 0.2, 0.04, 0.4), 0.07)
+    place(b, sine(523, 0.12) * exp_env(int(SR * 0.12), 0.05, 0.3), 0.13)
+    return b
+
+def r_ball_shake():  # CH-05 box rattles: three woody shakes
+    dur = 0.34
+    b = np.zeros(int(SR * dur))
+    for at in (0.0, 0.11, 0.22):
+        place(b, band(noise(0.05), 750, 2100) * exp_env(int(SR * 0.05), 0.02, 0.65), at)
+        place(b, filt(noise(0.02), "low", 600) * exp_env(int(SR * 0.02), 0.008, 0.5), at + 0.01)
+    return b
+
+def r_slot_tick():  # EC-13 reel ratchet tick (engine pitch-jitters it)
+    return band(noise(0.03), 1300, 3400) * exp_env(int(SR * 0.03), 0.01, 0.85)
+
+def r_slot_lever():  # EC-13 lever: clunk + spring
+    dur = 0.18
+    b = np.zeros(int(SR * dur))
+    place(b, filt(noise(0.04), "low", 500) * exp_env(int(SR * 0.04), 0.015, 0.7), 0)
+    place(b, sine(880, 0.12, glide_to=330) * exp_env(int(SR * 0.12), 0.05, 0.3), 0.03)
+    place(b, band(noise(0.025), 1500, 3000) * exp_env(int(SR * 0.025), 0.008, 0.6), 0.12)
+    return b
+
+def r_slot_stop():  # EC-15 reel stop / no-win thunk
+    dur = 0.11
+    b = filt(noise(0.05), "low", 650) * exp_env(int(SR * 0.05), 0.02, 0.75)
+    return np.pad(b, (0, int(SR * dur) - len(b))) + sine(196, dur) * exp_env(int(SR * dur), 0.045, 0.4)
+
+def r_slot_coins():  # EC-15 coin-bag win: small cascade of pings
+    dur = 0.5
+    b = np.zeros(int(SR * dur))
+    for i, at in enumerate((0.0, 0.07, 0.15, 0.24, 0.35)):
+        f = 2093 - i * 130
+        place(b, sine(f, 0.09) * exp_env(int(SR * 0.09), 0.03, 0.5), at)
+        place(b, sine(f * 1.5, 0.06) * exp_env(int(SR * 0.06), 0.02, 0.22), at)
+    return b
+
+def r_slot_curse():  # EC-15 curse: eerie descending minor steps
+    dur = 0.55
+    b = np.zeros(int(SR * dur))
+    place(b, sine(494, 0.24, glide_to=466) * exp_env(int(SR * 0.24), 0.1, 0.5), 0)
+    place(b, sine(370, 0.3, glide_to=311) * exp_env(int(SR * 0.3), 0.13, 0.5), 0.16)
+    place(b, band(noise(0.3), 300, 900) * env_adsr(int(SR * 0.3), 0.08, 0.1, 0.15, 0.1, 0.25), 0.05)
+    return b
+
+def r_jackpot():  # EC-14 jackpot: happy rising arpeggio (original)
+    dur = 0.6
+    b = np.zeros(int(SR * dur))
+    notes(b, [(523, 0.0, 0.11), (659, 0.09, 0.11), (784, 0.18, 0.11),
+              (1047, 0.27, 0.3)], wave="tri", gain=0.5, lp=5200)
+    place(b, band(noise(0.25), 5000, 10000) * exp_env(int(SR * 0.25), 0.09, 0.16), 0.27)
+    return b
+
+def r_zap():  # EC-15 / thunder stun: electric snap-buzz
+    dur = 0.14
+    b = np.zeros(int(SR * dur))
+    place(b, square(139, 0.1) * exp_env(int(SR * 0.1), 0.04, 0.55), 0)
+    place(b, band(noise(0.06), 2600, 8000) * exp_env(int(SR * 0.06), 0.02, 0.7), 0)
+    return b
+
+def r_evolve_done():  # LV-06 growth complete: shimmering ascent (original)
+    dur = 0.7
+    b = np.zeros(int(SR * dur))
+    notes(b, [(659, 0.0, 0.18), (880, 0.13, 0.18), (1175, 0.26, 0.4)],
+          wave="sine", gain=0.48, lp=6000)
+    place(b, band(noise(0.4), 5200, 10500) * env_adsr(int(SR * 0.4), 0.1, 0.12, 0.2, 0.12, 0.2), 0.15)
+    return b
+
+def r_streak():  # CB-04 kill-chain blip (engine pitches it up per chain)
+    return tri(880, 0.07) * exp_env(int(SR * 0.07), 0.025, 0.6)
+
+def r_confirm():  # UI-04 wallet connected: gentle two-note confirm
+    dur = 0.3
+    b = np.zeros(int(SR * dur))
+    notes(b, [(660, 0.0, 0.13), (880, 0.11, 0.18)], wave="sine", gain=0.45, lp=3800)
+    return b
+
+def r_start():  # UI-08 run start: fifth up with weight
+    dur = 0.3
+    b = np.zeros(int(SR * dur))
+    notes(b, [(392, 0.0, 0.12), (587, 0.1, 0.19)], wave="tri", gain=0.55, lp=3600)
+    place(b, filt(noise(0.035), "low", 420) * exp_env(int(SR * 0.035), 0.014, 0.55), 0)
+    return b
+
+def r_panel_open():  # UI-09 panel opens: paper/board slide up
+    dur = 0.16
+    tt = t(dur)
+    sw = band(noise(dur), 380, 1300) * np.sin(np.pi * tt / dur) ** 1.5
+    return sw * 0.8 + sine(320, dur, glide_to=520) * exp_env(int(SR * dur), 0.07, 0.12)
+
+def r_panel_close():  # UI-09 panel closes: shorter slide down
+    dur = 0.12
+    tt = t(dur)
+    sw = band(noise(dur), 380, 1100) * np.sin(np.pi * tt / dur) ** 1.5
+    return sw * 0.65 + sine(460, dur, glide_to=300) * exp_env(int(SR * dur), 0.05, 0.1)
+
+def r_buff():  # EC-09 generic pickup-buff gain
+    dur = 0.2
+    b = np.zeros(int(SR * dur))
+    place(b, sine(740, 0.12, glide_to=1108) * exp_env(int(SR * 0.12), 0.05, 0.5), 0)
+    place(b, sine(2217, 0.07) * exp_env(int(SR * 0.07), 0.025, 0.18), 0.06)
+    return b
+
+def r_chest_gold():  # EC-04 gold-trim chest: deeper knock + richer shimmer
+    dur = 0.55
+    b = np.zeros(int(SR * dur))
+    place(b, filt(noise(0.05), "low", 380) * exp_env(int(SR * 0.05), 0.02, 0.8), 0)
+    place(b, band(noise(0.07), 600, 1500) * exp_env(int(SR * 0.07), 0.028, 0.5), 0.06)
+    for f, at, g in [(1568, 0.12, 0.4), (2093, 0.17, 0.34), (2637, 0.23, 0.28), (3136, 0.3, 0.2)]:
+        place(b, sine(f, 0.16) * exp_env(int(SR * 0.16), 0.055, g), at)
+    return b
+
+def r_mimic():  # EC-16 mimic point: gear ticks into a magic gliss (no voice)
+    dur = 0.42
+    b = np.zeros(int(SR * dur))
+    for i, at in enumerate((0.0, 0.06, 0.12)):
+        place(b, band(noise(0.02), 1800 - i * 300, 3200 - i * 300) * exp_env(int(SR * 0.02), 0.007, 0.6), at)
+    place(b, sine(880, 0.24, glide_to=1568) * exp_env(int(SR * 0.24), 0.09, 0.4), 0.16)
+    place(b, sine(1760, 0.18, glide_to=2637) * exp_env(int(SR * 0.18), 0.07, 0.16), 0.18)
+    return b
+
+def r_ult_ready():  # SK-09 ult charged: bright ready ping, stands out
+    dur = 0.34
+    b = np.zeros(int(SR * dur))
+    notes(b, [(1175, 0.0, 0.1), (1568, 0.09, 0.22)], wave="sine", gain=0.5, lp=7000)
+    place(b, sine(2350, 0.2) * exp_env(int(SR * 0.2), 0.07, 0.16), 0.09)
+    return b
+
+def r_revive():  # CB-11 revive: warm rising restoration (original)
+    dur = 0.6
+    b = np.zeros(int(SR * dur))
+    notes(b, [(523, 0.0, 0.17), (659, 0.14, 0.17), (784, 0.28, 0.3)],
+          wave="sine", gain=0.46, lp=4200)
+    place(b, sine(262, 0.5) * env_adsr(int(SR * 0.5), 0.08, 0.15, 0.25, 0.15, 0.18), 0)
+    return b
+
+def r_rage():  # CB-16 guardian enrage: low growl swell (not a cry)
+    dur = 0.75
+    tt = t(dur)
+    growl = saw(58, dur, glide_to=87) * (0.75 + 0.25 * np.sin(2 * np.pi * 11 * tt))
+    b = filt(growl, "low", 300) * 0.8
+    b = b + band(noise(dur, pink=True), 180, 520) * 0.45
+    return b * env_adsr(int(SR * dur), 0.09, 0.2, 0.55, 0.2, 0.9)
+
+def r_boss_down():  # CB-17 variant: short triumphant phrase over the boom
+    dur = 0.55
+    b = np.zeros(int(SR * dur))
+    notes(b, [(392, 0.0, 0.13), (523, 0.11, 0.13), (659, 0.22, 0.3)],
+          wave="tri", gain=0.5, lp=4400)
+    return b
+
+def r_banish():  # LV-05 banish: paper tear
+    dur = 0.2
+    tt = t(dur)
+    tear = band(noise(dur), 700, 3400) * (0.35 + 0.65 * np.abs(np.sin(2 * np.pi * 9 * tt)))
+    return tear * np.sin(np.pi * tt / dur) ** 0.7
+
+def r_shiny_spawn():  # CH-07 shiny ally appears: rare sparkle ping
+    dur = 0.4
+    b = np.zeros(int(SR * dur))
+    for f, at in [(2093, 0.0), (2637, 0.07), (3136, 0.14)]:
+        place(b, sine(f, 0.2) * exp_env(int(SR * 0.2), 0.07, 0.34), at)
+    place(b, band(noise(0.22), 6000, 11000) * exp_env(int(SR * 0.22), 0.08, 0.14), 0.05)
+    return b
+
+def r_terminal():  # EC-17 recompile terminal: gears + low whir
+    dur = 0.38
+    b = np.zeros(int(SR * dur))
+    for i, at in enumerate((0.0, 0.07, 0.15)):
+        place(b, band(noise(0.022), 1200 + i * 250, 2600 + i * 250) * exp_env(int(SR * 0.022), 0.008, 0.6), at)
+    place(b, band(noise(0.2), 280, 720) * env_adsr(int(SR * 0.2), 0.05, 0.06, 0.3, 0.06, 0.4), 0.1)
+    place(b, sine(330, 0.1) * exp_env(int(SR * 0.1), 0.04, 0.25), 0.26)
+    return b
+
+def r_greet():  # EC-18 shopkeeper door: small bell + wooden shuffle
+    dur = 0.4
+    b = np.zeros(int(SR * dur))
+    for ratio, g in [(1.0, 0.42), (2.02, 0.2), (2.74, 0.13)]:
+        place(b, sine(1175 * ratio, 0.3) * exp_env(int(SR * 0.3), 0.11, g), 0.02)
+    place(b, band(noise(0.09), 500, 1400) * env_adsr(int(SR * 0.09), 0.03, 0.04, 0.15, 0.03, 0.3), 0.0)
+    return b
+
+RECIPES_P12 = {
+    "hover": r_hover, "shot_electric": r_shot_electric, "shot_ice": r_shot_ice,
+    "shot_psychic": r_shot_psychic, "shot_ghost": r_shot_ghost,
+    "beam": r_beam, "beam_ice": r_beam_ice, "cone_fire": r_cone_fire,
+    "cone_other": r_cone_other, "nova": r_nova, "nova_ground": r_nova_ground,
+    "dodge": r_dodge, "land": r_land, "dive": r_dive, "slam": r_slam,
+    "encounter": r_encounter, "throw_ball": r_throw_ball,
+    "ball_open": r_ball_open, "ball_shake": r_ball_shake,
+    "slot_tick": r_slot_tick, "slot_lever": r_slot_lever,
+    "slot_stop": r_slot_stop, "slot_coins": r_slot_coins,
+    "slot_curse": r_slot_curse, "jackpot": r_jackpot, "zap": r_zap,
+    "evolve_done": r_evolve_done, "streak": r_streak,
+    "confirm": r_confirm, "start": r_start, "panel_open": r_panel_open,
+    "panel_close": r_panel_close, "buff": r_buff, "chest_gold": r_chest_gold,
+    "mimic": r_mimic, "ult_ready": r_ult_ready, "revive": r_revive,
+    "rage": r_rage, "boss_down": r_boss_down, "banish": r_banish,
+    "shiny_spawn": r_shiny_spawn, "terminal": r_terminal, "greet": r_greet,
+}
+
+# ------------------------------------------------- ambience (stereo OGG loops)
+# EN-01 / EN-02: synthesized beds, looped by blending the tail into the
+# head content. Encoded OGG Vorbis q6 per the format ruling for loops.
+
+LOOP_FADE = 2.0  # seconds of head crossfade
+
+def _loop_mix(s, dur):
+    """Seamless whole-file loop of length `dur` from stream s (which is
+    LOOP_FADE seconds longer): the head crossfades in from the stream's
+    own continuation, so the pure-stream tail flows straight into it."""
+    n = int(SR * dur)
+    f = int(LOOP_FADE * SR)
+    out = s[:n].copy()
+    w = np.linspace(0, 1, f)
+    out[:f] = s[:f] * w + s[n:n + f] * (1 - w)
+    return out
+
+def _place_stereo(out, seg, at, pan):
+    place(out[:, 0], seg * (1 - pan), at)
+    place(out[:, 1], seg * pan, at)
+
+def _bed_pair(dur, seed):
+    """Decorrelated stereo noise pair."""
+    r = np.random.default_rng(seed)
+    return r.standard_normal(int(SR * dur)), r.standard_normal(int(SR * dur))
+
+def r_amb_forest():  # EN-01 forest bed: leaves + sparse birds, very quiet
+    dur = 24.0
+    ext = dur + LOOP_FADE
+    tt = np.arange(int(SR * ext)) / SR
+    wl, wr = _bed_pair(ext, 101)
+    lfo_l = 0.75 + 0.25 * np.sin(2 * np.pi * tt / 12.0)
+    lfo_r = 0.75 + 0.25 * np.sin(2 * np.pi * tt / 12.0 + 1.1)
+    left = _loop_mix(filt(wl, "low", 480) * 1.4 * lfo_l, dur)
+    right = _loop_mix(filt(wr, "low", 480) * 1.4 * lfo_r, dur)
+    out = np.stack([left, right], axis=1)
+    chirp_rng = np.random.default_rng(7)
+    for _ in range(9):  # birds stay clear of the wrap zones
+        at = chirp_rng.uniform(LOOP_FADE + 0.6, dur - LOOP_FADE - 0.6)
+        f0 = chirp_rng.uniform(2300, 2900)
+        seg = sine(f0, 0.14, glide_to=f0 * 1.25) * exp_env(int(SR * 0.14), 0.05, 0.10)
+        _place_stereo(out, seg * 0.5, at, chirp_rng.uniform(0.25, 0.75))
+    return out
+
+def r_amb_rain():  # EN-02 rain bed: steady wash + sparse droplets
+    dur = 20.0
+    ext = dur + LOOP_FADE
+    wl, wr = _bed_pair(ext, 202)
+    left = _loop_mix(band(wl, 420, 3400) * 0.8 + filt(wl, "low", 220) * 0.9, dur)
+    right = _loop_mix(band(wr, 420, 3400) * 0.8 + filt(wr, "low", 220) * 0.9, dur)
+    out = np.stack([left, right], axis=1)
+    drop_rng = np.random.default_rng(11)
+    for _ in range(46):
+        at = drop_rng.uniform(LOOP_FADE + 0.5, dur - LOOP_FADE - 0.5)
+        f0 = drop_rng.uniform(1750, 2650)
+        seg = sine(f0, 0.03) * exp_env(int(SR * 0.03), 0.008, 0.14)
+        _place_stereo(out, seg, at, drop_rng.uniform(0.15, 0.85))
+    return out
+
+def r_amb_wind():  # EN-02 wind / fog bed: slow gusting bands
+    dur = 22.0
+    ext = dur + LOOP_FADE
+    tt = np.arange(int(SR * ext)) / SR
+    wl, wr = _bed_pair(ext, 303)
+    gust = 0.55 + 0.45 * np.sin(2 * np.pi * tt / 11.0) ** 2
+    gust_r = 0.55 + 0.45 * np.sin(2 * np.pi * tt / 11.0 + 0.7) ** 2
+    left = _loop_mix(band(wl, 190, 880) * gust * 1.2, dur)
+    right = _loop_mix(band(wr, 190, 880) * gust_r * 1.2, dur)
+    return np.stack([left, right], axis=1)
+
+AMBIENCE = {"amb_forest": r_amb_forest, "amb_rain": r_amb_rain, "amb_wind": r_amb_wind}
+
+def _render_ambience(key):
+    import subprocess, tempfile, os
+    x = np.asarray(AMBIENCE[key](), dtype=np.float64)
+    pk = np.max(np.abs(x)) + 1e-12
+    x = (x / pk * 0.5 * 32767).astype(np.int16)  # beds sit well under SFX
+    with tempfile.TemporaryDirectory() as td:
+        tmp = os.path.join(td, key + ".wav")
+        wavfile.write(tmp, SR, x)
+        subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", tmp,
+                        "-codec:a", "libvorbis", "-q:a", "6",
+                        str(OUT / f"{key}.ogg")], check=True)
+    print(f"{key:14s} {len(x) / SR:5.1f}s loop (ogg q6)")
+
 RECIPES = {
     "click": r_click, "deny": r_deny, "xp": r_xp, "coin": r_coin,
     "sparkle": r_sparkle, "heal": r_heal, "chest": r_chest,
@@ -357,9 +760,14 @@ RECIPES = {
 }
 
 def main():
-    keys = sys.argv[1:] or list(RECIPES)
+    global RECIPES
+    RECIPES = {**RECIPES, **RECIPES_P12}
+    keys = sys.argv[1:] or list(RECIPES) + list(AMBIENCE)
     OUT.mkdir(parents=True, exist_ok=True)
     for k in keys:
+        if k in AMBIENCE:
+            _render_ambience(k)
+            continue
         data = finish(RECIPES[k]())
         wavfile.write(OUT / f"{k}.wav", SR, data)
         dur = len(data) / SR
