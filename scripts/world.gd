@@ -400,6 +400,7 @@ var _zone_chip: Panel
 var _tier_chip: Panel
 var _wx_chip: Panel
 var _wallet_pill: Panel
+var _hud_resource_divider: ColorRect
 var _dust_icon: UiIcon
 var _coin_icon: UiIcon
 var _ball_icon: UiIcon
@@ -3034,6 +3035,13 @@ func _build_hud() -> void:
 	wpill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card.add_child(wpill)
 	_wallet_pill = wpill
+	_hud_resource_divider = ColorRect.new()
+	_hud_resource_divider.position = Vector2(320, 13)
+	_hud_resource_divider.size = Vector2(1, 57)
+	_hud_resource_divider.color = Color(1, 1, 1, 0.45)
+	_hud_resource_divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_hud_resource_divider.hide()
+	card.add_child(_hud_resource_divider)
 	var dust_ic := UiIcon.new("spark", UiTheme.GOLD, 18)
 	dust_ic.position = Vector2(10, 9)
 	dust_ic.size = Vector2(18, 18)
@@ -14125,20 +14133,25 @@ func _apply_top_card_phone(on: bool) -> void:
 		return
 	_p2_on = want
 	_p2_font_sig = ""
+	if not _wallet_pill.has_meta("desktop_face"):
+		_wallet_pill.set_meta("desktop_face", _wallet_pill.get_theme_stylebox("panel"))
+	_wallet_pill.add_theme_stylebox_override("panel", StyleBoxEmpty.new() if on else _wallet_pill.get_meta("desktop_face"))
+	_hud_resource_divider.visible = on
+	_dust_icon.color = Color("e083ed") if on else UiTheme.GOLD
 	var lay := [
 		[_zone_cn, Rect2(18, 8, 120, 26)],
-		[_zone_chip, Rect2(18, 40, 74, 22)],
-		[_tier_chip, Rect2(98, 40, 44, 22)],
+		[_zone_chip, Rect2(18, 24, 74, 22)],
+		[_tier_chip, Rect2(98, 24, 44, 22)],
 		[_tier_chip_label, Rect2(0, 0, 44, 22)],
-		[_wx_chip, Rect2(148, 40, 48, 26)],
+		[_wx_chip, Rect2(148, 22, 48, 26)],
 		[_wx_icon, Rect2(5, 5, 14, 14)],
 		[_wx_label, Rect2(21, 0, 25, 26)],
-		[_timer_label, Rect2(140, 4, 180, 44)],
+		[_timer_label, Rect2(211, 4, 110, 44)],
 		# Plan (170,48,220,14): at the floor-fitted size
 		# (14+ px) the centred glyphs ran into the segments
 		# at y 64 — the box lifts into the timer's empty
 		# lower margin, same centre column.
-		[_danger_name, Rect2(140, 41, 180, 20)],
+		[_danger_name, Rect2(211, 41, 110, 20)],
 		# U1 1:1 round 3: the wallet carries all three
 		# resources again (dust + gold + ball price), so it
 		# widens to 220 inside the unchanged 560 card — the
@@ -14166,10 +14179,9 @@ func _apply_top_card_phone(on: bool) -> void:
 		# U1 1:1 round 3: pips drop to the third row — the
 		# second row now holds the restored zone / tier /
 		# weather chips (reference U1_final.jpg).
-		lay.append([_pips[i], Rect2(18 + i * 17, 64, 11, 11)])
+		lay.append([_pips[i], Rect2(18 + i * 17, 52, 11, 11)])
 	for i in range(_danger_segs.size()):
-		# Recentered under the narrowed timer (centre 230).
-		lay.append([_danger_segs[i], Rect2(171 + i * 17, 64, 13, 14)])
+		lay.append([_danger_segs[i], Rect2(215 + i * 15, 64, 13, 14)])
 	for e in lay:
 		var c := e[0] as Control
 		if c == null:
