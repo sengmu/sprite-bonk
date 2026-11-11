@@ -1518,7 +1518,13 @@ func _p2_state(vp: Vector2, st: String) -> void:
 	_check("P2: party row only with allies (" + st + ")",
 		party.is_visible_in_tree() == (na > 0),
 		"allies=" + str(na) + " visible=" + str(party.is_visible_in_tree()))
-	var want_h := 104.0 if na > 0 else 86.0
+	# U1 1:1 round 14 (coordinator ruling): the medallion grew
+	# 86 -> 108 to the reference's measure and is now the
+	# cluster's tallest element in both states (party bottom
+	# is 104), so the box-height pin follows it at the same
+	# strength — the pin's purpose (box = tallest element's
+	# bottom) is unchanged.
+	var want_h := 108.0
 	_check("P2: hero cluster box = 340 x HP/party bottom (" + st + ")",
 		absf(hero.size.x - 340.0) < 0.5 and absf(hero.size.y - want_h) < 0.5,
 		"size=" + str(hero.size) + " want_h=" + str(want_h))

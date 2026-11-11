@@ -2871,22 +2871,32 @@ func _build_hud() -> void:
 	# proud of the pill's left edge; phone-only, sized in
 	# _p2_hero_box; desktop keeps the bare cluster.
 	_hero_plate = Panel.new()
-	_hero_plate.position = Vector2(56, 8)
+	_hero_plate.position = Vector2(56, 24)
 	# U1 1:1 round 13: plate width 284 -> 232 — measured on
 	# U1_final.jpg the pill's right edge sits at 0.192 of frame
 	# width (ours drew 0.226, a visible empty tail past the HP
 	# track's new right edge at cluster-local 248).
-	_hero_plate.size = Vector2(232, 78)
+	# U1 1:1 round 14 (coordinator): the round-13 width math
+	# assumed the cluster draws at the 1.5 touch scale — a row
+	# scan of the round-13 capture puts the plate's right edge
+	# at 0.270 of frame width, not 0.192 (the Lv badge's drawn
+	# width gives the cluster's true scale as ~2.0). Width
+	# 232 -> 156 lands the edge at 0.190; height 78 -> 60 and
+	# y 8 -> 24 centre the slimmer pill on the medallion.
+	_hero_plate.size = Vector2(156, 60)
 	_hero_plate.add_theme_stylebox_override("panel", UiTheme.dark_glass(28, 0.92))
 	_hero_plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_hero_cluster.add_child(_hero_plate)
 	_medal_panel = UiMedallion.new()
 	_medal_panel.position = Vector2(0, 0)
-	_medal_panel.size = Vector2(86, 86)
+	# U1 1:1 round 14 (coordinator): medallion 86 -> 108 — at
+	# the cluster's true ~2.0 draw scale the 86 disc read
+	# 0.073 of frame width against the reference's 0.093.
+	_medal_panel.size = Vector2(108, 108)
 	_medal_panel.medal = STARTER_HUD["bulbasaur"]["medal"]
 	_medal_panel.portrait = UiTheme.portrait("bulbasaur")
 	_hero_cluster.add_child(_medal_panel)
-	_medal_glyph = _label_in(_medal_panel, "妙", Vector2(0, 0), Vector2(86, 86), 34, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
+	_medal_glyph = _label_in(_medal_panel, "妙", Vector2(0, 0), Vector2(108, 108), 34, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
 	_medal_glyph.visible = _medal_panel.portrait == null
 	# UI-mobile P3 (plan H1 / D1): on phone a tap on the
 	# portrait pauses — the plan put a small "‖" badge on the
@@ -2942,6 +2952,12 @@ func _build_hud() -> void:
 	_hud_hp_num.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.55))
 	_hud_hp_num.add_theme_constant_override("shadow_offset_x", 1)
 	_hud_hp_num.add_theme_constant_override("shadow_offset_y", 1)
+	# U1 1:1 round 14 (coordinator): on phone the HP track's
+	# left end tucks BEHIND the medallion (reference: the bar
+	# emerges from behind the portrait disc) — move the track
+	# to just above the plate, below the medallion. Desktop
+	# geometry has no overlap, so this changes nothing there.
+	_hero_cluster.move_child(hp_track, _hero_plate.get_index() + 1)
 	# Cycle 18: party portrait row (.party @2002233 — a disc +
 	# mini HP track per ally) and the pw-row of live power
 	# chips (.topbar .pw / cpw @2004105) under the HP track.
@@ -14476,10 +14492,16 @@ func _apply_top_card_phone(on: bool) -> void:
 		# reference's measure (U1_final.jpg: bar right edge at
 		# 0.167 of frame width; ours drew to 0.217) — the fill
 		# driver reads the track width, so only rects change.
-		[_hud_hp_track, Rect2(94, 33, 154, 20)],
-		[_hud_hp_lag, Rect2(1, 1, 152, 18)],
-		[_hud_hp_fill, Rect2(1, 1, 152, 18)],
-		[_hud_hp_num, Rect2(0, 0, 154, 20)],
+		# U1 1:1 round 14 (coordinator): the round-13 rect used
+		# the same wrong scale premise as the plate — the row
+		# scan puts the drawn bar at ~0.10..0.234 against the
+		# reference's 0.0825..0.1669. New rect (85, 44, 98, 20):
+		# left end tucks behind the 108 medallion, right edge
+		# lands at 0.167, vertically centred on the plate.
+		[_hud_hp_track, Rect2(85, 44, 98, 20)],
+		[_hud_hp_lag, Rect2(1, 1, 96, 18)],
+		[_hud_hp_fill, Rect2(1, 1, 96, 18)],
+		[_hud_hp_num, Rect2(0, 0, 98, 20)],
 		[_hud_shield_fill, Rect2(1, 1, 0, 18)],
 		# U1 1:1 round 4: the info plate (name + type chips +
 		# evo line) is gone on phone — the reference hero
@@ -14611,7 +14633,10 @@ func _p2_hero_box() -> void:
 	if _hero_plate != null:
 		_hero_plate.visible = _p2_on == 1
 	if _p2_on == 1:
-		var h := 104.0 if _party_row != null and _party_row.visible else 86.0
+		# U1 1:1 round 14: the 108-tall medallion is now the
+		# cluster's tallest element in both states (the party
+		# row's bottom is 104), so the box height follows it.
+		var h := 108.0
 		_hero_cluster.size = Vector2(340, h)
 	else:
 		_hero_cluster.size = Vector2(454, 216)
