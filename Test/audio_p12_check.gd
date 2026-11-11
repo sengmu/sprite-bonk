@@ -81,8 +81,7 @@ func run() -> void:
 		var s := a._amb_stream(k)
 		ck(s != null, k + " loads")
 		if s:
-			ck(s.loop_mode == AudioStreamOggVorbis.LOOP_FORWARD,
-				k + " loops forward")
+			ck(s.loop, k + " loops (loop flag set at load)")
 			ck(s.get_length() > 15.0, k + " is a long bed")
 	ck(a._amb_players.size() == 2, "ambience has bed + weather players")
 	a.ambience("forest")

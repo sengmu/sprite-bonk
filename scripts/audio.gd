@@ -893,7 +893,7 @@ func _amb_stream(name: String) -> AudioStreamOggVorbis:
 		return null
 	var s := load(path) as AudioStreamOggVorbis
 	if s:
-		s.loop_mode = AudioStreamOggVorbis.LOOP_FORWARD
+		s.loop = true  # 4.3 OggVorbis API: bool + begin/end, no enum
 		s.loop_begin = 0
 		s.loop_end = 0
 	_amb_cache[name] = s
