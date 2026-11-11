@@ -166,6 +166,8 @@ func add(x: float) -> void:
 	var was := charge
 	charge = minf(1.0, charge + x * rate())
 	if was < 1.0 and charge >= 1.0:
+		if GameAudio.instance:
+			GameAudio.instance.ult_ready()  # SK-09: the ready ping (G7)
 		var p = world.get("player")
 		if p != null and is_instance_valid(p):
 			world.spawn_nova(p.global_position, 3.0, READY_RING)

@@ -459,6 +459,7 @@ var _wallet_status: Label
 var _wallet_panel: PanelContainer
 var _wallet_edit: LineEdit
 var _wallet_balance: Label
+var _wallet_ok_armed := false  # UI-04: confirm chime on MWA auth completion
 var _wallet_retry: Button
 var _menu_panel: Control
 var _menu_intro_items: Array = []  # cycle 19: stagger set
@@ -4302,15 +4303,23 @@ func _build_wallet_panel(root: Control) -> void:
 			wallet.disconnect_wallet()
 		elif _wallet_edit.text.strip_edges() != "":
 			if not wallet.connect_with_address(_wallet_edit.text):
+				audio.deny()  # UI-05: invalid address
 				_wallet_balance.text = "地址无效，请重试"
+			else:
+				audio.confirm()  # UI-04: address connect succeeded
 		else:
 			_wallet_balance.text = "正在唤起 Solana 钱包授权..."
+			_wallet_ok_armed = true
 			var err := wallet.request_authorize()
 			if err != "":
+				_wallet_ok_armed = false
+				audio.deny()  # UI-05: authorize rejected at once
 				_wallet_balance.text = err
 	)
 	row.add_child(cbtn)
 	wallet.auth_failed.connect(func(reason: String) -> void:
+		_wallet_ok_armed = false
+		audio.deny()  # UI-05: authorization failed
 		if _wallet_balance:
 			_wallet_balance.text = "授权未完成：%s" % reason
 	)
@@ -4350,6 +4359,9 @@ func _refresh_wallet_ui() -> void:
 		var bal := "读取中…"
 		if wallet.last_balance_sol >= 0.0:
 			bal = "%.4f SOL" % wallet.last_balance_sol
+		if _wallet_ok_armed and not failed and wallet.last_balance_sol >= 0.0:
+			_wallet_ok_armed = false
+			audio.confirm()  # UI-04: authorized and balance read
 		_wallet_status.text = wallet.short_address()
 		_wallet_edit.text = wallet.address
 		_wallet_balance.text = "余额读取失败" if failed else bal
@@ -4801,7 +4813,7 @@ func _refresh_shop() -> void:
 		b.pressed.connect(func() -> void:
 			var err := GameProfile.shop_buy(captured_id)
 			if err == "":
-				audio.power()
+				audio.sparkle()  # EC-07: stardust shop reuses the EC-06 sound
 				_refresh_meta()
 			else:
 				audio.deny()
@@ -4881,6 +4893,7 @@ func _build_sound_panel(root: Control) -> void:
 
 func _open_settings() -> void:
 	_settings_return = ""
+	audio.panel_open()  # UI-09
 	_sound_panel.visible = true
 	_settings_show_tab(_settings_tab_now)
 	_apply_ui_scale()
@@ -5389,6 +5402,7 @@ func _open_draft() -> void:
 		return
 	_render_draft()
 	audio.level_up()  # cycle 16: the level-up fanfare
+	audio.panel_open()  # UI-09: the draft panel opens
 	_draft_panel.visible = true
 	# Cycle 18 (audit §4.7): the bundle's modal() swallows
 	# input for 600 ms after opening (VR=600 @1997697) —
@@ -5752,6 +5766,7 @@ func _draft_skip() -> void:
 func _banish_option(idx: int) -> void:
 	if banishes_left <= 0 or idx < 0 or idx >= _draft_options.size():
 		return
+	audio.banish()  # LV-05: the card tears away
 	banishes_left -= 1
 	_draft_banish_mode = false  # one banish per mode entry
 	_draft_banish_target = -1
@@ -5840,7 +5855,7 @@ func _build_result(root: Control) -> void:
 	rcol.add_child(actions)
 	var again := UiTheme.make_button("再次出发", "green", "big")
 	again.pressed.connect(func() -> void:
-		audio.click()
+		audio.start()  # UI-06/UI-08: heading out again uses the start sound
 		_result_panel.hide()
 		_open_loadout(_menu_hero_sp))
 	actions.add_child(again)
@@ -5983,6 +5998,8 @@ func start_game(p_species: String, boosts: Array = [], requested_tier: int = 0) 
 	# bundle @1440396); the kill chain (xp/streak pitch ladder)
 	# resets.
 	_run_music = ["ingame1", "ingame2", "ingame3", "ingame4"][_rng.randi_range(0, 3)]
+	audio.ambience("forest")  # EN-01: the forest bed runs with the run
+	audio.ambience_weather(weather)  # EN-02
 	_kill_chain = 0
 	_kill_chain_t = -10.0
 	_music_t = 0.0
@@ -6512,6 +6529,7 @@ func _on_guardian_killed(e: Enemy) -> void:
 	add_trauma(0.8)  # bundle: boss killed -> shake(0.8) (@1460549)
 	hitstop(0.5)     # bundle: boss killed -> hitstop(.5) (@1460549)
 	audio.boom(1.0)  # cycle 16: boss-kill boom + the coin reward below
+	audio.boss_down()  # CB-17 (P1 variant): a short triumphant phrase
 	# --- Guardian reward (bundle onBossKilled @1462726, cycle 9) ---
 	# 20 coin pickups of wB = ceil(5 * stage * gold) each
 	# (wB @1555023). Cycle 20 (DIFF §7 correction): there is
@@ -7740,6 +7758,7 @@ func _open_shop() -> void:
 	state = "shop"
 	running = false
 	audio.click()
+	audio.greet()  # EC-18: the shopkeeper's door bell
 	_shop_refresh()
 	_meowth_panel.visible = true
 
@@ -7992,6 +8011,7 @@ func _choice_show(title: String, sub: String, options: Array, foot_text: String,
 	_choice_open = true
 	state = "choice"
 	running = false
+	audio.panel_open()  # UI-09: modal panels announce their opening
 	_choice_title.text = title
 	_choice_sub.text = sub
 	for c in _choice_opts_box.get_children():
@@ -8813,7 +8833,7 @@ func _boss_enrage() -> void:
 	_refresh_boss_tag()
 	show_banner("狂怒！%s 狂暴化：新招式，更快！" % String(ModelRig.SPECIES[guardian.species_id]["label"]), 3.0)
 	guardian.speed *= 1.2
-	audio.cry(guardian.species_id)
+	audio.rage()  # CB-16: enrage growl, not the species cry
 	spawn_nova(guardian.global_position + Vector3(0, 0.4, 0), 8.0, Color(1, 0.23, 0.23))
 	spawn_nova(guardian.global_position + Vector3(0, 0.4, 0), 14.0, Color(1, 1, 1))
 	if player:
@@ -9933,7 +9953,7 @@ func _interact_prop(p: Dictionary) -> void:
 ## cry(132), as does opening the picker.
 func _open_ditto(p: Dictionary, with_cry := true) -> void:
 	if with_cry:
-		audio.cry("ditto")
+		audio.mimic()  # EC-16: mechanism + magic, not a partner cry
 	var keys: Array = []
 	for k in player.items.keys():
 		if player.item_count(String(k)) > 0:
@@ -9960,7 +9980,7 @@ func _open_ditto(p: Dictionary, with_cry := true) -> void:
 				return
 			player.add_item(key)
 			_prop_set_used(p)
-			audio.cry("ditto")
+			audio.mimic()  # EC-16: the copy lands with a mechanism sound
 			show_banner("百变怪变成了%s！" % String(GameData.item_def(key).get("name", key)), 2.5),
 		func() -> void: pass)
 
@@ -10054,6 +10074,7 @@ func _slots_spin() -> void:
 		spawn_floater(player.global_position + Vector3(0, 2.6, 0), "金币不足（需要 %d）" % cost, Color(0.9, 0.6, 0.5))
 		return
 	audio.slot_lever()
+	audio.slot_tick()  # EC-13: a ratchet tick under the instant result
 	gold -= float(cost)
 	_slot_spins += 1
 	_slot_spent += cost
@@ -10201,6 +10222,7 @@ func _porygon_open(p: Dictionary) -> void:
 		var l: Dictionary = o["loss"]
 		opts.append("重编译\n%s\n代价：%s" % [_porygon_mod_text(String(g["stat"]), g["gain"], true),
 			_porygon_mod_text(String(l["stat"]), l["loss"], false)])
+	audio.terminal()  # EC-17: the terminal wakes with gears
 	_choice_show("机关匣 · 重编译", "选择一组重编译（本局生效）", opts, "离开（不选择）",
 		func(idx: int) -> void:
 			var o: Dictionary = offers[idx]
@@ -11007,6 +11029,7 @@ func _weather_pick(z: int) -> void:
 	weather = base_weather
 	weather_t = 0.0
 	apply_weather_look()
+	audio.ambience_weather(weather)  # EN-02
 
 func set_base_weather(w: String) -> void:
 	# Bundle @1452859: applies immediately only when no timed
@@ -11015,6 +11038,7 @@ func set_base_weather(w: String) -> void:
 	if weather_t <= 0.0:
 		weather = w
 		apply_weather_look()
+		audio.ambience_weather(weather)  # EN-02
 		_refresh_weather_chip()
 
 func set_weather(w: String, secs: float) -> void:
@@ -11022,6 +11046,7 @@ func set_weather(w: String, secs: float) -> void:
 	weather = w
 	weather_t = secs
 	apply_weather_look()
+	audio.ambience_weather(weather)  # EN-02
 	_refresh_weather_chip()
 	show_banner("天气变化：%s！" % String(WEATHER_TABLE[w]["cn"]), 2.5)
 
@@ -11260,6 +11285,8 @@ func _finish_run(victory: bool) -> void:
 		audio.victory()
 	else:
 		audio.defeat()
+	audio.ambience("")  # EN-01: the beds stop with the run
+	audio.ambience_weather("")
 	if ult:
 		ult.dispose()  # clear ground-zone visuals + pending casts
 	# §3 lifetime counters settle at run end (cycle 8): 'runs' counts
@@ -11289,6 +11316,7 @@ func _finish_run(victory: bool) -> void:
 	var dust := int(round(float(_gold_to_dust(gold)) * (1.0 + float(run_tier) * 0.75)))
 	if dust > 0:
 		GameProfile.add_stardust(dust)
+		audio.sparkle()  # LV-09: the stardust credit lands with a chime
 	# §8 classic score (tier 0): kills*2 + time*3 + damage/200 +
 	# (stage-1)*1500 + bosses*800 + victory 6000.
 	var score := run_score(victory)
@@ -11303,14 +11331,14 @@ func _on_player_died() -> void:
 	if player and player.revives > 0:
 		player.revives -= 1
 		player.revive(0.6)
-		audio.heal()
+		audio.revive()  # CB-11: a revive has its own sound, not heal's
 		show_banner("最大复活生效！", 3.0)
 		return
 	# Lab revive (§6.2): one in-run resurrection at 35% HP.
 	if GameProfile.lab_level("revive") > 0 and not revive_used:
 		revive_used = true
 		player.revive(0.35)
-		audio.heal()  # cycle 16
+		audio.revive()  # CB-11
 		show_banner("研究室复活生效！", 3.0)
 		return
 	_finish_run(false)
@@ -11713,7 +11741,7 @@ func ally_shoot(ally: Enemy, foe: Enemy) -> void:
 	if player == null or not is_instance_valid(player):
 		return
 	var atype := String(ally.types[0]) if not ally.types.is_empty() else "normal"
-	audio.shot(atype)  # cycle 16: ally cast
+	audio.shot(atype, -6.0)  # SK-10: ally casts reuse the shot, quieter
 	var col: Color = Player.TYPE_COLORS.get(atype, Color.WHITE)
 	if not _proj_mats.has(col):
 		var m := StandardMaterial3D.new()
@@ -15716,6 +15744,7 @@ func _spawn_shiny(pool_override: Array = []) -> void:
 	_attach_shiny_sparkles(e)
 	_shiny_e = e
 	_shiny_escape = GameProfile.shiny_flee_time()
+	audio.shiny_spawn()  # CH-07: a rare sparkle ping beside the cry
 	audio.cry(sp)
 	show_banner("流光的 %s 出现了！打弱它再邀伴结伴！" % String(ModelRig.SPECIES[sp]["label"]), 4.0)
 
@@ -16329,6 +16358,7 @@ func _open_team_view() -> void:
 	else:
 		_blessing_panel.visible = false
 	state = "pause"
+	audio.duck(0.45, 3600.0)  # UI-10: music dips while paused
 	_pause_sub.text = "%s · 第 %d 区 · %s" % [
 		String(ZONES[zone - 1]["cn"]), zone, _fmt_time(run_time)]
 	_pause_panel.visible = true
@@ -16341,6 +16371,7 @@ func _open_pause() -> void:
 	_pre_pause_state = state
 	state = "pause"
 	running = false
+	audio.duck(0.45, 3600.0)  # UI-10: music dips while paused
 	_pause_quit_disarm()
 	_pause_sub.text = "%s · 第 %d 区 · %s" % [
 		String(ZONES[zone - 1]["cn"]), zone, _fmt_time(run_time)]
@@ -16351,6 +16382,7 @@ func _open_pause() -> void:
 func _close_pause() -> void:
 	if state != "pause":
 		return
+	audio.duck(1.0, 0.05)  # UI-10: restore the music level
 	_pause_quit_disarm()
 	_pause_panel.visible = false
 	if _unlock_from_pause:
@@ -16931,7 +16963,7 @@ func _build_loadout(root: Control) -> void:
 		_ls_start_btn.custom_minimum_size.x = 240
 		_ls_start_btn.set_meta("p5_primary", true)
 	_ls_start_btn.pressed.connect(func() -> void:
-		audio.click()
+		audio.start()  # UI-08: a run begins — weightier than a click
 		_loadout_start())
 	brow.add_child(_ls_start_btn)
 
@@ -16945,6 +16977,7 @@ func _open_loadout(sp: String) -> void:
 	if _ls_playable(sp):
 		_ls_hero = sp
 	_ls_boosts.clear()
+	audio.panel_open()  # UI-09
 	_loadout_panel.visible = true
 	_loadout_refresh()
 	_apply_ui_scale()

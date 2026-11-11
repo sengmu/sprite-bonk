@@ -44,6 +44,10 @@ var _music_players: Array[AudioStreamPlayer] = []
 var _music_fade := [0.0, 0.0]        # per player: 0 silent .. 1 full
 var _music_fade_target := [0.0, 0.0]
 var _music_active := 0
+var _amb_players: Array[AudioStreamPlayer] = []  # [bed, weather layer]
+var _amb_cache := {}
+var _amb_bed := ""
+var _amb_wx := ""
 var _hidden_mute := false
 var _master_eff := 0.8
 var _duck_t := 0.0
@@ -80,6 +84,14 @@ func _ready() -> void:
 		p.bus = "Music"
 		add_child(p)
 		_music_players.append(p)
+	for i in range(2):
+		# Ambience layers (EN-01/EN-02): continuous OGG beds on the
+		# Music bus, so the duck system dips them with the music.
+		var p := AudioStreamPlayer.new()
+		p.bus = "Music"
+		p.volume_db = -19.0 if i == 0 else -16.0
+		add_child(p)
+		_amb_players.append(p)
 	_apply_volumes()
 	_master_eff = vol["master"]
 
@@ -796,6 +808,125 @@ func sparkle() -> void:
 func power() -> void:
 	_sfx("power")
 
+# ------------------------------------------- P1/P2 production batch API
+# New one-shots from the second production round (design/
+# audio-production-p12.md). All file-backed originals.
+
+## UI-04: wallet connected + balance read — a gentle confirm,
+## deliberately NOT a coin sound (no transaction association).
+func confirm() -> void:
+	_sfx("confirm")
+
+## UI-08: run start — weightier than click, marks "a run begins".
+func start() -> void:
+	_sfx("start")
+
+## UI-09: major panels opening (closes keep their button click).
+func panel_open() -> void:
+	if _ok("panel", 0.05):
+		_sfx("panel_open")
+
+## EC-09: generic pickup-buff gain (magnet / repel / key / scrolls).
+func buff() -> void:
+	if _ok("buff", 0.08):
+		_sfx("buff")
+
+## EC-04 variant: the gold-trim chest's richer open.
+func chest_gold() -> void:
+	_sfx("chest_gold")
+
+## EC-16: the mimic point speaks mechanism + magic, never a cry.
+func mimic() -> void:
+	if _ok("mimic", 0.1):
+		_sfx("mimic")
+
+## SK-09: the ult gauge just filled — must stand out from UI sounds.
+func ult_ready() -> void:
+	if _ok("ultReady", 0.2):
+		_sfx("ult_ready")
+
+## CB-11: a revive charge spent — its own warm rising sound.
+func revive() -> void:
+	_sfx("revive")
+
+## CB-16: guardian enrage — a low growl swell, not a species cry.
+func rage() -> void:
+	_sfx("rage")
+
+## CB-17 (P1 variant): a short triumphant phrase over the kill boom.
+func boss_down() -> void:
+	_sfx("boss_down")
+
+## LV-05: banishing a draft card — a paper tear.
+func banish() -> void:
+	_sfx("banish")
+
+## CH-07: a shiny ally spawned — a rare sparkle ping beside its cry.
+func shiny_spawn() -> void:
+	if _ok("shinySpawn", 0.3):
+		_sfx("shiny_spawn")
+
+## EC-17: the recompile terminal opens — gears and a low whir.
+func terminal() -> void:
+	_sfx("terminal")
+
+## EC-18: the shopkeeper's door — small bell, no voice, no catchphrase.
+func greet() -> void:
+	if _ok("greet", 0.3):
+		_sfx("greet")
+
+# ------------------------------------------------------------ ambience
+## EN-01 / EN-02: synthesized beds (assets/audio/sfx/amb_*.ogg,
+## OGG Vorbis loops per the format ruling). Missing file = silence,
+## never a synth fallback — beds are production assets, not recipes.
+
+func _amb_stream(name: String) -> AudioStreamOggVorbis:
+	if _amb_cache.has(name):
+		return _amb_cache[name]
+	var path := SFX_DIR + name + ".ogg"
+	if not ResourceLoader.exists(path):
+		return null
+	var s := load(path) as AudioStreamOggVorbis
+	if s:
+		s.loop_mode = AudioStreamOggVorbis.LOOP_FORWARD
+		s.loop_begin = 0
+		s.loop_end = 0
+	_amb_cache[name] = s
+	return s
+
+## Start/stop the base bed ("forest"; "" stops).
+func ambience(kind: String) -> void:
+	if _amb_players.is_empty() or kind == _amb_bed:
+		return
+	_amb_bed = kind
+	var p := _amb_players[0]
+	if kind == "":
+		p.stop()
+		return
+	var s := _amb_stream("amb_" + kind)
+	if s:
+		p.stream = s
+		p.play()
+
+## Weather layer over the bed: rain/storm -> rain bed, fog -> wind
+## bed, anything else (clear) -> layer off.
+func ambience_weather(w: String) -> void:
+	if _amb_players.size() < 2 or w == _amb_wx:
+		return
+	_amb_wx = w
+	var p := _amb_players[1]
+	var key := ""
+	match w:
+		"rain", "storm": key = "amb_rain"
+		"fog": key = "amb_wind"
+	if key == "":
+		p.stop()
+		return
+	var s := _amb_stream(key)
+	if s:
+		p.stream = s
+		p.play()
+
 func heal() -> void:
 	_sfx("heal")
 
@@ -845,13 +976,13 @@ func boom(size: float = 1.0) -> void:
 	if _ok("boom", 0.06):
 		_sfx("boom", clampf(size, 0.7, 1.3))
 
-func shot(type: String) -> void:
+func shot(type: String, vol_db: float = 0.0) -> void:
 	if not _ok("shot:" + type, 0.05):
 		return
 	var key := "shot_" + type
 	if not _render_sfx_has(key):
 		key = "shot_default"
-	_play("shot_" + type, stream_for(key))
+	_play("shot_" + type, stream_for(key), 1.0, vol_db)
 
 ## Ultimate cast one-shots per starter family (audio
 ## requirements SK-08): 1 grass / 4 fire / 7 water. Replaces the

@@ -308,6 +308,11 @@ static func make_button(text: String, kind: String = "ghost",
 	var dis := base
 	dis.a *= 0.45
 	b.add_theme_stylebox_override("disabled", _btn_box(dis, radius, border, bw, pad))
+	# UI-12: desktop hover tick — one connection at the factory,
+	# throttled inside the engine; touch never fires mouse_entered.
+	b.mouse_entered.connect(func() -> void:
+		if GameAudio.instance:
+			GameAudio.instance.hover())
 	b.add_theme_stylebox_override("focus", flat_box(Color(0, 0, 0, 0), 24, GOLD, 2))
 	b.add_theme_color_override("font_color", TEXT)
 	b.add_theme_color_override("font_hover_color", TEXT)

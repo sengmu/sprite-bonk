@@ -197,18 +197,29 @@ func collect(kind: int, value := 1.0) -> void:
 			world.count_run_event("berries")
 			p.leech_heal(p.max_hp*0.25)
 			if world.audio: world.audio.heal()
-		3: magnet_all = 4.0*p.powerup_mult
-		4: nuke()
-		5: repel()
-		6: p.gain_level()
+		3:  # EC-09 (G8): kinds 3-12 were silent — a generic gain sound
+			magnet_all = 4.0*p.powerup_mult
+			if world.audio: world.audio.buff()
+		4:
+			if world.audio: world.audio.boom(1.0)  # EC-09: 清屏 reuses CB-13
+			nuke()
+		5:
+			repel()
+			if world.audio: world.audio.buff()
+		6:
+			p.gain_level()
+			if world.audio: world.audio.level_up()
 		7:
 			keys += 1
 			world.keys += 1
+			if world.audio: world.audio.buff()
 		8,9,10,12:
 			p.add_buff(KINDS[kind],(8.0 if kind==10 else (15.0 if kind==12 else 10.0))*p.powerup_mult)
+			if world.audio: world.audio.buff()
 		11:
 			for e in nearby(40.0):
 				e.pickup_stun(4.0*p.powerup_mult)
+			if world.audio: world.audio.zap()
 func nearby(radius: float, skip_objects := false) -> Array:
 	var found := []
 	for e in get_tree().get_nodes_in_group("enemies"):
