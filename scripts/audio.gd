@@ -595,19 +595,29 @@ func _render_sfx(name: String) -> AudioStreamWAV:
 # ------------------------------------------------------------ cries
 ## cry(id) @90240 fetches a recorded cry file and loudness-
 ## normalizes it (jc @74098). The recordings are the original's
-## IP and never ship here: our cry is a deterministic per-species
-## chirp (base frequency + pulse pattern hashed from the id) at a
-## fixed normalized level — a structural placeholder.
+## IP and never ship here. Production (2026-11-11): every fielded
+## species has an original synthesized cry file (generate_cries.py
+## — family-seeded motifs, size register, type flavour; starters
+## hand-designed). Resolution: exact file -> generic fallback
+## (hash bucket s/m/l) -> the legacy hash chirp below, which is
+## now only a dev safety net and goes at the M5 gate.
+
+func cry_stream_for(species_id: String) -> AudioStreamWAV:
+	if _cry_streams.has(species_id):
+		return _cry_streams[species_id]
+	var s := _file_stream("cry_" + species_id)
+	if s == null:
+		var bucket: String = ["s", "m", "l"][abs(species_id.hash()) % 3]
+		s = _file_stream("cry_fallback_" + bucket)
+	if s == null:
+		s = _render_cry(species_id)
+	_cry_streams[species_id] = s
+	return s
 
 func cry(species_id: String, pitch := 1.0) -> void:
 	if species_id == "":
 		return
-	var s: AudioStreamWAV
-	if _cry_streams.has(species_id):
-		s = _cry_streams[species_id]
-	else:
-		s = _render_cry(species_id)
-		_cry_streams[species_id] = s
+	var s := cry_stream_for(species_id)
 	var p := _cry_players[_cry_cursor]
 	_cry_cursor = (_cry_cursor + 1) % _cry_players.size()
 	p.stream = s
