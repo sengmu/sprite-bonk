@@ -3158,10 +3158,16 @@ func _build_hud() -> void:
 	# U1 1:1 round 16 (coordinator): on the reference the
 	# tag starts at 87% of the track and sticks out past
 	# its right end (0.685..0.816 of frame vs the track's
-	# 0.224..0.754) — chip (356,12,128,22) -> (535,12,
-	# 150,22); children are not clipped by the card.
-	_boss_tag_chip = _panel(_boss_card, Vector2(535, 12), Vector2(150, 22), UiTheme.CREAM, 11)
-	_boss_tag_label = _label_in(_boss_card, "守护者", Vector2(535, 12), Vector2(150, 22), 12, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, true)
+	# 0.224..0.754). Round 17: the protrusion cannot be
+	# honoured inside our centre span (the minimap lane
+	# sits closer than the reference's), so the chip sits
+	# ON the track's right end, right edge flush with the
+	# track's (486,12,142,22) — the protrusion delta is
+	# recorded with the top-card span residual (same root:
+	# the centre span starts further right than the
+	# reference's composition).
+	_boss_tag_chip = _panel(_boss_card, Vector2(486, 12), Vector2(142, 22), UiTheme.CREAM, 11)
+	_boss_tag_label = _label_in(_boss_card, "守护者", Vector2(486, 12), Vector2(142, 22), 12, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, true)
 
 	# Cycle 18: the two .bossbar.mini bars (constructor
 	# @2020582 — the cycle-10 ledger correction). Feed:
@@ -14306,7 +14312,7 @@ func _layout_hud() -> void:
 		var stack_y := 10.0 + 84.0 * s_card + 8.0
 		var boss_y := stack_y
 		if _boss_card and _boss_card.visible:
-			stack_y += 46.0 * minf(s, span_w / 460.0) + 8.0
+			stack_y += 46.0 * minf(s, span_w / 642.0) + 8.0
 		# UI-mobile P3 (plan C4): the ult cut-in heads the
 		# centre stack on the new layout (it shared the boss
 		# card's y band); the boss card moves down for 1.3 s.
@@ -14322,10 +14328,15 @@ func _layout_hud() -> void:
 				_cutin_panel.offset_bottom = stack_y + 64.0
 				stack_y += 64.0 * cs + 8.0
 		if _boss_card:
-			var bs := minf(s, span_w / 460.0)
+			# U1 1:1 round 17 (coordinator): the fit's assumed
+			# card width follows the card's real content —
+			# 460 -> 642 since round 16 widened the track to
+			# 614; at the old divisor the widened children
+			# overflowed the 460 box and ran off-screen.
+			var bs := minf(s, span_w / 642.0)
 			_set_scaled(_boss_card, bs)
-			_boss_card.offset_left = span_c - vw * 0.5 - 230.0
-			_boss_card.offset_right = span_c - vw * 0.5 + 230.0
+			_boss_card.offset_left = span_c - vw * 0.5 - 321.0
+			_boss_card.offset_right = span_c - vw * 0.5 + 321.0
 			if _boss_card.visible:
 				# offset_bottom moves WITH the top —
 				# these are plain Panels, so a top-only
