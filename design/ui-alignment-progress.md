@@ -385,3 +385,12 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 验证批 `Test/u2_herofix_run.sh`（2400 s100）已于 04:03:35 detached 启动（PID 2218796，起跑时无 Godot 在跑），`.done` 路径 `Test/out/u2_herofix.done`，预计约 04:16 完成。**断点**：下一轮先读该 .done（须 1564/0 且钱包行绿），取新菜单实拍重测主角高（目标约 0.400±0.01）；落地则进入 U2 签核决断（余项＝右侧移位设计定性）；未落地则按实测再调框高。
 - 本轮工作文件教训：约 03:56 服务重启清空了 `/tmp/wallet_fix`（本地工作副本全失，含已备好的主角修复编辑）。NUC 侧状态未受影响（全部提交已在库）。此后轮次工作文件放 `~/workspace` 持久路径，不放 `/tmp`。主角修复改用 stdin 管道 Python 脚本重做（`~/workspace/hero_fix_edit.py`），diff 核验仅 1 行。
 - 本轮提交（align-fix13，待推送）：`ba7216b` 主角框 392→367；本节台账＋重建的 `compare/U2.png` 随本提交一并推送。NUC `.git` 反向同步回本机仍因直连中断未做，留待直连恢复后补。
+
+## U2 主角框验证批监看（2026-11-13 04:07 轮）
+
+- 防撞触发：`Test/out/u2_herofix.done` 只有 START（2026-11-13T04:03:35+08:00，HEAD ba7216b），无 ALLDONE；锚定 pgrep 见 Godot 在跑（PID 2218821，2400x1080 s100）。本轮按防撞规则只监看、不双开、不改代码、不碰 main。
+- 监看时点 04:10：2400 档日志 `Test/out/u2_herofix_phonehud_2400.log` 984 PASS、0 FAIL，行至 P3 段（camera step=3），中途无红。预计约 04:16 完成。
+- SSH 直连已恢复：本轮 `Test/nuc_ssh.sh` 直连成功（上一轮 02:24 起「Connection closed by UNKNOWN port 65535」中断已愈）；musen 跳板配置（`~/workspace/tools/nuc_jump.sh`）留作备用，不用即不拆。
+- NUC `.git` 反向同步回本机已补做（上一轮因直连中断未做）：rsync NUC `.git/` → 本机 `.git/`（`--delete`；两条 chown 告警仅为 worktree 临时文件属性、内容无损，rsync rc=23 仅属性项），本机 `git reset --hard` 至 cc2e93b、工作树干净（仅未跟踪 Test/*.sh），`git cat-file -e cc2e93b^{commit}` OK；origin/align-fix13 == HEAD == cc2e93b（NUC 与本机双向核验一致），即 ba7216b/cc2e93b 均已在 origin，不存在待推送。注意：本机一次 `git ls-remote` 遇 tsproxy 出口 Connection reset，未作结论、以 NUC 侧核验为准。下次 sync_to_nuc 前不再有回滚风险。
+- 断点不变：验证批 `Test/u2_herofix_run.sh`（2400 s100）仍在 NUC 上跑，.done 路径 `Test/out/u2_herofix.done`。下一轮先读该 .done：须 1564/0 且钱包行绿，取新菜单实拍重测主角高（目标约 0.400±0.01）；落地则进入 U2 签核决断（余项＝右侧移位设计定性）；未落地则按实测再调框高。
+- 本轮无代码改动；唯一提交为本节台账记入。
