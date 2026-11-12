@@ -3106,8 +3106,13 @@ func _build_hud() -> void:
 	# and stays the children's anchor) — and the track widens
 	# toward the reference's 0.364 frame fraction (card
 	# 460 -> 500, track 432 -> 470).
-	_boss_card.offset_left = -250
-	_boss_card.offset_right = 250
+	# U1 1:1 round 16 (coordinator): re-measured on the RAW
+	# reference — the track spans 0.224..0.754 of frame width
+	# (0.53, not 0.364; the 0.364 figure was eyeballed off a
+	# composite). At the card's ~2.02 draw scale the track
+	# goes 470 -> 614 and the card +-250 -> +-321.
+	_boss_card.offset_left = -321
+	_boss_card.offset_right = 321
 	_boss_card.offset_top = 102
 	_boss_card.offset_bottom = 148
 	_boss_card.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
@@ -3132,26 +3137,31 @@ func _build_hud() -> void:
 	_boss_pic.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_boss_pic.visible = false
 	_boss_card.add_child(_boss_pic)
-	_boss_foot = _label_in(_boss_card, "", Vector2(14, 50), Vector2(470, 16), 12, UiTheme.HUD_DIM, HORIZONTAL_ALIGNMENT_LEFT, true)
+	_boss_foot = _label_in(_boss_card, "", Vector2(14, 50), Vector2(614, 16), 12, UiTheme.HUD_DIM, HORIZONTAL_ALIGNMENT_LEFT, true)
 	_boss_foot.hide()
 	_boss_name_label = _label_in(_boss_card, "", Vector2(56, 5), Vector2(254, 22), 16, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT, true)
 	_boss_name_label.add_theme_font_override("font", _font_display)
 	_boss_name_label.visible = false
-	var boss_track := _panel(_boss_card, Vector2(14, 15), Vector2(470, 16), Color(0.1, 0.1, 0.16, 0.9), 8, Color(0, 0, 0, 0), 0, true)
-	_boss_hp_lag = _panel(boss_track, Vector2(1, 1), Vector2(468, 14), Color(1.0, 0.82, 0.78, 0.8), 7)
-	_boss_hp_fill = _panel(boss_track, Vector2(1, 1), Vector2(468, 14), Color(0.93, 0.3, 0.22), 7)
-	_boss_hp_num = _label_in(_boss_card, "", Vector2(14, 15), Vector2(470, 16), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
+	var boss_track := _panel(_boss_card, Vector2(14, 15), Vector2(614, 16), Color(0.1, 0.1, 0.16, 0.9), 8, Color(0, 0, 0, 0), 0, true)
+	_boss_hp_lag = _panel(boss_track, Vector2(1, 1), Vector2(612, 14), Color(1.0, 0.82, 0.78, 0.8), 7)
+	_boss_hp_fill = _panel(boss_track, Vector2(1, 1), Vector2(612, 14), Color(0.93, 0.3, 0.22), 7)
+	_boss_hp_num = _label_in(_boss_card, "", Vector2(14, 15), Vector2(614, 16), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
 	_boss_hp_num.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.55))
 	_boss_hp_num.add_theme_constant_override("shadow_offset_x", 1)
 	_boss_hp_num.add_theme_constant_override("shadow_offset_y", 1)
 	for frac in [0.666, 0.333]:
-		var tick := _panel(_boss_card, Vector2(14 + 470.0 * frac - 1, 15), Vector2(2, 16), Color(1, 1, 1, 0.45), 0)
+		var tick := _panel(_boss_card, Vector2(14 + 614.0 * frac - 1, 15), Vector2(2, 16), Color(1, 1, 1, 0.45), 0)
 		tick.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_boss_ticks.append(tick)  # cycle 21: shown only for kit bosses
 	# The tag chip rides ON the track's right end (added
 	# after the track so it draws above it), dark ink text.
-	_boss_tag_chip = _panel(_boss_card, Vector2(356, 12), Vector2(128, 22), UiTheme.CREAM, 11)
-	_boss_tag_label = _label_in(_boss_card, "守护者", Vector2(356, 12), Vector2(128, 22), 12, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, true)
+	# U1 1:1 round 16 (coordinator): on the reference the
+	# tag starts at 87% of the track and sticks out past
+	# its right end (0.685..0.816 of frame vs the track's
+	# 0.224..0.754) — chip (356,12,128,22) -> (535,12,
+	# 150,22); children are not clipped by the card.
+	_boss_tag_chip = _panel(_boss_card, Vector2(535, 12), Vector2(150, 22), UiTheme.CREAM, 11)
+	_boss_tag_label = _label_in(_boss_card, "守护者", Vector2(535, 12), Vector2(150, 22), 12, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, true)
 
 	# Cycle 18: the two .bossbar.mini bars (constructor
 	# @2020582 — the cycle-10 ledger correction). Feed:
@@ -12504,8 +12514,8 @@ func _update_hud_bars(delta: float) -> void:
 			_boss_lag_hold -= delta
 			if _boss_lag_hold <= 0.0:
 				_boss_lag = maxf(bf, _boss_lag - delta * 0.6)
-		_boss_hp_fill.size.x = 468.0 * bf
-		_boss_hp_lag.size.x = 468.0 * _boss_lag
+		_boss_hp_fill.size.x = 612.0 * bf
+		_boss_hp_lag.size.x = 612.0 * _boss_lag
 		_boss_hp_num.text = str(int(maxf(guardian.hp, 0.0)))
 	else:
 		_boss_shown = false
