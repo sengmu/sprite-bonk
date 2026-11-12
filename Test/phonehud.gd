@@ -796,7 +796,9 @@ func _finish(snap: Dictionary) -> void:
 ## script matches Test/out basenames only).
 func _p1_capture_combo() -> bool:
 	var tag := _run_tag()
-	return tag == "2400x1080_s100_i0" or tag == "1920x1080_s150_i48_0_0_0"
+	# U2 2026-11-13: 2340 s100 is the signoff batch first leg; its menu
+	# snapshot feeds compare/U2.png. Snapshots only, no check changes.
+	return tag == "2400x1080_s100_i0" or tag == "2340x1080_s100_i0" or tag == "1920x1080_s150_i48_0_0_0"
 
 func _p1_snap(state: String) -> void:
 	if _mode != "phone" or not _p1_capture_combo():
