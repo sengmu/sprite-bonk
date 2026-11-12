@@ -3441,6 +3441,11 @@ func _p5_menu_block(vp: Vector2) -> void:
 			var low := INF
 			var lwho := ""
 			for b in _p5_buttons(mdc):
+				# U2: the two resource pills are reference-sized info
+				# counters (52 ref px tall per the U2 ref measurement),
+				# not labelled action buttons; the 76 floor is for those.
+				if (b as Control).get_parent() != null and (b as Control).get_parent().name == "Resources":
+					continue
 				var h := _vis_rect(b).size.y
 				if h < low:
 					low = h
