@@ -15,6 +15,21 @@ extends Control
 
 var world: Node = null
 
+## Icon order 2: markers wear the shipped map art; fog, pins
+## logic and click handling are unchanged.
+const TEX_PIN := preload("res://assets/ui/badges/map_pin_player.png")
+const TEX_STAR := preload("res://assets/ui/badges/map_star.png")
+const TEX_CHEST := preload("res://assets/ui/badges/map_chest.png")
+const TEX_DOT_PURPLE := preload("res://assets/ui/badges/map_dot_purple.png")
+const TEX_EVENT_RED := preload("res://assets/ui/badges/event_dot_red.png")
+
+func _mark(tex: Texture2D, at: Vector2, sz: float, mod := Color.WHITE) -> void:
+	draw_texture_rect(tex, Rect2(at - Vector2.ONE * sz * 0.5, Vector2.ONE * sz), false, mod)
+
+func _pin(at: Vector2, sz: float, mod := Color.WHITE) -> void:
+	# Pin art anchors by its tip: rect bottom-centre on the point.
+	draw_texture_rect(TEX_PIN, Rect2(at - Vector2(sz * 0.5, sz), Vector2.ONE * sz), false, mod)
+
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	custom_minimum_size = Vector2(420, 420)
@@ -40,8 +55,7 @@ func _draw() -> void:
 		draw_rect(Rect2(Vector2.ZERO, size), Color(0.275, 0.235, 0.392, 0.85))
 		var bpl = world.get("player")
 		if bpl != null and is_instance_valid(bpl):
-			draw_circle(_w2m(bpl.global_position), 5, Color.WHITE)
-			draw_arc(_w2m(bpl.global_position), 7.5, 0, TAU, 24, Color(0.11, 0.07, 0.21), 2.0)
+			_pin(_w2m(bpl.global_position), 22.0)
 		return
 	var tex: Texture2D = world.get("terrain_baked")
 	if tex != null:
@@ -61,31 +75,25 @@ func _draw() -> void:
 						Color(0.05, 0.04, 0.10, 0.78))
 	var ap = world.get("altar_pos")
 	if ap != null:
-		draw_circle(_w2m(ap), 6, Color(1, 0.85, 0.2))
+		_mark(TEX_STAR, _w2m(ap), 19.0)
 		draw_arc(_w2m(ap), 9, 0, TAU, 24, Color.WHITE, 1.5)
 	var pn = world.get("portal_node")
 	if pn != null and is_instance_valid(pn):
 		var pp := _w2m((pn as Node3D).global_position)
-		draw_circle(pp, 6, Color(0.72, 0.4, 1))
+		_mark(TEX_DOT_PURPLE, pp, 14.0)
 		draw_arc(pp, 9, 0, TAU, 24, Color.WHITE, 1.5)
 	for c in world.call("chests_positions"):
-		draw_circle(_w2m(c), 3.5, Color(1, 0.8, 0.25))
+		_mark(TEX_CHEST, _w2m(c), 14.0)
 	var g: Node = world.get("guardian")
 	if g != null and is_instance_valid(g) and float(g.get("hp")) > 0.0:
 		var gp := _w2m(g.global_position)
-		draw_circle(gp, 7, Color(1, 0.42, 0.1))
+		_mark(TEX_EVENT_RED, gp, 17.0)
 		draw_arc(gp, 10, 0, TAU, 24, Color(1, 0.2, 0.3), 2.0)
 	var pl: Node = world.get("player")
 	if pl != null and is_instance_valid(pl):
-		draw_circle(_w2m(pl.global_position), 5, Color.WHITE)
-		draw_arc(_w2m(pl.global_position), 7.5, 0, TAU, 24,
-			Color(0.11, 0.07, 0.21), 2.0)
+		_pin(_w2m(pl.global_position), 22.0)
 	for pin in world.get("_map_pins"):
-		var mp := _w2m(pin)
-		draw_circle(mp, 6, Color(1, 0.82, 0.23))
-		draw_arc(mp, 9.5, 0, TAU, 24, Color(1, 0.82, 0.23), 2.0)
-		draw_line(mp + Vector2(0, 2), mp + Vector2(0, 12),
-			Color(1, 0.82, 0.23), 2.0)
+		_pin(_w2m(pin), 18.0, Color(1, 0.82, 0.23))
 	# Cycle 22: the golden meowth's treasure marker
 	# (sx.marker; the bundle's big map plots Treasure
 	# units in its special-marker pass).
@@ -93,5 +101,5 @@ func _draw() -> void:
 		var tp = world.event_marker_pos()
 		if tp != null:
 			var tm2 := _w2m(tp)
-			draw_circle(tm2, 6, Color(1, 0.78, 0.23))
+			_mark(TEX_CHEST, tm2, 15.0)
 			draw_arc(tm2, 9.5, 0, TAU, 24, Color.WHITE, 2.0)

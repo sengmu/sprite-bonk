@@ -16960,15 +16960,30 @@ func _bigmap_refresh_list() -> void:
 	var pct := int(round(100.0 * float(visited) / float(maxi(_fog.size(), 1))))
 	_mk_label(_bigmap_list, "已探索 %d%%" % pct, 14, UiTheme.GOLD)
 	var ist: Dictionary = _inter_state.get(zone, {})
-	var rows := [["祭坛", (ist.get("altars", []) as Array).size()],
-		["宝箱", chests_positions().size()],
-		["标记", _map_pins.size()]]
+	# Icon order 2: the side list is the map's legend — each row
+	# wears the same marker art the map draws.
+	var rows := [["祭坛", (ist.get("altars", []) as Array).size(), "map_star"],
+		["宝箱", chests_positions().size(), "map_chest"],
+		["标记", _map_pins.size(), "map_pin_player"]]
 	for r in rows:
-		_mk_label(_bigmap_list, "%s · %d" % [String(r[0]), int(r[1])], 13)
+		_bigmap_legend_row(String(r[2]), "%s · %d" % [String(r[0]), int(r[1])], UiTheme.TEXT)
 	if guardian != null and is_instance_valid(guardian) and guardian.hp > 0.0:
-		_mk_label(_bigmap_list, "守护者 · 存活", 13, Color(1, 0.6, 0.4))
+		_bigmap_legend_row("event_dot_red", "守护者 · 存活", Color(1, 0.6, 0.4))
 	if _shiny_e != null and is_instance_valid(_shiny_e):
-		_mk_label(_bigmap_list, "流光遭遇 · 出现中", 13, Color(0.6, 0.95, 1))
+		_bigmap_legend_row("event_dot_blue", "流光遭遇 · 出现中", Color(0.6, 0.95, 1))
+
+func _bigmap_legend_row(tex_key: String, text: String, color: Color) -> void:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	_bigmap_list.add_child(row)
+	var tr := TextureRect.new()
+	tr.texture = load("res://assets/ui/badges/%s.png" % tex_key)
+	tr.custom_minimum_size = Vector2(16, 16)
+	tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(tr)
+	_mk_label(row, text, 13, color)
 
 func _fog_mark(pos: Vector3, radius: float) -> void:
 	if _fog.size() != 48 * 48:

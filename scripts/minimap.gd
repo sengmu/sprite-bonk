@@ -10,6 +10,32 @@ var world: Node = null  # the World node (scripts/world.gd)
 var world_range := 170.0
 var baked: Texture2D = null
 
+## Icon order 2: map markers wear the shipped art
+## (assets/ui/badges/map_*.png, event_dot_*.png). Positions and
+## the fog-blind rule are unchanged — only the marks' faces.
+const TEX_ARROW := preload("res://assets/ui/badges/map_player_arrow.png")
+const TEX_STAR := preload("res://assets/ui/badges/map_star.png")
+const TEX_CHEST := preload("res://assets/ui/badges/map_chest.png")
+const TEX_DOT_RED := preload("res://assets/ui/badges/map_dot_red.png")
+const TEX_DOT_ORANGE := preload("res://assets/ui/badges/map_dot_orange.png")
+const TEX_DOT_GREEN := preload("res://assets/ui/badges/map_dot_green.png")
+const TEX_DOT_PURPLE := preload("res://assets/ui/badges/map_dot_purple.png")
+const TEX_DOT_YELLOW := preload("res://assets/ui/badges/map_dot_yellow.png")
+const TEX_EVENT_RED := preload("res://assets/ui/badges/event_dot_red.png")
+
+func _mark(tex: Texture2D, at: Vector2, sz: float) -> void:
+	draw_texture_rect(tex, Rect2(at - Vector2.ONE * sz * 0.5, Vector2.ONE * sz), false)
+
+func _player_mark(at: Vector2) -> void:
+	var pl = world.get("player")
+	var rot := 0.0
+	if pl and is_instance_valid(pl):
+		var fwd: Vector3 = -(pl as Node3D).global_transform.basis.z
+		rot = atan2(fwd.x, -fwd.z)
+	draw_set_transform(at, rot, Vector2.ONE)
+	draw_texture_rect(TEX_ARROW, Rect2(Vector2.ONE * -8.0, Vector2.ONE * 16.0), false)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
 func _ready() -> void:
 	custom_minimum_size = Vector2(168, 168)
 	size = custom_minimum_size
@@ -50,7 +76,7 @@ func _draw() -> void:
 		draw_circle(center, radius + 3.0, Color(0.275, 0.235, 0.392, 0.85))
 		var bpl = world.get("player")
 		if bpl and is_instance_valid(bpl):
-			draw_circle(_w2m_abs(bpl.global_position), 5.0, Color.WHITE)
+			_player_mark(_w2m_abs(bpl.global_position))
 		# U1 1:1 round 4: no cardinal letters — the reference
 		# minimap (U1_final.jpg) is a clean disc.
 		return
@@ -58,13 +84,12 @@ func _draw() -> void:
 	var altar: Vector3 = world.get("altar_pos")
 	var am := _w2m_abs(altar)
 	if (am - center).length() < radius - 4.0:
-		draw_circle(am, 6.0, Color(1.0, 0.8, 0.25))
-		draw_circle(am, 6.0, Color(1, 1, 1, 0.0))
+		_mark(TEX_STAR, am, 15.0)
 	var portal = world.get("portal_node")
 	if portal and is_instance_valid(portal):
 		var pm := _w2m_abs(portal.global_position)
 		if (pm - center).length() < radius - 4.0:
-			draw_circle(pm, 6.0, Color(0.75, 0.45, 1.0))
+			_mark(TEX_DOT_PURPLE, pm, 12.0)
 	# Enemies (absolute; skip any that fall outside the disc).
 	for e in get_tree().get_nodes_in_group("enemies"):
 		if not is_instance_valid(e):
@@ -72,8 +97,10 @@ func _draw() -> void:
 		var em := _w2m_abs(e.global_position)
 		if (em - center).length() > radius - 3.0:
 			continue
-		var col := Color(0.95, 0.35, 0.3) if not e.get("is_guardian") else Color(1.0, 0.55, 0.2)
-		draw_circle(em, 4.0 if not e.get("is_guardian") else 6.0, col)
+		if e.get("is_guardian"):
+			_mark(TEX_DOT_ORANGE, em, 12.0)
+		else:
+			_mark(TEX_DOT_RED, em, 8.0)
 	# Guardian chests (cycle 9): the original marks unopened
 	# Poké Ball chests on the minimap (onBossKilled toast @1461354).
 	if world.has_method("chests_positions"):
@@ -81,7 +108,7 @@ func _draw() -> void:
 			var cm := _w2m_abs(cp)
 			if (cm - center).length() > radius - 3.0:
 				continue
-			draw_circle(cm, 3.5, Color(1.0, 0.8, 0.25))
+			_mark(TEX_CHEST, cm, 13.0)
 	# Allies (cycles 8-9): the original plots allies as green dots —
 	# fillStyle #7aff9a, strokeStyle #1d1236, lineWidth 2, arc
 	# radius 6*g (bundle minimap draw @2038659; cycle 8 had the
@@ -92,7 +119,7 @@ func _draw() -> void:
 		var am2 := _w2m_abs(a.global_position)
 		if (am2 - center).length() > radius - 3.0:
 			continue
-		draw_circle(am2, 6.0, Color("7aff9a"))
+		_mark(TEX_DOT_GREEN, am2, 11.0)
 		draw_arc(am2, 6.0, 0.0, TAU, 32, Color("1d1236"), 2.0)
 	# Cycle 18: the shiny encounter (cyan capture ring, the
 	# gR ring color for capturables) and the player's pins
@@ -106,7 +133,7 @@ func _draw() -> void:
 		for pin in world.get("_map_pins"):
 			var pm2 := _w2m_abs(pin)
 			if (pm2 - center).length() < radius - 3.0:
-				draw_circle(pm2, 3.5, Color(1, 0.82, 0.23))
+				_mark(TEX_DOT_YELLOW, pm2, 8.0)
 	# Cycle 22: the golden meowth's treasure marker
 	# (sx.marker; bundle minimap @2034218 draws Treasure
 	# units in the special-marker pass).
@@ -115,12 +142,10 @@ func _draw() -> void:
 		if mp != null:
 			var mm := _w2m_abs(mp)
 			if (mm - center).length() < radius - 3.0:
-				draw_circle(mm, 5.0, Color(1, 0.78, 0.23))
+				_mark(TEX_EVENT_RED, mm, 12.0)
 				draw_arc(mm, 7.0, 0.0, TAU, 24, Color.WHITE, 1.5)
-	# Player dot (absolute — moves within the zone map).
+	# Player mark (absolute — moves within the zone map).
 	var player = world.get("player")
 	if player and is_instance_valid(player):
-		var pp := _w2m_abs(player.global_position)
-		draw_circle(pp, 5.0, Color.WHITE)
-		draw_circle(pp, 5.0, Color(0.2, 0.5, 1.0, 0.0))
+		_player_mark(_w2m_abs(player.global_position))
 	# U1 1:1 round 4: no cardinal letters (see blind path above).
