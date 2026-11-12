@@ -126,4 +126,4 @@ sync --delete 清除、贴图静默空白）。
 status_ 无 2D 状态展示面，不虚构界面。
 - items.json 的 name 字段为原包西班牙语串——既有文案债，显示名走
 GameData.item_def(key).name，文件 id 不上屏；不阻塞本单。
-- 本单已合入 align-fix13（），Notion 单据置 Done。
+- 本单已合入 align-fix13（66ad775），Notion 单据置 Done。
