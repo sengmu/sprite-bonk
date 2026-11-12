@@ -349,3 +349,11 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 监看时点 01:13：2340 档已完，`phonehud 2340 rc=0`，**PHONEHUD DONE checks=1459 fails=0**；2400 档在跑（Godot PID 2035261，s100，01:11 已耗），日志 55 行，中途读数 2 FAIL（均为 P5：`menu pieces pairwise disjoint` TextureRect(765,76) x HBoxContainer(1008,34)；`primary action bottom-right (wallet/menu)` '关闭' centre=(1038,424)）。2400 未跑完，上述仅为中途读数、不作裁定——须等 ALLDONE 后逐名对同机基线再判（此前完整批的三类既有红为抽屉自动收起、头像暂停可达、祝福遇 draft；这两条是否新增待核）。
 - 断点：验证批 `Test/u2_signoff_run.sh`（2340 s150 → 2400 s100 顺序）仍在 NUC 上跑，.done 路径 `Test/out/u2_signoff.done`。下一轮先读该 .done：两档绿则重建 `compare/U2.png` 与 `compare/U2_2400.png`、逐项亲检后签核 U2；2400 有红则先逐名裁定（是否新红、是否与本轮资源 pill/主角框改动相关）再修。
 - 本轮无代码改动；唯一提交为本节台账记入。
+
+## U2 签核验证批监看（2026-11-13 01:14 轮）
+
+- 防撞触发：`Test/out/u2_signoff.done` 仍只有 START（2026-11-13T01:00:06+08:00，HEAD 3790409），无 ALLDONE；锚定 pgrep 见 Godot 在跑（PID 2035261，2400x1080 s100，01:15 时已耗约 4 分钟，timeout 1500s）。本轮按防撞规则只监看、不双开、不改代码、不碰 main。
+- 监看时点 01:15：2340 档已完（`phonehud 2340 rc=0`，**PHONEHUD DONE checks=1459 fails=0**，与 01:07 轮一致）；2400 档在跑，日志 `Test/out/u2_signoff_phonehud_2400.log` 821 PASS、1 FAIL——`PHONEHUD FAIL P5: primary action bottom-right (wallet/menu) :: '关闭' centre=(1038, 424)`（第 43 行），日志正行至 P1 段（`single-thumb drag rotates once`）。
+- 注意：01:07 轮记录的中途 2 FAIL 中另一条（P5 `menu pieces pairwise disjoint` TextureRect(765,76) x HBoxContainer(1008,34)）在本轮 grep 中已不在 2400 日志内——日志状态有出入，不作裁定；以 ALLDONE 后的最终日志逐名对基线为准。
+- 断点不变：验证批 `Test/u2_signoff_run.sh` 仍在 NUC 上跑，.done 路径 `Test/out/u2_signoff.done`。下一轮先读该 .done：两档绿则重建 `compare/U2.png` 与 `compare/U2_2400.png`、逐项亲检后签核 U2；2400 有红则先逐名裁定（是否新红、是否与本轮资源 pill/主角框改动相关）再修。
+- 本轮无代码改动；唯一提交为本节台账记入。
