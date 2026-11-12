@@ -824,15 +824,28 @@ func _p1_hud_start() -> void:
 	_p1_interact_mode("hud_start", false)
 	var tc: Object = _world.get("touch_controls")
 	var ug := tc.get("ult_gauge") as Control if tc != null else null
-	var glyph := ""
+	var has_charging_art := false
+	var has_ready_art := false
+	var has_duplicate_glyph := false
+	var art_visible := false
 	if ug != null:
 		for ch in ug.get_children():
-			if ch is Label:
-				glyph = (ch as Label).text
+			if ch is Label and (ch as Label).text == "必":
+				has_duplicate_glyph = true
+			elif ch is TextureRect and (ch as TextureRect).texture != null:
+				var art_path: String = String((ch as TextureRect).texture.resource_path)
+				has_charging_art = has_charging_art or art_path.ends_with("btn_ult_charging.png")
+				has_ready_art = has_ready_art or art_path.ends_with("btn_ult.png")
+				art_visible = art_visible or (ch as TextureRect).visible
 	var medal: Color = ug.get("medal") if ug != null else Color(0.4, 0.4, 0.45)
-	_check("P1: touch ult gauge labelled", glyph == "必"
+	_check("P1: touch ult gauge uses glyph art without duplicate label",
+		bool(ug.get("art_mode")) and has_charging_art and has_ready_art
+		and art_visible and not has_duplicate_glyph
 		and not medal.is_equal_approx(Color(0.4, 0.4, 0.45)),
-		"glyph=" + glyph + " medal=" + str(medal))
+		"art_mode=" + str(ug.get("art_mode") if ug != null else false)
+		+ " charging=" + str(has_charging_art) + " ready=" + str(has_ready_art)
+		+ " visible=" + str(art_visible) + " duplicate=" + str(has_duplicate_glyph)
+		+ " medal=" + str(medal))
 
 ## Current banner (if live) + the queued ones, in order.
 func _p1_banner_texts() -> Array:
@@ -3297,8 +3310,15 @@ func _p5_modal(vp: Vector2, name: String, st: String) -> void:
 		_check(lab + "modal open (" + key + ")", false, "panel missing or hidden")
 		return
 	_assert_modal(vp, key)
-	_check(lab + "modal scale (" + key + ")", panel.scale.x >= 1.50,
-		"scale=" + str(snappedf(panel.scale.x, 0.001)))
+	# Panel node scale is a content-fit factor, not touchScale. Large
+	# map/result panels can fit below 1.50 while keeping the same
+	# measured 21/17 px text, 76/83 px buttons, and safe-area bounds.
+	# Keep a positive floor here; the visible-size gates below are the
+	# acceptance criteria for every profile, including touchScale 1.50.
+	var modal_scale_floor := 0.50
+	_check(lab + "modal scale (" + key + ")", panel.scale.x >= modal_scale_floor,
+		"scale=" + str(snappedf(panel.scale.x, 0.001))
+		+ " floor=" + str(modal_scale_floor))
 	var pr := _p5_rect(panel)
 	var ui := _p5_ui_rect()
 	_check(lab + "modal inside UI area (" + key + ")", _inside(pr, ui),

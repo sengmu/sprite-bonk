@@ -3715,7 +3715,7 @@ func _c9_shop_phase() -> void:
 	err = String(GameProfile.shop_buy("nope", fake))
 	_c9_check("shop: unknown id rejected", err == "unknown", "err=" + err)
 	# Persistence + sanitization.
-	var f := FileAccess.open("user://GameProfile.json", FileAccess.READ)
+	var f := FileAccess.open(GameProfile.PATH, FileAccess.READ)
 	var parsed: Dictionary = JSON.parse_string(f.get_as_text())
 	f.close()
 	_c9_check("shop: bag + shop day persisted to disk", int((parsed.get("bag", {}) as Dictionary).get("honey", 0)) == 9 and int((parsed.get("shop", {}) as Dictionary).get("day", 0)) == 6,
@@ -4790,18 +4790,17 @@ func _c21_phase() -> void:
 	var saved_crit: float = p.crit_chance
 	p.crit_chance = -1.0
 	# tentacles: two nearest within 7 m take the F_ hit.
-	# Cycle 21.1 fixture (all passive blocks below): the
-	# subjects ride 40000x HP — at the C21 400x the
+	# Cycle 21.1 fixture: targets use 1e9 HP — at the C21 400x the
 	# item-loaded player's ambient DPS killed every subject
 	# inside its window on both hosts (closing standalones:
-	# hp -1/-1, status=freed), so the ticks were never the
-	# thing measured. Each subject is retired after its
+	# targets were freed), so the ticks were never the thing
+	# measured. Each subject is retired after its
 	# own check so the next block's nearest/in-range pick
 	# cannot land on a survivor.
 	p.hp = p.max_hp  # the tick carrier must stay alive through every window
 	p.passive_id = "tentacles"
-	var t1 = w.call("_spawn_enemy_at", "rattata", w.player.global_position + Vector3(2, 0, 0), 40000.0, false, 1.0)
-	var t2 = w.call("_spawn_enemy_at", "rattata", w.player.global_position + Vector3(-2, 0, 0), 40000.0, false, 1.0)
+	var t1 = w.call("_spawn_enemy_at", "rattata", w.player.global_position + Vector3(2, 0, 0), 1000000000.0, false, 1.0)
+	var t2 = w.call("_spawn_enemy_at", "rattata", w.player.global_position + Vector3(-2, 0, 0), 1000000000.0, false, 1.0)
 	await _c211_wait_disarmed(w, p, 4.5)
 	print("C21DBG passive: state=", w.get("state"), " run_time=", w.get("run_time"),
 		" pid=", p.passive_id, " pendlv=", p.get("pending_levels"),
@@ -4871,7 +4870,7 @@ func _c21_phase() -> void:
 	# static: the nearest enemy takes the discharge.
 	p.hp = p.max_hp
 	p.passive_id = "static"
-	var d1 = w.call("_spawn_enemy_at", "rattata", w.player.global_position + Vector3(3, 0, 0), 40000.0, false, 1.0)
+	var d1 = w.call("_spawn_enemy_at", "rattata", w.player.global_position + Vector3(3, 0, 0), 1000000000.0, false, 1.0)
 	# Cycle 21.1: static is the one single-target passive
 	# (nearest enemy, 5 s period, ~1 tick per window) — an
 	# ambient wild enemy standing nearer than the subject
@@ -4884,8 +4883,11 @@ func _c21_phase() -> void:
 		if e != d1 and is_instance_valid(e):
 			(e as Node).queue_free()
 	await _c9_frames(2)
-	await _c211_wait_disarmed(w, p, 6.5)
+	# Runtime can pause around scripted modal settlements; allow
+	# the game clock to reach the scheduled 5 s discharge.
+	await _c211_wait_disarmed(w, p, 12.0)
 	print("C22DBG static: pid=", p.passive_id, " pendlv=", p.get("pending_levels"),
+		" hp=", (d1.hp if is_instance_valid(d1) else -1.0),
 		" ptick=", str(w.get("_ptick_next")), " state=", w.get("state"),
 		" running=", w.get("running"), " rt=", w.get("run_time"))
 	_c9_check("c21 passive static: discharge hits the nearest",

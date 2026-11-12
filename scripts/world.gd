@@ -562,6 +562,7 @@ var _draft_sb: Button
 var _draft_bb: Button
 var _draft_card_btns: Array = []
 var _draft_card_accents: Array = []
+var _draft_card_rars: Array = []
 var _draft_shines: Array = []   # cycle 19: rarity>=2 shine sweeps
 var _shine_tex: Texture2D       # cycle 19: shared shine gradient
 var _draft_banish_mode := false
@@ -3588,8 +3589,10 @@ func _build_hud() -> void:
 	_build_bigmap(root)
 	_build_loadout(root)
 	# UI-mobile P5 (plan §B3 table): M0 design sizes (W_max, H).
-	_p5_register(_draft_panel, 985.0, 420.0)
-	_p5_register(_blessing_panel, 985.0, 400.0)
+	# The selected cards are 300 px tall; include the live header,
+	# team row, and panel padding in the registered fit heights.
+	_p5_register(_draft_panel, 985.0, 475.0)
+	_p5_register(_blessing_panel, 985.0, 467.0)
 	_p5_register(_choice_panel, 860.0, 360.0)
 	_p5_register(_meowth_panel, 985.0, 430.0)
 	_p5_register(_pause_panel, 1000.0, 430.0)
@@ -5720,6 +5723,7 @@ func _draft_card(opt: Dictionary, idx: int) -> Button:
 	card.clip_contents = true  # cycle 19: the shine stays in the card
 	_draft_card_btns.append(card)
 	_draft_card_accents.append(accent)
+	_draft_card_rars.append(rar)
 	var top := Panel.new()
 	top.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	top.offset_left = 2
@@ -5841,6 +5845,7 @@ func _render_draft() -> void:
 		c.queue_free()
 	_draft_card_btns.clear()
 	_draft_card_accents.clear()
+	_draft_card_rars.clear()
 	_draft_shines.clear()
 	for i in range(_draft_options.size()):
 		_draft_opts_box.add_child(_draft_card(_draft_options[i], i))
@@ -5925,8 +5930,16 @@ func _paint_draft_cards() -> void:
 				else Color(1.12, 0.82, 0.86)
 		else:
 			var acc: Color = _draft_card_accents[i]
-			card.add_theme_stylebox_override("normal", UiTheme.card_box(acc))
-			card.add_theme_stylebox_override("hover", UiTheme.card_box(acc, true))
+			# Icon order 2 acceptance fix: framed cards (rar >= 0)
+			# keep their rarity frame here — repainting them with
+			# card_box wiped the frame make_card had set.
+			var rar2: int = int(_draft_card_rars[i]) if i < _draft_card_rars.size() else -1
+			if rar2 >= 0:
+				card.add_theme_stylebox_override("normal", UiTheme.card_frame_box(rar2))
+				card.add_theme_stylebox_override("hover", UiTheme.card_frame_box(rar2, true))
+			else:
+				card.add_theme_stylebox_override("normal", UiTheme.card_box(acc))
+				card.add_theme_stylebox_override("hover", UiTheme.card_box(acc, true))
 			card.modulate = Color.WHITE
 
 func _draft_toggle_banish() -> void:
@@ -13186,11 +13199,13 @@ func _process(delta: float) -> void:
 			and state in ["playing", "guardian", "portal"] \
 			and player and is_instance_valid(player):
 		var face := Vector3.ZERO
-		var lt: Node = player.get("lock_target")
-		if lt != null and is_instance_valid(lt):
+		var lt: Node = null
+		if player.lock_target != null and is_instance_valid(player.lock_target):
+			lt = player.lock_target
+		if lt != null:
 			face = (lt as Node3D).global_position - player.global_position
 		else:
-			face = Vector3(player.velocity.x, 0, player.velocity.z)
+			face = Vector3(player._vel.x, 0, player._vel.z)
 		face.y = 0.0
 		if face.length() > 0.5:
 			face = face.normalized()
@@ -13790,13 +13805,15 @@ func _p5_register(panel: Control, w_max: float, h: float) -> void:
 func _p5_w(panel: Control, fallback: float) -> float:
 	return float(panel.get_meta("p5_w", fallback)) if panel else fallback
 
-## M0: s_m = min(s, (vh - 16) / H), W = min(W_max, (vw - 24) / s_m),
-## in _ui_root space (the safe area); centred, pivot = centre.
-func _p5_place_modal(c: Control, s: float) -> void:
+## M0: fit against the larger of the nominal and live content heights;
+## card rows can make the latter taller than the original design box.
+## Keep a small vertical inset in _ui_root space and centre the result.
+func _p5_place_modal(c: Control, s: float, post_layout: bool = false) -> void:
 	var spec: Vector2 = _p5_spec[c]
 	var area := _ui_root.size if _ui_root and _ui_root.size.y > 0.0 \
 		else get_viewport().get_visible_rect().size
-	var sm := minf(s, (area.y - 16.0) / spec.y)
+	var content_h := maxf(spec.y, c.get_combined_minimum_size().y)
+	var sm := minf(s, (area.y - 6.0) / content_h)
 	var w := floorf(minf(spec.x, (area.x - 24.0) / sm))
 	c.offset_left = -w * 0.5
 	c.offset_right = w * 0.5
@@ -13810,6 +13827,11 @@ func _p5_place_modal(c: Control, s: float) -> void:
 	_p5_fit(c, sm)
 	if relay:
 		_p5_relayout(c)
+		# Width-dependent content can grow beyond the nominal height
+		# during its first layout (notably the 300 px draft/blessing
+		# cards). Refit once against that measured content height.
+		if not post_layout:
+			_p5_place_modal(c, s, true)
 
 ## Width-dependent modal content re-renders when W changes
 ## (hudScale slider, safe-area change).
@@ -14537,6 +14559,10 @@ func _layout_hud() -> void:
 			_banner.offset_right = b_c - vw * 0.5 + 430.0
 			_banner.offset_top = stack_y + 10.0
 			_banner.offset_bottom = stack_y + 50.0
+			# The banner's width is fixed by the offsets above. Its
+			# previous measured size may be zero or from an older
+			# scale, so pin the pivot to the 860 px design center.
+			_banner.pivot_offset = Vector2(430.0, 0.0)
 			# The backing is SIZED to the span (its 892
 			# design width exceeds the free span at
 			# phone widths — scaling it with the label
@@ -15110,7 +15136,7 @@ func _p3_place_objective(mm_bot: float, mm_l: float, s_col: float, vw: float, vh
 	_p3_place_hit(_obj_hit, _p3_obj_target())
 	# The hit never reaches into the cluster below (it is a
 	# later touch-layer sibling and would steal the ult).
-	if _obj_hit.visible and touch_controls != null:
+	if _obj_hit != null and _obj_hit.visible and touch_controls != null:
 		var d: Vector2 = touch_controls.get_global_rect().position - _ui_root.get_global_rect().position
 		var lim := _p3_z_over(_obj_hit.position.x + d.x, _obj_hit.position.x + d.x + _obj_hit.size.x)
 		if lim < INF and _obj_hit.position.y + d.y + _obj_hit.size.y > lim + 6.0:

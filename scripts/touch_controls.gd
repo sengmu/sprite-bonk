@@ -405,11 +405,11 @@ func _build_button(font: Font, kind: String, icon: String, size: int,
 	# vector glyph hides (the art carries its own glyph) and the
 	# state code's "icon" handle points at the art so its
 	# modulate states (interact idle/ready) drive the face.
-	var art_path := {"interact": "res://assets/ui/touch/btn_interact.png",
+	var art_path: String = String({"interact": "res://assets/ui/touch/btn_interact.png",
 		"jump": "res://assets/ui/touch/btn_jump.png",
 		"dash": "res://assets/ui/touch/btn_dash.png",
 		"aim": "res://assets/ui/touch/btn_aim.png",
-		"pause": "res://assets/ui/touch/btn_pause.png"}.get(kind, "")
+		"pause": "res://assets/ui/touch/btn_pause.png"}.get(kind, ""))
 	var art: TextureRect = null
 	if art_path != "":
 		art = _art_rect(art_path)
