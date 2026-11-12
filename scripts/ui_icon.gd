@@ -120,6 +120,14 @@ func _draw() -> void:
 			_circ(10.8, 18.2, 0.7)
 			_line([Vector2(4, 5), Vector2(2, 8), Vector2(2, 11)], 1.5)
 			_line([Vector2(21, 10), Vector2(22, 13), Vector2(21, 16)], 1.5)
+		"magnet":
+			# Icon order 1 (2026-11-12): horseshoe magnet so the
+			# lab magnet node stops falling back to the plain
+			# ring. Arc over the top, two pole blocks hanging
+			# from its ends.
+			_arc(12, 11.4, 6.2, 3.49, 5.93, 3.4)
+			_poly([Vector2(4.4, 9.6), Vector2(7.0, 9.6), Vector2(7.0, 15.4), Vector2(4.4, 15.4)], color)
+			_poly([Vector2(17.0, 9.6), Vector2(19.6, 9.6), Vector2(19.6, 15.4), Vector2(17.0, 15.4)], color)
 		"wind":
 			# U1 1:1 round 10: a bold "3" swirl with two speed
 			# lines (reference U1_final.jpg dash glyph) — the

@@ -5667,7 +5667,7 @@ func _draft_card(opt: Dictionary, idx: int) -> Button:
 			icon = _type_icon(String(md2.get("type", "")))
 		"vitamin":
 			var vc: Dictionary = GameData.VITAMINS[key]
-			icon = {"protein":"sword", "calcium":"sparkle", "iron":"shield", "carbos":"vibrate", "hp-up":"heart", "ether":"flask", "dire-hit":"sword", "exp-candy":"book", "nugget":"wallet", "super-potion":"flask", "star-piece":"star"}.get(key, "flask")
+			icon = {"protein":"vit_protein", "calcium":"vit_calcium", "iron":"vit_iron", "carbos":"vit_carbos", "hp-up":"vit_hp_up", "ether":"vit_ether", "dire-hit":"vit_dire_hit", "exp-candy":"vit_exp_candy", "nugget":"vit_nugget", "super-potion":"vit_super_potion", "star-piece":"vit_star_piece"}.get(key, "flask")
 			title = String(vc["label"])
 			desc = String(vc["fmt"]) % _fmt_num(float(vc["per"]) * pe)
 	var accent := top_c if kind == "move_new" else rar_c
@@ -16202,7 +16202,7 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 	for c in _result_box.get_children():
 		(c as Node).queue_free()
 	# Approved U5: four readable summary rows before extended statistics.
-	for data in [["clock", "用时", _fmt_time(run_time)], ["sword", "击杀", str(kills)], ["star", "等级", str(player.level if player else 1)], ["coin", "金币", str(int(gold))]]:
+	for data in [["tile_clock", "用时", _fmt_time(run_time)], ["tile_sword", "击杀", str(kills)], ["tile_star", "等级", str(player.level if player else 1)], ["tile_coin", "金币", str(int(gold))]]:
 		var plate := PanelContainer.new()
 		plate.add_theme_stylebox_override("panel", UiTheme.panel_texture())
 		_result_box.add_child(plate)
