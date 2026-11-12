@@ -4326,7 +4326,7 @@ func _build_menu(root: Control) -> void:
 			pill.text = ""
 			for button_state in ["normal", "hover", "pressed"]:
 				pill.add_theme_stylebox_override(button_state, menu_pill_face)
-			pill.custom_minimum_size = Vector2(108, 25)  # U2: ref pill 226x52 ref px
+			pill.custom_minimum_size = Vector2(115, 31)  # U2: 115x31 button renders a 108x25 face (button_cream opaque 93.7%x79.7%)
 			var resource_icon: Control
 			if dest == "lab":
 				resource_icon = UiIcon.new("spark", Color("aa4ace"), 25)
@@ -4337,17 +4337,17 @@ func _build_menu(root: Control) -> void:
 				total_star.texture = UiTheme.asset("decorations", "star_filled")
 				resource_icon = total_star
 			resource_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			resource_icon.position = Vector2(7, 4)
+			resource_icon.position = Vector2(7, 7)
 			resource_icon.size = Vector2(16, 16)
 			pill.add_child(resource_icon)
 			var resource_text := _mk_label(pill, String(entry[0]), 14, UiTheme.TEXT)
 			resource_text.name = "ResourceText"
-			resource_text.position = Vector2(28, 2)
+			resource_text.position = Vector2(28, 5)
 			resource_text.size = Vector2(72, 21)
 			resource_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 			var text_width := resource_text.get_minimum_size().x
 			resource_text.size.x = maxf(72.0, text_width)
-			pill.custom_minimum_size.x = maxf(108.0, 36.0 + text_width)
+			pill.custom_minimum_size.x = maxf(115.0, 36.0 + text_width)
 		pill.pressed.connect(func() -> void:
 			if dest == "lab":
 				_lab_panel.show()
@@ -13879,9 +13879,14 @@ func _p5_fit(root: Control, sm: float) -> void:
 			var b := n as Button
 			if b.text != "":
 				_p5_floor_font(b, ft)
+			# U2: the two resource pills are reference-sized info
+			# counters (their button_cream face is 108x25 ref px);
+			# the 76 UI touch floor would force them to 49 design
+			# tall and overlap the hero, so they skip the floor.
+			var _res_pill := b.get_parent() != null and b.get_parent().name == "Resources"
 			if b.get_node_or_null("knob") != null:
 				UiTheme.size_switch(b, hb / 28.0)
-			else:
+			elif not _res_pill:
 				if not b.has_meta("p5_h0"):
 					b.set_meta("p5_h0", b.custom_minimum_size.y)
 				var want := maxf(float(b.get_meta("p5_h0")), hp if b.has_meta("p5_primary") else hb)
@@ -13983,8 +13988,8 @@ func _p5_layout_menu(s: float) -> void:
 				var font_size := resource_text.get_theme_font_size("font_size")
 				var text_width := ceilf(font.get_string_size(resource_text.text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x)
 				resource_text.size.x = text_width
-				(pill as Control).custom_minimum_size.x = maxf(108.0, 36.0 + text_width)
-		resources.position = Vector2(maxf(328, w - resources.get_combined_minimum_size().x - 22), 19)  # U2: ref pair top 42, right edge 1627 ref px
+				(pill as Control).custom_minimum_size.x = maxf(115.0, 36.0 + text_width)
+		resources.position = Vector2(maxf(328, w - resources.get_combined_minimum_size().x - 22), 13)  # U2: face top ~32 ref (button 31 tall; rect bottom 92 ref clears hero top 95)
 	_p5_fit(_menu_design, sm)
 	if _menu_hint:
 		# The floored font wraps the hint to two lines taller than
