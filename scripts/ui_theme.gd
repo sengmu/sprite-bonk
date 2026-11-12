@@ -403,10 +403,31 @@ static func card_box(accent: Color, hover: bool = false,
 	box.modulate_color = Color.WHITE if not hover else Color(1, 0.97, 0.88)
 	return box
 
-static func make_card(accent: Color, min_size: Vector2) -> Button:
+## Icon order 2: rarity card frames (assets/ui/frames/card_*.png,
+## 444x604 equal-ratio full faces). Callers pass frame_rarity >= 0
+## only for cards whose aspect matches the art (~0.735) — the
+## frame is drawn unstretched, per the order.
+const CARD_FRAMES := ["common", "uncommon", "rare", "epic", "legendary"]
+static func card_frame_box(rarity: int, hover: bool = false) -> StyleBoxTexture:
+	var box := StyleBoxTexture.new()
+	box.texture = load("res://assets/ui/frames/card_%s.png" % CARD_FRAMES[clampi(rarity, 0, 4)])
+	box.modulate_color = Color(1, 0.97, 0.88) if hover else Color.WHITE
+	return box
+
+static func make_card(accent: Color, min_size: Vector2, frame_rarity: int = -1) -> Button:
 	var b := Button.new()
 	b.text = ""
 	b.custom_minimum_size = min_size
+	if frame_rarity >= 0:
+		b.add_theme_stylebox_override("normal", card_frame_box(frame_rarity))
+		b.add_theme_stylebox_override("hover", card_frame_box(frame_rarity, true))
+		var pressed := card_frame_box(frame_rarity, true)
+		pressed.modulate_color = Color(0.82, 0.78, 0.72)
+		b.add_theme_stylebox_override("pressed", pressed)
+		var focus := StyleBoxTexture.new()
+		focus.texture = load("res://assets/ui/frames/card_selected.png")
+		b.add_theme_stylebox_override("focus", focus)
+		return b
 	b.add_theme_stylebox_override("normal", card_box(accent))
 	b.add_theme_stylebox_override("hover", card_box(accent, true))
 	b.add_theme_stylebox_override("pressed", card_box(accent.darkened(0.25), true))

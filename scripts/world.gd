@@ -5708,11 +5708,14 @@ func _draft_card(opt: Dictionary, idx: int) -> Button:
 			title = String(vc["label"])
 			desc = String(vc["fmt"]) % _fmt_num(float(vc["per"]) * pe)
 	var accent := top_c if kind == "move_new" else rar_c
-	# UI-mobile P5 (plan §B3 M1): phone cards 220 x 230, narrower
+	# UI-mobile P5 (plan §B3 M1): phone cards 220 wide, narrower
 	# when four must share a 16:9 row (_p5_card_w).
-	var csz := Vector2(_p5_card_w(_draft_panel, _draft_options.size(), 220.0), 230.0) \
+	# Icon order 2: phone card height 230 -> 300 so the card
+	# matches the rarity frames' equal ratio (444x604 ~ 0.735);
+	# the modal's vertical budget still fits (~448 <= 452).
+	var csz := Vector2(_p5_card_w(_draft_panel, _draft_options.size(), 220.0), 300.0) \
 		if _p5_on else Vector2(222, 302)
-	var card := UiTheme.make_card(accent, csz)
+	var card := UiTheme.make_card(accent, csz, rar)
 	card.clip_contents = true  # cycle 19: the shine stays in the card
 	_draft_card_btns.append(card)
 	_draft_card_accents.append(accent)
@@ -10727,9 +10730,11 @@ func _render_blessing() -> void:
 		var offer: Dictionary = _blessing_offers[i]
 		var rar := int(offer["rarity"])
 		var rar_c := UiTheme.rarity_color(rar)
-		var bsz := Vector2(_p5_card_w(_blessing_panel, _blessing_offers.size(), 220.0), 216.0) \
-			if _p5_on else Vector2(190, 216)
-		var card := UiTheme.make_card(rar_c, bsz)
+		# Icon order 2: heights follow the frames' equal ratio
+		# (216 -> 300 phone / 258 desktop at these widths).
+		var bsz := Vector2(_p5_card_w(_blessing_panel, _blessing_offers.size(), 220.0), 300.0) \
+			if _p5_on else Vector2(190, 258)
+		var card := UiTheme.make_card(rar_c, bsz, rar)
 		var top := Panel.new()
 		top.set_anchors_preset(Control.PRESET_TOP_WIDE)
 		top.offset_left = 2
@@ -10748,8 +10753,16 @@ func _render_blessing() -> void:
 		# top zone draws the GENERIC blessing glyph at 64 px
 		# (Z('blessing',64) @2064760) — matched, replacing
 		# the per-stat 52 px icon.
-		var ic := UiIcon.new("blessing", Color.WHITE, 64)
+		# Icon order 2: the glyph is the A02 production art
+		# (glyphs/glyph_blessing.png, white monochrome tinted
+		# here) — NOT the S14 star variant.
+		var ic := TextureRect.new()
+		ic.texture = load("res://assets/ui/glyphs/glyph_blessing.png")
+		ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		ic.size = Vector2(64, 64)
 		ic.position = Vector2((bsz.x - 64.0) * 0.5, 9)
+		ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		card.add_child(ic)
 		# Cycle 19 (audit punch #11): ink chip, rarity text
 		# (the zone is the rarity color now — same rule as
