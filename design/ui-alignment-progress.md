@@ -394,3 +394,10 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - NUC `.git` 反向同步回本机已补做（上一轮因直连中断未做）：rsync NUC `.git/` → 本机 `.git/`（`--delete`；两条 chown 告警仅为 worktree 临时文件属性、内容无损，rsync rc=23 仅属性项），本机 `git reset --hard` 至 cc2e93b、工作树干净（仅未跟踪 Test/*.sh），`git cat-file -e cc2e93b^{commit}` OK；origin/align-fix13 == HEAD == cc2e93b（NUC 与本机双向核验一致），即 ba7216b/cc2e93b 均已在 origin，不存在待推送。注意：本机一次 `git ls-remote` 遇 tsproxy 出口 Connection reset，未作结论、以 NUC 侧核验为准。下次 sync_to_nuc 前不再有回滚风险。
 - 断点不变：验证批 `Test/u2_herofix_run.sh`（2400 s100）仍在 NUC 上跑，.done 路径 `Test/out/u2_herofix.done`。下一轮先读该 .done：须 1564/0 且钱包行绿，取新菜单实拍重测主角高（目标约 0.400±0.01）；落地则进入 U2 签核决断（余项＝右侧移位设计定性）；未落地则按实测再调框高。
 - 本轮无代码改动；唯一提交为本节台账记入。
+
+## U2 主角框验证批监看（2026-11-13 04:11 轮）
+
+- 防撞触发：`Test/out/u2_herofix.done` 只有 START（2026-11-13T04:03:35+08:00，HEAD ba7216b），无 ALLDONE；锚定 pgrep 见 Godot 在跑（PID 2218821，2400x1080 s100）。本轮按防撞规则只监看、不双开、不改代码、不碰 main。
+- 监看时点 04:12：2400 档日志 `Test/out/u2_herofix_phonehud_2400.log` 1430 PASS、0 FAIL，行至 P4 段（full_prompt 快照已存），中途无红。预计约 04:16 完成。
+- 断点不变：验证批 `Test/u2_herofix_run.sh`（2400 s100）仍在 NUC 上跑，.done 路径 `Test/out/u2_herofix.done`。下一轮先读该 .done：须 1564/0 且钱包行绿，取新菜单实拍重测主角高（目标约 0.400±0.01）；落地则进入 U2 签核决断（余项＝右侧移位设计定性）；未落地则按实测再调框高。
+- 本轮无代码改动；唯一提交为本节台账记入。
