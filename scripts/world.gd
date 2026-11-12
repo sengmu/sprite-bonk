@@ -3843,6 +3843,12 @@ func _build_menu(root: Control) -> void:
 		forest.set_anchors_preset(Control.PRESET_FULL_RECT)
 		forest.offset_left = -48.0
 		forest.offset_right = 48.0
+		# U2 (2026-11-13): bg 1672x941 is COVERED onto the wider phone
+		# viewport (~1.49x) while the UI lays out at ~1.15x, so the stone
+		# ledge lands ~40px below the hero feet. Lifting this rect 50px
+		# moves the texture up ~25px on screen, putting the ledge at the
+		# feet (ref's own asymmetry: one foot ~7px in, the other ~9px up).
+		forest.offset_top = -50.0
 		forest.texture = load("res://assets/menu/v2-background.png")
 		forest.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		forest.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
