@@ -14047,7 +14047,7 @@ func _p5_menu_reference_layout(width: float) -> void:
 		"MenuChallenge": Rect2(39, 475, 224, 182),
 		"MenuSettings": Rect2(271, 475, 220, 182),
 		"MenuShake": Rect2(36, 677, 460, 98),
-		"MenuPartnerHero": Rect2(790, 95, 334, 392),  # U2 hero figure box, plane-normalized meas 2026-11-12 (was +15% tall, feet 0.10 low)
+		"MenuPartnerHero": Rect2(790, 95, 334, 367),  # U2 hero 2026-11-13: 392 rendered +6.5% tall vs ref (2400 +6.7%, 2340 +6.3%, two widths agree); 367 = 376 ref height / 1.024 render overshoot, top y=95 kept, feet rise to ref
 		"StarterSelection": Rect2(560, 590, 678, 308),
 		"StartButton": Rect2(1260, 686, 390, 166),
 		"StartCaption": Rect2(1280, 625, 350, 40),
