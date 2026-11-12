@@ -4498,10 +4498,26 @@ func _build_wallet_panel(root: Control) -> void:
 	_wallet_edit.add_theme_color_override("font_placeholder_color", UiTheme.MUTED)
 	_wallet_edit.add_theme_stylebox_override("normal", UiTheme.glass(32))
 	header.add_child(_wallet_edit)
-	_wallet_balance = _mk_dlabel(vb, "尚未连接", 36, UiTheme.TEXT)
+	# U2 wallet: the balance-failure retry shares the balance row
+	# instead of its own full-width row. A separate retry row grew
+	# the panel's combined minimum height past its 640x430 spec, so
+	# the modal fit shrank it (1.66 -> 1.15) and the primary close
+	# button fell out of the bottom-right quadrant (2400 s100:
+	# centre y 424 vs the 432 gate). The balance row is 80 px tall
+	# either way, so the retry adds no height in either state.
+	var bal_row := HBoxContainer.new()
+	bal_row.add_theme_constant_override("separation", 12)
+	vb.add_child(bal_row)
+	_wallet_balance = _mk_dlabel(bal_row, "尚未连接", 36, UiTheme.TEXT)
 	_wallet_balance.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_wallet_balance.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_wallet_balance.custom_minimum_size.y = 80
+	_wallet_balance.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_wallet_retry = UiTheme.make_button("重试读取余额", "ghost", "small")
+	_wallet_retry.visible = false
+	_wallet_retry.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_wallet_retry.pressed.connect(func() -> void: wallet.fetch_balance())
+	bal_row.add_child(_wallet_retry)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
 	vb.add_child(row)
@@ -4534,10 +4550,6 @@ func _build_wallet_panel(root: Control) -> void:
 		(btn as Control).size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	cbtn.set_meta("wallet_connect", true)
 	_wallet_panel.set_meta("connect_button", cbtn)
-	_wallet_retry = UiTheme.make_button("重试读取余额", "ghost", "small")
-	_wallet_retry.visible = false
-	_wallet_retry.pressed.connect(func() -> void: wallet.fetch_balance())
-	vb.add_child(_wallet_retry)
 	var note := _mk_label(vb, "可选 · 仅查看公开余额，不签名、不交易。断开连接会清除保存的地址。", 14, UiTheme.MUTED)
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
