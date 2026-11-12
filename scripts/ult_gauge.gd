@@ -21,6 +21,11 @@ var deny_t := 0.0
 ## control's rect to a >= 70 px hit area; the disc keeps
 ## its visual size, inset by hit_pad on every side.
 var hit_pad := 0.0
+## Icon order 2: art mode — the touch cluster's gauge wears the
+## btn_ult / btn_ult_charging art (state swapped by TouchControls)
+## instead of the drawn disc. The HUD gauge instance never sets
+## this and keeps the drawn U1 form.
+var art_mode := false
 var _pulse := 0.0
 var _last_drawn := -1.0
 
@@ -56,6 +61,8 @@ func _process(delta: float) -> void:
 		queue_redraw()
 
 func _draw() -> void:
+	if art_mode:
+		return
 	var centre := size * 0.5
 	var r_out := minf(size.x, size.y) * 0.5 - 1.0 - hit_pad
 	# Base disc: ult purple (reference U1: purple disc +

@@ -85,8 +85,9 @@ var _aim_on := false
 # (ready + a 0.8 Hz border pulse).
 var _interact_mode := 1
 var _pulse_t := 0.0
-# UI-mobile P1.3: the cluster gauge's identity glyph.
-var _ult_glyph: Label
+# Icon order 2: the cluster gauge's art faces (charging/ready).
+var _ult_art_charging: TextureRect
+var _ult_art_ready: TextureRect
 var _classic := true
 const MIN_HIT := 70.0
 const INTERACT_FILL := Color(0.96, 0.52, 0.08, 0.95)
@@ -103,6 +104,11 @@ func _ready() -> void:
 	add_child(_joy_zone)
 	_base_ring = _make_disc(Color(1, 1, 1, 0.10), Color(1, 1, 1, 0.35))
 	_knob = _make_disc(Color(1, 1, 1, 0.28), Color(1, 1, 1, 0.5))
+	# Icon order 2: the stick wears the shipped art (the drawn
+	# discs stay underneath as a soft backing). Appearance only —
+	# every geometry/feel constant is unchanged.
+	_base_ring.add_child(_art_rect("res://assets/ui/touch/joystick_base.png"))
+	_knob.add_child(_art_rect("res://assets/ui/touch/joystick_knob.png"))
 	add_child(_base_ring)
 	add_child(_knob)
 	_reset_stick_visual()
@@ -129,23 +135,29 @@ func _ready() -> void:
 	ult_gauge.set_meta("base_off", Vector4(-124, -248, -40, -164))
 	ult_gauge.pressed.connect(func() -> void: ult_pressed.emit())
 	add_child(ult_gauge)
-	# UI-mobile P1.3 (plan K5): the gauge was an unlabeled
-	# dark disc on touch — it now wears the 必 glyph (the
-	# HUD gauge's identity), sized 22 x touchScale.
-	_ult_glyph = Label.new()
-	_ult_glyph.text = "必"
-	_ult_glyph.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_ult_glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_ult_glyph.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_ult_glyph.add_theme_font_override("font", UiTheme.display_font())
-	_ult_glyph.add_theme_font_size_override("font_size", 48)
-	_ult_glyph.add_theme_color_override("font_color", Color(1, 1, 1, 0.92))
-	_ult_glyph.add_theme_color_override("font_outline_color", UiTheme.ORANGE.darkened(0.25))
-	_ult_glyph.add_theme_constant_override("outline_size", 4)
-	_ult_glyph.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	ult_gauge.add_child(_ult_glyph)
+	# Icon order 2: the touch gauge wears the shipped ult art —
+	# btn_ult_charging while charging, btn_ult at ready (the art
+	# carries its own 必， so the P1.3 glyph Label is gone and
+	# nothing doubles). The gauge keeps the press handling and
+	# state; art_mode silences its drawn disc. The HUD gauge is
+	# a separate instance and keeps the drawn U1 form.
+	ult_gauge.art_mode = true
+	_ult_art_charging = _art_rect("res://assets/ui/touch/btn_ult_charging.png")
+	_ult_art_ready = _art_rect("res://assets/ui/touch/btn_ult.png")
+	_ult_art_ready.visible = false
+	ult_gauge.add_child(_ult_art_charging)
+	ult_gauge.add_child(_ult_art_ready)
 	visibility_changed.connect(_on_visibility)
 	resized.connect(_apply_column)
+
+func _art_rect(path: String) -> TextureRect:
+	var tr := TextureRect.new()
+	tr.texture = load(path)
+	tr.set_anchors_preset(Control.PRESET_FULL_RECT)
+	tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return tr
 
 func _make_disc(fill: Color, border: Color) -> Control:
 	var p := Panel.new()
@@ -389,9 +401,24 @@ func _build_button(font: Font, kind: String, icon: String, size: int,
 	ic.offset_bottom = half
 	ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	area.add_child(ic)
+	# Icon order 2: the button face is the shipped art now; the
+	# vector glyph hides (the art carries its own glyph) and the
+	# state code's "icon" handle points at the art so its
+	# modulate states (interact idle/ready) drive the face.
+	var art_path := {"interact": "res://assets/ui/touch/btn_interact.png",
+		"jump": "res://assets/ui/touch/btn_jump.png",
+		"dash": "res://assets/ui/touch/btn_dash.png",
+		"aim": "res://assets/ui/touch/btn_aim.png",
+		"pause": "res://assets/ui/touch/btn_pause.png"}.get(kind, "")
+	var art: TextureRect = null
+	if art_path != "":
+		art = _art_rect(art_path)
+		panel.add_child(art)
+		ic.visible = false
 	area.gui_input.connect(_on_button_input.bind(kind))
 	add_child(area)
-	_buttons[kind] = {"area": area, "panel": panel, "icon": ic,
+	_buttons[kind] = {"area": area, "panel": panel,
+		"icon": art if art != null else ic, "art": art,
 		"base_off": Vector4(ol, ot, orr, ob)}
 	_held[kind] = false
 	_edges[kind] = false
@@ -410,11 +437,17 @@ func _on_button_input(event: InputEvent, kind: String) -> void:
 		_edges[kind] = true
 		var panel: Panel = _buttons[kind]["panel"]
 		(panel.get_theme_stylebox("panel") as StyleBoxFlat).bg_color.a = 1.0 if kind == "interact" else 0.42
+		var art_d: TextureRect = _buttons[kind].get("art")
+		if art_d != null:
+			art_d.modulate.a = 1.0
 	elif up:
 		_held[kind] = false
 		var panel2: Panel = _buttons[kind]["panel"]
 		(panel2.get_theme_stylebox("panel") as StyleBoxFlat).bg_color.a = \
 			_interact_fill_a() if kind == "interact" else 0.13
+		var art_u: TextureRect = _buttons[kind].get("art")
+		if art_u != null:
+			art_u.modulate.a = 0.45 if kind == "interact" and _interact_mode == 0 else 1.0
 
 func held(kind: String) -> bool:
 	return bool(_held.get(kind, false))
@@ -446,6 +479,10 @@ func consume_touch_aim() -> bool:
 func set_ult_state(frac: float, pcol: Color, deny: float) -> void:
 	if ult_gauge != null:
 		ult_gauge.set_state(frac, pcol, deny)
+	if _ult_art_ready != null:
+		var ready := frac >= 1.0
+		_ult_art_ready.visible = ready
+		_ult_art_charging.visible = not ready
 
 ## UI-mobile P1.2 (plan §B3 I8): the interact button tells
 ## the truth about what a tap does. 0 idle: near-clear fill
@@ -529,8 +566,14 @@ func apply_scale(s: float) -> void:
 		ult_gauge.offset_bottom = bo2.w * _scale_s + gpad
 		ult_gauge.hit_pad = gpad
 		ult_gauge.queue_redraw()
-	if _ult_glyph != null:
-		_ult_glyph.add_theme_font_size_override("font_size", int(round(48.0 * _scale_s)))
+		# The art faces inset to the visual disc, like the
+		# drawn gauge's hit_pad discipline.
+		for art in [_ult_art_charging, _ult_art_ready]:
+			if art != null:
+				art.offset_left = gpad
+				art.offset_top = gpad
+				art.offset_right = -gpad
+				art.offset_bottom = -gpad
 	# Cycle 21.3: the lane column's offsets are NOT the
 	# base x _scale_s products — re-derive them last.
 	_apply_column()
