@@ -3801,17 +3801,18 @@ func _starter_card(sp: String, unlocked: bool, w: float) -> Button:
 	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(portrait)
 	if _p5_on:
-		var mark := Panel.new()
+		# Icon order 2: the selected starter wears the shipped
+		# check badge (badges/badge_check_selected.png) instead
+		# of the drawn green disc + vector check.
+		var mark := TextureRect.new()
 		mark.name = "SelectedMark"
 		mark.visible = sp == _menu_hero_sp
+		mark.texture = load("res://assets/ui/badges/badge_check_selected.png")
+		mark.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		mark.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		mark.position = Vector2(86, 2)
 		mark.size = Vector2(22, 22)
 		mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		mark.add_theme_stylebox_override("panel", _style(UiTheme.GREEN_DEEP, 11))
-		var check := UiIcon.new("check", Color.WHITE, 16)
-		check.position = Vector2(3, 3)
-		check.size = Vector2(16, 16)
-		mark.add_child(check)
 		b.add_child(mark)
 	if not _p5_on or unlocked:
 		_label_in(b, String(info["name"]), Vector2(0, 64 if _p5_on else 82), Vector2(110, 26), 17, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER)
@@ -6047,7 +6048,7 @@ func _build_result(root: Control) -> void:
 	ribbon.custom_minimum_size.y = 54
 	ribbon.draw.connect(func() -> void:
 		var extent := Vector2(minf(ribbon.size.x, 300), 72)
-		ribbon.draw_texture_rect(UiTheme.asset("decorations", "logo_ribbon"), Rect2(Vector2((ribbon.size.x - extent.x) / 2, -8), extent), false))
+		ribbon.draw_texture_rect(UiTheme.asset("decorations", "ribbon_green"), Rect2(Vector2((ribbon.size.x - extent.x) / 2, -8), extent), false))
 	vb.add_child(ribbon)
 	_result_title = _mk_dlabel(ribbon, "", 34, UiTheme.TEXT)
 	_result_title.add_theme_color_override("font_color", UiTheme.TEXT)
@@ -7773,6 +7774,30 @@ func _item_fill_keys(floor_tier: int, chosen: Array) -> Array:
 	hi.append_array(lo)
 	return hi
 
+## Icon order 2 — held-item art. The mapping rule (the order's
+## required item table): file = assets/ui/items/item_<id>.png
+## with the code id's hyphens turned to underscores; all 126
+## CHARM_TYPES / items.json ids resolve (verified against the
+## landed files). Display names keep coming from
+## GameData.item_def(key).name — file names never surface.
+var _item_tex_cache := {}
+func _item_tex(key: String) -> Texture2D:
+	if _item_tex_cache.has(key):
+		return _item_tex_cache[key]
+	var p := "res://assets/ui/items/item_%s.png" % key.replace("-", "_")
+	var tex: Texture2D = load(p) if ResourceLoader.exists(p) else null
+	_item_tex_cache[key] = tex
+	return tex
+
+func _item_icon_rect(key: String, sz: float) -> TextureRect:
+	var tr := TextureRect.new()
+	tr.texture = _item_tex(key)
+	tr.custom_minimum_size = Vector2.ONE * sz
+	tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return tr
+
 const ITEM_STAT_CN := {
 	"damage": "伤害", "attackSpeed": "攻速", "maxHp": "最大生命",
 	"moveSpeed": "移速", "critChance": "暴击率", "critDamage": "暴击伤害",
@@ -8038,6 +8063,13 @@ func _shop_refresh() -> void:
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		b.add_child(l)
+		# Icon order 2: the item's art rides the card's top-left;
+		# the text block shifts right to clear it.
+		var iic := _item_icon_rect(key, 40.0)
+		iic.position = Vector2(8, 8)
+		iic.size = Vector2(40, 40)
+		b.add_child(iic)
+		l.offset_left = 54
 		if sold or not player.can_hold_item(key):
 			b.modulate = Color(1, 1, 1, 0.45)
 		var idx := i
@@ -16683,6 +16715,7 @@ func _pause_fill_status() -> void:
 		var irow := HBoxContainer.new()
 		irow.add_theme_constant_override("separation", 8)
 		box.add_child(irow)
+		irow.add_child(_item_icon_rect(key, 26.0))
 		_mk_label(irow, "%s ×%d" % [String(GameData.item_def(key).get("name", key)),
 			int(player.items[ik])], 15)
 		_mk_label(irow, _item_label(key), 12, UiTheme.MUTED)

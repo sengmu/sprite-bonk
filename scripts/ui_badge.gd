@@ -60,8 +60,11 @@ func set_icon(glyph: String) -> void:
 func _resolve() -> void:
 	# Icon order 2: whole regular families live at
 	# badges/<key>.png — the 18 type tiles, the 18 move tiles,
-	# the 7 weather tiles and the 11 lab node patterns.
-	for prefix in ["type_", "move_", "weather_", "lab_", "class_"]:
+	# the 7 weather tiles, the 11 lab node patterns and the
+	# status faces (status_*; no dedicated status-icon surface
+	# exists in the UI yet — statuses read off the 3D bodies —
+	# so these resolve here, ready for the first display site).
+	for prefix in ["type_", "move_", "weather_", "lab_", "class_", "status_"]:
 		if icon.begins_with(prefix):
 			var p := "res://assets/ui/badges/%s.png" % icon
 			if ResourceLoader.exists(p):
