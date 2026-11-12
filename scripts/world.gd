@@ -381,7 +381,7 @@ var _kills_label: Label
 var _danger_segs: Array = []
 var _danger_name: Label
 var _wx_label: Label
-var _wx_icon: UiIcon
+var _wx_icon: UiBadge
 var _pips: Array = []
 var _medal_panel: UiMedallion
 var _move_slot: Panel
@@ -2767,6 +2767,14 @@ func _type_icon(t: String) -> String:
 		"electric": return "bolt"
 	return "spark"
 
+## Icon order 2: the move tile for a type (badges/move_<type>.png,
+## one per type, S08 style). Unknown types fall back to normal.
+func _move_icon(t: String) -> String:
+	var k := t.to_lower()
+	if k == "" or not ResourceLoader.exists("res://assets/ui/badges/move_%s.png" % k):
+		k = "normal"
+	return "move_" + k
+
 func _label_in(parent: Node, text: String, pos: Vector2, sz: Vector2, size: int, color: Color, align: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT, raw: bool = false) -> Label:
 	var l := _mk_label(parent, text, size, color, raw)
 	l.position = pos
@@ -3021,7 +3029,7 @@ func _build_hud() -> void:
 	_tier_chip_label = _label_in(nchip, "普通", Vector2(0, 0), Vector2(64, 22), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
 	var wxchip := _panel(card, Vector2(246, 57), Vector2(64, 22), Color(0.13, 0.30, 0.48, 0.95), 11, Color(0, 0, 0, 0), 0, true)
 	_wx_chip = wxchip
-	_wx_icon = UiIcon.new("sun", Color(1.0, 0.9, 0.5), 14)
+	_wx_icon = UiBadge.new("weather_sunny", Color(1.0, 0.9, 0.5), 14)
 	_wx_icon.position = Vector2(7, 4)
 	_wx_icon.size = Vector2(14, 14)
 	wxchip.add_child(_wx_icon)
@@ -4201,12 +4209,18 @@ func _build_menu(root: Control) -> void:
 		var partner_hero := TextureRect.new()
 		partner_hero.name = "MenuPartnerHero"
 		partner_hero.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		partner_hero.stretch_mode = TextureRect.STRETCH_SCALE
+		# Icon order 2 (PM addendum): the atlas region is
+		# 947x1109 — the old 315x240 STRETCH_SCALE frame
+		# squashed the mascot ~1.36x horizontally. The frame
+		# now keeps the region's aspect (240 tall, ~205 wide),
+		# centred on the old frame's centre, feet baseline
+		# unchanged (frame bottom stays at y 288).
+		partner_hero.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		partner_hero.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		partner_hero.texture = _menu_feature_portrait(_menu_hero_sp)
 		partner_hero.custom_minimum_size = Vector2.ZERO
-		partner_hero.position = Vector2(318, 48)
-		partner_hero.size = Vector2(315, 240)
+		partner_hero.position = Vector2(373, 48)
+		partner_hero.size = Vector2(205, 240)
 		partner_hero.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_menu_design.add_child(partner_hero)
 		_menu_design.move_child(partner_hero, 2)
@@ -4685,14 +4699,13 @@ func _refresh_lab() -> void:
 		var accent := UiTheme.GREEN_DEEP if lv > 0 else UiTheme.MUTED
 		if id == _lab_selected:
 			accent = UiTheme.ORANGE
-		var badge := UiBadge.new(_lab_icon(id), accent, 54)
+		# Icon order 2: an unlearned node wears the silver
+		# lab_locked pattern itself (the old grey-out + small
+		# lock overlay is gone); learned nodes wear their
+		# mapped pattern at full colour.
+		var badge := UiBadge.new("lab_locked" if lv == 0 else _lab_icon(id), accent, 54)
 		badge.position = Vector2(6, 0)
 		b.add_child(badge)
-		if lv == 0:
-			badge.modulate = Color(0.48, 0.48, 0.48)
-			var lock_icon := UiBadge.new("lock", UiTheme.TEXT, 22)
-			lock_icon.position = Vector2(44, 36)
-			b.add_child(lock_icon)
 		_label_in(b, "已满" if GameProfile.lab_cost(id) < 0 else "%d级" % lv, Vector2(0, 52), Vector2(66, 24), 13, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER)
 		var selected: String = id
 		b.pressed.connect(func() -> void:
@@ -4731,8 +4744,30 @@ func _refresh_lab() -> void:
 			audio.deny())
 	_lab_detail.add_child(buy)
 
+## Icon order 2 — lab mapping table (a required deliverable of
+## the order). The U4 art names 11 patterns for the lab's 24
+## upgrade ids; unpictured ids reuse the nearest pattern family
+## (documented per group). Locked (level 0) nodes draw
+## lab_locked instead — see _refresh_lab. Icons only; effects,
+## costs and order are untouched. The old wrong routes are gone:
+## gold is no longer the wallet, archive no longer the bell,
+## magnet no longer the fallback ring.
+const LAB_ICON := {
+	"dmg": "lab_sword", "atkspd": "lab_sword",        # blade family
+	"armor": "lab_shield", "bag": "lab_shield",       # guard / load
+	"hp": "lab_heart", "revive": "lab_heart",         # life
+	"spd": "lab_wing",                                # speed
+	"ult": "lab_muscle", "party": "lab_muscle",       # power
+	"luck": "lab_clover",                             # luck
+	"research": "lab_hourglass", "archive": "lab_hourglass",  # time / records
+	"crit": "lab_target", "area": "lab_target", "magnet": "lab_target",  # aim
+	"xp": "lab_sparkle", "gold": "lab_sparkle", "choice4": "lab_sparkle",
+	"slot-move": "lab_sparkle",                       # gains / unlocks
+	"regen": "lab_potion", "slot-vit": "lab_potion",  # draughts
+	"reroll": "lab_sparkle", "skip": "lab_sparkle", "banish": "lab_sparkle",
+}
 func _lab_icon(id: String) -> String:
-	return {"dmg": "sword", "hp": "heart", "spd": "wind", "gold": "coin", "luck": "star", "magnet": "magnet", "armor": "shield", "party": "paw", "archive": "bag", "reroll": "reroll", "skip": "skip", "banish": "banish"}.get(id, "flask")
+	return String(LAB_ICON.get(id, "lab_sparkle"))
 
 ## Cycle 19: Lab tab switch (the bundle's Lab screen has
 ## lab/items modes; SL @1897612).
@@ -5643,6 +5678,7 @@ func _draft_card(opt: Dictionary, idx: int) -> Button:
 	var title := ""
 	var desc := ""
 	var icon := "candy"
+	var cls_badge := ""
 	var top_c := rar_c
 	match kind:
 		"move_new":
@@ -5653,18 +5689,19 @@ func _draft_card(opt: Dictionary, idx: int) -> Button:
 			# the rest of the UI — type and class were leaking
 			# raw EN ("dragon · special · 威力 60").
 			var cls_raw := String(md.get("cls", ""))
+			cls_badge = {"physical": "class_physical", "special": "class_special"}.get(cls_raw, "")
 			var cls_zh := "物理" if cls_raw == "physical" else ("特殊" if cls_raw == "special" else "变化")
 			var type_zh := String(md.get("type", ""))
 			if TYPE_HUD.has(type_zh):
 				type_zh = String((TYPE_HUD[type_zh] as Array)[0])
 			desc = "%s · %s · %s" % [type_zh, cls_zh, pw]
-			icon = _type_icon(String(md.get("type", "")))
+			icon = _move_icon(String(md.get("type", "")))
 			top_c = UiTheme.type_color(String(md.get("type", "")))
 		"move_up":
 			var md2: Dictionary = GameData.move(key)
 			title = "招式强化 · " + _move_zh(key)
 			desc = "%d级 → %d级\n伤害 +%s%%" % [player.move_level(key), player.move_level(key) + 1, _fmt_num(10.0 * pe)]
-			icon = _type_icon(String(md2.get("type", "")))
+			icon = _move_icon(String(md2.get("type", "")))
 		"vitamin":
 			var vc: Dictionary = GameData.VITAMINS[key]
 			icon = {"protein":"vit_protein", "calcium":"vit_calcium", "iron":"vit_iron", "carbos":"vit_carbos", "hp-up":"vit_hp_up", "ether":"vit_ether", "dire-hit":"vit_dire_hit", "exp-candy":"vit_exp_candy", "nugget":"vit_nugget", "super-potion":"vit_super_potion", "star-piece":"vit_star_piece"}.get(key, "flask")
@@ -5693,6 +5730,13 @@ func _draft_card(opt: Dictionary, idx: int) -> Button:
 	var ic := UiBadge.new(icon, top_c, 78)
 	ic.position = Vector2((csz.x - 78.0) * 0.5, 30)
 	card.add_child(ic)
+	# Icon order 2: the move-class mark (class_physical /
+	# class_special art) rides the top zone's lower right,
+	# clear of the centred main icon and the rarity chip.
+	if cls_badge != "":
+		var cb := UiBadge.new(cls_badge, top_c, 36)
+		cb.position = Vector2(csz.x - 46.0, 70.0)
+		card.add_child(cb)
 	# Cycle 19 (audit §4.3): the bundle's top zone also
 	# carries a KIND chip — NUEVO for a new move/vitamin,
 	# MEJORA for an upgrade — and on new moves the rar chip
@@ -12675,14 +12719,19 @@ func _refresh_weather_chip() -> void:
 	# the full name + modifiers are a tap away (and on the
 	# pause status page).
 	_wx_label.text = String(row["cn"]).substr(0, 1) if _p2_on == 1 else String(row["cn"])
-	var ic := "sun"
+	# Icon order 2: every weather gets its own tile — clear and
+	# harsh sun now differ, sandstorm is not wind, ashfall is
+	# not fog (badges/weather_*.png via UiBadge.set_icon).
+	var ic := "weather_sunny"
 	match weather:
-		"rain": ic = "rain"
-		"sand": ic = "wind"
-		"hail": ic = "snow"
-		"fog", "ash": ic = "fog"
+		"sun": ic = "weather_harsh_sun"
+		"rain": ic = "weather_rain"
+		"sand": ic = "weather_sandstorm"
+		"hail": ic = "weather_hail"
+		"fog": ic = "weather_fog"
+		"ash": ic = "weather_ashfall"
 	if _wx_icon:
-		_wx_icon.icon = ic
+		_wx_icon.set_icon(ic)
 
 # --------------------------------------------------------------------- loop
 ## Touch input feeds the player through the same logical controls as the
@@ -16583,7 +16632,7 @@ func _pause_fill_status() -> void:
 		row.add_theme_constant_override("separation", 8)
 		_pause_moves_box.add_child(row)
 		var t := String(md.get("type", "normal"))
-		var ic := UiIcon.new(_type_icon(t), UiTheme.type_color(t), 22)
+		var ic := UiBadge.new(_move_icon(t), UiTheme.type_color(t), 22)
 		ic.custom_minimum_size = Vector2(22, 22)
 		row.add_child(ic)
 		_mk_label(row, "%s %d级" % [_move_zh(String(m["key"])), int(m["level"])], 15)

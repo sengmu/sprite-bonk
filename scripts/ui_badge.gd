@@ -46,7 +46,29 @@ const GLYPH_FILES := {
 	"wind": "res://assets/ui/glyphs/glyph_wind.png",
 }
 var _mode := 0  # 0 = badge file / fallback, 1 = FULL override, 2 = GLYPH override
+var _fallback_glyph: UiIcon = null
 func _ready() -> void:
+	_resolve()
+## Icon order 2: live icon swap (the weather chip changes icon
+## with the weather). Re-runs the same resolution as _ready.
+func set_icon(glyph: String) -> void:
+	icon = glyph
+	if _fallback_glyph != null:
+		_fallback_glyph.queue_free()
+		_fallback_glyph = null
+	_resolve()
+func _resolve() -> void:
+	# Icon order 2: whole regular families live at
+	# badges/<key>.png — the 18 type tiles, the 18 move tiles,
+	# the 7 weather tiles and the 11 lab node patterns.
+	for prefix in ["type_", "move_", "weather_", "lab_", "class_"]:
+		if icon.begins_with(prefix):
+			var p := "res://assets/ui/badges/%s.png" % icon
+			if ResourceLoader.exists(p):
+				_mode = 1
+				_texture = load(p)
+				queue_redraw()
+				return
 	if FULL_FILES.has(icon):
 		_mode = 1
 		_texture = load(FULL_FILES[icon])
@@ -61,9 +83,9 @@ func _ready() -> void:
 	_fallback = not ResourceLoader.exists("res://assets/ui/badges/badge_%s.png" % key)
 	_texture = UiTheme.asset("badges", "badge_" + ("star_empty" if _fallback else key))
 	if _fallback:
-		var glyph := UiIcon.new(icon, UiTheme.TEXT, size.x * 0.5)
-		glyph.position = size * 0.25
-		add_child(glyph)
+		_fallback_glyph = UiIcon.new(icon, UiTheme.TEXT, size.x * 0.5)
+		_fallback_glyph.position = size * 0.25
+		add_child(_fallback_glyph)
 	queue_redraw()
 func _draw() -> void:
 	if _texture == null:
