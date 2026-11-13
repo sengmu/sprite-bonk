@@ -14007,7 +14007,7 @@ func _p5_layout_menu(s: float) -> void:
 				var text_width := ceilf(font.get_string_size(resource_text.text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x)
 				resource_text.size.x = text_width
 				(pill as Control).custom_minimum_size.x = maxf(115.0, 36.0 + text_width)
-		resources.position = Vector2(maxf(328, w - resources.get_combined_minimum_size().x - 22), 13)  # U2: face top ~32 ref (button 31 tall; rect bottom 92 ref clears hero top 95)
+		resources.position = Vector2(maxf(328, w - resources.get_combined_minimum_size().x - 11), 13)  # U2 right-anchor 2026-11-13: ref pill-row right edge = button right edge = 1648/1672 (0.986); design 788.1, margin w-788.1 = 11.5 -> 11 (was 22, row sat 0.014 face left of ref; button rect itself verified correct, 1226/1499 readings were tray-rim/text misreads)
 	_p5_fit(_menu_design, sm)
 	if _menu_hint:
 		# The floored font wraps the hint to two lines taller than
