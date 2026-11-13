@@ -4324,7 +4324,7 @@ func _build_menu(root: Control) -> void:
 	var resources := HBoxContainer.new()
 	resources.name = "Resources"
 	resources.position = Vector2(820, 26) if not _p5_on else Vector2(698, 8)
-	resources.add_theme_constant_override("separation", 30 if _p5_on else 10)
+	resources.add_theme_constant_override("separation", 0 if _p5_on else 10)
 	for entry in [["萤尘 %d  +" % GameProfile.stardust(), "lab"], ["累计 %d  +" % int(GameProfile.data.get("totalStardust", 0)), "shop"]]:
 		var pill := UiTheme.make_button(String(entry[0]), "ghost", "normal")
 		var dest: String = entry[1]
@@ -4332,7 +4332,9 @@ func _build_menu(root: Control) -> void:
 			pill.text = ""
 			for button_state in ["normal", "hover", "pressed"]:
 				pill.add_theme_stylebox_override(button_state, menu_pill_face)
-			pill.custom_minimum_size = Vector2(115, 31)  # U2: 115x31 button renders a 108x25 face (button_cream opaque 93.7%x79.7%)
+			var pill_min_w := 134.0 if dest == "lab" else 138.0
+			pill.set_meta("p5_pill_min_w", pill_min_w)
+			pill.custom_minimum_size = Vector2(pill_min_w, 34)
 			var resource_icon: Control
 			if dest == "lab":
 				resource_icon = UiIcon.new("spark", Color("aa4ace"), 25)
@@ -4343,17 +4345,17 @@ func _build_menu(root: Control) -> void:
 				total_star.texture = UiTheme.asset("decorations", "star_filled")
 				resource_icon = total_star
 			resource_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			resource_icon.position = Vector2(7, 7)
-			resource_icon.size = Vector2(16, 16)
+			resource_icon.position = Vector2(13, 8)
+			resource_icon.size = Vector2(22, 22)
 			pill.add_child(resource_icon)
-			var resource_text := _mk_label(pill, String(entry[0]), 14, UiTheme.TEXT)
+			var resource_text := _mk_label(pill, String(entry[0]), 16, UiTheme.TEXT)
 			resource_text.name = "ResourceText"
-			resource_text.position = Vector2(28, 5)
-			resource_text.size = Vector2(72, 21)
+			resource_text.position = Vector2(50, 2)
+			resource_text.size = Vector2(98, 30)
 			resource_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 			var text_width := resource_text.get_minimum_size().x
-			resource_text.size.x = maxf(72.0, text_width)
-			pill.custom_minimum_size.x = maxf(115.0, 36.0 + text_width)
+			resource_text.size.x = maxf(98.0, text_width)
+			pill.custom_minimum_size.x = maxf(pill_min_w, 36.0 + text_width)
 		pill.pressed.connect(func() -> void:
 			if dest == "lab":
 				_lab_panel.show()
@@ -13990,7 +13992,7 @@ func _p5_layout_menu(s: float) -> void:
 			(selection.get_node("StarterNext") as Control).position.x = selection.size.x - 44.0
 		var start_back := start.get_node_or_null("StartButtonArt") as Control
 		if start_back:
-			start_back.position = Vector2.ZERO
+			start_back.position = start.size * -0.05
 		var caption := _menu_design.get_node_or_null("StartCaption") as Control
 		if caption:
 			caption.position = Vector2(start.position.x, 318)
@@ -14006,8 +14008,8 @@ func _p5_layout_menu(s: float) -> void:
 				var font_size := resource_text.get_theme_font_size("font_size")
 				var text_width := ceilf(font.get_string_size(resource_text.text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x)
 				resource_text.size.x = text_width
-				(pill as Control).custom_minimum_size.x = maxf(115.0, 36.0 + text_width)
-		resources.position = Vector2(maxf(328, w - resources.get_combined_minimum_size().x - 11), 13)  # U2 right-anchor 2026-11-13: ref pill-row right edge = button right edge = 1648/1672 (0.986); design 788.1, margin w-788.1 = 11.5 -> 11 (was 22, row sat 0.014 face left of ref; button rect itself verified correct, 1226/1499 readings were tray-rim/text misreads)
+				(pill as Control).custom_minimum_size.x = maxf(float(pill.get_meta("p5_pill_min_w", 138.0)), 36.0 + text_width)
+		resources.position = Vector2(maxf(328, w - resources.get_combined_minimum_size().x - 11), 11.3)  # U2: right edge stays anchored; 1.7 design px up keeps the taller row disjoint from MenuPartnerHero.
 	_p5_fit(_menu_design, sm)
 	if _menu_hint:
 		# The floored font wraps the hint to two lines taller than
@@ -14091,11 +14093,13 @@ func _p5_menu_reference_layout(width: float) -> void:
 			art.size = Vector2(extent.x * 0.68, title.position.y - 11)
 			art.position = Vector2((extent.x - art.size.x) * 0.5, 7)
 	var start := _menu_design.get_node("StartButton") as Control
-	(start.get_node("StartButtonArt") as Control).size = start.size
+	var start_art := start.get_node("StartButtonArt") as Control
+	start_art.size = start.size * 1.10
+	start_art.position = start.size * -0.05
 	for leaf_side in [false, true]:
 		var leaf := start.get_node("StartLeafRight" if leaf_side else "StartLeafLeft") as Control
 		leaf.size = Vector2(21, 21)
-		leaf.position = Vector2(start.size.x - 40 if leaf_side else 19, (start.size.y - leaf.size.y) * 0.5)
+		leaf.position = Vector2(start.size.x - 21 if leaf_side else 0, (start.size.y - leaf.size.y) * 0.5)
 	var caption := _menu_design.get_node("StartCaption") as Label
 	var caption_back := _menu_design.get_node("StartCaptionBack") as Control
 	var caption_center_y := caption.position.y + caption.size.y * 0.5 - 4.0
