@@ -587,3 +587,11 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 传输记录：VM→NUC 整包 rsync 两次中断（15:47 "Connection closed by UNKNOWN port 65535"、15:49 Broken pipe），约 15:48 自愈；300KB 分片＋逐片重试可稳过，大文件仍走分片。
 - **断点（下一轮）**：先读 `Test/out/u3_fix2.done`（两档绿、FAIL=0；checks 1549 与 1564 均接受），取新的 `phone_hud_touch_*_draft.png` 双档快照（注意：fix1 快照现仅存 `..._draft_fix1.png` 与本机副本），核巨星已去、四枚约 20px 金星落在卡角／中缘后重建 compare、逐项亲检再议 U3 签核。Notion 对齐单未动（U3 未关闭）。
 - 本轮提交（align-fix13，已推送，`git ls-remote` 核验 origin 与本地同 SHA）：本节台账＋fix1 双档 compare（`compare/U3.png`、`compare/U3_2400.png`）。
+
+## U3 签核关闭（2026-11-14 16:1x 轮，主控亲检）
+
+- 验证批 `Test/u3_fix2_run.sh`（HEAD b8a3315）ALLDONE 16:03:26：2400 s100 **1564/0**、2340 s100 **1549/0**，双腿 rc=0。
+- fix2 二分定位与修复：巨星源头为 fx 叠层四颗星星——自由 position/size 的 TextureRect 在拟合路径下放大成单颗居中巨星（摘除循环的探针拍 15:29 即去星，探针实证）；fix2 改锚点/偏移定尺（提交 b8a3315，`scripts/world.gd`＋`Test/u3_fix2_probe.sh`＋`Test/u3_fix2_run.sh`），双档复拍实证巨星已去；四枚小星在位——原始图行列扫描量测：右中星 35×31 屏 px、右下星 35×30 屏 px（2400 与 2340 双档同值；20 设计 px 矩形内星形本体约 15 设计 px，纹理自带透明边距所致），左星与卡缘金线相接未单独量——四星在双档实拍上均清晰可辨、位于四角/中缘。
+- 逐项亲检（compare/U3.png 与 compare/U3_2400.png，左参考右实拍；另亲看双档原始 draft 实拍）：① 横幅 ✓ 金星居中压 pill 顶沿、三叶簇贴两端；② 卡顶 pills ✓ 实心色＋白字；③ 主推卡 ✓ 金边＋内辉＋四枚小星；④ 工具行 ✓ 重抽蓝实心居首、跳过/放逐随后、整行右置。⑤ 大面板约束（卡在 legacy 860×452 面板上、不浮于场景）、⑥ 画板豁免（扁平类型色＋小字形标）与内辉近似、叶形分隔徽章形态（32×32 徽章 vs 参考 36×12 嫩芽）记为已记录微残差/用户验收项，照 U1/U2 前例随关闭带过。
+- 结论：**U3 签核关闭**。下一屏：U5 结算屏（循环推进）。
+- 本轮提交（align-fix13，已推送，`git ls-remote` 核验）：本节台账＋fix2 双档 compare（`compare/U3.png`、`compare/U3_2400.png`，NUC 侧由 fix2 捕获重建，与主控本机构建逐字节核对一致）。
