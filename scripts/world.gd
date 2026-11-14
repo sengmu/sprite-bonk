@@ -563,8 +563,10 @@ var _draft_bb: Button
 var _draft_card_btns: Array = []
 var _draft_card_accents: Array = []
 var _draft_card_rars: Array = []
+var _draft_featured_fx: Control = null  # U3: gold rim+glow overlay on the featured draft card
 var _draft_shines: Array = []   # cycle 19: rarity>=2 shine sweeps
 var _shine_tex: Texture2D       # cycle 19: shared shine gradient
+var _gold_glow_tex: Texture2D  # U3: cached radial gold glow for the featured draft card
 var _draft_banish_mode := false
 var _draft_banish_target := -1  # cycle 18 (audit §4.1): two-step banish
 var _draft_opened_msec := 0     # cycle 18 (audit §4.7): the 600 ms modal guard
@@ -5448,6 +5450,43 @@ func _refresh_unlock_panel() -> void:
 			_mk_label(_unlock_list, txt, 14, Color(0.75, 0.78, 0.85))
 
 # ------------------------------------------------------------- draft (cycle 7)
+## U3: a three-leaf cluster for the banner ends (REF: a fan of
+## three leaves pressing each pill end; v2-leaves.svg is a
+## single leaf). The leaves share one base point at the pill
+## side and fan outward; `flip` mirrors for the right end.
+func _draft_leaf_cluster(flip: bool) -> Control:
+	var c := Control.new()
+	c.custom_minimum_size = Vector2(48, 48)
+	c.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var tex := load("res://assets/menu/v2-leaves.svg") as Texture2D
+	# (size, pos, rot): base at the pill side (right for the
+	# left cluster), fanning up/out and down/out.
+	var specs: Array = [
+		[Vector2(34, 23), Vector2(4, 0), -0.5],
+		[Vector2(30, 20), Vector2(10, 15), 0.12],
+		[Vector2(24, 16), Vector2(14, 30), 0.65],
+	]
+	for sp in specs:
+		var leaf := TextureRect.new()
+		leaf.texture = tex
+		leaf.size = sp[0]
+		leaf.position = sp[1]
+		leaf.pivot_offset = (sp[0] as Vector2) * 0.5
+		leaf.rotation = float(sp[2])
+		leaf.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		leaf.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		leaf.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		c.add_child(leaf)
+	if flip:
+		# Mirror around the cluster centre: the fan base
+		# moves to the left (pill) side.
+		for ch in c.get_children():
+			var l := ch as TextureRect
+			l.position = Vector2(48.0 - l.position.x - l.size.x, l.position.y)
+			l.rotation = -l.rotation
+	return c
+
 func _build_draft(root: Control) -> void:
 	_draft_panel = PanelContainer.new()
 	_draft_panel.set_anchors_preset(Control.PRESET_CENTER)
@@ -5462,43 +5501,38 @@ func _build_draft(root: Control) -> void:
 	vb.add_theme_constant_override("separation", 4)
 	_draft_panel.add_child(vb)
 	# The original's h1 is "¡Nivel {lvl}!" (UI_SPEC §2.5).
+	# U3: the banner pill runs wider/taller than the draft
+	# (REF ~1.36 card widths), the gold star sits centred
+	# on the top edge of the pill (not inside the row), and
+	# a three-leaf cluster presses each pill end.
 	var header := CenterContainer.new()
 	vb.add_child(header)
 	var header_row := HBoxContainer.new()
-	header_row.add_theme_constant_override("separation", 5)
+	header_row.add_theme_constant_override("separation", 0)
 	header.add_child(header_row)
-	var left_leaf := TextureRect.new()
-	left_leaf.texture = load("res://assets/menu/v2-leaves.svg") as Texture2D
-	left_leaf.custom_minimum_size = Vector2(31, 26)
-	left_leaf.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	left_leaf.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	header_row.add_child(left_leaf)
+	header_row.add_child(_draft_leaf_cluster(false))
 	var header_pill := PanelContainer.new()
 	var header_style := UiTheme.flat_box(Color("fff5dc"), 18, Color("e9bd73"), 2)
-	header_style.content_margin_left = 30
-	header_style.content_margin_right = 30
-	header_style.content_margin_top = 1
-	header_style.content_margin_bottom = 1
+	header_style.content_margin_left = 70
+	header_style.content_margin_right = 70
+	header_style.content_margin_top = -12
+	header_style.content_margin_bottom = 2
 	header_pill.add_theme_stylebox_override("panel", header_style)
 	header_row.add_child(header_pill)
-	var header_content := HBoxContainer.new()
-	header_content.add_theme_constant_override("separation", 8)
+	var header_content := VBoxContainer.new()
+	header_content.add_theme_constant_override("separation", 2)
 	header_pill.add_child(header_content)
+	var star_row := CenterContainer.new()
+	header_content.add_child(star_row)
 	var header_star := TextureRect.new()
 	header_star.texture = load("res://assets/ui/decorations/star_filled.png") as Texture2D
-	header_star.custom_minimum_size = Vector2(26, 26)
+	header_star.custom_minimum_size = Vector2(33, 33)
 	header_star.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	header_star.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	header_content.add_child(header_star)
-	_draft_title = _mk_dlabel(header_content, "升级！", 24, UiTheme.TEXT)
+	star_row.add_child(header_star)
+	_draft_title = _mk_dlabel(header_content, "升级！", 28, UiTheme.TEXT)
 	_draft_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	var right_leaf := TextureRect.new()
-	right_leaf.texture = left_leaf.texture
-	right_leaf.custom_minimum_size = Vector2(31, 26)
-	right_leaf.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	right_leaf.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	right_leaf.flip_h = true
-	header_row.add_child(right_leaf)
+	header_row.add_child(_draft_leaf_cluster(true))
 	_draft_opts_box = HBoxContainer.new()
 	_draft_opts_box.add_theme_constant_override("separation", 10)
 	_draft_opts_box.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -5532,7 +5566,17 @@ func _build_draft(root: Control) -> void:
 	_draft_bb = UiTheme.make_icon_button("banish", "放逐模式", "red", "small")
 	_draft_bb.pressed.connect(_draft_toggle_banish)
 	tools.add_child(_draft_bb)
-	tools.move_child(_draft_rb, -1)
+	# U3: tool order is reroll / skip / banish (the old
+	# move_child(rb, -1) had pushed reroll last). The
+	# reroll face is the blue solid + white text/icon of
+	# the reference (see _draft_tint_reroll); banish keeps
+	# its cream face with a red icon + dark-red label, as
+	# in the reference; skip stays cream + dark as built.
+	_draft_tint_reroll()
+	var bb_row := _draft_bb.get_child(0) as HBoxContainer
+	(bb_row.get_child(0) as UiIcon).color = UiTheme.RED
+	(_draft_bb.get_meta("label") as Label).add_theme_color_override(
+		"font_color", UiTheme.RED.darkened(0.2))
 	# Cycle 19 (audit punch #13): kbd caps on the tools
 	# (the bundle's ez caps, @1999261) + the "Ver mi
 	# equipo" [Tab] button the bundle appends to both card
@@ -5545,12 +5589,13 @@ func _build_draft(root: Control) -> void:
 		audio.click()
 		_open_team_view())
 	if _p5_on:
-		# Plan §B3 M1: one tools row — reroll / skip / banish on
-		# the left, 我的队伍 on the right.
-		tools.alignment = BoxContainer.ALIGNMENT_BEGIN
+		# Plan §B3 M1: one tools row — spacer first so
+		# reroll / skip / banish pack bottom-right, 我的队伍
+		# stays at the far right (extra row, kept).
 		var tsp := Control.new()
 		tsp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		tools.add_child(tsp)
+		tools.move_child(tsp, 0)
 		tools.add_child(team_b)
 	else:
 		var team_row := HBoxContainer.new()
@@ -5720,6 +5765,27 @@ func _shine_texture() -> Texture2D:
 	_shine_tex = gt
 	return gt
 
+## U3: radial gold glow for the featured draft card —
+## transparent in the middle, gold toward the rim (drawn
+## under the gold rim, clipped to the card like the shine).
+func _gold_glow_texture() -> Texture2D:
+	if _gold_glow_tex:
+		return _gold_glow_tex
+	var g := Gradient.new()
+	g.offsets = PackedFloat32Array([0.0, 0.55, 0.8, 1.0])
+	g.colors = PackedColorArray([
+		Color(1, 0.85, 0.3, 0), Color(1, 0.85, 0.3, 0),
+		Color(1, 0.82, 0.25, 0.35), Color(1, 0.8, 0.2, 0.6)])
+	var gt := GradientTexture2D.new()
+	gt.gradient = g
+	gt.fill = GradientTexture2D.FILL_RADIAL
+	gt.fill_from = Vector2(0.5, 0.5)
+	gt.fill_to = Vector2(1.0, 0.5)
+	gt.width = 256
+	gt.height = 256
+	_gold_glow_tex = gt
+	return gt
+
 func _fmt_num(v: float) -> String:
 	return str(int(v)) if absf(v - round(v)) < 0.01 else "%.1f" % v
 
@@ -5807,30 +5873,45 @@ func _draft_card(opt: Dictionary, idx: int) -> Button:
 	# and the shine. Ours: 新 / 强化 and 招式.
 	var is_new := kind == "move_new" \
 		or (kind == "vitamin" and int(player.vit_levels.get(key, 0)) <= 0)
+	# U3: card-top pills are solid + white text in the
+	# reference (REF ~62x29 design px); the old ink chips
+	# read as pale cream + colored text because INK_DEEP
+	# is a light tan (#dac6a2), not ink — the constant is
+	# shared palette-wide, so the fix is local to these
+	# chips. White is forced on the labels (the readable_fg
+	# inside chip() would flip it back on the orange pill);
+	# the gold legendary pill keeps dark text.
 	var kchip := UiTheme.chip("新" if is_new else "强化",
-		Color(UiTheme.INK_DEEP, 0.92), 11, UiTheme.GOLD)
+		UiTheme.ORANGE, 14)
 	kchip.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	kchip.offset_left = 8
-	kchip.offset_right = 56
+	kchip.offset_right = 70
 	kchip.offset_top = 8
-	kchip.offset_bottom = 32
+	kchip.offset_bottom = 38
 	card.add_child(kchip)
+	var klabel := kchip.get_child(0) as Label
+	klabel.add_theme_color_override("font_color", UiTheme.WHITE)
+	klabel.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	var rchip: PanelContainer
 	if kind == "move_new":
-		rchip = UiTheme.chip("招式", rar_c, 12)
+		rchip = UiTheme.chip("招式", rar_c, 14)
 	else:
-		# Cycle 19 (audit punch #11): on upgrade/vitamin
-		# cards the top zone IS the rarity color — a
-		# same-color chip vanished into it (white text
-		# floating on teal). Ink chip, rarity text.
+		# Cycle 19 (audit punch #11) chose ink chips here
+		# because the top zone IS the rarity color — but the
+		# zone is that color lightened 0.62 (pale), so a
+		# saturated solid pill still reads, as in the REF.
 		rchip = UiTheme.chip(String(GameData.RARITY_NAMES[rar]),
-			Color(UiTheme.INK_DEEP, 0.92), 12, rar_c)
+			rar_c, 14)
 	rchip.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	rchip.offset_left = -76
+	rchip.offset_left = -70
 	rchip.offset_right = -8
 	rchip.offset_top = 8
-	rchip.offset_bottom = 32
+	rchip.offset_bottom = 38
 	card.add_child(rchip)
+	var rlabel := rchip.get_child(0) as Label
+	if UiTheme.luminance(rar_c) < 0.75:
+		rlabel.add_theme_color_override("font_color", UiTheme.WHITE)
+	rlabel.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	# Cycle 19 (audit punch #12): title / description /
 	# footer FLOW in a column under the top zone — the
 	# fixed boxes left ~60 px of void on one-line cards;
@@ -5910,6 +5991,44 @@ func _draft_card(opt: Dictionary, idx: int) -> Button:
 		sh.modulate.a = 0.55
 		card.add_child(sh)
 		_draft_shines.append({"rect": sh, "phase": float(idx) * 0.9})
+	# U3: the featured (middle) card carries a gold rim +
+	# glow overlay on top of its rarity frame — the rarity
+	# rim logic is untouched; this only overlays the
+	# promoted state. Toggled by _paint_draft_cards
+	# (hidden while banishing).
+	if idx == _draft_options.size() / 2:
+		var fx := Control.new()
+		fx.set_anchors_preset(Control.PRESET_FULL_RECT)
+		fx.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var glow := TextureRect.new()
+		glow.set_anchors_preset(Control.PRESET_FULL_RECT)
+		glow.texture = _gold_glow_texture()
+		glow.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		glow.stretch_mode = TextureRect.STRETCH_SCALE
+		glow.modulate = Color(1, 0.85, 0.4, 0.6)
+		glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		fx.add_child(glow)
+		var rim := Panel.new()
+		rim.set_anchors_preset(Control.PRESET_FULL_RECT)
+		rim.add_theme_stylebox_override("panel",
+			UiTheme.flat_box(Color(0, 0, 0, 0), 30, UiTheme.GOLD, 4))
+		rim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		fx.add_child(rim)
+		# Gold sparkles at the free corners/edges (the top
+		# corners carry the kind/rarity chips).
+		for sp in [Vector2(8, csz.y - 28), Vector2(csz.x - 28, csz.y - 28),
+				Vector2(4, csz.y * 0.5 - 10), Vector2(csz.x - 24, csz.y * 0.5 - 10)]:
+			var st := TextureRect.new()
+			st.texture = load("res://assets/ui/decorations/star_filled.png") as Texture2D
+			st.size = Vector2(20, 20)
+			st.position = sp
+			st.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			st.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			st.modulate = UiTheme.GOLD
+			st.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			fx.add_child(st)
+		card.add_child(fx)
+		_draft_featured_fx = fx
 	card.pressed.connect(func() -> void:
 		if _draft_banish_mode:
 			_banish_press(idx)
@@ -5925,6 +6044,7 @@ func _render_draft() -> void:
 	_draft_card_accents.clear()
 	_draft_card_rars.clear()
 	_draft_shines.clear()
+	_draft_featured_fx = null
 	for i in range(_draft_options.size()):
 		_draft_opts_box.add_child(_draft_card(_draft_options[i], i))
 	# buildMini: current moves (type color) + vitamins.
@@ -5961,6 +6081,32 @@ func _refresh_draft_tools() -> void:
 		UiTheme.set_icon_button_text(_draft_bb,
 			"放逐模式：开（%d）" % banishes_left if _draft_banish_mode else "放逐模式（%d）" % banishes_left)
 	_draft_bb.disabled = banishes_left <= 0 and not _draft_banish_mode
+	_draft_tint_reroll()
+
+## U3: the reroll button is the blue solid primary of the
+## reference (white text + white refresh icon).
+## make_icon_button leaves the icon/label dark and _btn_box
+## has no blue texture, so both are fixed here. Idempotent
+## — re-applied by _refresh_draft_tools after state changes.
+func _draft_tint_reroll() -> void:
+	if _draft_rb == null:
+		return
+	var blue: Color = UiTheme.BTN_KINDS["blue"]
+	var border := Color(0, 0, 0, 0.18)
+	_draft_rb.add_theme_stylebox_override("normal",
+		UiTheme.tinted_btn_box(blue, 10, border, 2, 12))
+	_draft_rb.add_theme_stylebox_override("hover",
+		UiTheme.tinted_btn_box(blue.lightened(0.13), 10, border, 2, 12))
+	_draft_rb.add_theme_stylebox_override("pressed",
+		UiTheme.tinted_btn_box(blue.darkened(0.15), 10, border, 2, 12))
+	var dis := blue
+	dis.a *= 0.45
+	_draft_rb.add_theme_stylebox_override("disabled",
+		UiTheme.tinted_btn_box(dis, 10, border, 2, 12))
+	var row := _draft_rb.get_child(0) as HBoxContainer
+	(row.get_child(0) as UiIcon).color = UiTheme.WHITE
+	(_draft_rb.get_meta("label") as Label).add_theme_color_override(
+		"font_color", UiTheme.WHITE)
 
 func _draft_option_title(opt: Dictionary) -> String:
 	match String(opt["kind"]):
@@ -6019,6 +6165,12 @@ func _paint_draft_cards() -> void:
 				card.add_theme_stylebox_override("normal", UiTheme.card_box(acc))
 				card.add_theme_stylebox_override("hover", UiTheme.card_box(acc, true))
 			card.modulate = Color.WHITE
+
+	# U3: the gold rim+glow of the featured card is an overlay
+	# on the promoted state — hidden while banishing (the red
+	# banish state takes over the card faces).
+	if _draft_featured_fx != null:
+		_draft_featured_fx.visible = not _draft_banish_mode
 
 func _draft_toggle_banish() -> void:
 	if _draft_swallowed():

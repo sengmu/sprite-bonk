@@ -270,6 +270,23 @@ static func _btn_box(bg: Color, radius: int, border: Color, bw: int, pad: int) -
 	s.content_margin_bottom = 4
 	return s
 
+## U3 draft: a semantic button face from the cream 9-patch,
+## tinted to an exact target color by modulate (there is no
+## blue button texture — the _btn_box heuristic falls through
+## to cream for blue, which is why the draft reroll rendered
+## cream). The tint is solved against the face pixel of the
+## cream texture (248,230,199) so the face lands on `bg`;
+## the baked shading survives because only the tint changes.
+static func tinted_btn_box(bg: Color, radius: int, border: Color, bw: int, pad: int) -> StyleBoxTexture:
+	var s := _btn_box(bg, radius, border, bw, pad)
+	var face := Color8(248, 230, 199)
+	s.modulate_color = Color(
+		clampf(bg.r / face.r, 0.0, 1.0),
+		clampf(bg.g / face.g, 0.0, 1.0),
+		clampf(bg.b / face.b, 0.0, 1.0),
+		bg.a)
+	return s
+
 static func make_button(text: String, kind: String = "ghost",
 		size: String = "normal") -> Button:
 	var b := Button.new()
