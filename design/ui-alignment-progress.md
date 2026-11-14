@@ -665,3 +665,25 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 验证批 Test/u5_fix2_run.sh 已于 19:24:06 detached 启动（HEAD 65614f1，2400 s100 腿在跑，PID 675898），.done 路径 Test/out/u5_fix2.done，双腿 2400 s100 → 2340 s100，预计约 19:55 完成。
 - 断点：下一轮先读 Test/out/u5_fix2.done（两档绿、FAIL=0；checks 1549 与 1564 均接受，以 FAIL=0 为准），取 mobile_p5_result_victory_*_s100_i0.png 双档快照，行列扫描复核星（约 137 屏 px）／钮（各约 571 屏 px 宽、居中于面板）／值 pill 淡黄／标题白字后重建 compare/U5.png 与 compare/U5_2400.png（Test/make_compare_u5.py）、逐项亲检再议 U5 签核。Notion 对齐单未动（U5 未关闭）。
 - 本轮提交（align-fix13，已推送，git ls-remote 核验 origin 与本地同 SHA）：65614f1 fix2 代码＋脚本；本节台账另行提交。
+
+## U5 fix2 验证批：四项落地、新红面板溢出，U5 不关闭（2026-11-14 20:1x 轮，主控）
+
+- 验证批 `Test/u5_fix2_run.sh`（HEAD 65614f1）已 ALLDONE 19:58:17：2400 s100 **1549/1**、2340 s100 **1549/1**，双腿同值同红。防撞：起跑时无 sprite-bonk Godot 在跑（锚定 pgrep 空），无双开。
+- 唯一红（新红，fix1 的主钮红已消）：`P5: modal inside UI area (result/victory)`——面板全局 rect 856.8×748.27 逻辑 px，顶 y=-14.14、底 734.14，UI 区 1600×720（2400 档）；2340 档同值（351.6,-14.14）。日志 dump：PanelContainer min=(840,786) size=(900,786)，scale=0.952。
+- 根因：fix2 星 56→96px 使内容最小高由 750 涨到 786；`p5_fixed_h` 让 `_p5_place_modal` 仍按名义高 750 算 sm=714/750=0.952，面板实际尺寸却被最小高顶到 786，渲染高 748.3 超出 UI 区 720，上下各溢 14.1 逻辑 px。且旧单次 refit（relay 仅由 p5_w 变化触发，本面板 w 恒 900）走不到收敛。
+- fix2 四项逐项量测（原始 PNG 行列扫描＋目视，2400 档；2340 档同几何、仅 −30px 平移）：
+  - ① 星 ✓：三枚金星约 137 屏 px＝5.7% 幅宽，REF 5.7%（95/1672），三枚在位、大小达标。
+  - ② 钮 ✓：绿钮亮面芯 524×59、含边约 545×129 屏 px（22.7% 宽、11.9% 高），REF 23.2%×10.9%；奶油钮同档。fix1 所记钮高残差复核已清（此前目测 95px 为误读，列扫描实为约 129px）。
+  - ③ 值 pill ✓：取样 (255,239,186)，REF (255,233,165) 淡黄。
+  - ④ 标题 ✓：白字在绿缎带上，目视确认。
+  - ⑤ 检查改向 ✓：旧主钮右下红已消。
+  - ✗ 面板溢出：多列奶油扫描 y 0..1079 全屏高——面板上下缘均被视口裁掉；星本身未被裁（星顶约 y=28），但所压的面板顶沿已出屏。**U5 不关闭**。
+- 实施 fix3（提交 ad0c09e，已推送，`git ls-remote` 核验 origin 与本地同 SHA；scripts/world.gd＋Test/u5_fix3_*.sh；未动玩法数值、未动检查）：
+  ① 摘 `_result_panel` 的 `p5_fixed_h`：fix1 已把滚动内容移出固定盒，滚动区最小高为 0，内容最小高 786 有界，对其拟合即正确；固定高路径忽略长大的最小高是溢出来源。`p5_fixed_h` 分支保留供他面板选用，现无面板使用。
+  ② `_p5_place_modal` 改 place+fit 循环（至多 4 遍）：每遍按 max(名义高, 实时最小高) 算 sm、布放、`_p5_fit`，以实时最小高×sm ≤ area.y-6+1.0 为收口（+1.0 与 harness `_inside` 的 1px 容差一致）；首遍 w 变化仍走 `_p5_relayout`（草案/祝福卡宽度相关内容）；循环取代原递归，`post_layout` 参数保留兼容（2 遍封顶）。其余模态只在溢出时才多跑，不改已合行为。
+  ③ 文本风险已排除：不采用事后缩 scale（会把已按地板抬升的字号压回 P5_TEXT 21 下限之下）；循环内每遍按当遍 sm 重算地板，绘制字号恒 ≥ 下限。
+- 解析门 Test/u5_fix3_parse.sh（world/ui_icon/phonehud 三门）：全 rc=0、SCRIPT ERROR 0 条（SolanaSDK GDExtension 噪声为既有）。日志 Test/out/u5_fix3_parse.log。
+- 验证批 Test/u5_fix3_run.sh 已于 20:25:40 detached 启动（HEAD ad0c09e，2400 s100 腿在跑，PID 768307），.done 路径 Test/out/u5_fix3.done，双腿 2400 s100 → 2340 s100，预计约 20:56 完成。
+- 断点：下一轮先读 Test/out/u5_fix3.done（两档绿、FAIL=0；checks 1549 与 1564 均接受，以 FAIL=0 为准），取 mobile_p5_result_victory_*_s100_i0.png 双档快照，行列扫描复核面板（应 ≤714 逻辑 px 高、居中、上下缘在屏内）／星（约 137 屏 px）／钮（各约 545 屏 px 宽）／值 pill 淡黄／标题白字后重建 compare/U5.png 与 compare/U5_2400.png（Test/make_compare_u5.py）、逐项亲检再议 U5 签核。Notion 对齐单未动（U5 未关闭）。
+- SSH 说明：本轮两次短 SSH 在命令中途断（commit 前一次、起批后一次），均经重连核实实际状态后继续，未假设。
+- 本轮提交（align-fix13，已推送，`git ls-remote` 核验 origin 与本地同 SHA）：ad0c09e fix3 代码＋脚本；本节台账另行提交。
