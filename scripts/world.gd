@@ -3602,10 +3602,12 @@ func _build_hud() -> void:
 	_p5_register(_pause_panel, 1000.0, 430.0)
 	_p5_register(_bigmap_panel, 900.0, 430.0)
 	_p5_register(_result_panel, 900.0, 750.0)
-	# U5 fix3: no p5_fixed_h -- the scroll content moved out of the
-	# fixed box in fix1, so the live content min is bounded (786) and
-	# fitting against it is correct; the fixed-h path ignored the
-	# grown min and spilled the panel 14 px past the UI area.
+	# U5 fix4: result fits against its nominal design height only
+	# (see _p5_place_modal p5_fixed_h); the 14 px spill from its
+	# live min (786 vs spec 750) is fixed by trimming the live min
+	# (scroll min below), not by fitting against it -- the fix3
+	# fit-against-live-min loop diverged (s100 result scale 0.036).
+	_result_panel.set_meta("p5_fixed_h", true)
 	_p5_register(_lab_panel, 820.0, 430.0)
 	_p5_register(_shop_panel, 820.0, 430.0)
 	_p5_register(_unlock_panel, 900.0, 430.0)
@@ -6341,7 +6343,11 @@ func _build_result(root: Control) -> void:
 		_result_core.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		vb.add_child(_result_core)
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(0, 400)
+	# U5 fix4: phone scroll min 400 -> 340. The result panel live
+	# min (786 at sm 0.952) spilled 14 px past the UI area; the
+	# extended-stats scroll is below the fold, so showing 60 px
+	# less of it costs nothing visible. Desktop keeps 400.
+	scroll.custom_minimum_size = Vector2(0, 340 if _p5_on else 400)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	rcol.add_child(scroll)
 	_result_box = VBoxContainer.new()
@@ -14080,14 +14086,17 @@ func _p5_w(panel: Control, fallback: float) -> float:
 ## M0: fit against the larger of the nominal and live content heights;
 ## card rows can make the latter taller than the original design box.
 ## Keep a small vertical inset in _ui_root space and centre the result.
-## U5 fix3: place+fit loops until the rendered height fits. _p5_fit
-## floors fonts/buttons, which grows the content min, which shrinks
-## the fit scale, which floors them a little more -- a fixed point
-## the old single refit never reached (result panel: live min 786 vs
-## spec 750 at sm 0.952 rendered 748 tall in a 720 area, spilling
-## 14 px past the top and bottom). At most 4 passes; the +1.0 slack
-## matches the harness _inside tolerance. post_layout is retained
-## for call compatibility; the loop replaces the recursion.
+## U5 fix4: the fix3 place+fit loop is reverted. It diverged in
+## practice: the s100 run landed result at scale 0.036 and bigmap
+## at 0.266 (both red), and a probe showed the loop bistable --
+## repeated placements swung the result panel between 0.143 and
+## 1.275 with off-screen rects. Cause: _p5_fit floors scale as
+## 1/sm, so a smaller sm grows the content min (wrapped text grows
+## ~1/sm^2 once fonts blow up) and the loop post-fit check keeps
+## shrinking sm with no fixed point. Single-pass placement (fix2)
+## is deterministic; the result panel 14 px spill is fixed by
+## trimming its live min instead (see _build_result scroll min).
+## post_layout is retained for call compatibility.
 func _p5_place_modal(c: Control, s: float, post_layout: bool = false) -> void:
 	var spec: Vector2 = _p5_spec[c]
 	var area := _ui_root.size if _ui_root and _ui_root.size.y > 0.0 \
@@ -14097,34 +14106,27 @@ func _p5_place_modal(c: Control, s: float, post_layout: bool = false) -> void:
 	# it), so fitting against the live content height collapses the
 	# panel whenever the scroll holds a long list (the result panel
 	# fell to scale 0.53 on the s100 run for exactly this). Panels
-	# opt in via the p5_fixed_h meta (none at present: the result
-	# panel's scroll content moved out of its fixed box in fix1, so
-	# its live min is bounded again and it fits against it).
-	var prev_w := float(c.get_meta("p5_w", -1.0))
-	for attempt in range(2 if post_layout else 4):
-		var content_h := spec.y if bool(c.get_meta("p5_fixed_h", false)) else maxf(spec.y, c.get_combined_minimum_size().y)
-		var sm := minf(s, (area.y - 6.0) / content_h)
-		var w := floorf(minf(spec.x, (area.x - 24.0) / sm))
-		c.offset_left = -w * 0.5
-		c.offset_right = w * 0.5
-		c.offset_top = -spec.y * 0.5
-		c.offset_bottom = spec.y * 0.5
-		c.scale = Vector2(sm, sm)
-		c.pivot_offset = c.size * 0.5
-		c.set_meta("p5_sm", sm)
-		c.set_meta("p5_w", w)
-		_p5_fit(c, sm)
-		var relay := attempt == 0 and absf(prev_w - w) > 0.5
-		if relay:
-			_p5_relayout(c)
-			# Width-dependent content can grow beyond the nominal height
-			# during its first layout (notably the 300 px draft/blessing
-			# cards). Loop again to refit against that measured height.
-			continue
-		if maxf(spec.y, c.get_combined_minimum_size().y) * sm <= area.y - 6.0 + 1.0:
-			break
-		# Live size still exceeds the fitted box: loop and refit
-		# against the grown content height.
+	# opt in via the p5_fixed_h meta (result only, for now).
+	var content_h := spec.y if bool(c.get_meta("p5_fixed_h", false)) else maxf(spec.y, c.get_combined_minimum_size().y)
+	var sm := minf(s, (area.y - 6.0) / content_h)
+	var w := floorf(minf(spec.x, (area.x - 24.0) / sm))
+	c.offset_left = -w * 0.5
+	c.offset_right = w * 0.5
+	c.offset_top = -spec.y * 0.5
+	c.offset_bottom = spec.y * 0.5
+	c.scale = Vector2(sm, sm)
+	c.pivot_offset = c.size * 0.5
+	var relay := absf(float(c.get_meta("p5_w", -1.0)) - w) > 0.5
+	c.set_meta("p5_sm", sm)
+	c.set_meta("p5_w", w)
+	_p5_fit(c, sm)
+	if relay:
+		_p5_relayout(c)
+		# Width-dependent content can grow beyond the nominal height
+		# during its first layout (notably the 300 px draft/blessing
+		# cards). Refit once against that measured content height.
+		if not post_layout:
+			_p5_place_modal(c, s, true)
 
 ## Width-dependent modal content re-renders when W changes
 ## (hudScale slider, safe-area change).
