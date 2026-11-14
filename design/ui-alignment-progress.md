@@ -730,3 +730,21 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 未过门 3 项（双档同现）：① 两按钮在面板内——参考里按钮在面板外、下方场景上（面板因此过高）；② 汇总 pill 与按钮之间有一行四个孤零「0 0 0 0」，参考无此行（放大裁切实证）；③ 「再次出发」图标为空心圆环，参考为环形刷新箭头 ↻（放大裁切实证）。
 - fix6 处方：① 按钮移出面板、落到面板下方（面板随之收回内容高）；② 查 `_build_result` 残留的四枚 0 值标签并清除；③ 再次出发换环形刷新箭头；④ 修完确认面板右侧滚动条消失。修完复拍复检，仍不许跳屏。
 - 本轮提交（align-fix13，已推送，`git ls-remote` 核验）：本节台账＋fix5 双档 compare（`compare/U5.png`、`compare/U5_2400.png`，NUC 侧由 fix5 捕获重建，与主控本机构建逐字节核对一致）。
+
+## U5 fix6：按钮移出面板＋孤零行清除＋刷新箭头，验证批已起跑（2026-11-15 00:1x–00:5x 轮，主控）
+
+- 承接 23:2x 轮断点：验证批 `Test/u5_fix5_run.sh`（HEAD d3e0946）已 ALLDONE 23:14:05：2400 s100 **1564/0**、2340 s100 **1564/0**，双腿 rc=0。防撞：起跑时无 sprite-bonk Godot 在跑（仅 sanguo 工程进程），无双开。图标第二单收口序列已在前轮完成（记录 66ad775、合并 SHA ccf6b8a、fd2af03 已为 align-fix13 祖先），本轮不重复。
+- fix5 亲检三项（23:2x 轮裁定，本轮复核 fix5 实拍确认）：① 两钮在面板内（绿钮 x 637..1174、奶油钮约 1226..1430，y 960..1038，均在奶油区内）；② 汇总 pill 与按钮间一行四个孤零「0 0 0 0」；③ 「再次出发」图标为空心圆环。
+- 根因核查（原始 PNG 行列扫描＋代码）：
+  - ① 按钮本就是 `_result_panel` 内 VBox 的末行；参考里按钮在面板外、下方场景上。
+  - ② 四枚 0＝`_fill_result` 的 4-up fact grid（守护者/结伴/元素反应/成长，本局全 0）；该 grid 在 P5 滚动区内，滚动视口仅 23 逻辑 px（spec 750 − live min 727），只露出值行、标签被裁，成孤零行；滚动条亦因此在位。
+  - ③ `UiIcon "reroll"` 为双弧＋双小箭头（24 空间内弧 r7.6、箭头约 5.7），在 20 设计 px 图标上渲染约 19 屏 px 环、箭头约 7 屏 px，肉眼读作空心圆环；参考为单弧＋单箭头的 ↻。
+- 实施 fix6（提交 941c236，已推送，`git ls-remote` 核验 origin 与本地同 SHA；scripts/world.gd＋scripts/ui_icon.gd＋Test/phonehud.gd；未动玩法数值）：
+  - ① wrapper 栈：P5 下新增 `_result_wrap` VBox（面板＋动作行，separation 20 逻辑 px，约合参考 28 屏 px 间隙），注册为 P5 模态（900×750、p5_fixed_h），整栈居中缩放；桌面保持裸面板（legacy 700×580 不动）。面板 live min 623（星 96＋缎带 59＋摘要 36＋核心 380＋3×8 分隔＋28 边距），栈合计 731＜750，渲染约 696≤714，sm 保持 0.952；星／钮／值 pill／标题的 fix2 量测不变。可见性在 `_finish_run` 与再次出发 handler 内与面板同步；`_any_modal_open` 与 `_process` 的 HUD 隐藏仍读 `_result_panel.visible`（两标志同步）。
+  - ② P5 扩展统计不进滚动区：`_build_result` 的 ScrollContainer 只在桌面建（`_result_box` 仍建为孤儿供 `_fill_result` 清空循环）；`_fill_result` 在 P5 下四行＋汇总 pill 后直接返回（桌面保留完整分节汇总）。
+  - ③ 新图标 `UiIcon "refresh"`：单弧 243°（-90°→153°）＋单颗大箭头（24 空间内约 7×6.5），线宽 2.6；「再次出发」改用它、图标 20→28 设计 px；草案「重抽」仍用共享 "reroll"，U3 已关闭屏不动。
+  - ④ 检查适配（已批准规格对齐、强度不降）：`Test/phonehud.gd` 的 `_p5_panel("result")` 在 P5 下返回 wrapper——"modal inside UI area"、"modal scale"、"modal buttons"、"modal text"、"primary action centred bottom"、"back-to-menu wired" 均改为量整栈；桌面仍返回裸面板，legacy 几何检查不动。主钮居中底行预核：右钮中心约 x1485、栈中心 1200，偏差 285＜0.25×1285＝321；按钮底约 1048＜1080。
+- 解析门 Test/u5_fix6_parse.sh（world/ui_icon/phonehud 三门）：全 rc=0、SCRIPT ERROR 0 条。日志 Test/out/u5_fix6_parse.log。注：首版两脚本因 heredoc 未加引号致 `$log/$G` 展开为空而写坏，已用加引号 heredoc 重写并核对变量完整。
+- 验证批 Test/u5_fix6_run.sh 已于 00:51:46 detached 启动（HEAD 941c236，2400 s100 腿在跑），.done 路径 Test/out/u5_fix6.done，双腿 2400 s100 → 2340 s100，预计约 01:30 完成。
+- 断点：下一轮先读 Test/out/u5_fix6.done（两档绿、FAIL=0；checks 1549 与 1564 均接受，以 FAIL=0 为准），取 mobile_p5_result_victory_*_s100_i0.png 双档快照，行列扫描复核按钮（面板外、面板下方、约 571 屏 px 宽、居中）／孤零行已去／面板右侧无滚动条／刷新箭头可辨（单弧＋箭头＋缺口）／星（约 137 屏 px）／值 pill 淡黄／标题白字后重建 compare/U5.png 与 compare/U5_2400.png（Test/make_compare_u5.py）、逐项亲检再议 U5 签核。Notion 对齐单未动（U5 未关闭）。
+- 本轮提交（align-fix13，已推送，`git ls-remote` 核验 origin 与本地同 SHA）：941c236 fix6 代码＋脚本；本节台账另行提交。
