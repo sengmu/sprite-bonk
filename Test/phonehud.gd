@@ -3171,6 +3171,13 @@ func _p5_panel(name: String) -> Control:
 				if c is PanelContainer:
 					return c
 		return null
+	if name == "result":
+		# U5 fix6: on phone the result modal is the wrapper stack
+		# (panel + actions below it); the P5 checks measure the
+		# whole stack. Desktop keeps the bare panel (legacy).
+		var w := _world.get("_result_wrap") as Control
+		if w != null:
+			return w
 	return _world.get("_" + name + "_panel") as Control
 
 func _p5_snap(state: String) -> void:

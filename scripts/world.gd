@@ -469,6 +469,7 @@ var _menu_hero_box: VBoxContainer
 var _menu_hero_sp := ""
 var _first_starter_card: Button
 var _result_panel: PanelContainer
+var _result_wrap: VBoxContainer  # U5 fix6: P5 modal stack (panel + actions below); null on desktop
 var _result_title: Label
 var _result_body: Label
 var _result_core: VBoxContainer  # U5: P5 summary rows + payout pill, always visible (not scrolled)
@@ -3601,14 +3602,20 @@ func _build_hud() -> void:
 	_p5_register(_meowth_panel, 985.0, 430.0)
 	_p5_register(_pause_panel, 1000.0, 430.0)
 	_p5_register(_bigmap_panel, 900.0, 430.0)
-	_p5_register(_result_panel, 900.0, 750.0)
 	# U5 fix4/5: result fits against its nominal design height only
 	# (see _p5_place_modal p5_fixed_h); the 14 px spill from its
 	# live min (787 vs spec 750) is fixed by trimming the live min
 	# (slim row/payout plate margins in _fill_result), not by
 	# fitting against it -- the fix3 fit-against-live-min loop
 	# diverged (s100 result scale 0.036).
-	_result_panel.set_meta("p5_fixed_h", true)
+	# U5 fix6: on phone the registered modal is the wrapper stack
+	# (panel + actions below it); desktop keeps the bare panel.
+	if _p5_on:
+		_p5_register(_result_wrap, 900.0, 750.0)
+		_result_wrap.set_meta("p5_fixed_h", true)
+	else:
+		_p5_register(_result_panel, 900.0, 750.0)
+		_result_panel.set_meta("p5_fixed_h", true)
 	_p5_register(_lab_panel, 820.0, 430.0)
 	_p5_register(_shop_panel, 820.0, 430.0)
 	_p5_register(_unlock_panel, 900.0, 430.0)
@@ -6279,6 +6286,21 @@ func _banish_option(idx: int) -> void:
 	_render_draft()
 
 func _build_result(root: Control) -> void:
+	# U5 fix6: on phone the modal is a wrapper stack -- the cream
+	# panel plus the actions row below it, on the scene (v2
+	# reference: the buttons sit outside/below the card, not in
+	# it). The wrapper is the registered P5 modal (placed/scaled
+	# as one unit); desktop keeps the bare panel (legacy 700x580).
+	if _p5_on:
+		_result_wrap = VBoxContainer.new()
+		_result_wrap.add_theme_constant_override("separation", 20)
+		_result_wrap.set_anchors_preset(Control.PRESET_CENTER)
+		_result_wrap.offset_left = -450
+		_result_wrap.offset_right = 450
+		_result_wrap.offset_top = -375
+		_result_wrap.offset_bottom = 375
+		_result_wrap.visible = false
+		root.add_child(_result_wrap)
 	_result_panel = PanelContainer.new()
 	_result_panel.set_anchors_preset(Control.PRESET_CENTER)
 	_result_panel.offset_left = -350
@@ -6287,7 +6309,10 @@ func _build_result(root: Control) -> void:
 	_result_panel.offset_bottom = 290
 	_result_panel.visible = false
 	_result_panel.add_theme_stylebox_override("panel", UiTheme.panel_texture())
-	root.add_child(_result_panel)
+	if _p5_on:
+		_result_wrap.add_child(_result_panel)
+	else:
+		root.add_child(_result_panel)
 	var vb := VBoxContainer.new()
 	vb.add_theme_constant_override("separation", 8)
 	var rcol := vb
@@ -6343,19 +6368,26 @@ func _build_result(root: Control) -> void:
 		_result_core.add_theme_constant_override("separation", 10)
 		_result_core.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		vb.add_child(_result_core)
-	var scroll := ScrollContainer.new()
-	# U5 fix5: the fix4 scroll trim (340) was a no-op -- the P5
-	# block below overwrites this to 0, and a ScrollContainer
-	# never propagates its child's min anyway (probe: scroll min
-	# (291, 0) with a 708 px child). The spill is fixed by the
-	# slim row/payout plate margins in _fill_result instead.
-	scroll.custom_minimum_size = Vector2(0, 400)
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	rcol.add_child(scroll)
+	# U5 fix6: the extended-statistics scroll exists on desktop
+	# only. On phone its viewport only ever showed a clipped
+	# sliver of the fact grid (the stray "0 0 0 0" row) plus a
+	# scrollbar -- the reference card has neither. _result_box
+	# is still built (orphan on phone) so _fill_result's clear
+	# loop keeps working; its content is skipped on phone.
 	_result_box = VBoxContainer.new()
 	_result_box.add_theme_constant_override("separation", 10)
 	_result_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(_result_box)
+	if not _p5_on:
+		var scroll := ScrollContainer.new()
+		# U5 fix5: the fix4 scroll trim (340) was a no-op -- a
+		# ScrollContainer never propagates its child's min
+		# anyway (probe: scroll min (291, 0) with a 708 px
+		# child). The spill is fixed by the slim row/payout
+		# plate margins in _fill_result instead.
+		scroll.custom_minimum_size = Vector2(0, 400)
+		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		rcol.add_child(scroll)
+		scroll.add_child(_result_box)
 	# The pre-18 label said 再来一局 but the button reloads
 	# into the MENU (boot state) — the bundle's own primary
 	# here is back-to-menu; label it truthfully.
@@ -6364,12 +6396,20 @@ func _build_result(root: Control) -> void:
 	# U5: buttons centred below the rows (reference); the old
 	# right-aligned row is gone with the two columns.
 	actions.alignment = BoxContainer.ALIGNMENT_CENTER if _p5_on else BoxContainer.ALIGNMENT_END
-	rcol.add_child(actions)
+	if _p5_on:
+		_result_wrap.add_child(actions)
+	else:
+		rcol.add_child(actions)
 	# U5: reference buttons carry icons (refresh / house); the green
 	# primary is white-on-green (same whitening as the draft reroll).
-	var again := UiTheme.make_icon_button("reroll", "再次出发", "green", "big")
+	# U5 fix6: the reference icon is a single-arc circular arrow
+	# (refresh), not the shared double-arc reroll (which reads as
+	# a plain ring at this size); the draft modal keeps "reroll".
+	var again := UiTheme.make_icon_button("refresh", "再次出发", "green", "big")
 	again.pressed.connect(func() -> void:
 		_result_panel.hide()
+		if _result_wrap != null:
+			_result_wrap.hide()
 		_open_loadout(_menu_hero_sp))
 	actions.add_child(again)
 	var b := UiTheme.make_icon_button("home", "返回菜单", "ghost", "big")
@@ -6377,10 +6417,12 @@ func _build_result(root: Control) -> void:
 	actions.add_child(b)
 	var arow := again.get_child(0) as HBoxContainer
 	(arow.get_child(0) as UiIcon).color = UiTheme.WHITE
+	# U5 fix6: the reference glyph is ~2x the old 20 px icon next
+	# to the label; 28 px keeps the arrowhead legible at phone fit.
+	(arow.get_child(0) as UiIcon).custom_minimum_size = Vector2(28, 28)
+	again.set_meta("icon_px", 28)
 	(again.get_meta("label") as Label).add_theme_color_override("font_color", UiTheme.WHITE)
 	if _p5_on:
-		scroll.custom_minimum_size = Vector2(0, 0)
-		scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		# U5: reference buttons are ~23% of frame width each.
 		again.custom_minimum_size.x = 400
 		again.set_meta("min_w", 400)
@@ -11868,6 +11910,8 @@ func _finish_run(victory: bool) -> void:
 	var score := run_score(victory)
 	_fill_result(victory, score, dust)
 	_result_panel.visible = true
+	if _result_wrap != null:
+		_result_wrap.visible = true
 	_apply_ui_scale()
 	_refresh_meta()
 
@@ -16674,6 +16718,14 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 	_mk_label(prow, "金币 %d" % int(gold), 18, UiTheme.TEXT)
 	_mk_label(prow, "|", 18, UiTheme.MUTED)
 	_mk_label(prow, "得分 %s" % str(score), 18, UiTheme.TEXT)
+	if _p5_on:
+		# U5 fix6: phone shows the reference card only (rows +
+		# payout). The extended statistics lived in the scroll,
+		# whose viewport only ever showed a clipped sliver (the
+		# stray "0 0 0 0" fact-grid row) plus a scrollbar.
+		# Desktop keeps the full sectioned summary in its scroll.
+		call_deferred("_size_result_bars")
+		return
 	# 4-up fact grid.
 	var grid := GridContainer.new()
 	grid.columns = 4

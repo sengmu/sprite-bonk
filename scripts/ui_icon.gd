@@ -202,6 +202,14 @@ func _draw() -> void:
 			_poly([Vector2(18.9, 5.6), Vector2(20.9, 11.4), Vector2(15.2, 10.6)], color)
 			_arc(12, 12, 7.6, PI * 0.65, PI * 2.15)
 			_poly([Vector2(5.1, 18.4), Vector2(3.1, 12.6), Vector2(8.8, 13.4)], color)
+		"refresh":
+			# U5 fix6: single-arc circular arrow (reference refresh)
+			# -- the shared "reroll" double arc closes into a plain
+			# ring at small sizes; this one keeps a clear gap and
+			# one chunky head. Result screen only; the draft
+			# modal keeps "reroll".
+			_arc(12, 12, 8.0, -PI * 0.5, PI * 0.83, 2.6)
+			_poly([Vector2(2.97, 12.45), Vector2(8.55, 15.2), Vector2(2.69, 18.66)], color)
 		"skip":
 			_poly([Vector2(4.6, 5.6), Vector2(11.6, 12), Vector2(4.6, 18.4)], color)
 			_poly([Vector2(11.4, 5.6), Vector2(18.4, 12), Vector2(11.4, 18.4)], color)
