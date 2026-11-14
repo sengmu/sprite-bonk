@@ -748,3 +748,9 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 验证批 Test/u5_fix6_run.sh 已于 00:51:46 detached 启动（HEAD 941c236，2400 s100 腿在跑），.done 路径 Test/out/u5_fix6.done，双腿 2400 s100 → 2340 s100，预计约 01:30 完成。
 - 断点：下一轮先读 Test/out/u5_fix6.done（两档绿、FAIL=0；checks 1549 与 1564 均接受，以 FAIL=0 为准），取 mobile_p5_result_victory_*_s100_i0.png 双档快照，行列扫描复核按钮（面板外、面板下方、约 571 屏 px 宽、居中）／孤零行已去／面板右侧无滚动条／刷新箭头可辨（单弧＋箭头＋缺口）／星（约 137 屏 px）／值 pill 淡黄／标题白字后重建 compare/U5.png 与 compare/U5_2400.png（Test/make_compare_u5.py）、逐项亲检再议 U5 签核。Notion 对齐单未动（U5 未关闭）。
 - 本轮提交（align-fix13，已推送，`git ls-remote` 核验 origin 与本地同 SHA）：941c236 fix6 代码＋脚本；本节台账另行提交。
+
+## U5 fix6：批次监看轮（2026-11-15 01:1x 轮，worker）
+- 防撞核查：上一轮 00:51:46 起跑的验证批仍在跑——Godot 进程 1163837（--mode=phone --scale=1.00 --win=2340x1080 --result=victory）在跑；Test/out/u5_fix6.done 只有 START＋2400 腿记录、无 ALLDONE。本轮只监看、不双开、不施工。
+- 进度：2400 s100 腿已绿——.done 记 phonehud 2400 rc=0、PHONEHUD DONE checks=1549 fails=0；2340 s100 腿进行中——日志 Test/out/u5_fix6_phonehud_2340.log 587 行、485 PASS、FAIL 0 条，当前跑到 P5（P1 5／P2 51／P3 45／P4 45／P5 82 条 PASS 行），2400 腿日志 11937 行对照、2340 尚早。
+- 断点不变：下一轮先读 Test/out/u5_fix6.done（等 ALLDONE、两档绿 FAIL=0），按上一节断点取双档 mobile_p5_result_victory_*_s100_i0.png 快照、行列扫描复核（按钮面板外下方约 571 屏 px 居中／孤零行已去／面板右侧无滚动条／刷新箭头单弧＋箭头＋缺口／星约 137 屏 px／值 pill 淡黄／标题白字），重建 compare/U5.png 与 compare/U5_2400.png（Test/make_compare_u5.py）、逐项亲检再议 U5 签核。
+- 本轮提交：本节台账。
