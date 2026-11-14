@@ -700,3 +700,18 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 验证批 Test/u5_fix4_run.sh 已于 21:35:52 detached 启动（HEAD 04877ae，2400 s100 腿在跑），.done 路径 Test/out/u5_fix4.done，双腿 2400 s100 → 2340 s100，预计约 22:06 完成。
 - 断点：下一轮先读 Test/out/u5_fix4.done（两档绿、FAIL=0；checks 1549 与 1564 均接受，以 FAIL=0 为准），取 `mobile_p5_result_victory_*_s100_i0.png` 双档快照，行列扫描复核面板（应 ≤714 逻辑 px 高、居中、上下缘在屏内）／星（约 137 屏 px）／钮（各约 545 屏 px 宽）／值 pill 淡黄／标题白字后重建 compare/U5.png 与 compare/U5_2400.png（Test/make_compare_u5.py）、逐项亲检再议 U5 签核。Notion 对齐单未动（U5 未关闭）。SSH 说明：本轮 SSH 多次在长命令中断（约 20 秒断线），均按纪律改走 nohup＋短轮询，未假设状态。
 - 本轮提交（align-fix13，已推送，`git ls-remote` 核验 origin 与本地同 SHA）：04877ae fix4 代码＋脚本＋探针；本节台账另行提交。
+
+## U5 fix5：fix4 滚动裁剪无效根因＋行/汇总板边距收窄，验证批已起跑（2026-11-14 22:1x–22:3x 轮，主控）
+
+- 承接 21:11 轮断点：验证批 `Test/u5_fix4_run.sh`（HEAD 04877ae）已 ALLDONE 22:11:51：2400 s100 **1564/1**、2340 s100 **1564/1**，双腿同值同红。防撞：起跑时无 sprite-bonk Godot 在跑（仅 sanguo HeroLab 进程），无双开。
+- 唯一红（与 fix2 同红、未清）：`P5: modal inside UI area (result/victory)`——面板全局 rect 856.8×748.27 逻辑 px，顶 y=-14.14（双腿同值；2340 档 x 351.6）。fix4 的滚动裁剪对渲染尺寸零作用。
+- 根因（探针 `Test/u5_fix5_probe.gd`，s100 等效几何实证）：fix4 滚动裁剪 400→340 是双重 no-op——① `_build_result` 末尾 P5 分支把 scroll custom min 覆写为 0；② ScrollContainer 本就不传导子内容 min（探针：scroll min (291, 0)，子 `_result_box` min 708）。面板 live min 787 全部来自固定内容：星 96＋缎带 59＋摘要 36＋核心 440＋滚动 0＋钮行 88＋5×8 分隔＝759，＋面板边距 28＝787；核心 440＝4 行×84＋汇总 64＋4×10 分隔；每行 84＝徽 56＋2×14 板边距。探针教训：`--headless` 跑探针会扭曲窗口几何（首跑 ui_root 1280×1280、min 852），去 `--headless` 走 xvfb＋opengl3 后与 s100 等效（scale 0.952、min 787、rect 与 s100 日志差 1px 内）；首跑在两次 dump 打印后段错误收尾（terrain_gen.gd:307，PROBE_RC=139），数据已取全、无影响。
+- 实拍复核（fix4 胜利快照，双档已拉回校验）：奶油区 x 565..1835、y 0..1076——面板上下缘均被视口裁掉；金星簇顶沿触 y=0，星体本身被裁。**U5 不关闭**。
+- 实施 fix5（提交 d3e0946，已推送，`git ls-remote` 核验 origin 与本地同 SHA；scripts/world.gd＋Test/u5_fix5_*.sh＋Test/u5_fix5_probe.gd；未动玩法数值、未动检查）：
+  ① 行板与汇总 pill 在 P5 下改 `UiTheme.panel_texture(8)`（content margin 14→8；panel_texture 本就带 margin 参数、每次新建非共享，安全）：行 84→72（-48）、汇总 64→52（-12），live min 787→727，渲染 727×0.952≈692 ≤714，上下各留约 14px；行高向参考 ~70px 靠拢（现 11.1% 幅高→约 9.5%），徽 56 与星 96 均未动（fix2 已达标量测不变）。
+  ② fix4 滚动行还原为 400（P5 下仍由后分支覆写为 0、桌面保持 400），失效注释改写为根因记录；`_build_hud` 与 `_p5_place_modal` 内相关注释同步改向（指向 `_fill_result` 行板边距）。
+- 解析门 Test/u5_fix5_parse.sh（world 单门）：rc=0、SCRIPT ERROR 0 条。日志 Test/out/u5_fix5_parse.log。
+- 验证批 Test/u5_fix5_run.sh 已于 22:32:12 detached 启动（HEAD d3e0946，2400 s100 腿在跑），.done 路径 Test/out/u5_fix5.done，双腿 2400 s100 → 2340 s100，预计约 23:05–23:10 完成。
+- 断点：下一轮先读 Test/out/u5_fix5.done（两档绿、FAIL=0；checks 1549 与 1564 均接受，以 FAIL=0 为准），取 `mobile_p5_result_victory_*_s100_i0.png` 双档快照，行列扫描复核面板（应 ≤714 逻辑 px 高、居中、上下缘在屏内、星顶不裁）／星（约 137 屏 px）／钮（各约 545 屏 px 宽）／值 pill 淡黄／标题白字后重建 compare/U5.png 与 compare/U5_2400.png（Test/make_compare_u5.py）、逐项亲检再议 U5 签核。Notion 对齐单未动（U5 未关闭）。SSH 说明：本轮 SSH 两次在命令中途断（起批前一次、起批后一次），均经重连核实实际状态后继续，未假设。
+- 本轮提交（align-fix13，已推送，`git ls-remote` 核验 origin 与本地同 SHA）：d3e0946 fix5 代码＋脚本＋探针；本节台账另行提交。
+- 附：图标第二单与 U2、U3 均已关闭（见台账前节），本轮无收口/签核动作；队列头仍为 U5。
