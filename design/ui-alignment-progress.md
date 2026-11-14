@@ -503,3 +503,13 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 主控于 2026-11-14 亲检 compare/U2.png（2340）与 compare/U2_2400.png（2400）逐项：九项全在位（2×2 卡、累计 pill、第三卡「伙伴营挑战」、无红角标、震动行绿开关、单行提示 pill、钱包已连接绿 chip、首伙伴绿边＋勾、橙色开始钮带叶）；主角尺寸 ±0.01、脚已落地（前轮结论，未动）；pill 行约 270×56 ref px（目标约 271×57）、字形「4」约 23.8 ref px（目标 24–25）、右缘面 0.981；开始钮中心与参考一致。
 - 微残差在案：开始钮可见橙面约 403 vs 参考约 393 ref px（+2.6%，过扫描过冲，全帧并排不可辨）；pill 右缘 −0.003 面。托盘窄＋右移（deliberate 适配）与背景取景（场景近似）仍为待用户验收项；主角姿态豁免。
 - 决断：**U2 关闭**（主控签核，2026-11-14）。下一屏 U3 按队列推进中（公司侧）。
+
+## U3 暂存稿验证轮（2026-11-14 12:1x–12:3x 轮，主控）
+
+- 队列状态核实（本轮先读台账＋git log）：图标第二单已于 2026-11-12 23:05 轮关闭（s100 复跑 1564/0、时序 flake 裁定、记录 66ad775、Notion Done），本轮无收口动作；U2 已于 2026-11-14 主控亲检双档 compare 签核关闭（更正节 875d5cd），本轮无签核动作。队列头为 U3。
+- SSH 直连中断（本轮）：约 12:11 起 `Test/nuc_ssh.sh` 与 musen 跳板双路报「Connection closed by UNKNOWN port 65535」；tsproxy 直测 musen:22 与 NUC:22 均 rc=1 无 banner（此前 05:11 轮 musen 通、仅 NUC 断；本轮双路同断），3130 监听口仍开、3128 出口 curl 200、tailnet 节点表内 ubantu/musen 均在列——故障在 3130 CONNECT→Tailscale 段，属既往 flap 同款。约 12:28 直连自愈恢复（PING_OK）。中断期间未动任何代码；本轮全部工作均在恢复后直接落 NUC 树。
+- 防撞：起跑时无 Godot 在跑（锚定 pgrep 空）；最新 .done 为 u2_pillstart.done，已 ALLDONE（2400 1564/0、2340 1549/0，2026-11-13 11:42–12:06）。无双开。
+- 7e5c5fc 暂存稿核对（公司侧 WIP，主控 12:10 规范行尾后作未验证检查点提交）：`git show` 核实 world.gd 78 行改动与 phonehud.gd 1 行，**与台账「U3 暂存」节实施草案逐项一致**：顶横幅改奶油 pill（fff5dc、金边 2px、左右绿叶 v2-leaves.svg 31×26＋金星 star_filled.png 26×26、标题 24px TEXT 色、vb 分隔 10→4）；顶区 114→150；字形标 78→96（class badge y 70→104）；flow 顶 122→158；标题 18→20px 进奶油 pill（fff6df、圆角 18）；标题与描述间加叶形分隔（46×2 细线＋UiBadge "leaf" 18px＋细线）；描述 13→15px；phonehud P5 draft 块加 `_snap("phone_hud_touch_" + _run_tag() + "_draft")`（只取图、不动断言，2340 draft 取图口径与草案一致）。卡高 220×300 已由图标第二单 W4 落地（本稿未再动）；P5 模态 legacy 860×452 未动。
+- 解析门（`Test/u3_draft_parse.sh`，`Test/out/u3_draft_parse.log`）：scripts/world.gd **rc=0**、Test/phonehud.gd **rc=0**、SCRIPT ERROR 0 条。
+- 验证批 `Test/u3_draft_run.sh` 已于 12:28:56 detached 启动（PID 76021，Godot 76046，2400 s100 腿在跑），`.done` 路径 `Test/out/u3_draft.done`，HEAD 7e5c5fc，双腿 2400 s100 → 2340 s100，预计约 12:55 完成。
+- **断点**：下一轮先读 `Test/out/u3_draft.done`（两档绿、FAIL=0；checks 1549 与 1564 均接受，以 FAIL=0 为准），取 `phone_hud_touch_*_draft.png` 双档快照，对照 `design/ui-reference/v2/U3_final.jpg`（另有 `design/art-concepts/ui-approved/U3_升级三选一.png`）建 `compare/U3.png`（`Test/make_compare_u3.py` 待新建，仿 make_compare_u2.py 左参考右实拍），原始图行列扫描量卡高／顶区／字形标／标题 pill／叶形分隔／描述字高后逐项亲检，再议 U3 签核。NUC `.git` 反向同步回本机本轮待补（本地副本仍停在 11-13 10:47 同步点，NUC 已至 7e5c5fc）。
