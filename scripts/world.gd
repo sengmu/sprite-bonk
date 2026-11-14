@@ -5459,11 +5459,46 @@ func _build_draft(root: Control) -> void:
 	_draft_panel.add_theme_stylebox_override("panel", UiTheme.panel_texture())
 	root.add_child(_draft_panel)
 	var vb := VBoxContainer.new()
-	vb.add_theme_constant_override("separation", 10)
+	vb.add_theme_constant_override("separation", 4)
 	_draft_panel.add_child(vb)
 	# The original's h1 is "¡Nivel {lvl}!" (UI_SPEC §2.5).
-	_draft_title = _mk_dlabel(vb, "升级！", 24, UiTheme.GOLD)
+	var header := CenterContainer.new()
+	vb.add_child(header)
+	var header_row := HBoxContainer.new()
+	header_row.add_theme_constant_override("separation", 5)
+	header.add_child(header_row)
+	var left_leaf := TextureRect.new()
+	left_leaf.texture = load("res://assets/menu/v2-leaves.svg") as Texture2D
+	left_leaf.custom_minimum_size = Vector2(31, 26)
+	left_leaf.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	left_leaf.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	header_row.add_child(left_leaf)
+	var header_pill := PanelContainer.new()
+	var header_style := UiTheme.flat_box(Color("fff5dc"), 18, Color("e9bd73"), 2)
+	header_style.content_margin_left = 30
+	header_style.content_margin_right = 30
+	header_style.content_margin_top = 1
+	header_style.content_margin_bottom = 1
+	header_pill.add_theme_stylebox_override("panel", header_style)
+	header_row.add_child(header_pill)
+	var header_content := HBoxContainer.new()
+	header_content.add_theme_constant_override("separation", 8)
+	header_pill.add_child(header_content)
+	var header_star := TextureRect.new()
+	header_star.texture = load("res://assets/ui/decorations/star_filled.png") as Texture2D
+	header_star.custom_minimum_size = Vector2(26, 26)
+	header_star.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	header_star.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	header_content.add_child(header_star)
+	_draft_title = _mk_dlabel(header_content, "升级！", 24, UiTheme.TEXT)
 	_draft_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var right_leaf := TextureRect.new()
+	right_leaf.texture = left_leaf.texture
+	right_leaf.custom_minimum_size = Vector2(31, 26)
+	right_leaf.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	right_leaf.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	right_leaf.flip_h = true
+	header_row.add_child(right_leaf)
 	_draft_opts_box = HBoxContainer.new()
 	_draft_opts_box.add_theme_constant_override("separation", 10)
 	_draft_opts_box.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -5749,21 +5784,21 @@ func _draft_card(opt: Dictionary, idx: int) -> Button:
 	top.offset_left = 2
 	top.offset_right = -2
 	top.offset_top = 2
-	top.offset_bottom = 114
+	top.offset_bottom = 150
 	var tc := top_c
 	tc.a = 0.85
 	top.add_theme_stylebox_override("panel", UiTheme.flat_box(tc.lightened(0.62), 28))
 	top.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card.add_child(top)
-	var ic := UiBadge.new(icon, top_c, 78)
-	ic.position = Vector2((csz.x - 78.0) * 0.5, 30)
+	var ic := UiBadge.new(icon, top_c, 96)
+	ic.position = Vector2((csz.x - 96.0) * 0.5, 30)
 	card.add_child(ic)
 	# Icon order 2: the move-class mark (class_physical /
 	# class_special art) rides the top zone's lower right,
 	# clear of the centred main icon and the rarity chip.
 	if cls_badge != "":
 		var cb := UiBadge.new(cls_badge, top_c, 36)
-		cb.position = Vector2(csz.x - 46.0, 70.0)
+		cb.position = Vector2(csz.x - 46.0, 104.0)
 		card.add_child(cb)
 	# Cycle 19 (audit §4.3): the bundle's top zone also
 	# carries a KIND chip — NUEVO for a new move/vitamin,
@@ -5804,7 +5839,7 @@ func _draft_card(opt: Dictionary, idx: int) -> Button:
 	flow.set_anchors_preset(Control.PRESET_FULL_RECT)
 	flow.offset_left = 10
 	flow.offset_right = -10
-	flow.offset_top = 122
+	flow.offset_top = 158
 	flow.offset_bottom = -8
 	flow.add_theme_constant_override("separation", 4)
 	flow.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -5812,16 +5847,39 @@ func _draft_card(opt: Dictionary, idx: int) -> Button:
 	var tl := Label.new()
 	tl.text = title
 	tl.add_theme_font_override("font", UiTheme.display_font())
-	tl.add_theme_font_size_override("font_size", 18)
+	tl.add_theme_font_size_override("font_size", 20)
 	tl.add_theme_color_override("font_color", UiTheme.TEXT)
 	tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	tl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	tl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	flow.add_child(tl)
+	var title_pill := PanelContainer.new()
+	var title_style := UiTheme.flat_box(Color("fff6df"), 18)
+	for side in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
+		title_style.set_content_margin(side, 2.0)
+	title_pill.add_theme_stylebox_override("panel", title_style)
+	title_pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	flow.add_child(title_pill)
+	title_pill.add_child(tl)
+	var divider := HBoxContainer.new()
+	divider.alignment = BoxContainer.ALIGNMENT_CENTER
+	divider.add_theme_constant_override("separation", 5)
+	divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	flow.add_child(divider)
+	var rule_left := ColorRect.new()
+	rule_left.color = Color("e8cda1")
+	rule_left.custom_minimum_size = Vector2(46, 2)
+	rule_left.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	divider.add_child(rule_left)
+	divider.add_child(UiBadge.new("leaf", Color("82b542"), 18))
+	var rule_right := ColorRect.new()
+	rule_right.color = rule_left.color
+	rule_right.custom_minimum_size = rule_left.custom_minimum_size
+	rule_right.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	divider.add_child(rule_right)
 	var dl := Label.new()
 	dl.text = desc
 	dl.add_theme_font_override("font", UiTheme.body_font())
-	dl.add_theme_font_size_override("font_size", 13)
+	dl.add_theme_font_size_override("font_size", 15)
 	dl.add_theme_color_override("font_color", UiTheme.MUTED)
 	dl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	dl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

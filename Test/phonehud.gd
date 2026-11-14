@@ -3704,6 +3704,7 @@ func _p5_run_block(vp: Vector2) -> void:
 				and absf(_vis_rect(tb).get_center().y - _vis_rect(rb).get_center().y) < 2.0,
 				"rb=" + str(_vis_rect(rb).get_center().round()) + " team=" + str(_vis_rect(tb).get_center().round()))
 		await _p5_snap("draft")
+		await _snap("phone_hud_touch_" + _run_tag() + "_draft")
 		await _p5_banner_frozen("draft")
 	else:
 		_check("P5: draft opened", false, "state=" + String(_world.get("state")))
