@@ -715,3 +715,10 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 断点：下一轮先读 Test/out/u5_fix5.done（两档绿、FAIL=0；checks 1549 与 1564 均接受，以 FAIL=0 为准），取 `mobile_p5_result_victory_*_s100_i0.png` 双档快照，行列扫描复核面板（应 ≤714 逻辑 px 高、居中、上下缘在屏内、星顶不裁）／星（约 137 屏 px）／钮（各约 545 屏 px 宽）／值 pill 淡黄／标题白字后重建 compare/U5.png 与 compare/U5_2400.png（Test/make_compare_u5.py）、逐项亲检再议 U5 签核。Notion 对齐单未动（U5 未关闭）。SSH 说明：本轮 SSH 两次在命令中途断（起批前一次、起批后一次），均经重连核实实际状态后继续，未假设。
 - 本轮提交（align-fix13，已推送，`git ls-remote` 核验 origin 与本地同 SHA）：d3e0946 fix5 代码＋脚本＋探针；本节台账另行提交。
 - 附：图标第二单与 U2、U3 均已关闭（见台账前节），本轮无收口/签核动作；队列头仍为 U5。
+
+## U5 fix5 验证批监看（2026-11-14 23:11 轮，主控）
+
+- 防撞触发：`Test/out/u5_fix5.done` 只有 START（22:32:12，HEAD d3e0946）＋2400 腿 `PHONEHUD DONE checks=1564 fails=0`（rc=0）；2340 腿在跑（PID 975028，xvfb-run 2340x1080 s100 --result=victory）。另见一 sanguo 自对战 Godot 进程（PID 994340），与本工程无关。本轮按防撞规则只监看、不双开、不改代码、不碰 main。
+- 2400 腿已绿：1564/0——fix4 的 1564/1（modal-inside 红）已消于 2400 档，fix5 的行/汇总板边距收窄在 2400 档通过。2340 腿结果待定，须等 ALLDONE 后双档同值再议签核。
+- 断点不变：验证批 `Test/u5_fix5_run.sh` 仍在跑，.done 路径 `Test/out/u5_fix5.done`（预计 23:05–23:10 完成，现 23:11 仍在 2340 腿，略超预期、无异常）。下一轮先读该 .done（两档绿、FAIL=0；checks 1549 与 1564 均接受，以 FAIL=0 为准），取 `mobile_p5_result_victory_*_s100_i0.png` 双档快照，行列扫描复核面板（应 ≤714 逻辑 px 高、居中、上下缘在屏内、星顶不裁）／星（约 137 屏 px）／钮（各约 545 屏 px 宽）／值 pill 淡黄／标题白字后重建 compare/U5.png 与 compare/U5_2400.png（Test/make_compare_u5.py）、逐项亲检再议 U5 签核。Notion 对齐单未动（U5 未关闭）。
+- 本轮无代码改动；唯一提交为本节台账记入。
