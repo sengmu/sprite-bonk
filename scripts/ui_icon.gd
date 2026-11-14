@@ -143,6 +143,10 @@ func _draw() -> void:
 			_circ(8.3, 9.2, 3.6)
 			_circ(15.7, 9.2, 3.6)
 			_poly([Vector2(5.2, 11.4), Vector2(18.8, 11.4), Vector2(12, 20.6)], color)
+		"home":
+			# U5: house glyph for the result screen's 返回菜单 button.
+			_poly([Vector2(2.5, 12.5), Vector2(12, 3.5), Vector2(21.5, 12.5)], color)
+			_poly([Vector2(5, 11.5), Vector2(19, 11.5), Vector2(19, 21), Vector2(5, 21)], color)
 		"speed":
 			# Two chevron strokes as polylines — the filled
 			# chevron polygons self-intersected and failed

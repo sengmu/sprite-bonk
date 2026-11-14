@@ -85,6 +85,7 @@ var _checks := 0
 var _hud := -1.0       # UI-mobile P3: --hud= pins hudScale (P7 corners)
 var _mm := -1.0        # --mm= pins minimapScale
 var _classic := false  # --layout=classic (D6)
+var _result_victory := false  # U5: --result=victory ends the run as a win (victory-state capture)
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -108,6 +109,8 @@ func _ready() -> void:
 			_mm = float(a.trim_prefix("--mm="))
 		elif a.begins_with("--layout="):
 			_classic = a.trim_prefix("--layout=") == "classic"
+		elif a.begins_with("--result="):
+			_result_victory = a.trim_prefix("--result=") == "victory"
 	_run()
 
 func _frames(n: int) -> void:
@@ -3766,11 +3769,13 @@ func _p5_run_block(vp: Vector2) -> void:
 	pl.xp_mult = xpm0
 	# Results (ends the run — last).
 	await _p5_ready()
-	_world.call("_finish_run", false)
+	# U5: --result=victory captures the victory state (the v2
+	# reference is a win); the default stays defeat.
+	_world.call("_finish_run", _result_victory)
 	await _p1_pframes(10)
-	_p5_check(vp, "result", "dead")
+	_p5_check(vp, "result", "victory" if _result_victory else "dead")
 	if _p5_phone():
 		var rb2 := _p5_primary("result", _p5_panel("result"))
 		_check("P5: result back-to-menu wired", rb2 != null and rb2.get_signal_connection_list("pressed").size() > 0,
 			"btn=" + (_p5_btn_text(rb2) if rb2 else "none"))
-	await _p5_snap("result")
+	await _p5_snap("result_victory" if _result_victory else "result")

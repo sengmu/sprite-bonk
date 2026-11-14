@@ -471,6 +471,8 @@ var _first_starter_card: Button
 var _result_panel: PanelContainer
 var _result_title: Label
 var _result_body: Label
+var _result_core: VBoxContainer  # U5: P5 summary rows + payout pill, always visible (not scrolled)
+var _result_stars: Array = []  # U5: the three star TextureRects (filled by _fill_result per state)
 var _altar_label: Label3D
 var _hud_t := 0.0
 var _lv_label: Label
@@ -3599,7 +3601,10 @@ func _build_hud() -> void:
 	_p5_register(_meowth_panel, 985.0, 430.0)
 	_p5_register(_pause_panel, 1000.0, 430.0)
 	_p5_register(_bigmap_panel, 900.0, 430.0)
-	_p5_register(_result_panel, 960.0, 430.0)
+	_p5_register(_result_panel, 900.0, 750.0)
+	# U5: the result panel fits against its nominal design height only
+	# (see _p5_place_modal p5_fixed_h) -- its content is unbounded.
+	_result_panel.set_meta("p5_fixed_h", true)
 	_p5_register(_lab_panel, 820.0, 430.0)
 	_p5_register(_shop_panel, 820.0, 430.0)
 	_p5_register(_unlock_panel, 900.0, 430.0)
@@ -6282,35 +6287,33 @@ func _build_result(root: Control) -> void:
 	var vb := VBoxContainer.new()
 	vb.add_theme_constant_override("separation", 8)
 	var rcol := vb
-	if _p5_on:
-		# UI-mobile P5 (plan §B3 M7): two columns — big title +
-		# the summary line on the left, the scrolling sections on
-		# the right, 返回菜单 bottom-right.
-		var cols := HBoxContainer.new()
-		cols.add_theme_constant_override("separation", 16)
-		_result_panel.add_child(cols)
-		vb.custom_minimum_size = Vector2(250, 0)
-		vb.alignment = BoxContainer.ALIGNMENT_CENTER
-		cols.add_child(vb)
-		rcol = VBoxContainer.new()
-		rcol.add_theme_constant_override("separation", 8)
-		rcol.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		cols.add_child(rcol)
-	else:
-		_result_panel.add_child(vb)
+	# U5 (2026-11-14): phone uses the same single column as desktop
+	# (stars -> ribbon -> summary -> rows -> payout -> buttons), per
+	# the v2 reference. The old two-column P5 form put the summary
+	# in a 250 px column (wrapped to four lines) and the rows in a
+	# scroll (gold row + payout below the fold).
+	_result_panel.add_child(vb)
 	var stars := HBoxContainer.new()
 	stars.alignment = BoxContainer.ALIGNMENT_CENTER
 	vb.add_child(stars)
+	# U5: bigger stars on phone (reference ~5.7% of frame width
+	# each); _fill_result swaps filled/empty per victory/defeat.
+	var star_sz := Vector2(56, 56) if _p5_on else Vector2(44, 44)
 	for key in ["star_filled", "star_filled", "star_empty"]:
-		stars.add_child(UiTheme.art(key, Vector2(44, 44)))
+		var st := UiTheme.art(key, star_sz)
+		stars.add_child(st)
+		_result_stars.append(st)
 	var ribbon := PanelContainer.new()
 	ribbon.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	ribbon.custom_minimum_size.y = 54
 	ribbon.draw.connect(func() -> void:
-		var extent := Vector2(minf(ribbon.size.x, 300), 72)
+		# U5: the ribbon spans ~88% of the panel on phone
+		# (reference); desktop keeps the 300 px cap.
+		var rw := ribbon.size.x * 0.88 if _p5_on else minf(ribbon.size.x, 300.0)
+		var extent := Vector2(rw, 72)
 		ribbon.draw_texture_rect(UiTheme.asset("decorations", "ribbon_green"), Rect2(Vector2((ribbon.size.x - extent.x) / 2, -8), extent), false))
 	vb.add_child(ribbon)
-	_result_title = _mk_dlabel(ribbon, "", 34, UiTheme.TEXT)
+	_result_title = _mk_dlabel(ribbon, "", 40 if _p5_on else 34, UiTheme.TEXT)
 	_result_title.add_theme_color_override("font_color", UiTheme.TEXT)
 	_result_panel.draw.connect(func() -> void:
 		_result_panel.draw_texture_rect(UiTheme.asset("decorations", "confetti_strip"), Rect2(12, 4, _result_panel.size.x - 24, 64), false))
@@ -6328,6 +6331,14 @@ func _build_result(root: Control) -> void:
 	if _p5_on:
 		_result_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		_result_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		# U5: the four summary rows + payout pill live in their own
+		# fixed box above the scroll on phone (reference: always
+		# visible, never below the fold); only the extended
+		# statistics scroll. Desktop keeps everything in the scroll.
+		_result_core = VBoxContainer.new()
+		_result_core.add_theme_constant_override("separation", 10)
+		_result_core.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		vb.add_child(_result_core)
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(0, 400)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -6341,21 +6352,29 @@ func _build_result(root: Control) -> void:
 	# here is back-to-menu; label it truthfully.
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 12)
-	actions.alignment = BoxContainer.ALIGNMENT_END
+	# U5: buttons centred below the rows (reference); the old
+	# right-aligned row is gone with the two columns.
+	actions.alignment = BoxContainer.ALIGNMENT_CENTER if _p5_on else BoxContainer.ALIGNMENT_END
 	rcol.add_child(actions)
-	var again := UiTheme.make_button("再次出发", "green", "big")
+	# U5: reference buttons carry icons (refresh / house); the green
+	# primary is white-on-green (same whitening as the draft reroll).
+	var again := UiTheme.make_icon_button("reroll", "再次出发", "green", "big")
 	again.pressed.connect(func() -> void:
 		_result_panel.hide()
 		_open_loadout(_menu_hero_sp))
 	actions.add_child(again)
-	var b := UiTheme.make_button("返回菜单", "ghost", "big")
+	var b := UiTheme.make_icon_button("home", "返回菜单", "ghost", "big")
 	b.pressed.connect(func() -> void: get_tree().reload_current_scene())
 	actions.add_child(b)
+	var arow := again.get_child(0) as HBoxContainer
+	(arow.get_child(0) as UiIcon).color = UiTheme.WHITE
+	(again.get_meta("label") as Label).add_theme_color_override("font_color", UiTheme.WHITE)
 	if _p5_on:
 		scroll.custom_minimum_size = Vector2(0, 0)
 		scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		b.size_flags_horizontal = Control.SIZE_SHRINK_END
-		b.custom_minimum_size.x = 240
+		# U5: reference buttons are ~23% of frame width each.
+		again.custom_minimum_size.x = 400
+		b.custom_minimum_size.x = 400
 		b.set_meta("p5_primary", true)
 
 # ------------------------------------------------------------------ gameplay
@@ -13202,7 +13221,10 @@ func _process(delta: float) -> void:
 	# floats over the bare 3D scene (the pre-17 menu showed
 	# the whole HUD through/behind its panel).
 	if _hud_root != null:
-		var want_hud := state != "menu"
+		# U5: the result screen is a clean celebration over the
+		# scene (reference: no HUD) -- hide the HUD while the
+		# result panel is up; the scrim still dims the scene.
+		var want_hud := state != "menu" and not (_result_panel != null and _result_panel.visible)
 		if _hud_root.visible != want_hud:
 			_hud_root.visible = want_hud
 	# Cycle 12: an uncached portal switch deferred one frame so its
@@ -14059,7 +14081,13 @@ func _p5_place_modal(c: Control, s: float, post_layout: bool = false) -> void:
 	var spec: Vector2 = _p5_spec[c]
 	var area := _ui_root.size if _ui_root and _ui_root.size.y > 0.0 \
 		else get_viewport().get_visible_rect().size
-	var content_h := maxf(spec.y, c.get_combined_minimum_size().y)
+	# U5: scrollable modals fit against their nominal design height
+	# only -- their content is unbounded by design (the scroll clips
+	# it), so fitting against the live content height collapses the
+	# panel whenever the scroll holds a long list (the result panel
+	# fell to scale 0.53 on the s100 run for exactly this). Panels
+	# opt in via the p5_fixed_h meta (result only, for now).
+	var content_h := spec.y if bool(c.get_meta("p5_fixed_h", false)) else maxf(spec.y, c.get_combined_minimum_size().y)
 	var sm := minf(s, (area.y - 6.0) / content_h)
 	var w := floorf(minf(spec.x, (area.x - 24.0) / sm))
 	c.offset_left = -w * 0.5
@@ -16575,30 +16603,47 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 		zone, String(ZONES[zone - 1]["cn"]), kills, _fmt_time(run_time), int(damage_dealt)]
 	for c in _result_box.get_children():
 		(c as Node).queue_free()
+	if _p5_on and _result_core != null:
+		for c in _result_core.get_children():
+			(c as Node).queue_free()
+	# U5: three gold stars for a full clear, two + one empty on
+	# defeat (reference victory shows three gold stars; the stars
+	# were previously fixed at two filled + one empty in both).
+	for i in _result_stars.size():
+		var st := _result_stars[i] as TextureRect
+		if st != null:
+			st.texture = UiTheme.asset("decorations", "star_filled" if (victory or i < 2) else "star_empty")
 	# Approved U5: four readable summary rows before extended statistics.
+	# On phone the rows + payout live in _result_core (always
+	# visible); on desktop they stay in the scroll as approved.
+	var core_box := _result_core if (_p5_on and _result_core != null) else _result_box
 	for data in [["tile_clock", "用时", _fmt_time(run_time)], ["tile_sword", "击杀", str(kills)], ["tile_star", "等级", str(player.level if player else 1)], ["tile_coin", "金币", str(int(gold))]]:
 		var plate := PanelContainer.new()
 		plate.add_theme_stylebox_override("panel", UiTheme.panel_texture())
-		_result_box.add_child(plate)
+		core_box.add_child(plate)
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 14)
 		plate.add_child(row)
-		row.add_child(UiBadge.new(String(data[0]), UiTheme.SKY, 40))
+		row.add_child(UiBadge.new(String(data[0]), UiTheme.SKY, 56 if _p5_on else 40))
 		var label := _mk_label(row, String(data[1]), 18, UiTheme.TEXT)
 		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		var value := UiTheme.chip(String(data[2]), UiTheme.GREEN.lightened(0.65), 22, UiTheme.TEXT, 160)
+		var value := UiTheme.chip(String(data[2]), UiTheme.GREEN.lightened(0.65), 22, UiTheme.TEXT, 280 if _p5_on else 160)
 		row.add_child(value)
-	# Payout chips.
-	var chips := HBoxContainer.new()
-	chips.add_theme_constant_override("separation", 8)
-	chips.alignment = BoxContainer.ALIGNMENT_CENTER
-	_result_box.add_child(chips)
-	var c1 := UiTheme.chip("萤尘 +%d" % dust, Color(0.45, 0.32, 0.08, 0.95))
-	chips.add_child(c1)
-	var c2 := UiTheme.chip("金币 %d" % int(gold), Color(0.16, 0.13, 0.30, 0.95))
-	chips.add_child(c2)
-	var c3 := UiTheme.chip("得分 %s" % str(score), Color(0.13, 0.35, 0.55, 0.95))
-	chips.add_child(c3)
+	# Payout pill (reference: one pale pill, three segments).
+	var payout := PanelContainer.new()
+	payout.add_theme_stylebox_override("panel", UiTheme.panel_texture())
+	core_box.add_child(payout)
+	var prow := HBoxContainer.new()
+	prow.add_theme_constant_override("separation", 10)
+	prow.alignment = BoxContainer.ALIGNMENT_CENTER
+	payout.add_child(prow)
+	prow.add_child(UiIcon.new("spark", Color(0.62, 0.35, 0.95), 24))
+	_mk_label(prow, "星尘 +%d" % dust, 18, UiTheme.TEXT)
+	_mk_label(prow, "|", 18, UiTheme.MUTED)
+	prow.add_child(UiBadge.new("tile_coin", UiTheme.GOLD, 24))
+	_mk_label(prow, "金币 %d" % int(gold), 18, UiTheme.TEXT)
+	_mk_label(prow, "|", 18, UiTheme.MUTED)
+	_mk_label(prow, "得分 %s" % str(score), 18, UiTheme.TEXT)
 	# 4-up fact grid.
 	var grid := GridContainer.new()
 	grid.columns = 4
