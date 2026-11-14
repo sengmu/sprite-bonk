@@ -641,3 +641,27 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 初判（待 2340 腿完＋compare 亲检后裁定）：该检查断言主钮位于面板右下；fix1 实施⑤⑥已把双钮改居中（P5 最小宽 400、居中，回归参考卡下居中两大钮），「返回菜单」现居右位属居中布局的右钮——疑似检查期望滞后于已批准规格，须按改向纪律裁定（只许对齐已批准规格、强度不降、台账写明理由），本轮不擅自改向、不改代码。
 - 断点不变：验证批 `Test/u5_fix1_run.sh` 仍在跑，.done 路径 `Test/out/u5_fix1.done`。下一轮先读该 .done（两档 FAIL 数；checks 1549/1564 均接受，以 FAIL=0 为准——2400 腿已确认 1 红，须先裁定该项再议签核），取 `mobile_p5_result_victory_*_s100_i0.png` 双档快照，对照 `design/ui-reference/v2/U5_final.jpg` 行列扫描量面板／星／缎带／四行／汇总 pill／双钮后重建 `compare/U5.png` 与 `compare/U5_2400.png`（`Test/make_compare_u5.py`）、逐项亲检再议 U5 签核。Notion 对齐单未动（U5 未关闭）。
 - 本轮无代码改动；唯一提交为本节台账记入。
+
+## U5 fix2：单红裁定＋四项可见差异修复，验证批已起跑（2026-11-14 19:11–19:2x 轮，主控）
+
+- 承接 18:11 轮断点：验证批 `Test/u5_fix1_run.sh`（HEAD 1a64ec6）已 ALLDONE 18:19:52：2400 s100 **1549/1**、2340 s100 **1549/1**，双腿同值同红。防撞：起跑时无 sprite-bonk Godot 在跑（仅 sanguo 进程），无双开。
+- 单红裁定（检查改向，理由在案）：唯一红为 `P5: primary action bottom-right (result/victory)`——「返回菜单」centre=(885,662)@2400／(865,662)@2340，x 未过 0.6 视口阈。根因是检查期望滞后于已批准规格：fix1（1a64ec6）已按 v2 参考把双钮改为卡下居中两大钮，右钮中心自应落在视口中央而非右下。改向：仅 result 模态改断言为「居中底行」——仍须落在底部带（c.y > 0.6·vp.y）且位于面板中央半宽内（|c.x − panel_cx| < 0.25·panel_w）；其余模态的右下断言不动。强度未降（水平方向由象限放宽为中央半宽、仍有明确界；底部带保留）。
+- fix1 胜利实拍逐项量测（原始 PNG 行列扫描；2400 档／2340 档同几何、仅 −30px 平移；REF `design/ui-reference/v2/U5_final.jpg` 1672×941）：
+  - 面板 ✓：x 566..1834（53.5% 宽，REF 52.8%）、满高（P5 拟合惯例，17:1x 轮已记为手机适配、不阻塞签核）；HUD 已隐藏、scrim 在位。
+  - 摘要 ✓：单行居中；四行全可见（值 pill y 簇 293..372／427..506／562..640／696..774）；汇总 pill 单只三分段 ✓；五彩纸屑在位 ✓。
+  - 缎带 ✓：绿芯 698..1702（79% 面板宽），含叶端约 88%（代码 rw = 0.88·ribbon.w；REF 约 88–93% 卡宽）。
+  - 星 ✗：金核约 60 屏 px（2.5% 幅宽），REF 约 95px（5.7%）——fix1 的 56 设计 px 仅为参考一半，须放大。
+  - 钮 ✗：绿钮 972..1174×972..1029、奶油钮约 1226..1430（各约 204×100 屏 px＝8.5%×9.3% 幅面），REF 各约 388×103（23.2%×10.9%）。根因已定位：fix1 设的 `custom_minimum_size.x = 400` 被 `_p5_fit` 的重拟合覆写——`_p5_fit` 在字号地板抬升时调 `UiTheme.set_icon_button_text` → `_fit_icon_button` 按文本重算最小宽（约 143 设计 px），400 从未上屏。
+  - 值 pill ✗：淡绿 (216,238,187)，REF 为淡黄 (255,233,165)——`UiTheme.GREEN.lightened(0.65)` 所致。
+  - 标题 ✗：深棕字（标题带深色像素 24%），REF 为白字（近白像素 34%）——`UiTheme.TEXT` 所致。
+  - 钮高残差（已量、不修）：可见钮高约 100 屏 px（9.3% 幅高）vs REF 10.9%，待宽修复后复核；卡缘为棕金细边、与 REF 一致，无差异。
+- 实施 fix2（提交 65614f1，已推送，`git ls-remote` 核验 origin 与本地同 SHA；scripts/world.gd＋scripts/ui_theme.gd＋Test/phonehud.gd；未动玩法数值）：
+  ① 星 56→96 设计 px（P5，桌面仍 44）：96×0.952×1.5 ≈ 137 屏 px＝5.7% 幅宽、10.8% 面板宽，与 REF（5.7%／10.8%）对齐。
+  ② 钮宽钉死：`_fit_icon_button` 改为 `maxf(文本拟合宽, min_w meta)`；`_build_result` 给双钮加 `set_meta("min_w", 400)`（原 `custom_minimum_size.x = 400` 保留）。仅设 meta 的钮受影响，其余图标钮行为不变。
+  ③ 值 pill 改 `UiTheme.GOLD.lightened(0.65)`（淡黄，REF 取样 (255,233,165) 附近）。
+  ④ 标题改 `UiTheme.WHITE`（_mk_dlabel 入参与 font_color override 双处）。
+  ⑤ 检查改向见上（result 专属「primary action centred bottom」）。
+- 解析门 Test/u5_fix2_parse.sh（world/ui_theme/phonehud 三门）：全 rc=0、SCRIPT ERROR 0 条（SolanaSDK GDExtension 噪声为既有）。日志 Test/out/u5_fix2_parse.log。
+- 验证批 Test/u5_fix2_run.sh 已于 19:24:06 detached 启动（HEAD 65614f1，2400 s100 腿在跑，PID 675898），.done 路径 Test/out/u5_fix2.done，双腿 2400 s100 → 2340 s100，预计约 19:55 完成。
+- 断点：下一轮先读 Test/out/u5_fix2.done（两档绿、FAIL=0；checks 1549 与 1564 均接受，以 FAIL=0 为准），取 mobile_p5_result_victory_*_s100_i0.png 双档快照，行列扫描复核星（约 137 屏 px）／钮（各约 571 屏 px 宽、居中于面板）／值 pill 淡黄／标题白字后重建 compare/U5.png 与 compare/U5_2400.png（Test/make_compare_u5.py）、逐项亲检再议 U5 签核。Notion 对齐单未动（U5 未关闭）。
+- 本轮提交（align-fix13，已推送，git ls-remote 核验 origin 与本地同 SHA）：65614f1 fix2 代码＋脚本；本节台账另行提交。
