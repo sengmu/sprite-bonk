@@ -612,3 +612,24 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
   ⑦ 摘要换行：左栏 250 设计 px 窄栏致一行摘要折成 4 行、句中拆词（「杀 52·用时」断行）；参考为单行居中。
 - **断点（下一轮）**：先定胜利态捕获路径——查 phonehud P5 result 触发条件与 s100 终局是否恒为败北（若恒败北，须另找胜利态捕获法或以 `_fill_result` 分支核对胜利态独有内容）；再裁定②的 P5 两栏去留；然后按清单施工（只动表现层）、跑双档 s100 批、胜利态 compare 逐项亲检再议签核。Notion 对齐单未动（U3 已关闭；U5 未关闭）。
 - 本轮提交（align-fix13，已推送，`git ls-remote` 核验）：本节台账。
+
+## U5 fix1：单栏重建＋胜利态捕获（2026-11-14 17:1x–17:5x 轮，主控）
+
+- 承接 16:11 轮断点：胜利态捕获路径已定——phonehud 新增 `--result=victory`（Test/phonehud.gd；默认仍为败北，s100 缺省路径不动），胜利批以此取与 v2 参考同态（胜利）的实拍；② 裁定：P5 两栏改单栏（见下）。
+- 胜利态核查（_finish_run/_fill_result，world.gd）：胜利与败北共用同一面板；差异仅标题（「★ 全区通关！★」vs「你倒下了…」）与星（代码原为两实一空、与胜负无关）；金币行与汇总 pill 在代码中本就存在（四行＋三芯片），16:11 轮所记「缺行」实为折叠在滚动区之下、静态实拍不可见。
+- 拟合根因（实证）：s100 批结果面板 scale 0.529（Test/out/u3_fix2_phonehud_2400.log：modal rect 508×242 逻辑 px），名义 960×430 规格被内容高约 1350 拖垮；探针 Test/u5_fit_probe.gd 实证 ScrollContainer 本身不计子内容（combined min (8,8)），但整面板在 _p5_place_modal 的 relay＋_p5_fit 地板（字号/钮高随 sm 反比抬升）下收敛到小尺——fix1 以 p5_fixed_h 让结果面板只按名义高拟合（滚动内容本就不应参与拟合）。诊断脚本 Test/u5_diag.gd（实景启动、_finish_run(false) 直取）：核心内容 combined min (739,379)（无伤害条）、resident hudScale 约 0.3 致其 scale 0.58（harness 钉 1.0，不影响结论）。
+- 参考量测（原始图行列扫描；REF 1672×941）：卡 x 375..1252（52.8% 宽）、y 约 150..690（57% 高）；三星各约 95px（5.7% 宽）压卡顶沿；缎带约 88% 卡宽；四行各约 70px；汇总 pill 单只三分段；两钮各约 388×103（23% 宽、11% 高）、居中于卡下。实拍败北捕获（2400 档）：奶油区 756×356（31.5%×33%）、三星贴顶沿、金币行与汇总 pill 在滚动区之下不可见、两钮在右栏内右置小钮、HUD 全可见。
+- ② 裁定：P5 两栏改单栏。两栏是既定适配，但它直接造成 7 项差异中的 4 项（摘要折 4 行⑦、金币行与汇总 pill 折叠③、钮小且在滚动区内④、面板过小①）；参考本身即单栏，桌面分支亦为单栏——单栏不是新设计，是回归参考。面板高度按 P5 拟合惯例取满高（同 U3 草案模态前例），宽度分数向参考靠（约 53%），高度分数差异记为手机适配、不阻塞签核。
+- 实施（提交 1a64ec6；scripts/world.gd＋scripts/ui_icon.gd＋Test/phonehud.gd；未动玩法数值、未动检查）：
+  ① 单栏：_build_result 删两栏分支，P5 与桌面同流（星→缎带→摘要→行→汇总→钮）；_result_core（P5 专属固定盒）装四行＋汇总 pill，滚动区只留扩展统计。
+  ② 面板规格 _p5_register 960×430 → 900×750（拟合后约 53% 宽、满高）；_p5_place_modal 加 p5_fixed_h（结果面板只按名义高拟合）。
+  ③ 星：56px（P5）／44（桌面），_fill_result 按胜负填色（胜利三实星、败北两实一空）。
+  ④ 缎带：P5 展宽至 88% 面板宽；标题 34→40px（P5）。
+  ⑤ 行徽 40→56px（P5）、值 pill 最小宽 160→280（P5）；汇总三芯片改单只淡底 pill（紫✦星尘｜金币｜得分，三分段）。
+  ⑥ 钮：改 icon 钮（reroll 刷新标／新增 home 房子标，UiIcon 加 "home" 形），绿主钮白字白标（同草案重抽白化法），P5 居中、最小宽 400（约 23% 幅宽）。
+  ⑦ 背景：_process 中结果面板打开时隐藏 _hud_root（参考无 HUD；scrim 仍在、仍遮罩场景）。
+  ⑧ 捕获：phonehud --result=victory（默认败北不动）；Test/u5_fix1_run.sh 双档胜利批。
+- 解析门 Test/u5_fix1_parse.sh（world/ui_icon/phonehud 三门）：全 rc=0、SCRIPT ERROR 0 条。日志 Test/out/u5_fix1_parse.log。
+- 验证批 Test/u5_fix1_run.sh 已于 17:50:23 detached 启动（HEAD 1a64ec6，2400 s100 腿在跑），.done 路径 Test/out/u5_fix1.done，双腿 2400 s100 → 2340 s100，预计约 18:20 完成。
+- 断点：下一轮先读 Test/out/u5_fix1.done（两档绿、FAIL=0；checks 1549 与 1564 均接受，以 FAIL=0 为准），取 mobile_p5_result_victory_*_s100_i0.png 双档快照，对照 design/ui-reference/v2/U5_final.jpg 行列扫描量面板／星／缎带／四行／汇总 pill／双钮后重建 compare/U5.png 与 compare/U5_2400.png（Test/make_compare_u5.py）、逐项亲检再议 U5 签核。Notion 对齐单未动（U5 未关闭）。
+- 本轮提交（align-fix13，已推送，git ls-remote 核验 origin 与本地同 SHA）：1a64ec6 fix1 代码＋脚本；本节台账另行提交。
