@@ -1,0 +1,20 @@
+#!/bin/bash
+# U3 fix2 batch: verify the featured-card sparkles rebuilt with
+# anchor/offset geometry (fix1's free position/size TextureRects rendered
+# as one giant centred star; bisect-proven 2026-11-14).
+# Leg 1: 2400 s100. Leg 2: 2340 s100. Expect FAIL=0 each leg; then compare
+# draft cards in phone_hud_touch_*_draft.png vs U3 reference.
+cd ~/workspace/sprite-bonk-3d
+mkdir -p .tmp Test/out
+export TMPDIR=$PWD/.tmp
+G=$HOME/workspace/tools/godot/Godot_v4.3-stable_linux.x86_64
+DONE=Test/out/u3_fix2.done
+: > "$DONE"
+echo "START $(date -Is) HEAD $(git rev-parse --short HEAD)" >> "$DONE"
+timeout 1500 xvfb-run -a -s "-screen 0 2400x1080x24" "$G" --path . --rendering-driver opengl3 res://Test/phonehud.tscn -- --mode=phone --scale=1.00 --win=2400x1080 --inset=0,0,0,0 > Test/out/u3_fix2_phonehud_2400.log 2>&1
+echo "phonehud 2400 rc=$?" >> "$DONE"
+grep "PHONEHUD DONE" Test/out/u3_fix2_phonehud_2400.log >> "$DONE" 2>/dev/null
+timeout 1500 xvfb-run -a -s "-screen 0 2340x1080x24" "$G" --path . --rendering-driver opengl3 res://Test/phonehud.tscn -- --mode=phone --scale=1.00 --win=2340x1080 --inset=0,0,0,0 > Test/out/u3_fix2_phonehud_2340.log 2>&1
+echo "phonehud 2340 rc=$?" >> "$DONE"
+grep "PHONEHUD DONE" Test/out/u3_fix2_phonehud_2340.log >> "$DONE" 2>/dev/null
+echo "ALLDONE $(date -Is)" >> "$DONE"

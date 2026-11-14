@@ -6015,13 +6015,30 @@ func _draft_card(opt: Dictionary, idx: int) -> Button:
 		rim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		fx.add_child(rim)
 		# Gold sparkles at the free corners/edges (the top
-		# corners carry the kind/rarity chips).
-		for sp in [Vector2(8, csz.y - 28), Vector2(csz.x - 28, csz.y - 28),
-				Vector2(4, csz.y * 0.5 - 10), Vector2(csz.x - 24, csz.y * 0.5 - 10)]:
+		# corners carry the kind/rarity chips). U3 fix2:
+		# anchor/offset geometry only — the free position/
+		# size form rendered as one giant centred star in
+		# the fix1 captures (bisect-proven 2026-11-14:
+		# emptying that loop removed the star).
+		var sparkle_defs: Array = [
+			[Vector2(0, 1), Rect2(8, -28, 20, 20)],
+			[Vector2(1, 1), Rect2(-28, -28, 20, 20)],
+			[Vector2(0, 0.5), Rect2(4, -10, 20, 20)],
+			[Vector2(1, 0.5), Rect2(-24, -10, 20, 20)],
+		]
+		for entry in sparkle_defs:
+			var anch: Vector2 = entry[0]
+			var ro: Rect2 = entry[1]
 			var st := TextureRect.new()
 			st.texture = load("res://assets/ui/decorations/star_filled.png") as Texture2D
-			st.size = Vector2(20, 20)
-			st.position = sp
+			st.anchor_left = anch.x
+			st.anchor_right = anch.x
+			st.anchor_top = anch.y
+			st.anchor_bottom = anch.y
+			st.offset_left = ro.position.x
+			st.offset_top = ro.position.y
+			st.offset_right = ro.position.x + ro.size.x
+			st.offset_bottom = ro.position.y + ro.size.y
 			st.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 			st.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 			st.modulate = UiTheme.GOLD
