@@ -687,3 +687,16 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 断点：下一轮先读 Test/out/u5_fix3.done（两档绿、FAIL=0；checks 1549 与 1564 均接受，以 FAIL=0 为准），取 mobile_p5_result_victory_*_s100_i0.png 双档快照，行列扫描复核面板（应 ≤714 逻辑 px 高、居中、上下缘在屏内）／星（约 137 屏 px）／钮（各约 545 屏 px 宽）／值 pill 淡黄／标题白字后重建 compare/U5.png 与 compare/U5_2400.png（Test/make_compare_u5.py）、逐项亲检再议 U5 签核。Notion 对齐单未动（U5 未关闭）。
 - SSH 说明：本轮两次短 SSH 在命令中途断（commit 前一次、起批后一次），均经重连核实实际状态后继续，未假设。
 - 本轮提交（align-fix13，已推送，`git ls-remote` 核验 origin 与本地同 SHA）：ad0c09e fix3 代码＋脚本；本节台账另行提交。
+
+## U5 fix4：fix3 循环发散回滚＋结果滚动区裁剪，验证批已起跑（2026-11-14 21:11–21:3x 轮，主控）
+
+- 承接 20:1x 轮断点：验证批 `Test/u5_fix3_run.sh`（HEAD ad0c09e）已 ALLDONE 20:58:28：2400 s100 **1549/3**、2340 s100 **1549/3**，双腿同值同红（fix2 为 1549/1，fix3 回退两档）。防撞：起跑时无 sprite-bonk Godot 在跑，无双开。
+- 三红（双腿同值）：① `modal scale (bigmap/run)` scale=0.266 floor=0.5；② `primary action bottom-right (bigmap/run)` '关闭' centre=(894, 543)@2400；③ `modal scale (result/victory)` scale=0.036 floor=0.5。fix2 的主钮红与 modal-inside 红均已消——fix3 修好了溢出，但把两块面板的 scale 打崩了。实拍目视确认：胜利面板缩成中央小条，摘要溢出面板左右缘、星被裁、按钮极小，视觉上已不可用（scrim 检查虽过）。
+- 根因（探针 `Test/u5_fix4_probe.gd` 实证，2400 档实景启动）：fix3 的 place+fit 循环无不动点——`_p5_fit` 地板 ∝ 1/sm，sm 一小、字号/钮高即涨、内容 min 即涨（换行文本在字体吹大后 min 高约 ∝ 1/sm²），循环的 post-fit 检查于是继续压 sm；且 `_p5_fit` 单调抬升、跨次调用只涨不回。探针实测（fix3 代码）：结果面板一次 `_finish_run(true)` 后 scale 0.143、min (1879, 2882)；连续 `_apply_ui_scale` 又在同帧内把它从 0.143 摇回 1.275、rect 出屏——双稳态、非确定性；bigmap 在探针里反为健康（1.925），与 s100 的 0.266 相反，同样说明发散与调用顺序有关、不可靠。结论：循环不可打补丁收敛，必须撤回。
+- 实施 fix4（提交 04877ae，已推送，`git ls-remote` 核验 origin 与本地同 SHA；scripts/world.gd＋Test/u5_fix4_*.sh＋Test/u5_fix4_probe.gd；未动玩法数值、未动检查）：
+  ① `_p5_place_modal` 撤回 fix2 单次布放＋relay 单次 refit；② 结果面板恢复 `p5_fixed_h`（sm 恒由名义高 750 得 0.952）；③ 结果滚动区 `custom_minimum_size` 在 P5 下 400→340（-60，桌面保持 400）：fix2 实测 live min 786（rendered 748，溢出 14px），裁剪后目标 live min ≤~726（rendered ≤691）。扩展统计在折叠区之下，少露 60px 无可见代价。星／钮／值 pill／标题均未动（fix2 已达标量测不变）。
+- 探针复核（fix4 代码，同一探针去手动重布放后）：结果面板 scale 1.699、min (840, 852)；bigmap scale 1.925、min (704, 426) 健康。注：探针几何（root 2400×1080 直启、`_kr` 顶格 2.0、area.y 1280）与 s100（逻辑视口 1600×720、area.y 720）不同，其绝对 scale/min 不可与 s100 对读——探针只证实「不再坍缩、bigmap 健康」，验收以 s100 批为准；探针 min 读数本身亦有布局时滞（fix3 探针曾在同帧内见 min 2882→962 摇摆），不作定量依据。
+- 解析门 Test/u5_fix4_parse.sh（world/ui_icon/phonehud 三门）：全 rc=0、SCRIPT ERROR 0 条。日志 Test/out/u5_fix4_parse.log。
+- 验证批 Test/u5_fix4_run.sh 已于 21:35:52 detached 启动（HEAD 04877ae，2400 s100 腿在跑），.done 路径 Test/out/u5_fix4.done，双腿 2400 s100 → 2340 s100，预计约 22:06 完成。
+- 断点：下一轮先读 Test/out/u5_fix4.done（两档绿、FAIL=0；checks 1549 与 1564 均接受，以 FAIL=0 为准），取 `mobile_p5_result_victory_*_s100_i0.png` 双档快照，行列扫描复核面板（应 ≤714 逻辑 px 高、居中、上下缘在屏内）／星（约 137 屏 px）／钮（各约 545 屏 px 宽）／值 pill 淡黄／标题白字后重建 compare/U5.png 与 compare/U5_2400.png（Test/make_compare_u5.py）、逐项亲检再议 U5 签核。Notion 对齐单未动（U5 未关闭）。SSH 说明：本轮 SSH 多次在长命令中断（约 20 秒断线），均按纪律改走 nohup＋短轮询，未假设状态。
+- 本轮提交（align-fix13，已推送，`git ls-remote` 核验 origin 与本地同 SHA）：04877ae fix4 代码＋脚本＋探针；本节台账另行提交。
