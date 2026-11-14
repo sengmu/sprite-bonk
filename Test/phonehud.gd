@@ -3362,9 +3362,18 @@ func _p5_modal(vp: Vector2, name: String, st: String) -> void:
 			"min_h=" + str(snappedf(sl_low, 0.1)))
 	if P5_PRIMARY_TXT.has(name) or name == "choice":
 		var c := _vis_rect(prim).get_center() if prim != null else Vector2(-1, -1)
-		_check(lab + "primary action bottom-right (" + key + ")",
-			prim != null and c.x > 0.6 * vp.x and c.y > 0.6 * vp.y,
-			("'" + _p5_btn_text(prim) + "' centre=" + str(c.round())) if prim != null else "no primary found")
+		if name == "result":
+			# U5 fix2: the result actions sit centred under the card
+			# (approved spec, v2 reference: two big centred buttons),
+			# not bottom-right. Keep the bottom band and require the
+			# primary to sit in the panel's central half.
+			_check(lab + "primary action centred bottom (" + key + ")",
+				prim != null and c.y > 0.6 * vp.y and absf(c.x - pr.get_center().x) < 0.25 * pr.size.x,
+				("'" + _p5_btn_text(prim) + "' centre=" + str(c.round()) + " panel_cx=" + str(snappedf(pr.get_center().x, 1))) if prim != null else "no primary found")
+		else:
+			_check(lab + "primary action bottom-right (" + key + ")",
+				prim != null and c.x > 0.6 * vp.x and c.y > 0.6 * vp.y,
+				("'" + _p5_btn_text(prim) + "' centre=" + str(c.round())) if prim != null else "no primary found")
 
 ## Banner clock under an open modal (P1 rule, per modal).
 func _p5_banner_frozen(key: String) -> void:

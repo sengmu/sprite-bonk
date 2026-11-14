@@ -6298,7 +6298,7 @@ func _build_result(root: Control) -> void:
 	vb.add_child(stars)
 	# U5: bigger stars on phone (reference ~5.7% of frame width
 	# each); _fill_result swaps filled/empty per victory/defeat.
-	var star_sz := Vector2(56, 56) if _p5_on else Vector2(44, 44)
+	var star_sz := Vector2(96, 96) if _p5_on else Vector2(44, 44)
 	for key in ["star_filled", "star_filled", "star_empty"]:
 		var st := UiTheme.art(key, star_sz)
 		stars.add_child(st)
@@ -6313,8 +6313,8 @@ func _build_result(root: Control) -> void:
 		var extent := Vector2(rw, 72)
 		ribbon.draw_texture_rect(UiTheme.asset("decorations", "ribbon_green"), Rect2(Vector2((ribbon.size.x - extent.x) / 2, -8), extent), false))
 	vb.add_child(ribbon)
-	_result_title = _mk_dlabel(ribbon, "", 40 if _p5_on else 34, UiTheme.TEXT)
-	_result_title.add_theme_color_override("font_color", UiTheme.TEXT)
+	_result_title = _mk_dlabel(ribbon, "", 40 if _p5_on else 34, UiTheme.WHITE)
+	_result_title.add_theme_color_override("font_color", UiTheme.WHITE)
 	_result_panel.draw.connect(func() -> void:
 		_result_panel.draw_texture_rect(UiTheme.asset("decorations", "confetti_strip"), Rect2(12, 4, _result_panel.size.x - 24, 64), false))
 
@@ -6374,7 +6374,9 @@ func _build_result(root: Control) -> void:
 		scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		# U5: reference buttons are ~23% of frame width each.
 		again.custom_minimum_size.x = 400
+		again.set_meta("min_w", 400)
 		b.custom_minimum_size.x = 400
+		b.set_meta("min_w", 400)
 		b.set_meta("p5_primary", true)
 
 # ------------------------------------------------------------------ gameplay
@@ -16627,7 +16629,7 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 		row.add_child(UiBadge.new(String(data[0]), UiTheme.SKY, 56 if _p5_on else 40))
 		var label := _mk_label(row, String(data[1]), 18, UiTheme.TEXT)
 		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		var value := UiTheme.chip(String(data[2]), UiTheme.GREEN.lightened(0.65), 22, UiTheme.TEXT, 280 if _p5_on else 160)
+		var value := UiTheme.chip(String(data[2]), UiTheme.GOLD.lightened(0.65), 22, UiTheme.TEXT, 280 if _p5_on else 160)
 		row.add_child(value)
 	# Payout pill (reference: one pale pill, three segments).
 	var payout := PanelContainer.new()

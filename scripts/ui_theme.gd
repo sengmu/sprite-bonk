@@ -405,7 +405,10 @@ static func _fit_icon_button(b: Button, text: String) -> void:
 	var pad := 12.0 if size == "small" else (22.0 if size == "big" else 16.0)
 	var tw := body_font().get_string_size(text,
 		HORIZONTAL_ALIGNMENT_LEFT, -1.0, fs).x
-	b.custom_minimum_size.x = pad * 2.0 + float(b.get_meta("icon_px")) + 6.0 + tw + 4.0
+	# A "min_w" meta pins a reference width (U5 result buttons):
+	# _p5_fit re-fits icon buttons when the font floor moves, which
+	# would otherwise shrink them back to text width.
+	b.custom_minimum_size.x = maxf(pad * 2.0 + float(b.get_meta("icon_px")) + 6.0 + tw + 4.0, float(b.get_meta("min_w", 0.0)))
 
 static func set_icon_button_text(b: Button, text: String) -> void:
 	if b.has_meta("label"):
