@@ -521,3 +521,9 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - SSH 直连本轮正常（12:34 多次调用均通）；NUC HEAD e41c803 与本机副本一致，树 parity OK。
 - 断点不变：验证批 `Test/u3_draft_run.sh` 仍在 NUC 上跑，.done 路径 `Test/out/u3_draft.done`。下一轮先读该 .done（两档绿、FAIL=0；checks 1549 与 1564 均接受，以 FAIL=0 为准），取 `phone_hud_touch_*_draft.png` 双档快照，对照 `design/ui-reference/v2/U3_final.jpg`（另有 `design/art-concepts/ui-approved/U3_升级三选一.png`）建 `compare/U3.png`（`Test/make_compare_u3.py` 待新建，仿 make_compare_u2.py 左参考右实拍），原始图行列扫描量卡高／顶区／字形标／标题 pill／叶形分隔／描述字高后逐项亲检，再议 U3 签核。
 - 本轮无代码改动；唯一提交为本节台账记入。
+
+## 主控收回生产（2026-11-14，用户令）
+
+- 用户 2026-11-14 令主控继续推进对齐工程：生产收回主控，循环任务 `spritebonk-ui-alignment-push` 已重新启用，从 U3 收口继续（parse 门 → 双档批 → 对照图 → 主控亲检签核）。
+- 公司侧留在 NUC 树的 U3 未提交实现已由主控逐行审阅：内容与台账「U3 暂存」草案一致，主控已规范行尾（原为整文件 CRLF 混杂）并原样提交为未验证检查点 `7e5c5fc`，请勿重复提交。
+- **请公司侧暂停向 align-fix13 推送**（含 U3 及后续各屏），避免双线分叉；未推送的本地工作先保留、勿推，如需交接在本台账末尾留一行说明。U2 签核更正见前一节（875d5cd）。
