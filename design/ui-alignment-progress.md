@@ -571,3 +571,19 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
   - ③ 主推卡 ✗：金边＋内辉已落地（金 rim 在位），但中卡正中出现一颗巨型金星（约 465×310 屏 px @2400 档），遮住标题 pill 右半与描述区，并溢出卡底边——fix1 新增缺陷；fix 前草案验证拍（2340 档）无此星。代码侧核查：`_draft_card` 的 fx 叠层星星按 20×20 构造（scripts/world.gd 约 6022 行），构造代码本身无放大路径；巨星来源待二分定位。
 - 结论：**U3 不关闭**（检查全绿只是必要条件，本轮再次实证）。fix2 处方：先摘掉 fx 的四颗 20px 星星单独取一张 draft 图二分——星消失＝星星层在 P5 拟合路径下被放大，改以 rim Panel 的 draw 回调绘制星芒或用 CenterContainer 承载定尺；星仍在＝继续查其他 star_filled 消费者。星星最终只许以约 20 设计 px 出现在主推卡四角／中缘。改完只跑双档 s100 批复拍、重建 compare、主控再亲检。①②④ 已达标，勿再动；⑤ 大面板约束与 ⑥ 画板豁免维持在案。
 - 附注：fix1 双档 compare 因 VM→NUC 大文件传输中断未随本节入库；主控亲检用的 compare 由 NUC 本地捕获（Test/out/phone_hud_touch_2400x1080_s100_i0_draft.png 14:58、…_2340… 15:11）经 Test/make_compare_u3.py 在本机构建，下轮在 NUC 本地重建 compare/U3.png 与 compare/U3_2400.png 入库即可（同一脚本同一输入）。
+
+## U3 fix1 平行验证：三项落地、巨星缺陷，U3 不关闭（2026-11-14 15:11–16:0x 轮，并行验证 worker）
+
+- 本轮为与协调方并行的独立验证（非 4b9d343 的复述）：验证批 `Test/u3_fix1_run.sh`（HEAD 2ed5ef5）已 ALLDONE 15:13:37——2400 s100 **1564/0**、2340 s100 **1564/0**，双腿 rc=0、SCRIPT ERROR 0 条。防撞：起跑时无 Godot 在跑（锚定 pgrep 空），.done 已 ALLDONE，可直接接续。
+- 取图：`phone_hud_touch_2400x1080_s100_i0_draft.png`（14:58）与 `phone_hud_touch_2340x1080_s100_i0_draft.png`（15:11）已 pull_from_nuc 验数拉回（2 文件 2,494,543 字节）；`compare/U3.png` 与 `compare/U3_2400.png` 已用 `Test/make_compare_u3.py` 重建。
+- 原始图行列扫描量测（2400×1080 原图；2340 档同几何、仅 −30px 平移）：
+  - ① 横幅 ✓：金星居中压 pill 顶沿（左右叶簇中心 877／1502，pill 中心 ≈1190）、左右三叶簇贴 pill 端（84×97／89×97 屏 px）、pill 已加宽、标题在星下。
+  - ② 卡顶 pills ✓：实心＋白字——橙 (255,151,36)、蓝 (84,124,214)、绿实心；带 y 227..294、高约 67 屏 px。
+  - ④ 工具行 ✓：重抽蓝实心居首（229×65，x 1046..1275，y 944..1009），顺序 重抽／跳过／放逐、整行右置；「查看我的队伍」保留在右。
+  - ③ 主推卡 ✗：金边＋内辉已落地，但中卡正中一颗巨型金星（约 350×300 屏 px @2400 档，约占卡宽 72%，纵贯卡下半部），遮住标题 pill 右半与描述区。根因与协调方一致：fix1 星星用自由 position/size（`st.size = 20×20`、`st.position = sp`），在 P5 拟合路径下被放大成单颗居中巨星（协调方二分实证：清空该循环即去星）。
+- 结论：**U3 不关闭**——与 4b9d343 独立同判（检查全绿只是必要条件）。①②④ 已达标，勿再动；⑤ 大面板约束与 ⑥ 画板豁免维持在案。
+- 并行工作记录（本轮内观测）：协调方已提交 4b9d343（15:20，fix1 亲检）与 b8a3315（15:32，fix2：星星改 anchor/offset 几何），并启动验证批 `Test/u3_fix2_run.sh`（15:32:50，HEAD b8a3315）；本轮查时 2400 腿已 ALLDONE **1564/0**、2340 腿在跑——按防撞规则本轮不双开、不另起批。
+- 证据保全：fix1 2400 快照在 NUC 侧于 15:45 被 fix2 批 P5 新 snap 覆盖（同名文件）；已凭本机拉回件（md5 e20d5724e8db47dc881276194655f764）分片（5×300KB）重传 NUC，拼接后 md5 核对一致，存 `Test/out/phone_hud_touch_2400x1080_s100_i0_draft_fix1.png`；双档 compare 已在 NUC 侧用核验过的快照重建（U3.png 2340／U3_2400.png 2400）并随本节入库。附注：NUC 与本机构建的 compare 经逐像素 raw-md5 核对一致（cfa74eaf／33d2add5）；本机 15:24 首版 compare 为拉回窗口期内的异常构建（巨星缺失），已由 16:03 重建取代，勿用旧件。
+- 传输记录：VM→NUC 整包 rsync 两次中断（15:47 "Connection closed by UNKNOWN port 65535"、15:49 Broken pipe），约 15:48 自愈；300KB 分片＋逐片重试可稳过，大文件仍走分片。
+- **断点（下一轮）**：先读 `Test/out/u3_fix2.done`（两档绿、FAIL=0；checks 1549 与 1564 均接受），取新的 `phone_hud_touch_*_draft.png` 双档快照（注意：fix1 快照现仅存 `..._draft_fix1.png` 与本机副本），核巨星已去、四枚约 20px 金星落在卡角／中缘后重建 compare、逐项亲检再议 U3 签核。Notion 对齐单未动（U3 未关闭）。
+- 本轮提交（align-fix13，已推送，`git ls-remote` 核验 origin 与本地同 SHA）：本节台账＋fix1 双档 compare（`compare/U3.png`、`compare/U3_2400.png`）。
