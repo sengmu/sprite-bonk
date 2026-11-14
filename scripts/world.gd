@@ -6304,10 +6304,10 @@ func _build_result(root: Control) -> void:
 		# U5 fix7: crest headroom spacer -- the crest (stars +
 		# ribbon) straddles the panel top edge, so the panel must
 		# sit lower in the wrapper: panel top lands ~172 screen px
-		# (reference ~174), stars top ~13 screen px, buttons
-		# bottom ~1040 (reference ~1021; the +19 px is the
-		# row-pitch residual, see _fill_result -- rows run 82 px
-		# pitch vs reference ~67, panel 500 vs ~474 design px).
+		# (reference ~174), stars top ~23 screen px.
+		# U5 fix8: the row-pitch residual is fixed in _fill_result
+		# (pitch 82 -> ~63) with the panel held at ~500 px by the
+		# bottom spacer; buttons bottom ~1014 (reference ~1018).
 		var _crest_spacer := Control.new()
 		_crest_spacer.custom_minimum_size = Vector2(0, 97)
 		_crest_spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -6369,13 +6369,19 @@ func _build_result(root: Control) -> void:
 		ribbon = PanelContainer.new()
 		ribbon.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 		ribbon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		# Ribbon rect 150 tall centred on the panel top edge
-		# (crest-local -14): main green band ~105 screen px.
-		ribbon.position = Vector2(0, -89)
-		ribbon.size = Vector2(872, 150)
+		# U5 fix8: ribbon rect 225 tall centred on the panel top
+		# edge (crest-local -14): the fix7 150 rect rendered a
+		# ~80 screen px band (measured on the raw capture) vs
+		# ~120 in the reference -- the title crowded the band
+		# edges. 225 renders ~120 screen px (empirical 0.53
+		# screen px per rect px); centre unchanged, so the star
+		# overlap grows to ~30 screen px, inside the reference
+		# range (~16-32).
+		ribbon.position = Vector2(0, -126)
+		ribbon.size = Vector2(872, 225)
 		ribbon.draw.connect(func() -> void:
 			var rw := ribbon.size.x * 0.88
-			var extent := Vector2(rw, 150)
+			var extent := Vector2(rw, 225)
 			ribbon.draw_texture_rect(UiTheme.asset("decorations", "ribbon_green"), Rect2(Vector2((ribbon.size.x - extent.x) / 2, 0), extent), false))
 		crest.add_child(ribbon)
 	else:
@@ -6422,9 +6428,21 @@ func _build_result(root: Control) -> void:
 		# visible, never below the fold); only the extended
 		# statistics scroll. Desktop keeps everything in the scroll.
 		_result_core = VBoxContainer.new()
-		_result_core.add_theme_constant_override("separation", 10)
+		# U5 fix8: rows run 82 px pitch vs reference ~63 --
+		# separation 10 -> 1 (row plates 72 -> 62 via the
+		# 3 px margins in _fill_result).
+		_result_core.add_theme_constant_override("separation", 1)
 		_result_core.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		vb.add_child(_result_core)
+		# U5 fix8: bottom breathing room -- the reference leaves
+		# a wide empty cream band below the payout pill (rows end
+		# ~63%H, panel bottom ~79%H). The tightened rows free
+		# ~77 px of panel min; hold the panel at ~500 px with
+		# this spacer so the panel top / buttons stay put.
+		var _p5_bottom_gap := Control.new()
+		_p5_bottom_gap.custom_minimum_size = Vector2(0, 69)
+		_p5_bottom_gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		vb.add_child(_p5_bottom_gap)
 	# U5 fix6: the extended-statistics scroll exists on desktop
 	# only. On phone its viewport only ever showed a clipped
 	# sliver of the fact grid (the stray "0 0 0 0" row) plus a
@@ -6497,6 +6515,12 @@ func _build_result(root: Control) -> void:
 		b.custom_minimum_size.x = 400
 		b.set_meta("min_w", 400)
 		b.set_meta("p5_primary", true)
+		# U5 fix8: reference buttons are ~67 px tall vs our ~61
+		# (icon 60 nearly fills the button); 70 px puts the top
+		# on the reference line (~917 screen px) with the icon
+		# still ~86% of the button height.
+		again.custom_minimum_size.y = 70
+		b.custom_minimum_size.y = 70
 
 # ------------------------------------------------------------------ gameplay
 func _fmt_time(sec: float) -> String:
@@ -16760,7 +16784,10 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 		# margin, so 4 rows carry 112 px of padding. 8 px margins
 		# cut 48 px (rows 84 -> 72, still badge-driven) and move
 		# rows toward the reference ~70 px height.
-		plate.add_theme_stylebox_override("panel", UiTheme.panel_texture(8 if _p5_on else 14))
+		# U5 fix8: 8 -> 3 -- reference rows are ~63 px pitch
+		# (badge 56 + 2x3 margins); the 8 px plates left the
+		# rows at 82 px pitch with a swollen value pill.
+		plate.add_theme_stylebox_override("panel", UiTheme.panel_texture(3 if _p5_on else 14))
 		core_box.add_child(plate)
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 14)
@@ -16768,12 +16795,20 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 		row.add_child(UiBadge.new(String(data[0]), UiTheme.SKY, 56 if _p5_on else 40))
 		var label := _mk_label(row, String(data[1]), 18, UiTheme.TEXT)
 		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		var value := UiTheme.chip(String(data[2]), UiTheme.GOLD.lightened(0.65), 22, UiTheme.TEXT, 280 if _p5_on else 160)
+		# U5 fix8: the value pill filled the whole row height
+		# (HBox stretches it) -- reference pills are ~25 px in
+		# a ~63 px row. Fixed 26 px height, vertically centred,
+		# 18 px value font (reference digits ~18 px).
+		var value := UiTheme.chip(String(data[2]), UiTheme.GOLD.lightened(0.65), 18 if _p5_on else 22, UiTheme.TEXT, 280 if _p5_on else 160)
+		if _p5_on:
+			value.custom_minimum_size.y = 26
+			value.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		row.add_child(value)
 	# Payout pill (reference: one pale pill, three segments).
 	var payout := PanelContainer.new()
 	# U5 fix5: same slim margin as the rows on P5 (-12 px live min).
-	payout.add_theme_stylebox_override("panel", UiTheme.panel_texture(8 if _p5_on else 14))
+	# U5 fix8: 8 -> 3, matching the rows (see above).
+	payout.add_theme_stylebox_override("panel", UiTheme.panel_texture(3 if _p5_on else 14))
 	core_box.add_child(payout)
 	var prow := HBoxContainer.new()
 	prow.add_theme_constant_override("separation", 10)
