@@ -6301,6 +6301,17 @@ func _build_result(root: Control) -> void:
 		_result_wrap.offset_bottom = 375
 		_result_wrap.visible = false
 		root.add_child(_result_wrap)
+		# U5 fix7: crest headroom spacer -- the crest (stars +
+		# ribbon) straddles the panel top edge, so the panel must
+		# sit lower in the wrapper: panel top lands ~172 screen px
+		# (reference ~174), stars top ~13 screen px, buttons
+		# bottom ~1040 (reference ~1021; the +19 px is the
+		# row-pitch residual, see _fill_result -- rows run 82 px
+		# pitch vs reference ~67, panel 500 vs ~474 design px).
+		var _crest_spacer := Control.new()
+		_crest_spacer.custom_minimum_size = Vector2(0, 97)
+		_crest_spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_result_wrap.add_child(_crest_spacer)
 	_result_panel = PanelContainer.new()
 	_result_panel.set_anchors_preset(Control.PRESET_CENTER)
 	_result_panel.offset_left = -350
@@ -6322,32 +6333,78 @@ func _build_result(root: Control) -> void:
 	# in a 250 px column (wrapped to four lines) and the rows in a
 	# scroll (gold row + payout below the fold).
 	_result_panel.add_child(vb)
-	var stars := HBoxContainer.new()
-	stars.alignment = BoxContainer.ALIGNMENT_CENTER
-	vb.add_child(stars)
-	# U5: bigger stars on phone (reference ~5.7% of frame width
-	# each); _fill_result swaps filled/empty per victory/defeat.
-	var star_sz := Vector2(96, 96) if _p5_on else Vector2(44, 44)
-	for key in ["star_filled", "star_filled", "star_empty"]:
-		var st := UiTheme.art(key, star_sz)
-		stars.add_child(st)
-		_result_stars.append(st)
-	var ribbon := PanelContainer.new()
-	ribbon.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
-	ribbon.custom_minimum_size.y = 54
-	ribbon.draw.connect(func() -> void:
-		# U5: the ribbon spans ~88% of the panel on phone
-		# (reference); desktop keeps the 300 px cap.
-		var rw := ribbon.size.x * 0.88 if _p5_on else minf(ribbon.size.x, 300.0)
-		var extent := Vector2(rw, 72)
-		ribbon.draw_texture_rect(UiTheme.asset("decorations", "ribbon_green"), Rect2(Vector2((ribbon.size.x - extent.x) / 2, -8), extent), false))
-	vb.add_child(ribbon)
+	# U5 fix7: on phone the crest (stars + ribbon) is an overlay
+	# straddling the panel top edge (reference: stars press the
+	# ribbon top, ribbon centre sits on the panel top edge), NOT
+	# flow content -- flow stars+ribbon made the panel ~166 px
+	# too tall and left no headroom above it. The crest is a plain
+	# Control (min height 40 = ribbon tail bottom to summary top)
+	# whose children are manually placed and spill above the panel
+	# edge; plain Controls do not clip, so the spill draws. The
+	# panel live min drops 623 -> ~500 design px. Desktop keeps
+	# the old flow layout verbatim (legacy 700x580 panel).
+	var ribbon: PanelContainer
+	if _p5_on:
+		var crest := Control.new()
+		crest.custom_minimum_size = Vector2(0, 40)
+		crest.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		vb.add_child(crest)
+		var stars := HBoxContainer.new()
+		stars.alignment = BoxContainer.ALIGNMENT_CENTER
+		stars.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		# Crest-local coords: crest top = panel top + 14 (panel
+		# margin). Stars 96 tall; bottoms overlap the ribbon
+		# main-band top by ~22 design px (~31 screen px);
+		# ribbon centre on the panel top edge (crest-local -14).
+		# Bigger stars on phone (reference ~5.7% of frame width
+		# each); _fill_result swaps filled/empty per victory/defeat.
+		stars.position = Vector2(0, -125)
+		stars.size = Vector2(872, 96)
+		crest.add_child(stars)
+		var star_sz := Vector2(96, 96)
+		for key in ["star_filled", "star_filled", "star_empty"]:
+			var st := UiTheme.art(key, star_sz)
+			stars.add_child(st)
+			_result_stars.append(st)
+		ribbon = PanelContainer.new()
+		ribbon.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+		ribbon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		# Ribbon rect 150 tall centred on the panel top edge
+		# (crest-local -14): main green band ~105 screen px.
+		ribbon.position = Vector2(0, -89)
+		ribbon.size = Vector2(872, 150)
+		ribbon.draw.connect(func() -> void:
+			var rw := ribbon.size.x * 0.88
+			var extent := Vector2(rw, 150)
+			ribbon.draw_texture_rect(UiTheme.asset("decorations", "ribbon_green"), Rect2(Vector2((ribbon.size.x - extent.x) / 2, 0), extent), false))
+		crest.add_child(ribbon)
+	else:
+		var stars := HBoxContainer.new()
+		stars.alignment = BoxContainer.ALIGNMENT_CENTER
+		vb.add_child(stars)
+		var star_sz := Vector2(44, 44)
+		for key in ["star_filled", "star_filled", "star_empty"]:
+			var st := UiTheme.art(key, star_sz)
+			stars.add_child(st)
+			_result_stars.append(st)
+		ribbon = PanelContainer.new()
+		ribbon.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+		ribbon.custom_minimum_size.y = 54
+		ribbon.draw.connect(func() -> void:
+			var rw := minf(ribbon.size.x, 300.0)
+			var extent := Vector2(rw, 72)
+			ribbon.draw_texture_rect(UiTheme.asset("decorations", "ribbon_green"), Rect2(Vector2((ribbon.size.x - extent.x) / 2, -8), extent), false))
+		vb.add_child(ribbon)
 	_result_title = _mk_dlabel(ribbon, "", 40 if _p5_on else 34, UiTheme.WHITE)
 	_result_title.add_theme_color_override("font_color", UiTheme.WHITE)
 	_result_panel.draw.connect(func() -> void:
 		_result_panel.draw_texture_rect(UiTheme.asset("decorations", "confetti_strip"), Rect2(12, 4, _result_panel.size.x - 24, 64), false))
 
 	_result_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	if _p5_on:
+		# U5 fix7: the P5 ribbon rect is 150 tall (crest overlay);
+		# centre the title on the band instead of top-aligning it.
+		_result_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	# Cycle 18: the sectioned summary (UI_SPEC §2.7) replaces
 	# the single body label — payout chips, a 4-up fact grid,
 	# per-move damage bars, pact chips, the capture grid,
@@ -6402,10 +6459,13 @@ func _build_result(root: Control) -> void:
 		rcol.add_child(actions)
 	# U5: reference buttons carry icons (refresh / house); the green
 	# primary is white-on-green (same whitening as the draft reroll).
-	# U5 fix6: the reference icon is a single-arc circular arrow
-	# (refresh), not the shared double-arc reroll (which reads as
-	# a plain ring at this size); the draft modal keeps "reroll".
-	var again := UiTheme.make_icon_button("refresh", "再次出发", "green", "big")
+	# U5 fix7: the reference icon is a DOUBLE-arc cycle (two arcs,
+	# two arrowheads) -- fix6 misread it as a single arc and added
+	# a "refresh" icon for it. The shared "reroll" geometry IS the
+	# reference shape; at 60 px the two heads stay legible (the
+	# "plain ring" misread was a small-size artefact). The draft
+	# modal keeps "reroll" too.
+	var again := UiTheme.make_icon_button("reroll", "再次出发", "green", "big")
 	again.pressed.connect(func() -> void:
 		_result_panel.hide()
 		if _result_wrap != null:
@@ -6417,10 +6477,18 @@ func _build_result(root: Control) -> void:
 	actions.add_child(b)
 	var arow := again.get_child(0) as HBoxContainer
 	(arow.get_child(0) as UiIcon).color = UiTheme.WHITE
-	# U5 fix6: the reference glyph is ~2x the old 20 px icon next
-	# to the label; 28 px keeps the arrowhead legible at phone fit.
-	(arow.get_child(0) as UiIcon).custom_minimum_size = Vector2(28, 28)
-	again.set_meta("icon_px", 28)
+	# U5 fix7: the reference glyph is ~80% of the button height
+	# (icon ~86 screen px on a ~105 px button); 60 px puts both
+	# arrowheads clearly on screen. icon_px stays in sync so the
+	# width fit uses the real icon; min_w 400 still pins the width.
+	(arow.get_child(0) as UiIcon).custom_minimum_size = Vector2(60, 60)
+	again.set_meta("icon_px", 60)
+	# U5 fix7: same rule for the home icon -- the reference house
+	# is ~44% of the button height (47/106 px), the old 20 px icon
+	# only ~28%. 32 px matches the reference ratio.
+	var brow := b.get_child(0) as HBoxContainer
+	(brow.get_child(0) as UiIcon).custom_minimum_size = Vector2(32, 32)
+	b.set_meta("icon_px", 32)
 	(again.get_meta("label") as Label).add_theme_color_override("font_color", UiTheme.WHITE)
 	if _p5_on:
 		# U5: reference buttons are ~23% of frame width each.
