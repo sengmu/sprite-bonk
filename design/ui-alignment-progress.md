@@ -833,3 +833,11 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
   - 同步：本地提交 d3d2349 已 `sync_to_nuc`，parity 892 文件 0 diff；NUC HEAD 已核 d3d2349。
 - 断点：下一轮先读 Test/out/u5_fix8.done（两档绿、FAIL=0；checks 1549 与 1564 均接受，以 FAIL=0 为准），取 `mobile_p5_result_victory_*_s100_i0.png` 双档快照，行列扫描复核缎带（带体约 120 屏 px、顶约 110、底约 235、中心压面板顶沿）／行 pitch 约 96 屏 px／值 pill 约 37 屏 px 高且纵向居中／汇总 pill 上移、面板底下有空奶油带／面板顶约 173、面板底约 880／钮顶约 917、钮底约 1018–1025／星仍压缎带且未被带体埋住后重建 compare/U5.png 与 compare/U5_2400.png（Test/make_compare_u5.py）、逐项亲检再议 U5 签核。Notion 对齐单未动（U5 未关闭）。
 - 本轮提交（align-fix13，待推送，`git ls-remote` 核验）：d3d2349 fix8 代码＋脚本；本节台账＋fix7 双档 compare（`design/ui-reference/compare/U5.png`、`U5_2400.png`，由 fix7 实拍重建；与本机构建逐字节一致——构建输入即 NUC 快照，md5 已核对）。
+
+## U5 fix8：批次监看轮（2026-11-15 06:1x 轮，worker）
+
+- 防撞核查：上一轮 05:51:49 起跑的验证批仍在跑——Godot 进程 1564652（--mode=phone --scale=1.00 --win=2340x1080 --result=victory）在跑；Test/out/u5_fix8.done 只有 START＋2400 腿记录、无 ALLDONE。本轮只监看、不双开、不施工。
+- 进度：2400 s100 腿已绿——.done 记 phonehud 2400 rc=0、PHONEHUD DONE checks=1549 fails=0；2340 s100 腿进行中。2400 腿日志 1549 PASS、FAIL 0 条（尾部为退出时资源清理 ERROR 行，属 Godot 退出噪音、非检查失败）。
+- 图标第二单收口已在前轮完成（记录 66ad775、合并 SHA ccf6b8a、fd2af03 已为 align-fix13 祖先），本轮不重复。
+- 断点不变：下一轮先读 Test/out/u5_fix8.done（等 ALLDONE、两档绿 FAIL=0），按上一节断点取双档 mobile_p5_result_victory_*_s100_i0.png 快照、行列扫描复核（缎带带体约 120 屏 px、顶约 110、底约 235、中心压面板顶沿／行 pitch 约 96 屏 px／值 pill 约 37 屏 px 高且纵向居中／汇总 pill 上移、面板底下有空奶油带／面板顶约 173、面板底约 880／钮顶约 917、钮底约 1018–1025／星仍压缎带且未被带体埋住），重建 compare/U5.png 与 compare/U5_2400.png（Test/make_compare_u5.py）、逐项亲检再议 U5 签核。Notion 对齐单未动（U5 未关闭）。
+- 本轮提交：本节台账。
