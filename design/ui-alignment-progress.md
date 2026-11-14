@@ -560,3 +560,14 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 验证批 Test/u3_fix1_run.sh 已于 14:47:30 detached 启动（HEAD 2ed5ef5，2400 s100 腿在跑），.done 路径 Test/out/u3_fix1.done，双腿 2400 s100 → 2340 s100，预计约 15:10 完成。
 - 断点：下一轮先读 Test/out/u3_fix1.done（两档绿、FAIL=0；checks 1549 与 1564 均接受，以 FAIL=0 为准），取 phone_hud_touch_*_draft.png 双档快照，对照 design/ui-reference/v2/U3_final.jpg 行列扫描量星位/pill 色/金边/工具行后重建 compare/U3.png 与 compare/U3_2400.png（Test/make_compare_u3.py）、逐项亲检再议 U3 签核。Notion 对齐单未动（U3 未关闭；连接器已移除，证据先落台账）。
 - 本轮提交（align-fix13，已推送，git ls-remote 核验 origin 与本地同 SHA）：2ed5ef5 fix1 代码＋Test/u3_fix1_parse.sh＋Test/u3_fix1_run.sh；本节台账另行提交。
+
+## U3 fix1 亲检：三项落地、主推卡巨星缺陷，U3 不关闭（2026-11-14 15:0x 轮，主控亲检）
+
+- 验证批 `Test/u3_fix1_run.sh`（HEAD 2ed5ef5）：2400 s100 **1564/0** rc=0；2340 s100 **1564/0** rc=0（双档 ALLDONE 15:13:37；两档 checks 同为 1564，以 FAIL=0 为准）。
+- 主控亲检 fix1 双档 draft 实拍与 compare/U3_2400.png 逐项（对照 `design/ui-reference/v2/U3_final.jpg`）：
+  - ① 横幅 ✓：金星居中压 pill 顶沿、三叶簇贴两端、pill 与字号比例达标。
+  - ② 卡顶 pills ✓：实心色＋白字（强化橙／普通蓝／新橙／优秀绿），对比达标。
+  - ④ 工具行 ✓：重抽蓝实心＋白字白标居首、跳过／放逐随后、整行右置；「查看我的队伍」为功能外加行，保留在案。
+  - ③ 主推卡 ✗：金边＋内辉已落地（金 rim 在位），但中卡正中出现一颗巨型金星（约 465×310 屏 px @2400 档），遮住标题 pill 右半与描述区，并溢出卡底边——fix1 新增缺陷；fix 前草案验证拍（2340 档）无此星。代码侧核查：`_draft_card` 的 fx 叠层星星按 20×20 构造（scripts/world.gd 约 6022 行），构造代码本身无放大路径；巨星来源待二分定位。
+- 结论：**U3 不关闭**（检查全绿只是必要条件，本轮再次实证）。fix2 处方：先摘掉 fx 的四颗 20px 星星单独取一张 draft 图二分——星消失＝星星层在 P5 拟合路径下被放大，改以 rim Panel 的 draw 回调绘制星芒或用 CenterContainer 承载定尺；星仍在＝继续查其他 star_filled 消费者。星星最终只许以约 20 设计 px 出现在主推卡四角／中缘。改完只跑双档 s100 批复拍、重建 compare、主控再亲检。①②④ 已达标，勿再动；⑤ 大面板约束与 ⑥ 画板豁免维持在案。
+- 附注：fix1 双档 compare 因 VM→NUC 大文件传输中断未随本节入库；主控亲检用的 compare 由 NUC 本地捕获（Test/out/phone_hud_touch_2400x1080_s100_i0_draft.png 14:58、…_2340… 15:11）经 Test/make_compare_u3.py 在本机构建，下轮在 NUC 本地重建 compare/U3.png 与 compare/U3_2400.png 入库即可（同一脚本同一输入）。
