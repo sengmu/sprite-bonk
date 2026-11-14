@@ -6346,7 +6346,13 @@ func _build_result(root: Control) -> void:
 	var ribbon: PanelContainer
 	if _p5_on:
 		var crest := Control.new()
-		crest.custom_minimum_size = Vector2(0, 40)
+		# U5 fix9: 40 -> 56 -- the fix8 225 ribbon folded tails
+		# reach ~285 screen px at the sides and clipped the
+		# summary glyph tops (~275); +16 design px (~23 screen px)
+		# of crest headroom clears them. The ribbon is
+		# crest-local, so it does not move; the bottom gap
+		# shrinks by the same 16 to hold the panel at ~500.
+		crest.custom_minimum_size = Vector2(0, 56)
 		crest.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		vb.add_child(crest)
 		var stars := HBoxContainer.new()
@@ -6421,6 +6427,10 @@ func _build_result(root: Control) -> void:
 	_result_body = _mk_label(vb, "", 14, UiTheme.MUTED)
 	_result_body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	if _p5_on:
+		# U5 fix9: summary in TEXT, not MUTED -- the reference
+		# summary is dark brown (median 86,54,18); MUTED
+		# (119,101,79) reads washed-out against the cream.
+		_result_body.add_theme_color_override("font_color", UiTheme.TEXT)
 		_result_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		_result_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		# U5: the four summary rows + payout pill live in their own
@@ -6440,7 +6450,11 @@ func _build_result(root: Control) -> void:
 		# ~77 px of panel min; hold the panel at ~500 px with
 		# this spacer so the panel top / buttons stay put.
 		var _p5_bottom_gap := Control.new()
-		_p5_bottom_gap.custom_minimum_size = Vector2(0, 69)
+		# U5 fix9: 69 -> 53, offsetting the +16 crest headroom
+		# above so the panel stays at ~500 design px (top and
+		# buttons do not move); the empty cream band below the
+		# payout pill shrinks ~23 screen px, still ~100.
+		_p5_bottom_gap.custom_minimum_size = Vector2(0, 53)
 		_p5_bottom_gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		vb.add_child(_p5_bottom_gap)
 	# U5 fix6: the extended-statistics scroll exists on desktop
@@ -16803,6 +16817,15 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 		if _p5_on:
 			value.custom_minimum_size.y = 26
 			value.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			# U5 fix9: chip() adds 2 px top/bottom content
+			# margins, so the fix8 26 px min rendered ~31
+			# design px (~44 screen px vs reference ~38).
+			# Zero them (this chip instance only) so the pill
+			# lands at its 18 px font line height, ~38 px.
+			var vsb := value.get_theme_stylebox("panel") as StyleBoxFlat
+			if vsb != null:
+				vsb.content_margin_top = 0
+				vsb.content_margin_bottom = 0
 		row.add_child(value)
 	# Payout pill (reference: one pale pill, three segments).
 	var payout := PanelContainer.new()
