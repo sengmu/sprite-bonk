@@ -513,3 +513,11 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 解析门（`Test/u3_draft_parse.sh`，`Test/out/u3_draft_parse.log`）：scripts/world.gd **rc=0**、Test/phonehud.gd **rc=0**、SCRIPT ERROR 0 条。
 - 验证批 `Test/u3_draft_run.sh` 已于 12:28:56 detached 启动（PID 76021，Godot 76046，2400 s100 腿在跑），`.done` 路径 `Test/out/u3_draft.done`，HEAD 7e5c5fc，双腿 2400 s100 → 2340 s100，预计约 12:55 完成。
 - **断点**：下一轮先读 `Test/out/u3_draft.done`（两档绿、FAIL=0；checks 1549 与 1564 均接受，以 FAIL=0 为准），取 `phone_hud_touch_*_draft.png` 双档快照，对照 `design/ui-reference/v2/U3_final.jpg`（另有 `design/art-concepts/ui-approved/U3_升级三选一.png`）建 `compare/U3.png`（`Test/make_compare_u3.py` 待新建，仿 make_compare_u2.py 左参考右实拍），原始图行列扫描量卡高／顶区／字形标／标题 pill／叶形分隔／描述字高后逐项亲检，再议 U3 签核。NUC `.git` 反向同步回本机本轮待补（本地副本仍停在 11-13 10:47 同步点，NUC 已至 7e5c5fc）。
+
+## U3 暂存稿验证批监看（2026-11-14 12:34 轮）
+
+- 防撞触发：`Test/out/u3_draft.done` 只有 START（2026-11-14T12:28:56+08:00，HEAD 7e5c5fc），无 ALLDONE；锚定 pgrep 见 Godot 在跑（PID 76046，2400x1080 s100）。本轮按防撞规则只监看、不双开、不改代码、不碰 main。
+- 监看时点 12:35：2400 腿行至 P3 段（pause 抽屉往返），日志 `Test/out/u3_draft_phonehud_2400.log` 980 PASS、0 FAIL，中途无红。预计约 12:55 完成（2400 s100 → 2340 s100 双腿）。
+- SSH 直连本轮正常（12:34 多次调用均通）；NUC HEAD e41c803 与本机副本一致，树 parity OK。
+- 断点不变：验证批 `Test/u3_draft_run.sh` 仍在 NUC 上跑，.done 路径 `Test/out/u3_draft.done`。下一轮先读该 .done（两档绿、FAIL=0；checks 1549 与 1564 均接受，以 FAIL=0 为准），取 `phone_hud_touch_*_draft.png` 双档快照，对照 `design/ui-reference/v2/U3_final.jpg`（另有 `design/art-concepts/ui-approved/U3_升级三选一.png`）建 `compare/U3.png`（`Test/make_compare_u3.py` 待新建，仿 make_compare_u2.py 左参考右实拍），原始图行列扫描量卡高／顶区／字形标／标题 pill／叶形分隔／描述字高后逐项亲检，再议 U3 签核。
+- 本轮无代码改动；唯一提交为本节台账记入。
