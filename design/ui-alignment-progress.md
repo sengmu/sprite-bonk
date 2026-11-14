@@ -546,3 +546,17 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 双档 compare 逐项亲检结论：**U3 本轮不关闭**。草案 7e5c5fc 的全部条目均已落地（顶横幅奶油 pill、顶区 150、字形标 96、标题 pill、叶形分隔、描述 15px、卡高 300、中卡推广），但与参考相比仍有肉眼可见差异：①横幅星偏左＋叶单薄＋横幅偏小；②卡顶 pills 淡底彩字（非实心＋白字）；③主推卡无金边辉光；④工具行顺序/颜色/位置（重抽须为蓝实心首位）。另两项为已记录约束、不阻塞修图：⑤大面板（legacy 860×452 不可动，卡浮于场景无法复现，待用户验收——同 U2 托盘类）；⑥画板为扁平类型色＋小字形标（场景/英雄内容豁免内，比例按草案）。
 - **断点（下一轮）**：按序修 ①–④（只动表现层，不动玩法数值；检查改向须在台账写明理由）：①横幅星居中压顶沿、叶改多叶簇贴 pill 端、横幅 pill/字号向 REF 比例靠（星 26px→约 33px 设计）；②卡顶 pills 改实心（橙/蓝/绿）＋白字；③主推卡加金边＋辉光（不改稀有度 rim 逻辑，推广态叠加）；④工具行改回 重抽（蓝实心、白字白标）/跳过/放逐 顺序并移回卡下右侧。改完只跑双档 s100 批（`Test/u3_draft_run.sh` 同款流程），复测星位/pills/金边/工具行后重建 compare、逐项亲检再议签核。Notion 对齐单未动（U3 未关闭；连接器已移除，证据先落台账）。
 - 本轮提交（align-fix13，已推送，`git ls-remote` 核验 origin 与本地同 SHA）：见提交记录——`Test/make_compare_u3.py`＋重建的 `compare/U3.png` 与 `compare/U3_2400.png`＋本节台账。
+
+## U3 fix1：横幅星/叶＋卡顶 pills 实心＋主推卡金边辉光＋工具行（2026-11-14 14:1x–14:5x 轮，主控）
+
+- 承接 13:5x 轮断点：按序修 ①–④。图标第二单与 U2 均已关闭，本轮无收口/签核动作。
+- 防撞：起跑时 NUC 上无 sprite-bonk 的 Godot 在跑（锚定 pgrep 仅见 sanguo 工程进程，与本工程无关）；最新 .done 为 u3_draft.done，已 ALLDONE（2400 1564/0、2340 1549/0）。无双开。
+- 实施（提交 2ed5ef5；scripts/world.gd＋scripts/ui_theme.gd；未动玩法数值、未动检查、未动 P5 模态 legacy 尺寸）：
+  ① 横幅：标题 24→28px、内容边距 30→70（pill 向 REF 约 1.36 卡宽靠）；星 26→33px 移出 pill 内容行，改 VBox 结构＋顶边距 -12 使星心压 pill 顶沿、居中；左右叶由单叶 31×26 改为三叶簇（新增 _draft_leaf_cluster，48×48、共用 v2-leaves.svg 旋转拼簇，贴 pill 端、间距 0）。
+  ② 卡顶 pills：kchip 改橙实心＋白字、rchip 改稀有度色实心＋白字（传说金 pill 例外，仍深色字），字 11/12→14px、尺寸 48×24→62×30；根因已查明：INK_DEEP 常量值实为浅米 #dac6a2（注释称 #1a1030 名不副实），旧芯片因而呈淡米底＋彩字——常量为全 palette 共用，不动，只在卡片本地改；另 cycle-19 墨色芯片的理由已复核不成立（顶区为稀有度色 lightened 0.62 的淡底，饱和 pill 仍可读）。
+  ③ 主推卡：中卡（idx == 选项数/2，三选一为 idx 1）叠加金边＋辉光——全幅叠层：径向金渐变内辉（新增 _gold_glow_texture，缓存）＋4px 金边 Panel（radius 30）＋四角/中缘四枚 20px 金星；稀有度 rim 逻辑未动；放逐模式下叠层隐藏（_paint_draft_cards 切换）；外延辉光因卡 clip_contents=true 无法出卡外，改以内辉＋金边＋星芒近似，记为已知近似。
+  ④ 工具行：删 tools.move_child(_draft_rb, -1)，顺序回重抽/跳过/放逐；P5 行改 spacer 置首，三钮＋查看我的队伍整体右置；重抽改蓝实心＋白字白标——根因：_btn_box 仅有奶油/绿/橙三纹理，蓝色启发式落空回奶油；新增 UiTheme.tinted_btn_box（以奶油纹理面像素 248,230,199 解算 modulate，使面色落到蓝 66,174,224，保留烘焙明暗），四态均覆写，_refresh_draft_tools 末尾重申（幂等）；图标本身即双弧刷新箭头（UiIcon "reroll" 程序化绘制），白化后即白标；放逐保持奶油面＋红标＋深红字，跳过不动（奶油＋深色，已合 REF）。
+- 解析门 Test/u3_fix1_parse.sh（world/ui_theme/phonehud 三门）：14:45–14:46 全 rc=0、SCRIPT ERROR 0 条（SolanaSDK GDExtension 噪声为既有，与 4.4 扩展有关）。日志 Test/out/u3_fix1_parse.log。
+- 验证批 Test/u3_fix1_run.sh 已于 14:47:30 detached 启动（HEAD 2ed5ef5，2400 s100 腿在跑），.done 路径 Test/out/u3_fix1.done，双腿 2400 s100 → 2340 s100，预计约 15:10 完成。
+- 断点：下一轮先读 Test/out/u3_fix1.done（两档绿、FAIL=0；checks 1549 与 1564 均接受，以 FAIL=0 为准），取 phone_hud_touch_*_draft.png 双档快照，对照 design/ui-reference/v2/U3_final.jpg 行列扫描量星位/pill 色/金边/工具行后重建 compare/U3.png 与 compare/U3_2400.png（Test/make_compare_u3.py）、逐项亲检再议 U3 签核。Notion 对齐单未动（U3 未关闭；连接器已移除，证据先落台账）。
+- 本轮提交（align-fix13，已推送，git ls-remote 核验 origin 与本地同 SHA）：2ed5ef5 fix1 代码＋Test/u3_fix1_parse.sh＋Test/u3_fix1_run.sh；本节台账另行提交。
