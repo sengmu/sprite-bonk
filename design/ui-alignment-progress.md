@@ -633,3 +633,11 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 验证批 Test/u5_fix1_run.sh 已于 17:50:23 detached 启动（HEAD 1a64ec6，2400 s100 腿在跑），.done 路径 Test/out/u5_fix1.done，双腿 2400 s100 → 2340 s100，预计约 18:20 完成。
 - 断点：下一轮先读 Test/out/u5_fix1.done（两档绿、FAIL=0；checks 1549 与 1564 均接受，以 FAIL=0 为准），取 mobile_p5_result_victory_*_s100_i0.png 双档快照，对照 design/ui-reference/v2/U5_final.jpg 行列扫描量面板／星／缎带／四行／汇总 pill／双钮后重建 compare/U5.png 与 compare/U5_2400.png（Test/make_compare_u5.py）、逐项亲检再议 U5 签核。Notion 对齐单未动（U5 未关闭）。
 - 本轮提交（align-fix13，已推送，git ls-remote 核验 origin 与本地同 SHA）：1a64ec6 fix1 代码＋脚本；本节台账另行提交。
+
+## U5 fix1 验证批监看（2026-11-14 18:11–18:1x 轮，主控）
+
+- 防撞触发：`Test/out/u5_fix1.done` 只有 START（17:50:23，HEAD 1a64ec6），无 ALLDONE；锚定 pgrep 见 sprite-bonk Godot 在跑（PID 569414，2340x1080 s100 --result=victory，查时行至 P3 段）。另见一 sanguo 工程 Godot 进程（PID 402688），与本工程无关。本轮按防撞规则只监看、不双开、不改代码、不碰 main。
+- 2400 腿已完（18:05，rc=1）：checks=1549 fails=1。唯一红：`PHONEHUD FAIL P5: primary action bottom-right (result/victory) :: '返回菜单' centre=(885, 662)`（日志 1803 行）。其余 P5 胜利段均绿（modal text、modal buttons、result back-to-menu wired 均 PASS）。胜利快照已取：`mobile_p5_result_victory_2400x1080_s100_i0`（日志 1805 行）。
+- 初判（待 2340 腿完＋compare 亲检后裁定）：该检查断言主钮位于面板右下；fix1 实施⑤⑥已把双钮改居中（P5 最小宽 400、居中，回归参考卡下居中两大钮），「返回菜单」现居右位属居中布局的右钮——疑似检查期望滞后于已批准规格，须按改向纪律裁定（只许对齐已批准规格、强度不降、台账写明理由），本轮不擅自改向、不改代码。
+- 断点不变：验证批 `Test/u5_fix1_run.sh` 仍在跑，.done 路径 `Test/out/u5_fix1.done`。下一轮先读该 .done（两档 FAIL 数；checks 1549/1564 均接受，以 FAIL=0 为准——2400 腿已确认 1 红，须先裁定该项再议签核），取 `mobile_p5_result_victory_*_s100_i0.png` 双档快照，对照 `design/ui-reference/v2/U5_final.jpg` 行列扫描量面板／星／缎带／四行／汇总 pill／双钮后重建 `compare/U5.png` 与 `compare/U5_2400.png`（`Test/make_compare_u5.py`）、逐项亲检再议 U5 签核。Notion 对齐单未动（U5 未关闭）。
+- 本轮无代码改动；唯一提交为本节台账记入。
