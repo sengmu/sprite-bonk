@@ -3602,11 +3602,12 @@ func _build_hud() -> void:
 	_p5_register(_pause_panel, 1000.0, 430.0)
 	_p5_register(_bigmap_panel, 900.0, 430.0)
 	_p5_register(_result_panel, 900.0, 750.0)
-	# U5 fix4: result fits against its nominal design height only
+	# U5 fix4/5: result fits against its nominal design height only
 	# (see _p5_place_modal p5_fixed_h); the 14 px spill from its
-	# live min (786 vs spec 750) is fixed by trimming the live min
-	# (scroll min below), not by fitting against it -- the fix3
-	# fit-against-live-min loop diverged (s100 result scale 0.036).
+	# live min (787 vs spec 750) is fixed by trimming the live min
+	# (slim row/payout plate margins in _fill_result), not by
+	# fitting against it -- the fix3 fit-against-live-min loop
+	# diverged (s100 result scale 0.036).
 	_result_panel.set_meta("p5_fixed_h", true)
 	_p5_register(_lab_panel, 820.0, 430.0)
 	_p5_register(_shop_panel, 820.0, 430.0)
@@ -6343,11 +6344,12 @@ func _build_result(root: Control) -> void:
 		_result_core.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		vb.add_child(_result_core)
 	var scroll := ScrollContainer.new()
-	# U5 fix4: phone scroll min 400 -> 340. The result panel live
-	# min (786 at sm 0.952) spilled 14 px past the UI area; the
-	# extended-stats scroll is below the fold, so showing 60 px
-	# less of it costs nothing visible. Desktop keeps 400.
-	scroll.custom_minimum_size = Vector2(0, 340 if _p5_on else 400)
+	# U5 fix5: the fix4 scroll trim (340) was a no-op -- the P5
+	# block below overwrites this to 0, and a ScrollContainer
+	# never propagates its child's min anyway (probe: scroll min
+	# (291, 0) with a 708 px child). The spill is fixed by the
+	# slim row/payout plate margins in _fill_result instead.
+	scroll.custom_minimum_size = Vector2(0, 400)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	rcol.add_child(scroll)
 	_result_box = VBoxContainer.new()
@@ -14095,7 +14097,8 @@ func _p5_w(panel: Control, fallback: float) -> float:
 ## ~1/sm^2 once fonts blow up) and the loop post-fit check keeps
 ## shrinking sm with no fixed point. Single-pass placement (fix2)
 ## is deterministic; the result panel 14 px spill is fixed by
-## trimming its live min instead (see _build_result scroll min).
+## trimming its live min instead (see _fill_result row/payout
+## plate margins).
 ## post_layout is retained for call compatibility.
 func _p5_place_modal(c: Control, s: float, post_layout: bool = false) -> void:
 	var spec: Vector2 = _p5_spec[c]
@@ -16639,7 +16642,13 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 	var core_box := _result_core if (_p5_on and _result_core != null) else _result_box
 	for data in [["tile_clock", "用时", _fmt_time(run_time)], ["tile_sword", "击杀", str(kills)], ["tile_star", "等级", str(player.level if player else 1)], ["tile_coin", "金币", str(int(gold))]]:
 		var plate := PanelContainer.new()
-		plate.add_theme_stylebox_override("panel", UiTheme.panel_texture())
+		# U5 fix5: slim P5 row plates (content margin 14 -> 8).
+		# Probe in s100 geometry: panel live min 787 vs spec 750
+		# spilled 14 px; each row is 84 px = 56 badge + 2x14 plate
+		# margin, so 4 rows carry 112 px of padding. 8 px margins
+		# cut 48 px (rows 84 -> 72, still badge-driven) and move
+		# rows toward the reference ~70 px height.
+		plate.add_theme_stylebox_override("panel", UiTheme.panel_texture(8 if _p5_on else 14))
 		core_box.add_child(plate)
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 14)
@@ -16651,7 +16660,8 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 		row.add_child(value)
 	# Payout pill (reference: one pale pill, three segments).
 	var payout := PanelContainer.new()
-	payout.add_theme_stylebox_override("panel", UiTheme.panel_texture())
+	# U5 fix5: same slim margin as the rows on P5 (-12 px live min).
+	payout.add_theme_stylebox_override("panel", UiTheme.panel_texture(8 if _p5_on else 14))
 	core_box.add_child(payout)
 	var prow := HBoxContainer.new()
 	prow.add_theme_constant_override("separation", 10)
