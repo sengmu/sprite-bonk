@@ -1126,3 +1126,15 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 同步说明：本机树有主控未提交改动（M scripts/world.gd、M scripts/ui_icon.gd），本轮不做 .git 反向同步（免扰主控在途工作）；NUC 提交推送后，本机 .git 落后 NUC 一个提交，下一轮先核主控改动落盘情况再同步。
 - 断点：待 Codex 第二轮交付（.tmp/u5_reaudit_codex2_changes.md 落盘）后，按验收口径（双档 s100 批＋同法复测＋compare 亲检）接续；U1 复审仍不开。
 - 本轮提交：本节台账。
+## U5 复审 Codex 第二轮：交付已接、解析门过、验证批已起跑（2026-11-15 22:1x–22:2x 轮，worker）
+
+- 防撞核查：无在跑的 sprite-bonk 批次——最新 .done 仍为 u5_reaudit_c1.done（ALLDONE 20:55:23）；锚定 pgrep 的 Godot 进程为另一工程（--path godot3d，VisualSmoke/batch-b-smoke），非本线、不动不扰；Xvfb :97 旧批残留、:10 为 Grok Bot 桌面。
+- Codex 第二轮已交付（21:36，71,475 tokens，本地 .tmp/u5_reaudit_codex2_changes.md＋.tmp/u5_reaudit_codex2.log）：基底 8d3a5bb，未提交，改动仅 scripts/world.gd（95 行）＋scripts/ui_icon.gd（12 行），均为 P5 专属表现层；桌面分支原值不动、玩法数值不动、检查不动。七项逐一有处方与静态预测：①内容 VBox 上移（外层 separation 8→0，摘要上移 8 设计 px；core separation 4→0、行高 62.3→66.3，值 pill 心预测上移 6 设计 px ≈35.207/43.907/52.607/61.307%H）；②行标签字号 18→31（_p5_fit 底线 23，预测字形 3.626%H）；③汇总字 18→32（预测 4.383%H，pill 高 60 不变）；④钮面字有效 23→著 33（预测 ~3.86%H，粗体栈已在）；⑤再次出发钮新 glyph `result_refresh`（两段 136.8° 弧＋双箭头，Control 60→56，预测可见约 55.8% 钮面）；⑥家形 Control 32→50（预测约 44.5%）；⑦tile 56→64（预测 ~7.20%H）。
+- 21:4x 轮「log 仍空、交付未到」已过期：交付实际 21:36 落盘于本机 .tmp（上一轮查的是 NUC 侧 .tmp，故未见）。本机树 M world.gd／ui_icon.gd 即 Codex 第二轮改动本身（非主控另有在途改动），diff 已逐行复核、与 changes.md 一致。
+- Codex 自报的汇总带冲突记入验收注意：派单要汇总带 68.0..76.0%H，但其引用的 scan3 存量数 67.78..75.56 与第一轮裁定数 69.2..76.9 并不一致；本轮上移预测 66.99..74.77（按 scan3 计）。验收轮须以第一轮裁定同法重测汇总带实值，不得沿用任一存量数作判据。
+- 同步铁律执行：本机 .git 落后 NUC 一个台账提交（f686ee4）——先反向 rsync NUC .git → 本机（rc=0，HEAD 已为 f686ee4；本地台账文件随 HEAD 恢复，工作树仅留两处 Codex 改动），再 sync_to_nuc（parity 904 文件 0 diff），未再现回滚事故。
+- 提交 f36389f（已推送，`git ls-remote` 核验 origin align-fix13 = f36389f）：Codex 第二轮代码＋Test/u5_reaudit_c2_parse.sh＋Test/u5_reaudit_c2_run.sh。缎带 .ctex sidecar source_md5=d20f98ff（fix12 纹理）已核验在位，本轮无纹理改动、无须重导入。
+- 解析门 Test/u5_reaudit_c2_parse.sh（NUC）：world.gd rc=0、ui_icon.gd rc=0、SCRIPT ERROR 0 条；6 条 ERROR 均为已知的 SolanaSDK GDExtension 4.4-only 告警，与本改动无关。
+- 验证批 Test/u5_reaudit_c2_run.sh 已于 22:21:55 detached 起跑（HEAD f36389f，2400 s100 腿 Godot 在跑），.done 路径 Test/out/u5_reaudit_c2.done，双腿 2400 s100 → 2340 s100，预计约 23:00–23:05 完成。
+- 断点：下一轮先读 Test/out/u5_reaudit_c2.done（两档绿、FAIL=0），取 mobile_p5_result_victory_*_s100_i0.png 双档新拍，同法复测（值 pill 心 35.2/43.8/52.7/61.4、行距 ~8.73、行标签 ~3.61、汇总字 ~4.36、汇总带以第一轮同法重测、钮面字 ~3.9、双弧钮图标、家形 ~45%、tile ~7.23、面板框 22.6..74.8/15.9..78.6 保持）后重建 compare/U5.png 与 compare/U5_2400.png（Test/make_compare_u5.py；注意仓库 compare 现仍为 fix12 实拍，须以新拍重建）、逐项亲检再议 U5 签核；缎带描边／三星刻面形制属纹理/素材族，不在本轮代码范围。Notion 对齐单未动（U5 未关闭）；U1 复审仍不开。
+- 本轮提交：本节台账（另行提交推送）。
