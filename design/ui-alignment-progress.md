@@ -1231,3 +1231,12 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 本轮只监看：不实施、不起批、不改树。
 - 断点不变：待主控派第四轮（两项：汇总 pill 横向 inset 每侧约 2.1%W、result_coins 约 48 设计 px）→ 交付落盘后 parse 门→双档 s100 批→同法复测→重建 compare→亲检再议签核；U5 未关闭；U1 复审仍不开。
 - 本轮提交：本节台账。
+
+## U5 复审 Codex 第四轮：待命轮（2026-11-16 05:1x 轮，worker）
+
+- 防撞核查：NUC 无在跑批次——最新 .done 仍为 u5_reaudit_c3.done（ALLDONE 02:58:10）；锚定 pgrep（argv0 与 `[G]odot_v4` 双法）无 Godot 在跑；无 u5_reaudit_c4.done。
+- Codex 第四轮未派：NUC .tmp 无 u5_reaudit_codex4.log／changes.md，仅 brief 在位（03:35）；本机 codex-homes 自 03:35 起无新 rollout、无 codex 进程在跑。派单权在主控，本轮不派、不代跑。
+- 同步：本机 .git 已与 NUC HEAD 796090e 一致，工作树干净（仅既有未入库 Test 脚本）；无须反向同步。
+- 本轮只监看：不实施、不起批、不改树。
+- 断点不变：待主控派第四轮（两项：汇总 pill 横向 inset 每侧约 2.1%W、result_coins 约 48 设计 px）→ 交付落盘后 parse 门→双档 s100 批→同法复测→重建 compare→亲检再议签核；U5 未关闭；U1 复审仍不开。
+- 本轮提交：本节台账。
