@@ -1221,3 +1221,13 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 亲检：compare/U5.png 与 compare/U5_2400.png 已以第三轮双档新拍重建（Test/make_compare_u5.py，标签 u5_reaudit_c3），逐项看过——与上述量测一致；2400 腿同残差、无新增项。纹理/素材族仍在范围外（缎带棕色粗描边＋窄折尾、三星 6.48 vs 10.20%H 偏小、钮面/pill 扁平无光泽渐变），不入本轮代码结论。
 - 结论：**U5 未过关闭门**。第三轮十项中八项落定（①汇总带、②行标签字、③汇总字尺寸、④钮面字、⑤双弧 glyph、⑥家形、⑦tile 形、⑧行横向、⑩摘要字重——星已齐，仅币与 pill 宽两项未落定）。第四轮处方两项：汇总 pill 加横向 inset 约每侧 2.1%W（y 带不动）、result_coins 图标放大至约 48 设计 px（星不动、汇总字不动）。派单草稿 `.tmp/u5_reaudit_codex4_brief.md` 已拟好（含验收数值总表与量法警示：汇总带须用 scan2 goldblob5 法、%W 跨宽高比失真、type2 奶油字带污染），**待主控派 Codex 池**；本屏仍不开 U1 复审。Notion 对齐单未动（U5 未关闭）。
 - 本轮提交：本节台账＋重建的 compare/U5.png、compare/U5_2400.png（随本提交推送）；量测脚本与裁切图留 .tmp（u5_reaudit_c3_*）。
+
+## U5 复审 Codex 第四轮：待命轮（2026-11-16 04:1x 轮，worker）
+
+- 防撞核查：NUC 无在跑批次——最新 .done 仍为 u5_reaudit_c3.done（ALLDONE 02:58:10）；锚定 pgrep 仅命中 SSH 会话自身命令行（已知误报），无 Godot 在跑；无 u5_reaudit_c4.done。
+- Codex 第四轮未派：本机无 codex 进程、codex-homes 自 03:35 起无新 rollout；NUC .tmp 无 u5_reaudit_codex4.log／changes.md，仅 brief 在位（.tmp/u5_reaudit_codex4_brief.md，03:35）。派单权在主控，本轮不派、不代跑。
+- 图标第二单收口已完成（66ad775、ccf6b8a），任务体 2026-11-12 段的收口序列已过期，不重复。
+- 同步小插曲（已修复）：本轮起笔时本机 .git 落后 NUC 一个提交（c896b6a vs ed1e556），且本地 `git fetch origin` 在本机拒连（GitHub SSH 无权）；一次 `reset --hard origin/align-fix13` 误用过期追踪分支把本地台账/compare 短暂回滚到 1201 行——已按铁律反向 rsync NUC .git 回本机并 reset 至 ed1e556，md5 与 NUC 逐字节一致（台账 371597da…、U5.png 644afe70…、U5_2400 4b61a337…），工作树干净。教训：fetch 失败时不许用本地过期追踪分支 reset，直接走 .git 反向 rsync。
+- 本轮只监看：不实施、不起批、不改树。
+- 断点不变：待主控派第四轮（两项：汇总 pill 横向 inset 每侧约 2.1%W、result_coins 约 48 设计 px）→ 交付落盘后 parse 门→双档 s100 批→同法复测→重建 compare→亲检再议签核；U5 未关闭；U1 复审仍不开。
+- 本轮提交：本节台账。
