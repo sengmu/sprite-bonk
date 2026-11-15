@@ -887,3 +887,19 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
   - ⑤ 实施后复跑双档 phonehud s100 验证（checks 1549/1564，FAIL=0 为准），重建双档 compare，逐项亲检再议签核。数值自洽校验：摘要行顶 ~349、行中心 ~443/538/633/728、汇总 pill 底 ~842、面板底 867、空带 ~25。
 - 本轮提交（align-fix13，待推送，`git ls-remote` 核验）：本节台账＋fix9 双档 compare（`design/ui-reference/compare/U5.png`、`U5_2400.png`，由 fix9 实拍重建；构建输入即 NUC 快照，md5 已核对）。未动代码、未起新批次。Notion 对齐单未动（U5 未关闭）。
 - 断点：下一轮按上 fix10 处方施工（scripts/world.gd 表现层＋ribbon_green.png 纹理）；先跑 `Test/u5_fix10_parse.sh` 解析门（须新建，仿 fix9），再起双腿验证批（Test/out/u5_fix10.done，2400 s100 → 2340 s100），取 `mobile_p5_result_victory_*_s100_i0.png` 双档快照，行列扫描复核值 pill（高 ~60、宽 ~305、填色金黄）／摘要行顶 ~349／行 pitch ~95／汇总 pill 底 ~842、空带 ~25／面板顶 ~171、面板底 ~867／钮顶 ~914／叶簇已去后重建 compare/U5.png 与 compare/U5_2400.png、逐项亲检再议 U5 签核。Notion 对齐单未动（U5 未关闭）。
+
+## U5 fix10：修正版处方实施，验证批已起跑（2026-11-15 09:1x–09:4x 轮，worker）
+
+- 承接 08:1x 轮断点：验证批 `Test/u5_fix9_run.sh`（HEAD 13d988f）已 ALLDONE 08:00:29：2400 s100 **1564/0**、2340 s100 **1549/0**，双腿 rc=0。防撞：起跑时无 sprite-bonk Godot 在跑，无双开。图标第二单收口已在前轮完成，不重复。
+- **量测纠正（本轮原始图行列扫描＋放大裁切实证，fix9 台账两处参考数作废——已在上节记入，此处补第三处、影响处方本身）**：fix9 fix10 处方所据「摘要行顶 294、参考 33.3%H≈359px」是误读——原始参考 `design/ui-reference/v2/U5_final.jpg`（1672×941）上摘要行在 raw y 239..263（25.4%H，≈274 屏 px），33.3%H（raw y 313）处是第一行值 pill 的顶沿。本轮复核的参考真值（纵向 %H／横向 %W）：面板顶 15.9%H／底 78.6%H；摘要行顶 25.4%H；行中心 34.9／43.6／52.4／61.1%H（pitch 8.77%H≈95 屏 px）；值 pill 54–55 raw px 高（5.84%H≈63 屏 px）× ~198–213 raw px 宽（~12%W≈284–305 屏 px）、填色 (252,232,159)、数字字形 ~30 raw px；汇总 pill 73 raw px 高（7.76%H≈84 屏 px）、底 76.0%H（≈821 屏 px）；面板底下空带 ~25 raw px（≈29 屏 px）。实拍对照（%H）：摘要行顶 27.2%（仅低 1.8%H）、行中心 35.9／44.3／52.6／60.9%（均在 1%H 内）、汇总 pill 底 70.8%（低 5.2%H＝56 屏 px）、面板底 80.3%（已近）。**结论：行已对齐、摘要行仅低 20px，fix9 处方「内容整体下移 ~55px」方向反了、会把已对齐的行推离，不予执行；本轮改行修正版 fix10。**
+- 实施修正版 fix10（提交 306619e，已推送，`git ls-remote` 核验 origin align-fix13 = 306619e，对象存在；scripts/world.gd＋Test/u5_fix10_*.sh；未动玩法数值、未动检查、桌面布局一律未动）：
+  - ① 值 pill（P5）：min 宽 280→210 设计 px（≈300 屏 px）、定高 26→44 设计 px（≈63 屏 px）、字号 18→32（字形 ≈32 屏 px）、填色 `GOLD.lightened(0.65)`→`Color8(252,232,159)`；上下 content margin 保持 0。fix8「参考 pill ~25px」与 fix9「参考约 38」两处旧数已在代码注释中订正为实测 55×~198–213。
+  - ② 汇总 pill（P5）：在其前加 28 设计 px headroom spacer（行不动，汇总顶 700→~738 屏 px）＋定高 59 设计 px（≈84 屏 px）；目标汇总底 ~822（参考 821）。
+  - ③ 底 spacer 53→13 设计 px：对冲汇总 gap（+28）与汇总增高（+~13.5），面板总高基本不变、面板底保持 ~867、按钮不动；汇总下空带变为 margin 14＋13＝27 设计 px（≈39 屏 px，参考 ~29，余 ~10px 待亲检）。
+  - ④ 行 pitch 不动（90 屏 px，参考 95；行绝对位置已在 1%H 内，单改 pitch 会把 2–4 行推离）、crest 不动（56；摘要行顶 294 保留，缎带尾端问题由纹理裁剪解决，见下）。
+  - ⑤ 纹理 `assets/ui/decorations/ribbon_green.png`（仅 NUC 工作树已改，未提交）：PIL 透明化 tex y>390 的折尾（实证：y>390 仅折尾不透明，中心列带底在 386，带体无损；不透明像素 410765→382925）。折尾底由 ~288 提至 ~257 屏 px，摘要行间隙 6→~37（参考 ~38）。原图备份 NUC `/tmp/ribbon_green.orig.png`。绿叶簇未动——叶色与带色在重叠区无法用颜色分离、几何裁剪会在带顶留叶形缺口，须重绘带顶边的修复方案，留待 fix11 另行处理；fix10 亲检时叶簇仍为已知残差。
+- 解析门 Test/u5_fix10_parse.sh（world 单门，NUC）：rc=0、SCRIPT ERROR 0 条。日志 Test/out/u5_fix10_parse.log。注：本机树解析有 29 条 SCRIPT ERROR（均为本地 `.godot` 缓存缺失致 preload 失败）；与 HEAD 版逐条比对完全相同，本轮改动未引入新错，NUC 门为准。
+- 验证批 Test/u5_fix10_run.sh 已于 09:42:08 detached 启动（HEAD 306619e，2400 s100 腿在跑，Godot PID 1842988），.done 路径 Test/out/u5_fix10.done，双腿 2400 s100 → 2340 s100，预计约 10:25 完成。
+- 同步与推送说明：本地 `git push origin align-fix13` 失败（access rights，见本轮命令输出）；改走 NUC 树推送成功（5c8175c..306619e，`git ls-remote` 核验）。本地提交 306619e 已 `sync_to_nuc`，parity 896 文件 0 diff。
+- 断点：下一轮先读 Test/out/u5_fix10.done（两档绿、FAIL=0；checks 1549 与 1564 均接受，以 FAIL=0 为准），取 `mobile_p5_result_victory_*_s100_i0.png` 双档快照，行列扫描复核值 pill（高 ~63、宽 ~300、填色金黄、数字字形 ~32）／汇总 pill（高 ~84、底 ~822）／面板顶 ~172、面板底 ~867／钮顶 ~914、钮底 ~1014／折尾底 ~257、摘要行与折尾间隙 ~37／星仍压缎带后重建 compare/U5.png 与 compare/U5_2400.png（Test/make_compare_u5.py）、逐项亲检再议 U5 签核；绿叶残差（仍在）与空带余 ~10px 一并裁定。**纹理收尾（下一轮亲检后、提交前）**：本轮纹理改动在 NUC 工作树未提交——待批绿后从 NUC 拉回 `assets/ui/decorations/ribbon_green.png` 与其 `.import`（批跑中 Godot 重生成）一并提交，勿只提交纹理不带 `.import`（第一单教训）；若批红需回滚纹理，NUC 有 `/tmp/ribbon_green.orig.png` 备份。Notion 对齐单未动（U5 未关闭）。
+- 本轮提交（align-fix13，已推送，`git ls-remote` 核验）：306619e fix10 代码＋脚本；本节台账另行提交。
