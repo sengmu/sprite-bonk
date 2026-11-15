@@ -1183,3 +1183,12 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 本轮只监看：不实施、不起批、不改树、不做 .git 同步——Codex 正在本机树上施工，sync_to_nuc 会把半成品抄上 NUC；本机 .git 落后 NUC 两个提交（43f35d9、de59f69），待交付落盘后再按铁律接续。
 - 断点不变：待 .tmp/u5_reaudit_codex3_changes.md 落盘后，按验收口径（parse 门＋双档 s100 批＋同法复测＋compare 亲检）接续；U5 未关闭；U1 复审仍不开。
 - 本轮提交：本节台账。
+
+## U5 复审 Codex 第三轮：监看轮（2026-11-16 02:1x 轮，worker）
+
+- 防撞核查：NUC 无在跑批次——最新 .done 仍为 u5_reaudit_c2.done（ALLDONE 22:54:52）；锚定 pgrep 无 Godot 在跑；无 u5_reaudit_c3.done。NUC HEAD 6607ee7（01:1x 监看轮台账提交）。
+- Codex 第三轮交付未到：.tmp/u5_reaudit_codex3_changes.md 未落盘、.tmp/u5_reaudit_codex3.log 仍 0 字节（mtime 00:07）。
+- **Codex 会话疑似已退出（本轮新发现，需主控核实）**：本机无任何 codex/acct4/u5_c3 进程在跑；acct4 沙箱 rollout 日志 sessions/2026/11/15/rollout-2026-11-15T16-07-39-01a1dff6-cb8e-7af0-ac01-a177bad0cbee.jsonl 最后事件 01:24:22 CST（末条 assistant 消息：「两档原始渲染取图仍在场景预构建阶段，尚未产出最终 PNG。诊断批当前仍为 985/0、822/0；这些进度不作完整验收结果。」随后调 sleep 50s）；此后约 50 分钟无任何新事件，thread_history_1.sqlite WAL 最后写 01:23:51；world.gd／ui_icon.gd 最后改动仍为 00:24／00:17；自起的并行预览渲染（2400 PID 19410／2340 PID 19896）已退出，.tmp/u5_c3_parallel_*.done 未落盘，native 渲染只产出 shader 缓存与 godot.log、无最终 PNG。结论：第三轮 agent 疑似在等待自有渲染期间退出、未交付——**本轮不重派、不代跑、不碰本机树**（派单权在主控；changes.md 落盘前无可验收内容）。
+- 本轮只监看：不实施、不起批、不改树、不做 .git 同步——本机树仍留 Codex 第三轮未提交改动（M world.gd／ui_icon.gd），sync_to_nuc 会把半成品抄上 NUC；本机 .git 落后 NUC 三个提交（43f35d9、de59f69、6607ee7），待交付落盘后再按铁律接续。
+- 断点不变：待主控核实 Codex 第三轮状态（续跑／重派／接手在途改动）或 .tmp/u5_reaudit_codex3_changes.md 落盘后，按验收口径（parse 门＋双档 s100 批＋同法复测＋compare 亲检）接续；U5 未关闭；U1 复审仍不开。
+- 本轮提交：本节台账。
