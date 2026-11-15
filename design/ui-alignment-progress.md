@@ -941,3 +941,10 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 断点：下一轮先读 Test/out/u5_fix11.done（两档绿、FAIL=0；checks 1549 与 1564 均接受，以 FAIL=0 为准），取 `mobile_p5_result_victory_*_s100_i0.png` 双档快照，行列扫描复核绿叶已去（叶区缎带带体上方无绿像素、两端为素面折带）／汇总 pill 填色 (252,232,159)／值 pill（高 ~66、宽 ~299）／汇总 pill（高 ~86、底 ~832）／面板顶 ~171、面板底 ~867／钮顶 ~914、钮底 ~1014／折尾底 ~267、摘要行与折尾间隙 ~28 后重建 compare/U5.png 与 compare/U5_2400.png（Test/make_compare_u5.py）、逐项亲检再议 U5 签核；三处小残差（摘要行＋20px／面板底＋24px／空带＋12px）一并裁定是否进 fix12。**纹理收尾**：批跑中 Godot 会重生成 `ribbon_green.png.import`——裁定后从 NUC 拉回该 `.import` 与台账同批提交（纹理与 .import 同批入库，第一单教训）；若批红需回滚纹理，NUC 有 `/tmp/ribbon_green.fix10.png` 备份。Notion 对齐单未动（U5 未关闭）。
 - 本轮提交：本节台账。
 
+
+## U5 fix11：同步事故纠正（2026-11-15 12:0x–12:1x 轮，worker）
+- 事故：台账整理轮 sync_to_nuc 时本机 .git 仍停在 6e61a3a（fix11 提交 2d1ad07 后未反向同步），把 NUC 的 .git 回滚到 6e61a3a，且把本机旧纹理（fix10 态 385cf907）覆写了 NUC 已改好的 fix11 纹理（7b4c7732）——当时 fix11 验证批正在跑（2400 档进行中）。铁律教训：**NUC 侧任何提交后、再次 sync_to_nuc 前，必须先反向同步 .git**（本轮已是第二次犯同一错）。
+- 发现：台账提交 d34f197 推送被拒（origin 已是 2d1ad07）；核查发现 d34f197 的父为 6e61a3a、NUC 纹理已变回 385cf907。
+- 纠正：① 立即在 NUC 重跑 /tmp/fix11_ribbon.py，纹理恢复 7b4c7732（opaque 360806、双区 edge 上 0 像素）——此时 2400 档仍在 P3 阶段、胜利面板尚未构建，纹理在面板构建时才读入，故两档捕获应均为 fix11 态；② NUC 上 `git reset --soft origin/align-fix13` 后显式 add 五类文件重提交为 a1e4366（仅台账＋compare，3 文件＋23 行），推送成功，`git ls-remote` 核实 origin align-fix13 = a1e4366；③ 本机 .git 反向同步（--no-owner --no-group，消 chown 噪音），`git checkout --` 恢复本机纹理为 7b4c7732，本机 HEAD = a1e4366、工作树干净。
+- 批次有效性门：下一轮验 fix11 捕获时须先确认 2400 档截图无绿叶——若有叶，说明纹理恢复晚于面板构建，2400 档作废、须重跑；2340 档为新进程、必读磁盘新纹理，不受影响。
+- 本轮提交：本节台账。
