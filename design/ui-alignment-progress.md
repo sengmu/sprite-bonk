@@ -910,3 +910,11 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - **纹理补救（NUC，`/tmp/fix10_ribbon.py`）**：PIL 透明化 tex y>390，实测 opaque_before **410765**、opaque_after **382925**（与 fix10 节所称数逐数吻合，证实处方本身正确、只是未落盘）、0..390 行与备份逐字节相同（带体无损）、新 md5 385cf907…。已提交 **02acbca** 并推送（`git ls-remote` 核验 origin align-fix13 = 02acbca），防后续 sync 覆盖。`.import` 待本批 Godot 重生成后随裁定轮一并提交（第一单教训：纹理与 .import 同批入库）。
 - **重跑**：验证批 `Test/u5_fix10_run.sh` 于 **09:53:59** detached 重起（HEAD 02acbca，2400 s100 腿 Godot PID 1859727），.done 路径 `Test/out/u5_fix10.done`，双腿 2400 s100 → 2340 s100，预计约 10:35 完成。
 - 断点：下一轮先读 `Test/out/u5_fix10.done`（两档绿、FAIL=0；checks 1549 与 1564 均接受，以 FAIL=0 为准），取 `mobile_p5_result_victory_*_s100_i0.png` 双档快照，行列扫描复核值 pill（高 ~63、宽 ~300、填色金黄、数字字形 ~32）／汇总 pill（高 ~84、底 ~822）／面板顶 ~172、面板底 ~867／钮顶 ~914、钮底 ~1014／折尾底 ~257、摘要行与折尾间隙 ~37／星仍压缎带后重建 compare/U5.png 与 compare/U5_2400.png（Test/make_compare_u5.py）、逐项亲检再议 U5 签核；绿叶残差（仍在，fix11 另议）与空带余 ~10px 一并裁定；裁定后把重生成的 `ribbon_green.png.import` 与台账同批提交。Notion 对齐单未动（U5 未关闭）。
+
+## U5 fix10：批次监看轮（2026-11-15 10:1x 轮，worker）
+
+- 防撞核查：上一轮 09:53:59 起跑的重跑验证批仍在跑——Godot 进程 1877946（--mode=phone --scale=1.00 --win=2340x1080 --result=victory）在跑；Test/out/u5_fix10.done 只有 START＋2400 腿记录、无 ALLDONE。本轮只监看、不双开、不施工。
+- 进度：2400 s100 腿已绿——.done 记 phonehud 2400 rc=0、PHONEHUD DONE checks=1549 fails=0；2340 s100 腿进行中——日志 Test/out/u5_fix10_phonehud_2340.log 822 PASS、FAIL 0 条，当前跑到 P2，预计约 10:35 完成。
+- 图标第二单收口已在前轮完成（记录 66ad775、合并 SHA ccf6b8a、fd2af03 已为 align-fix13 祖先），本轮不重复。
+- 断点不变：下一轮先读 Test/out/u5_fix10.done（等 ALLDONE、两档绿 FAIL=0；checks 1549 与 1564 均接受，以 FAIL=0 为准），按 09:4x 轮断点取双档 mobile_p5_result_victory_*_s100_i0.png 快照、行列扫描复核（值 pill 高 ~63、宽 ~300、填色金黄、数字字形 ~32／汇总 pill 高 ~84、底 ~822／面板顶 ~172、面板底 ~867／钮顶 ~914、钮底 ~1014／折尾底 ~257、摘要行与折尾间隙 ~37／星仍压缎带），重建 compare/U5.png 与 compare/U5_2400.png（Test/make_compare_u5.py）、逐项亲检再议 U5 签核；绿叶残差（仍在，fix11 另议）与空带余 ~10px 一并裁定；裁定后把重生成的 ribbon_green.png.import 与台账同批提交。Notion 对齐单未动（U5 未关闭）。
+- 本轮提交：本节台账。
