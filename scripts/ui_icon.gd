@@ -202,10 +202,14 @@ func _draw() -> void:
 			_poly([Vector2(18.9, 5.6), Vector2(20.9, 11.4), Vector2(15.2, 10.6)], color)
 			_arc(12, 12, 7.6, PI * 0.65, PI * 2.15)
 			_poly([Vector2(5.1, 18.4), Vector2(3.1, 12.6), Vector2(8.8, 13.4)], color)
-		# U5 fix7: "refresh" (single arc) removed -- fix6 misread
-		# the reference as a single-arc arrow; it is a double-arc
-		# cycle, i.e. the shared "reroll" geometry, now used by
-		# the result "again" button directly.
+		"result_refresh":
+			# P5 result only: two disjoint 136-degree clockwise arcs,
+			# each ending in a tangent-facing filled arrowhead. The
+			# shared reroll arcs overlap into a ring; leave them intact.
+			_arc(12, 12, 8.4, -PI * 0.82, -PI * 0.06, 2.8)
+			_poly([Vector2(22.0, 14.2), Vector2(15.7, 10.4), Vector2(21.5, 6.9)], color)
+			_arc(12, 12, 8.4, PI * 0.18, PI * 0.94, 2.8)
+			_poly([Vector2(2.0, 9.8), Vector2(8.3, 13.6), Vector2(2.5, 17.1)], color)
 		"skip":
 			_poly([Vector2(4.6, 5.6), Vector2(11.6, 12), Vector2(4.6, 18.4)], color)
 			_poly([Vector2(11.4, 5.6), Vector2(18.4, 12), Vector2(11.4, 18.4)], color)

@@ -6422,6 +6422,15 @@ func _build_result(root: Control) -> void:
 		# U5 fix7: the P5 ribbon rect is 150 tall (crest overlay);
 		# centre the title on the band instead of top-aligning it.
 		_result_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		# U5 re-audit 2: the outer 8 px crest/summary gap is excess
+		# flow headroom. Group summary/core/bottom with their existing
+		# 8 px gaps, removing only the gap above the summary. The plain
+		# crest Control isolates ribbon/title minima from this flow.
+		var content := VBoxContainer.new()
+		content.add_theme_constant_override("separation", 8)
+		vb.add_theme_constant_override("separation", 0)
+		vb.add_child(content)
+		vb = content
 	# Cycle 18: the sectioned summary (UI_SPEC §2.7) replaces
 	# the single body label — payout chips, a 4-up fact grid,
 	# per-move damage bars, pact chips, the capture grid,
@@ -6443,14 +6452,15 @@ func _build_result(root: Control) -> void:
 		# visible, never below the fold); only the extended
 		# statistics scroll. Desktop keeps everything in the scroll.
 		_result_core = VBoxContainer.new()
-		# U5 re-audit #5: 62.3 + 4 = 66.3 design px (~8.77%H pitch).
-		_result_core.add_theme_constant_override("separation", 4)
+		# U5 re-audit 2: 66.3 + 0 retains the 66.3 px row pitch
+		# while accommodating 64 px tiles and 1 px vertical margins.
+		_result_core.add_theme_constant_override("separation", 0)
 		_result_core.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		vb.add_child(_result_core)
-		# U5 re-audit #1/#6: core changes remove 8 design px; another
-		# 6 here brings the panel bottom up ~13.3 logical px.
+		# U5 re-audit 2: +6 below the payout offsets the net -6
+		# content height, preserving panel bottom and action placement.
 		var _p5_bottom_gap := Control.new()
-		_p5_bottom_gap.custom_minimum_size = Vector2(0, 7)
+		_p5_bottom_gap.custom_minimum_size = Vector2(0, 13)
 		_p5_bottom_gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		vb.add_child(_p5_bottom_gap)
 	# U5 fix6: the extended-statistics scroll exists on desktop
@@ -6487,13 +6497,9 @@ func _build_result(root: Control) -> void:
 		rcol.add_child(actions)
 	# U5: reference buttons carry icons (refresh / house); the green
 	# primary is white-on-green (same whitening as the draft reroll).
-	# U5 fix7: the reference icon is a DOUBLE-arc cycle (two arcs,
-	# two arrowheads) -- fix6 misread it as a single arc and added
-	# a "refresh" icon for it. The shared "reroll" geometry IS the
-	# reference shape; at 60 px the two heads stay legible (the
-	# "plain ring" misread was a small-size artefact). The draft
-	# modal keeps "reroll" too.
-	var again := UiTheme.make_icon_button("reroll", "再次出发", "green", "big")
+	# U5 re-audit 2: a distinct P5 glyph avoids the shared reroll's
+	# overlapping 270-degree arcs without changing draft/desktop icons.
+	var again := UiTheme.make_icon_button("result_refresh" if _p5_on else "reroll", "再次出发", "green", "big")
 	again.pressed.connect(func() -> void:
 		_result_panel.hide()
 		if _result_wrap != null:
@@ -6505,15 +6511,9 @@ func _build_result(root: Control) -> void:
 	actions.add_child(b)
 	var arow := again.get_child(0) as HBoxContainer
 	(arow.get_child(0) as UiIcon).color = UiTheme.WHITE
-	# U5 fix7: the reference glyph is ~80% of the button height
-	# (icon ~86 screen px on a ~105 px button); 60 px puts both
-	# arrowheads clearly on screen. icon_px stays in sync so the
-	# width fit uses the real icon; min_w 400 still pins the width.
+	# Desktop retains its existing icon sizes; P5 overrides below.
 	(arow.get_child(0) as UiIcon).custom_minimum_size = Vector2(60, 60)
 	again.set_meta("icon_px", 60)
-	# U5 fix7: same rule for the home icon -- the reference house
-	# is ~44% of the button height (47/106 px), the old 20 px icon
-	# only ~28%. 32 px matches the reference ratio.
 	var brow := b.get_child(0) as HBoxContainer
 	(brow.get_child(0) as UiIcon).custom_minimum_size = Vector2(32, 32)
 	b.set_meta("icon_px", 32)
@@ -6529,6 +6529,21 @@ func _build_result(root: Control) -> void:
 		b.set_meta("p5_primary", true)
 		again.custom_minimum_size.y = 108
 		b.custom_minimum_size.y = 108
+		# Visible button face is ~82 design px tall after texture
+		# padding. Glyph extents: refresh 19.6/24 * 56 ~= 45.7;
+		# house 17.5/24 * 50 ~= 36.5 (about 55% / 45% of face).
+		(arow.get_child(0) as UiIcon).custom_minimum_size = Vector2(56, 56)
+		again.set_meta("icon_px", 56)
+		(brow.get_child(0) as UiIcon).custom_minimum_size = Vector2(50, 50)
+		b.set_meta("icon_px", 50)
+		# Existing body_font is Nunito ExtraBold / Noto SC Heavy.
+		# Preserve that weight and teach the fit pass the authored size.
+		for action in [again, b]:
+			var action_label := action.get_meta("label") as Label
+			action_label.add_theme_font_size_override("font_size", 33)
+			action_label.set_meta("p5_fs0", 33)
+			action.set_meta("fs_over", 33)
+			UiTheme.set_icon_button_text(action, action_label.text)
 
 # ------------------------------------------------------------------ gameplay
 func _fmt_time(sec: float) -> String:
@@ -16790,25 +16805,22 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 	var core_box := _result_core if (_p5_on and _result_core != null) else _result_box
 	for data in [["tile_clock", "用时", _fmt_time(run_time)], ["tile_sword", "击杀", str(kills)], ["tile_star", "等级", str(player.level if player else 1)], ["tile_coin", "金币", str(int(gold))]]:
 		var plate := PanelContainer.new()
-		# U5 fix5: slim P5 row plates (content margin 14 -> 8).
-		# Probe in s100 geometry: panel live min 787 vs spec 750
-		# spilled 14 px; each row is 84 px = 56 badge + 2x14 plate
-		# margin, so 4 rows carry 112 px of padding. 8 px margins
-		# cut 48 px (rows 84 -> 72, still badge-driven) and move
-		# rows toward the reference ~70 px height.
-		# U5 fix8: 8 -> 3 -- reference rows are ~63 px pitch
-		# (badge 56 + 2x3 margins); the 8 px plates left the
-		# rows at 82 px pitch with a swollen value pill.
-		plate.add_theme_stylebox_override("panel", UiTheme.panel_texture(3 if _p5_on else 14))
+		var row_style := UiTheme.panel_texture(3 if _p5_on else 14)
 		if _p5_on:
-			# U5 re-audit #5: fractional row height closes the pitch residual.
-			plate.custom_minimum_size.y = 62.3
+			# U5 re-audit 2: grow tiles without growing the pitch.
+			# Keep horizontal insets (and the value right edge) intact.
+			row_style.content_margin_top = 1
+			row_style.content_margin_bottom = 1
+			plate.custom_minimum_size.y = 66.3
+		plate.add_theme_stylebox_override("panel", row_style)
 		core_box.add_child(plate)
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 14)
 		plate.add_child(row)
-		row.add_child(UiBadge.new(String(data[0]), UiTheme.SKY, 56 if _p5_on else 40))
-		var label := _mk_label(row, String(data[1]), 18, UiTheme.TEXT)
+		row.add_child(UiBadge.new(String(data[0]), UiTheme.SKY, 64 if _p5_on else 40))
+		# The current phone fit floor is 23, so 31 (not authored 24)
+		# yields the requested ~1.34x glyph height after fitting.
+		var label := _mk_label(row, String(data[1]), 31 if _p5_on else 18, UiTheme.TEXT)
 		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		# U5 re-audit #2: 185 design px is ~11.3% of the 2340-wide
 		# capture at x1.5 / modal scale 0.952; preserve 32 px digits.
@@ -16830,10 +16842,11 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 			value_inset.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			row.add_child(value_inset)
 	if _p5_on:
-		# U5 re-audit #5/#6: +15 from core gaps, +1.2 from row heights,
-		# -25.2 here => payout top moves up 9 design px (~8.6 logical).
+		# U5 re-audit 2: rows add 16, five core gaps remove 20,
+		# spacer adds 6: payout follows the row centres up 6 px
+		# after removing 8 px above the summary.
 		var _payout_gap := Control.new()
-		_payout_gap.custom_minimum_size = Vector2(0, 2.8)
+		_payout_gap.custom_minimum_size = Vector2(0, 8.8)
 		_payout_gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		core_box.add_child(_payout_gap)
 	# Payout pill (reference: one pale pill, three segments).
@@ -16858,12 +16871,12 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 	prow.alignment = BoxContainer.ALIGNMENT_CENTER
 	payout.add_child(prow)
 	prow.add_child(UiIcon.new("spark", Color(0.62, 0.35, 0.95), 24))
-	_mk_label(prow, "星尘 +%d" % dust, 18, UiTheme.TEXT)
-	_mk_label(prow, "|", 18, UiTheme.MUTED)
+	_mk_label(prow, "星尘 +%d" % dust, 32 if _p5_on else 18, UiTheme.TEXT)
+	_mk_label(prow, "|", 32 if _p5_on else 18, UiTheme.MUTED)
 	prow.add_child(UiBadge.new("tile_coin", UiTheme.GOLD, 24))
-	_mk_label(prow, "金币 %d" % int(gold), 18, UiTheme.TEXT)
-	_mk_label(prow, "|", 18, UiTheme.MUTED)
-	_mk_label(prow, "得分 %s" % str(score), 18, UiTheme.TEXT)
+	_mk_label(prow, "金币 %d" % int(gold), 32 if _p5_on else 18, UiTheme.TEXT)
+	_mk_label(prow, "|", 32 if _p5_on else 18, UiTheme.MUTED)
+	_mk_label(prow, "得分 %s" % str(score), 32 if _p5_on else 18, UiTheme.TEXT)
 	if _p5_on:
 		# U5 fix6: phone shows the reference card only (rows +
 		# payout). The extended statistics lived in the scroll,
