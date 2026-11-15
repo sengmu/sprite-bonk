@@ -1095,3 +1095,9 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 图标第二单：收口已完成（66ad775、ccf6b8a），icons2_s100_rerun.done ALLDONE 2026-11-12 23:10、1564/0，时序 flake 裁定在案，不重复。
 - 断点不变：待主控验收 Codex 产出后另行通知恢复；下一轮先核 HEAD 是否有 Codex 交付提交，有则按验收口径（双档 s100 批＋同法复测＋compare 亲检）接续，无则继续待命监看。
 - 本轮提交：本节台账。
+
+## U5 复审 Codex 第一轮（2026-11-15 20:1x，主控验收链）
+
+- Codex 池已于 15:12 交货（54,992 tokens，改动清单 .tmp/u5_reaudit_codex1_changes.md）：仅 scripts/world.gd，P5 专属，桌面分支原值不动；六项逐一有处方与预测残差（均约 ≤1 逻辑 px），并自报 2340/2400 归一化差异与可见皮相/Control 框区别。主控已逐行审 diff：范围合规（_p5_place_modal 增 p5_frame_shift 元读、默认零，不影响他屏）。
+- 验收前置：缎带 .ctex sidecar source_md5=d20f98ff 与磁盘纹理一致（fix12）；world.gd 单文件 --check-only **rc=0**（.tmp/u5_reaudit_c1_parse.done 20:18:53）。
+- 批次 Test/u5_reaudit_c1_run.sh（2400 s100 → 2340 s100，FAIL=0 各档）已提交，待本轮回执。

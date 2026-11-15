@@ -3611,8 +3611,10 @@ func _build_hud() -> void:
 	# U5 fix6: on phone the registered modal is the wrapper stack
 	# (panel + actions below it); desktop keeps the bare panel.
 	if _p5_on:
-		_p5_register(_result_wrap, 900.0, 750.0)
+		_p5_register(_result_wrap, 867.0, 750.0)
 		_result_wrap.set_meta("p5_fixed_h", true)
+		# U5 re-audit #1: panel centre is 48.7% of the frame width.
+		_result_wrap.set_meta("p5_frame_shift", Vector2(-0.013, 0.0))
 	else:
 		_p5_register(_result_panel, 900.0, 750.0)
 		_result_panel.set_meta("p5_fixed_h", true)
@@ -6293,10 +6295,11 @@ func _build_result(root: Control) -> void:
 	# as one unit); desktop keeps the bare panel (legacy 700x580).
 	if _p5_on:
 		_result_wrap = VBoxContainer.new()
-		_result_wrap.add_theme_constant_override("separation", 20)
+		# U5 re-audit #1/#4: retain ~37 logical px of visible panel/button gap.
+		_result_wrap.add_theme_constant_override("separation", 21)
 		_result_wrap.set_anchors_preset(Control.PRESET_CENTER)
-		_result_wrap.offset_left = -450
-		_result_wrap.offset_right = 450
+		_result_wrap.offset_left = -433.5
+		_result_wrap.offset_right = 433.5
 		_result_wrap.offset_top = -375
 		_result_wrap.offset_bottom = 375
 		_result_wrap.visible = false
@@ -6309,7 +6312,8 @@ func _build_result(root: Control) -> void:
 		# (pitch 82 -> ~63) with the panel held at ~500 px by the
 		# bottom spacer; buttons bottom ~1014 (reference ~1018).
 		var _crest_spacer := Control.new()
-		_crest_spacer.custom_minimum_size = Vector2(0, 97)
+		# U5 re-audit #1/#4: offset the +1 wrapper gap to hold panel top.
+		_crest_spacer.custom_minimum_size = Vector2(0, 96)
 		_crest_spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_result_wrap.add_child(_crest_spacer)
 	_result_panel = PanelContainer.new()
@@ -6407,7 +6411,8 @@ func _build_result(root: Control) -> void:
 			var extent := Vector2(rw, 72)
 			ribbon.draw_texture_rect(UiTheme.asset("decorations", "ribbon_green"), Rect2(Vector2((ribbon.size.x - extent.x) / 2, -8), extent), false))
 		vb.add_child(ribbon)
-	_result_title = _mk_dlabel(ribbon, "", 40 if _p5_on else 34, UiTheme.WHITE)
+	# U5 re-audit #3: 53/40 = 1.325; includes the title’s flanking glyphs.
+	_result_title = _mk_dlabel(ribbon, "", 53 if _p5_on else 34, UiTheme.WHITE)
 	_result_title.add_theme_color_override("font_color", UiTheme.WHITE)
 	_result_panel.draw.connect(func() -> void:
 		_result_panel.draw_texture_rect(UiTheme.asset("decorations", "confetti_strip"), Rect2(12, 4, _result_panel.size.x - 24, 64), false))
@@ -6438,29 +6443,14 @@ func _build_result(root: Control) -> void:
 		# visible, never below the fold); only the extended
 		# statistics scroll. Desktop keeps everything in the scroll.
 		_result_core = VBoxContainer.new()
-		# U5 fix8: rows run 82 px pitch vs reference ~63 --
-		# separation 10 -> 1 (row plates 72 -> 62 via the
-		# 3 px margins in _fill_result).
-		_result_core.add_theme_constant_override("separation", 1)
+		# U5 re-audit #5: 62.3 + 4 = 66.3 design px (~8.77%H pitch).
+		_result_core.add_theme_constant_override("separation", 4)
 		_result_core.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		vb.add_child(_result_core)
-		# U5 fix8: bottom breathing room -- the reference leaves
-		# a wide empty cream band below the payout pill (rows end
-		# ~63%H, panel bottom ~79%H). The tightened rows free
-		# ~77 px of panel min; hold the panel at ~500 px with
-		# this spacer so the panel top / buttons stay put.
+		# U5 re-audit #1/#6: core changes remove 8 design px; another
+		# 6 here brings the panel bottom up ~13.3 logical px.
 		var _p5_bottom_gap := Control.new()
-		# U5 fix9: 69 -> 53, offsetting the +16 crest headroom
-		# above so the panel stays at ~500 design px (top and
-		# buttons do not move); the empty cream band below the
-		# payout pill shrinks ~23 screen px, still ~100.
-		# U5 fix10: 53 -> 13 -- the payout gap (+28) and the
-		# taller payout pill (+~13.5) add ~41.5 design px of
-		# panel min; the spacer absorbs them so the panel
-		# bottom holds ~867 and the buttons do not move. The
-		# empty band below the payout becomes margin 14 + 13
-		# = 27 design px (~39 screen px, reference ~29).
-		_p5_bottom_gap.custom_minimum_size = Vector2(0, 13)
+		_p5_bottom_gap.custom_minimum_size = Vector2(0, 7)
 		_p5_bottom_gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		vb.add_child(_p5_bottom_gap)
 	# U5 fix6: the extended-statistics scroll exists on desktop
@@ -6529,18 +6519,16 @@ func _build_result(root: Control) -> void:
 	b.set_meta("icon_px", 32)
 	(again.get_meta("label") as Label).add_theme_color_override("font_color", UiTheme.WHITE)
 	if _p5_on:
-		# U5: reference buttons are ~23% of frame width each.
-		again.custom_minimum_size.x = 400
-		again.set_meta("min_w", 400)
-		b.custom_minimum_size.x = 400
-		b.set_meta("min_w", 400)
+		# U5 re-audit #4: allow for the texture's transparent borders.
+		# The previous action row was 88 design px after the primary
+		# floor; +20 adds ~19 logical px to its visible height.
+		again.custom_minimum_size.x = 393
+		again.set_meta("min_w", 393)
+		b.custom_minimum_size.x = 393
+		b.set_meta("min_w", 393)
 		b.set_meta("p5_primary", true)
-		# U5 fix8: reference buttons are ~67 px tall vs our ~61
-		# (icon 60 nearly fills the button); 70 px puts the top
-		# on the reference line (~917 screen px) with the icon
-		# still ~86% of the button height.
-		again.custom_minimum_size.y = 70
-		b.custom_minimum_size.y = 70
+		again.custom_minimum_size.y = 108
+		b.custom_minimum_size.y = 108
 
 # ------------------------------------------------------------------ gameplay
 func _fmt_time(sec: float) -> String:
@@ -14269,10 +14257,14 @@ func _p5_place_modal(c: Control, s: float, post_layout: bool = false) -> void:
 	var content_h := spec.y if bool(c.get_meta("p5_fixed_h", false)) else maxf(spec.y, c.get_combined_minimum_size().y)
 	var sm := minf(s, (area.y - 6.0) / content_h)
 	var w := floorf(minf(spec.x, (area.x - 24.0) / sm))
-	c.offset_left = -w * 0.5
-	c.offset_right = w * 0.5
-	c.offset_top = -spec.y * 0.5
-	c.offset_bottom = spec.y * 0.5
+	# U5 re-audit #1: authored frame-relative translation survives every
+	# placement pass. Other modals retain the zero translation default.
+	var frame_shift: Vector2 = c.get_meta("p5_frame_shift", Vector2.ZERO)
+	var frame_offset: Vector2 = frame_shift * area
+	c.offset_left = -w * 0.5 + frame_offset.x
+	c.offset_right = w * 0.5 + frame_offset.x
+	c.offset_top = -spec.y * 0.5 + frame_offset.y
+	c.offset_bottom = spec.y * 0.5 + frame_offset.y
 	c.scale = Vector2(sm, sm)
 	c.pivot_offset = c.size * 0.5
 	var relay := absf(float(c.get_meta("p5_w", -1.0)) - w) > 0.5
@@ -16808,6 +16800,9 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 		# (badge 56 + 2x3 margins); the 8 px plates left the
 		# rows at 82 px pitch with a swollen value pill.
 		plate.add_theme_stylebox_override("panel", UiTheme.panel_texture(3 if _p5_on else 14))
+		if _p5_on:
+			# U5 re-audit #5: fractional row height closes the pitch residual.
+			plate.custom_minimum_size.y = 62.3
 		core_box.add_child(plate)
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 14)
@@ -16815,44 +16810,30 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 		row.add_child(UiBadge.new(String(data[0]), UiTheme.SKY, 56 if _p5_on else 40))
 		var label := _mk_label(row, String(data[1]), 18, UiTheme.TEXT)
 		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		# U5 fix8: the value pill filled the whole row height
-		# (HBox stretches it) -- reference pills are ~25 px in
-		# a ~63 px row. Fixed 26 px height, vertically centred,
-		# 18 px value font (reference digits ~18 px).
-		# U5 fix10: the fix8 reference read was WRONG (measured
-		# on the raw reference this round: pill 54-55 px high x
-		# ~198-213 px wide, digits ~30 px -- a chunky capsule,
-		# not a 38 px sliver). Fix9 slimmed it the wrong way
-		# (38 x 400, pale). Corrected P5 pill: 44 px high
-		# (~63 screen px), 210 min width (~300 screen px),
-		# 32 px digits, deeper gold (252,232,159) sampled from
-		# the reference pill. Desktop unchanged.
-		var value := UiTheme.chip(String(data[2]), Color8(252, 232, 159) if _p5_on else UiTheme.GOLD.lightened(0.65), 32 if _p5_on else 22, UiTheme.TEXT, 210 if _p5_on else 160)
+		# U5 re-audit #2: 185 design px is ~11.3% of the 2340-wide
+		# capture at x1.5 / modal scale 0.952; preserve 32 px digits.
+		var value := UiTheme.chip(String(data[2]), Color8(252, 232, 159) if _p5_on else UiTheme.GOLD.lightened(0.65), 32 if _p5_on else 22, UiTheme.TEXT, 185 if _p5_on else 160)
 		if _p5_on:
-			value.custom_minimum_size.y = 44
+			value.custom_minimum_size.y = 45
 			value.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-			# U5 fix9: chip() adds 2 px top/bottom content
-			# margins, so the fix8 26 px min rendered ~31
-			# design px (~44 screen px vs reference ~38).
-			# Zero them (this chip instance only) so the pill
-			# lands at its 18 px font line height, ~38 px.
-			# U5 fix10: the fix9 "~38" reference was the same
-			# misread (see above). With a 32 px font the line
-			# is ~38 design px; zeroed margins keep the pill
-			# at its 44 px min (~63 screen px, reference ~62).
+			# Keep the authored height independent of chip content padding.
 			var vsb := value.get_theme_stylebox("panel") as StyleBoxFlat
 			if vsb != null:
 				vsb.content_margin_top = 0
 				vsb.content_margin_bottom = 0
 		row.add_child(value)
+		if _p5_on:
+			# U5 re-audit #2: trailing space + HBox separation = 138
+			# design px, bringing pill right to ~65.7% of the frame.
+			var value_inset := Control.new()
+			value_inset.custom_minimum_size.x = 124
+			value_inset.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			row.add_child(value_inset)
 	if _p5_on:
-		# U5 fix10: the payout pill sits ~56 screen px too
-		# high (bottom 765 vs reference 821, 76.0%H) -- the
-		# rows above it are already aligned, so the gap goes
-		# here, not in the row pitch. 28 px of headroom moves
-		# the payout top 700 -> ~738 screen px.
+		# U5 re-audit #5/#6: +15 from core gaps, +1.2 from row heights,
+		# -25.2 here => payout top moves up 9 design px (~8.6 logical).
 		var _payout_gap := Control.new()
-		_payout_gap.custom_minimum_size = Vector2(0, 28)
+		_payout_gap.custom_minimum_size = Vector2(0, 2.8)
 		_payout_gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		core_box.add_child(_payout_gap)
 	# Payout pill (reference: one pale pill, three segments).
@@ -16869,10 +16850,8 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 		payout.add_theme_stylebox_override("panel",
 			UiTheme.flat_box(Color8(252, 232, 159), 29))
 	if _p5_on:
-		# U5 fix10: reference payout pill is 73 raw px high
-		# (7.76%H, ~84 screen px); ours renders ~65-72.
-		# Pin 59 design px so it lands ~84 screen px.
-		payout.custom_minimum_size.y = 59
+		# U5 re-audit #6: 60 * 0.952 = 57.1 logical px (~8%H).
+		payout.custom_minimum_size.y = 60
 	core_box.add_child(payout)
 	var prow := HBoxContainer.new()
 	prow.add_theme_constant_override("separation", 10)
