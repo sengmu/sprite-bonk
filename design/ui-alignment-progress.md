@@ -1165,3 +1165,11 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 
 - 第二轮验收未过关闭门（批 ALLDONE 22:54:52，f36389f，双档 1549/0＋1564/0）：行/行标签/汇总字尺寸/刷新 glyph/标题已齐；残差＝汇总带上移过头约 1.1%H、钮面字未加粗且偏小、家形图标缺门洞偏窄、tile 方形且左偏，另新挖行内容横向错位（tile 左缘 23.03 vs 定稿 30.44%W）与汇总行图标偏小、摘要字重偏轻。
 - 第三轮派单 `.tmp/u5_reaudit_codex3_brief.md`（worker 拟稿、主控已审）已派 Codex 池，日志 `.tmp/u5_reaudit_codex3.log`。**下一轮只监看，不重派**：交付落地后走 parse 门→双档 s100 批→同法复测（汇总带须先以 scan2 法核对定稿值再定移量）→重建 compare→亲检再议签核。U5 未关闭；U1 复审仍不开。
+
+## U5 复审 Codex 第三轮：监看轮（2026-11-16 00:1x 轮，worker）
+
+- 防撞核查：NUC 无在跑批次——最新 .done 仍为 u5_reaudit_c2.done（ALLDONE 22:54:52）；锚定 pgrep 无 Godot 在跑；无 u5_reaudit_c3.done。NUC HEAD 43f35d9（主控 00:08 派单提交「monitor only next round」）。
+- Codex 第三轮进行中（本机 acct4 沙箱）：world.gd／ui_icon.gd 已改（mtime 00:12／00:10，含「U5 re-audit 3」处方：摘要加粗、bottom gap 13→4、result_home 图标、钮面字等），编辑器 --import 已跑（.tmp/u5_c3_import.log，仅已知 SolanaSDK 4.4-only 告警），现正跑 xvfb 2340 预览渲染（.tmp/u5_c3_preview.tscn，Godot PID 10734）；.tmp/u5_reaudit_codex3_changes.md 尚未落盘、.log 仍空——交付未到，无可验收内容。
+- 本轮只监看：不实施、不起批、不改树、不做 .git 同步——Codex 正在本机树上施工，sync_to_nuc 会把半成品抄上 NUC；本机 .git 落后 NUC 一个提交（43f35d9），待交付落盘后再按铁律接续。
+- 断点不变：待 .tmp/u5_reaudit_codex3_changes.md 落盘后，按验收口径（parse 门＋双档 s100 批＋同法复测＋compare 亲检）接续；U1 复审仍不开。
+- 本轮提交：本节台账。
