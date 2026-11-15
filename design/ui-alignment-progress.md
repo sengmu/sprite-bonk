@@ -1173,3 +1173,13 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 本轮只监看：不实施、不起批、不改树、不做 .git 同步——Codex 正在本机树上施工，sync_to_nuc 会把半成品抄上 NUC；本机 .git 落后 NUC 一个提交（43f35d9），待交付落盘后再按铁律接续。
 - 断点不变：待 .tmp/u5_reaudit_codex3_changes.md 落盘后，按验收口径（parse 门＋双档 s100 批＋同法复测＋compare 亲检）接续；U1 复审仍不开。
 - 本轮提交：本节台账。
+
+## U5 复审 Codex 第三轮：监看轮（2026-11-16 01:1x 轮，worker）
+
+- 防撞核查：NUC 无在跑批次——最新 .done 仍为 u5_reaudit_c2.done（ALLDONE 22:54:52）；锚定 pgrep 无 Godot 在跑；无 u5_reaudit_c3.done。NUC HEAD de59f69（00:1x 监看轮台账提交）。
+- Codex 第三轮仍在进行中（本机 acct4 沙箱）：.tmp/u5_reaudit_codex3_changes.md 尚未落盘、.tmp/u5_reaudit_codex3.log 仍 0 字节——交付未到，无可验收内容。
+- Codex 仍在改树：world.gd／ui_icon.gd mtime 00:24／00:17，晚于 00:1x 轮所见 00:12／00:10，改动继续。
+- Codex 自起并行预览渲染在跑（本机）：2400 腿（Godot PID 19410）与 2340 腿（PID 19896）双开，场景 .tmp/u5_c3_lowbg.tscn、--result=victory；.tmp/u5_c3_parallel_2340.done 与 _2400.done 均未落盘；00:1x 轮所见预览 PID 10734 已退出。本轮不动、不扰、不代跑。
+- 本轮只监看：不实施、不起批、不改树、不做 .git 同步——Codex 正在本机树上施工，sync_to_nuc 会把半成品抄上 NUC；本机 .git 落后 NUC 两个提交（43f35d9、de59f69），待交付落盘后再按铁律接续。
+- 断点不变：待 .tmp/u5_reaudit_codex3_changes.md 落盘后，按验收口径（parse 门＋双档 s100 批＋同法复测＋compare 亲检）接续；U5 未关闭；U1 复审仍不开。
+- 本轮提交：本节台账。
