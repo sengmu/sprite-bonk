@@ -1249,3 +1249,13 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 本轮只监看：不实施、不起批、不改树。
 - 断点不变：待主控派第四轮（两项：汇总 pill 横向 inset 每侧约 2.1%W、result_coins 约 48 设计 px）→ 交付落盘后 parse 门→双档 s100 批→同法复测→重建 compare→亲检再议签核；U5 未关闭；U1 复审仍不开。
 - 本轮提交：本节台账。
+
+## U5 复审 Codex 第四轮：待命轮（2026-11-16 07:1x 轮，worker）
+
+- 防撞核查：NUC 无在跑批次——最新 .done 仍为 u5_reaudit_c3.done（ALLDONE 02:58:10，双档 1564/0）；锚定 pgrep（argv0 `^[^ ]*/Godot_v4`）无 Godot 在跑；无 u5_reaudit_c4.done。
+- Codex 第四轮未派：NUC .tmp 无 u5_reaudit_codex4.log／changes.md；brief 亦不在 NUC .tmp，仅存本机 .tmp/u5_reaudit_codex4_brief.md（03:35，4140 字节）。本机 codex-homes 自 03:35 起唯一新 rollout 为 06:29 acct4 会话（cwd vibe-knowledge/ai-daily，06:30:24 已 task_complete，约 109k tokens），与 U5 复审无关；现无 codex 进程在跑。派单权在主控，本轮不派、不代跑。
+- 同步：起笔时本机 .git 已与 NUC HEAD 71f5ca3 一致，工作树已跟踪文件干净（仅既有未跟踪 .import 残留与旧 Test 脚本，不动）；本轮台账提交后按铁律反向同步 .git 回本机。
+- 图标第二单收口已完成（66ad775、ccf6b8a），任务体 2026-11-12 段的收口序列已过期，不重复。
+- 本轮只监看：不实施、不起批、不改树。
+- 断点不变：待主控派第四轮（两项：汇总 pill 横向 inset 每侧约 2.1%W、result_coins 约 48 设计 px）→ 交付落盘后 parse 门→双档 s100 批→同法复测→重建 compare→亲检再议签核；U5 未关闭；U1 复审仍不开。
+- 本轮提交：本节台账。
