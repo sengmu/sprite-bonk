@@ -1,0 +1,16 @@
+#!/bin/bash
+# U5 fix11 parse gate for the changed script (world.gd only:
+# payout pill flat gold capsule (252,232,159), P5 only; desktop
+# legacy pill untouched).
+cd ~/workspace/sprite-bonk-3d
+mkdir -p .tmp Test/out
+export TMPDIR=$PWD/.tmp
+GODOT=$HOME/workspace/tools/godot/Godot_v4.3-stable_linux.x86_64
+log="Test/out/u5_fix11_parse.log"
+: > "$log"
+for f in scripts/world.gd; do
+  echo "=== $f ===" >> "$log"
+  timeout 240 "$GODOT" --headless --check-only --script "res://$f" >> "$log" 2>&1
+  echo "rc=$? :: $f" >> "$log"
+done
+echo "PARSE DONE" >> "$log"

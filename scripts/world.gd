@@ -16861,6 +16861,14 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 	# U5 fix8: 8 -> 3, matching the rows (see above).
 	payout.add_theme_stylebox_override("panel", UiTheme.panel_texture(3 if _p5_on else 14))
 	if _p5_on:
+		# U5 fix11: reference payout pill is pale gold (252,230,154),
+		# the same gold as the value pills -- not the cream 9-patch
+		# (ours rendered 248,235,212, near-invisible against the
+		# panel). Flat capsule, no border, mirroring the value pills.
+		# P5 only: desktop keeps the legacy 9-patch pill.
+		payout.add_theme_stylebox_override("panel",
+			UiTheme.flat_box(Color8(252, 232, 159), 29))
+	if _p5_on:
 		# U5 fix10: reference payout pill is 73 raw px high
 		# (7.76%H, ~84 screen px); ours renders ~65-72.
 		# Pin 59 design px so it lands ~84 screen px.
