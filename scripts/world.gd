@@ -6445,6 +6445,11 @@ func _build_result(root: Control) -> void:
 		# summary is dark brown (median 86,54,18); MUTED
 		# (119,101,79) reads washed-out against the cream.
 		_result_body.add_theme_color_override("font_color", UiTheme.TEXT)
+		var summary_bold := FontVariation.new()
+		summary_bold.base_font = load("res://assets/fonts/NotoSC-Black-sub.ttf")
+		# Match the body stack's descent so rows and summary baseline stay put.
+		summary_bold.spacing_bottom = 1
+		_result_body.add_theme_font_override("font", summary_bold)
 		_result_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		_result_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		# U5: the four summary rows + payout pill live in their own
@@ -6452,15 +6457,14 @@ func _build_result(root: Control) -> void:
 		# visible, never below the fold); only the extended
 		# statistics scroll. Desktop keeps everything in the scroll.
 		_result_core = VBoxContainer.new()
-		# U5 re-audit 2: 66.3 + 0 retains the 66.3 px row pitch
-		# while accommodating 64 px tiles and 1 px vertical margins.
+		# Keep the accepted 66.3 px pitch while centring rectangular tiles.
 		_result_core.add_theme_constant_override("separation", 0)
 		_result_core.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		vb.add_child(_result_core)
-		# U5 re-audit 2: +6 below the payout offsets the net -6
-		# content height, preserving panel bottom and action placement.
+		# U5 re-audit 3: trade 9 px of bottom space for payout headroom;
+		# the panel bottom and action row retain their previous placement.
 		var _p5_bottom_gap := Control.new()
-		_p5_bottom_gap.custom_minimum_size = Vector2(0, 13)
+		_p5_bottom_gap.custom_minimum_size = Vector2(0, 4)
 		_p5_bottom_gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		vb.add_child(_p5_bottom_gap)
 	# U5 fix6: the extended-statistics scroll exists on desktop
@@ -6506,7 +6510,7 @@ func _build_result(root: Control) -> void:
 			_result_wrap.hide()
 		_open_loadout(_menu_hero_sp))
 	actions.add_child(again)
-	var b := UiTheme.make_icon_button("home", "返回菜单", "ghost", "big")
+	var b := UiTheme.make_icon_button("result_home" if _p5_on else "home", "返回菜单", "ghost", "big")
 	b.pressed.connect(func() -> void: get_tree().reload_current_scene())
 	actions.add_child(b)
 	var arow := again.get_child(0) as HBoxContainer
@@ -6529,20 +6533,23 @@ func _build_result(root: Control) -> void:
 		b.set_meta("p5_primary", true)
 		again.custom_minimum_size.y = 108
 		b.custom_minimum_size.y = 108
-		# Visible button face is ~82 design px tall after texture
-		# padding. Glyph extents: refresh 19.6/24 * 56 ~= 45.7;
-		# house 17.5/24 * 50 ~= 36.5 (about 55% / 45% of face).
+		# U5 re-audit 3: independent caption sizes match the two faces.
 		(arow.get_child(0) as UiIcon).custom_minimum_size = Vector2(56, 56)
 		again.set_meta("icon_px", 56)
-		(brow.get_child(0) as UiIcon).custom_minimum_size = Vector2(50, 50)
-		b.set_meta("icon_px", 50)
-		# Existing body_font is Nunito ExtraBold / Noto SC Heavy.
-		# Preserve that weight and teach the fit pass the authored size.
+		(brow.get_child(0) as UiIcon).custom_minimum_size = Vector2(58, 58)
+		b.set_meta("icon_px", 58)
 		for action in [again, b]:
 			var action_label := action.get_meta("label") as Label
-			action_label.add_theme_font_size_override("font_size", 33)
-			action_label.set_meta("p5_fs0", 33)
-			action.set_meta("fs_over", 33)
+			var caption_bold := FontVariation.new()
+			caption_bold.base_font = load("res://assets/fonts/NotoSC-Black-sub.ttf")
+			if action == again:
+				caption_bold.spacing_glyph = 8
+				caption_bold.variation_transform = Transform2D(Vector2(1.18, 0), Vector2(0, 1), Vector2.ZERO)
+			action_label.add_theme_font_override("font", caption_bold)
+			var caption_px := 36 if action == again else 40
+			action_label.add_theme_font_size_override("font_size", caption_px)
+			action_label.set_meta("p5_fs0", caption_px)
+			action.set_meta("fs_over", caption_px)
 			UiTheme.set_icon_button_text(action, action_label.text)
 
 # ------------------------------------------------------------------ gameplay
@@ -16807,8 +16814,7 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 		var plate := PanelContainer.new()
 		var row_style := UiTheme.panel_texture(3 if _p5_on else 14)
 		if _p5_on:
-			# U5 re-audit 2: grow tiles without growing the pitch.
-			# Keep horizontal insets (and the value right edge) intact.
+			# Keep the accepted pitch and value-pill right edge intact.
 			row_style.content_margin_top = 1
 			row_style.content_margin_bottom = 1
 			plate.custom_minimum_size.y = 66.3
@@ -16817,9 +16823,30 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 14)
 		plate.add_child(row)
-		row.add_child(UiBadge.new(String(data[0]), UiTheme.SKY, 64 if _p5_on else 40))
+		if _p5_on:
+			# Frame-relative left edge, including both phone aspect ratios.
+			# The value pill remains anchored by its existing trailing inset.
+			var lead := Control.new()
+			lead.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			row.add_child(lead)
+			var place_lead := func() -> void:
+				var sx := row.get_global_transform().get_scale().x
+				lead.custom_minimum_size.x = maxf(0, (get_viewport().get_visible_rect().size.x * 0.3044 - row.global_position.x) / sx - 14)
+			row.resized.connect(place_lead)
+			place_lead.call_deferred()
+		var tile := UiBadge.new(String(data[0]), UiTheme.SKY, 40)
+		if _p5_on:
+			# Stretch the complete tile and its glyph to the reference rectangle.
+			tile.custom_minimum_size = Vector2(96, 61)
+			tile.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(tile)
 		# The current phone fit floor is 23, so 31 (not authored 24)
 		# yields the requested ~1.34x glyph height after fitting.
+		if _p5_on:
+			var label_gap := Control.new()
+			label_gap.custom_minimum_size.x = 4
+			label_gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			row.add_child(label_gap)
 		var label := _mk_label(row, String(data[1]), 31 if _p5_on else 18, UiTheme.TEXT)
 		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		# U5 re-audit #2: 185 design px is ~11.3% of the 2340-wide
@@ -16842,11 +16869,10 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 			value_inset.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			row.add_child(value_inset)
 	if _p5_on:
-		# U5 re-audit 2: rows add 16, five core gaps remove 20,
-		# spacer adds 6: payout follows the row centres up 6 px
-		# after removing 8 px above the summary.
+		# U5 re-audit 3: scan2 goldblob5 needs +1.1%H (9 design px).
+		# Only this gap grows; all four row centres stay fixed.
 		var _payout_gap := Control.new()
-		_payout_gap.custom_minimum_size = Vector2(0, 8.8)
+		_payout_gap.custom_minimum_size = Vector2(0, 17.8)
 		_payout_gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		core_box.add_child(_payout_gap)
 	# Payout pill (reference: one pale pill, three segments).
@@ -16870,13 +16896,37 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 	prow.add_theme_constant_override("separation", 10)
 	prow.alignment = BoxContainer.ALIGNMENT_CENTER
 	payout.add_child(prow)
-	prow.add_child(UiIcon.new("spark", Color(0.62, 0.35, 0.95), 24))
-	_mk_label(prow, "星尘 +%d" % dust, 32 if _p5_on else 18, UiTheme.TEXT)
-	_mk_label(prow, "|", 32 if _p5_on else 18, UiTheme.MUTED)
-	prow.add_child(UiBadge.new("tile_coin", UiTheme.GOLD, 24))
-	_mk_label(prow, "金币 %d" % int(gold), 32 if _p5_on else 18, UiTheme.TEXT)
-	_mk_label(prow, "|", 32 if _p5_on else 18, UiTheme.MUTED)
-	_mk_label(prow, "得分 %s" % str(score), 32 if _p5_on else 18, UiTheme.TEXT)
+	if _p5_on:
+		# Three equal sections keep the larger glyphs at the pill's left
+		# and the coin section, independently of the changing result values.
+		var payout_bold := FontVariation.new()
+		payout_bold.base_font = load("res://assets/fonts/NotoSC-Black-sub.ttf")
+		var pad := Control.new()
+		pad.custom_minimum_size.x = 0
+		prow.add_child(pad)
+		for part in range(3):
+			var segment := HBoxContainer.new()
+			segment.add_theme_constant_override("separation", 8)
+			segment.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			segment.alignment = BoxContainer.ALIGNMENT_BEGIN if part == 0 else BoxContainer.ALIGNMENT_CENTER
+			prow.add_child(segment)
+			if part == 0:
+				segment.add_child(UiIcon.new("result_spark", Color(0.62, 0.35, 0.95), 40))
+			elif part == 1:
+				segment.add_child(UiIcon.new("result_coins", UiTheme.GOLD, 38))
+			var text: String = ["星尘 +%d" % dust, "金币 %d" % int(gold), "得分 %s" % str(score)][part]
+			var caption := _mk_label(segment, text, 32, UiTheme.TEXT)
+			caption.add_theme_font_override("font", payout_bold)
+			if part < 2:
+				_mk_label(prow, "|", 32, UiTheme.MUTED)
+	else:
+		prow.add_child(UiIcon.new("spark", Color(0.62, 0.35, 0.95), 24))
+		_mk_label(prow, "星尘 +%d" % dust, 32 if _p5_on else 18, UiTheme.TEXT)
+		_mk_label(prow, "|", 32 if _p5_on else 18, UiTheme.MUTED)
+		prow.add_child(UiBadge.new("tile_coin", UiTheme.GOLD, 24))
+		_mk_label(prow, "金币 %d" % int(gold), 32 if _p5_on else 18, UiTheme.TEXT)
+		_mk_label(prow, "|", 32 if _p5_on else 18, UiTheme.MUTED)
+		_mk_label(prow, "得分 %s" % str(score), 32 if _p5_on else 18, UiTheme.TEXT)
 	if _p5_on:
 		# U5 fix6: phone shows the reference card only (rows +
 		# payout). The extended statistics lived in the scroll,

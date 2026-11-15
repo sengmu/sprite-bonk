@@ -143,6 +143,22 @@ func _draw() -> void:
 			_circ(8.3, 9.2, 3.6)
 			_circ(15.7, 9.2, 3.6)
 			_poly([Vector2(5.2, 11.4), Vector2(18.8, 11.4), Vector2(12, 20.6)], color)
+		"result_home":
+			# Wide two-tone house with an open doorway (P5 result only).
+			_poly([Vector2(2, 11.595), Vector2(12, 4.305), Vector2(22, 11.595), Vector2(20, 12.810), Vector2(12, 7.140), Vector2(4, 12.810)], Color("69421b"))
+			_poly([Vector2(4.5, 11.595), Vector2(12, 6.735), Vector2(19.5, 11.595), Vector2(19.5, 18.885), Vector2(14, 18.885), Vector2(14, 13.620), Vector2(10, 13.620), Vector2(10, 18.885), Vector2(4.5, 18.885)], Color("98652e"))
+		"result_spark":
+			_poly([Vector2(12, 3), Vector2(15, 9), Vector2(21, 12), Vector2(15, 15), Vector2(12, 21), Vector2(9, 15), Vector2(3, 12), Vector2(9, 9)], color)
+			_poly([Vector2(12, 3), Vector2(12, 12), Vector2(3, 12), Vector2(9, 9)], color.lightened(0.35))
+		"result_coins":
+			# Overlapping gold coins, without the row tile's square plate.
+			for cx in [15.0, 9.0]:
+				draw_set_transform(_p(cx, 12), 0, Vector2(0.78, 1))
+				draw_circle(Vector2.ZERO, _u(8), Color("b9790d"))
+				draw_circle(Vector2.ZERO, _u(6.5), Color("ffcf32"))
+				draw_arc(Vector2.ZERO, _u(5), 0, TAU, 32, Color("fff09a"), _u(1.2), true)
+				draw_line(Vector2(0, -_u(2.8)), Vector2(0, _u(2.8)), Color("d49210"), _u(1.5), true)
+				draw_set_transform(Vector2.ZERO)
 		"home":
 			# U5: house glyph for the result screen's 返回菜单 button.
 			_poly([Vector2(2.5, 12.5), Vector2(12, 3.5), Vector2(21.5, 12.5)], color)
