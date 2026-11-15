@@ -999,3 +999,10 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 断点：批 ALLDONE 后取双档新拍，3× 裁切复核两角（顶边连续、无缺口、无叶、无浮碎片）＋全图逐项亲检＋重建 compare；全过则签核 U5（本台账＋Notion 对齐单 `414858d4-06aa-81ed-9a17-e8533ee8484d` Note，Status 保持 In progress）并回主聊天汇报。微残差在案：折尾长约 8–11px、摘要-折尾间隙紧、带面拖影 slab。
 
 - fix12 启动更正（主控，2026-11-15 14:1x）：提交推送实证——纹理＋台账＋compare＋脚本已入 `862ff7a`（origin 与 NUC HEAD 一致）。编辑器 `--import` 完成 rc=0，`.ctex` sidecar `source_md5=d20f98ff…` 与盘上纹理一致；导入产生的 addons `.import` churn 与 project.godot 键序重排（且误掉 editor_plugins 段）已全部 `git checkout` 撤回。**fix12 验证批 START 2026-11-15 14:10:00 HEAD 862ff7a**，2400 腿 Godot 在跑（PID 2195181），`.done`=`Test/out/u5_fix12.done`，预计约 14:39 ALLDONE。批后按上方断点亲检签核。
+
+## U5 fix12：批次监看轮（2026-11-15 14:1x 轮，worker）
+
+- 防撞核查：fix12 验证批 `Test/u5_fix12_run.sh`（14:10:00 起跑，HEAD 862ff7a）仍在跑——2400 s100 腿 Godot PID 2195181（--win=2400x1080 --result=victory）在跑，批脚本 2195160 在跑；`Test/out/u5_fix12.done` 只有 START、无 ALLDONE。本轮只监看、不双开、不施工、不重跑。
+- 进度：2400 s100 腿进行中——日志 `Test/out/u5_fix12_phonehud_2400.log` 130 PASS、FAIL 0 条，当前跑到 P5，预计约 14:39 完成。
+- 断点不变：批 ALLDONE 后取双档新拍，3× 裁切复核两角（顶边连续、无缺口、无叶、无浮碎片）＋全图逐项亲检＋重建 compare；全过则签核 U5（本台账＋Notion 对齐单 `414858d4-06aa-81ed-9a17-e8533ee8484d` Note，Status 保持 In progress）并回主聊天汇报。微残差在案：折尾长约 8–11px、摘要-折尾间隙紧、带面拖影 slab。
+- 本轮提交：本节台账。
