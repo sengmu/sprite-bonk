@@ -1192,3 +1192,10 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 本轮只监看：不实施、不起批、不改树、不做 .git 同步——本机树仍留 Codex 第三轮未提交改动（M world.gd／ui_icon.gd），sync_to_nuc 会把半成品抄上 NUC；本机 .git 落后 NUC 三个提交（43f35d9、de59f69、6607ee7），待交付落盘后再按铁律接续。
 - 断点不变：待主控核实 Codex 第三轮状态（续跑／重派／接手在途改动）或 .tmp/u5_reaudit_codex3_changes.md 落盘后，按验收口径（parse 门＋双档 s100 批＋同法复测＋compare 亲检）接续；U5 未关闭；U1 复审仍不开。
 - 本轮提交：本节台账。
+
+## U5 复审第三轮验收链已接续（2026-11-16 02:2x，主控）
+
+- Codex 会话约 01:24 退出、未写 change log（log 0 字节）；但工作树改动完整在位（world.gd 110 行、ui_icon.gd 16 行），主控已逐项核对 diff 与第三轮派单十项全对上（汇总下移 9 设计 px、钮面/汇总/摘要加粗、result_home 门洞、result_spark/result_coins、tile 96×61、行 lead spacer 至 0.3044 帧分）。change log 由主控按 diff 重建（.tmp/u5_reaudit_codex3_changes.md，未入库）。
+- 同步：NUC .git 反向回 VM 后 reset 至 1b22377（43f35d9 在祖先链内），改动原样恢复（diff 96+/30- 一致），sync_to_nuc parity 906 文件 0 diff。
+- Parse 门 Test/u5_reaudit_c3_parse.sh：world.gd rc=0、ui_icon.gd rc=0；缎带 .ctex sidecar d20f98ff 在位。
+- 提交 2ede84f 已推送（ls-remote 核验）；验证批 Test/u5_reaudit_c3_run.sh 02:25:54 起跑，.done 路径 Test/out/u5_reaudit_c3.done，预计 ALLDONE 约 03:00–03:05。**下一轮只监看批、取新拍复测、重建 compare、亲检再议签核。** U5 未关闭；U1 复审仍不开。
