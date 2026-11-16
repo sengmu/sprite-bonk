@@ -1278,3 +1278,12 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 本轮不提交代码、不起批（按第三轮分工：diff 核对＋changes.md＋提交＋起批由主控接手）。
 - 断点不变：待主控核对 diff（重点：34 设计 px 与派单 17 之差、part==2 END 是否合意）→ changes.md → 提交推送 → NUC 双档 s100 批 → 同法复测（汇总带 scan2 goldblob5 法、pill 边距、币面高）→ 重建 compare/U5.png 与 U5_2400.png → 亲检再议签核；U5 未关闭；U1 复审仍不开。
 - 本轮提交：本节台账（＋.tmp 内 c4 diff/全份/verify 脚本留档，未入库）。
+
+## U5 复审第四轮验收链已接续（2026-11-16 08:2x，主控）
+
+- Codex 会话 acct5 07:18:05–07:27:28 中途结束（无最终留言、log 0 字节、未写 change log、本地自验批未跑完：2400 腿 57 PASS/0 FAIL、无 DONE、无 victory 实拍）；交付完整在位（world.gd 13+/2-，md5 90f6c597…）。主控已逐项核对 diff：
+  - 汇总 pill 包 MarginContainer 每侧 34 设计 px（P5 专属）；**34 vs 17 定性：派单正文「≈17 设计 px」为换算错误**——按手机拟合倍率（设计→屏幕 ×1.428，2340 档）34 设计 px＝48.6 屏幕 px＝2.07%W，正合派单 2.1%W 目标；17 仅得约 1.0%W。验收以 %W 为准（pill x 约 25.1..72.2%W），34 正确、保留。
+  - result_coins 38→48；part==2（得分段）改 END 右锚（与派单「得分段右锚」一致）；星图标与汇总字不动。
+- 同步：sync_to_nuc 两次遇 rsync rc=12/255「Connection closed by UNKNOWN port 65535」已知传输抖动，第三次成功；parity 908 文件 0 diff。
+- Parse 门 Test/u5_reaudit_c4_parse.sh：world.gd rc=0、ui_icon.gd rc=0。
+- 提交 27b64fc 已推送（ls-remote 核验）；验证批 Test/u5_reaudit_c4_run.sh 08:30:58 起跑，.done 路径 Test/out/u5_reaudit_c4.done，预计 ALLDONE 约 09:05–09:10。**下一轮只监看批、取新拍复测、重建 compare、亲检再议签核。** U5 未关闭；U1 复审仍不开。
