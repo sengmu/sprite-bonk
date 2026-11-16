@@ -6424,6 +6424,13 @@ func _build_result(root: Control) -> void:
 	# U5 re-audit #3: 53/40 = 1.325; includes the title’s flanking glyphs.
 	_result_title = _mk_dlabel(ribbon, "", 53 if _p5_on else 34, UiTheme.WHITE)
 	_result_title.add_theme_color_override("font_color", UiTheme.WHITE)
+	if _p5_on:
+		# 为丝带白色大标题补充深绿描边与立体制字投影
+		_result_title.add_theme_color_override("font_outline_color", Color("3a740b"))
+		_result_title.add_theme_constant_override("outline_size", 6)
+		_result_title.add_theme_color_override("font_shadow_color", Color(0.16, 0.34, 0.04, 0.72))
+		_result_title.add_theme_constant_override("shadow_offset_x", 0)
+		_result_title.add_theme_constant_override("shadow_offset_y", 3)
 	_result_panel.draw.connect(func() -> void:
 		_result_panel.draw_texture_rect(UiTheme.asset("decorations", "confetti_strip"), Rect2(12, 4, _result_panel.size.x - 24, 64), false))
 
@@ -6531,7 +6538,15 @@ func _build_result(root: Control) -> void:
 	var brow := b.get_child(0) as HBoxContainer
 	(brow.get_child(0) as UiIcon).custom_minimum_size = Vector2(32, 32)
 	b.set_meta("icon_px", 32)
-	(again.get_meta("label") as Label).add_theme_color_override("font_color", UiTheme.WHITE)
+	var again_lbl := again.get_meta("label") as Label
+	again_lbl.add_theme_color_override("font_color", UiTheme.WHITE)
+	if _p5_on:
+		# 「再次出发」白色按钮文字补充深绿描边与柔和立体投影
+		again_lbl.add_theme_color_override("font_outline_color", Color("2b690c"))
+		again_lbl.add_theme_constant_override("outline_size", 5)
+		again_lbl.add_theme_color_override("font_shadow_color", Color(0.14, 0.34, 0.04, 0.70))
+		again_lbl.add_theme_constant_override("shadow_offset_x", 0)
+		again_lbl.add_theme_constant_override("shadow_offset_y", 2)
 	if _p5_on:
 		# U5 re-audit #4: allow for the texture's transparent borders.
 		# The previous action row was 88 design px after the primary
@@ -16965,7 +16980,16 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 			var caption := _mk_label(segment, text, 32, UiTheme.TEXT)
 			caption.add_theme_font_override("font", payout_bold)
 			if part < 2:
-				_mk_label(prow, "|", 32, UiTheme.MUTED)
+				# 以居中 2px 精致竖线替代粗重黑字竖杠，贴合定稿汇总条比例
+				var sep_wrap := CenterContainer.new()
+				sep_wrap.custom_minimum_size = Vector2(8, 36)
+				sep_wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				var sep_bar := ColorRect.new()
+				sep_bar.custom_minimum_size = Vector2(2, 28)
+				sep_bar.color = Color("8a7035")
+				sep_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				sep_wrap.add_child(sep_bar)
+				prow.add_child(sep_wrap)
 	else:
 		prow.add_child(UiIcon.new("spark", Color(0.62, 0.35, 0.95), 24))
 		_mk_label(prow, "星尘 +%d" % dust, 32 if _p5_on else 18, UiTheme.TEXT)

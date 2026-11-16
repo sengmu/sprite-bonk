@@ -148,8 +148,10 @@ func _draw() -> void:
 			_poly([Vector2(2, 11.595), Vector2(12, 4.305), Vector2(22, 11.595), Vector2(20, 12.810), Vector2(12, 7.140), Vector2(4, 12.810)], Color("69421b"))
 			_poly([Vector2(4.5, 11.595), Vector2(12, 6.735), Vector2(19.5, 11.595), Vector2(19.5, 18.885), Vector2(14, 18.885), Vector2(14, 13.620), Vector2(10, 13.620), Vector2(10, 18.885), Vector2(4.5, 18.885)], Color("98652e"))
 		"result_spark":
-			_poly([Vector2(12, 3), Vector2(15, 9), Vector2(21, 12), Vector2(15, 15), Vector2(12, 21), Vector2(9, 15), Vector2(3, 12), Vector2(9, 9)], color)
-			_poly([Vector2(12, 3), Vector2(12, 12), Vector2(3, 12), Vector2(9, 9)], color.lightened(0.35))
+			# 外层深紫立体描边轮廓＋亮紫四芒星＋左上高光分面
+			_poly([Vector2(12, 2.0), Vector2(15.5, 8.5), Vector2(22.0, 12), Vector2(15.5, 15.5), Vector2(12, 22.0), Vector2(8.5, 15.5), Vector2(2.0, 12), Vector2(8.5, 8.5)], Color("5e289a"))
+			_poly([Vector2(12, 3.3), Vector2(14.8, 9.2), Vector2(20.7, 12), Vector2(14.8, 14.8), Vector2(12, 20.7), Vector2(9.2, 14.8), Vector2(3.3, 12), Vector2(9.2, 9.2)], color)
+			_poly([Vector2(12, 3.3), Vector2(12, 12), Vector2(3.3, 12), Vector2(9.2, 9.2)], color.lightened(0.35))
 		"result_coins":
 			# 移除横向拉伸，按高度等比绘制两枚正圆交叠金币（包络比例约 51:44，右先左后、左压右）
 			var cs := size.y / 24.0
@@ -235,9 +237,12 @@ func _draw() -> void:
 			_arc(12, 12, 7.6, PI * 0.65, PI * 2.15)
 			_poly([Vector2(5.1, 18.4), Vector2(3.1, 12.6), Vector2(8.8, 13.4)], color)
 		"result_refresh":
-			# P5 result only: two disjoint 136-degree clockwise arcs,
-			# each ending in a tangent-facing filled arrowhead. The
-			# shared reroll arcs overlap into a ring; leave them intact.
+			# P5 结算页专属：先在下移处绘制深绿描边阴影，再绘制白色双弧与箭头，对齐定稿立体厚度
+			var sc := Color("2b690c")
+			draw_arc(_p(12, 12.6), _u(8.4), -PI * 0.84, -PI * 0.04, 24, sc, _u(3.8), true)
+			_poly([Vector2(22.4, 15.2), Vector2(14.9, 11.0), Vector2(21.9, 6.7)], sc)
+			draw_arc(_p(12, 12.6), _u(8.4), PI * 0.16, PI * 0.96, 24, sc, _u(3.8), true)
+			_poly([Vector2(1.6, 10.4), Vector2(9.1, 14.6), Vector2(2.1, 18.7)], sc)
 			_arc(12, 12, 8.4, -PI * 0.82, -PI * 0.06, 2.8)
 			_poly([Vector2(22.0, 14.2), Vector2(15.7, 10.4), Vector2(21.5, 6.9)], color)
 			_arc(12, 12, 8.4, PI * 0.18, PI * 0.94, 2.8)

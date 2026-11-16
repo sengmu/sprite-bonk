@@ -1506,3 +1506,29 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - **状态：U5 第七轮修复与自检全部落地，待主控亲检 compare 与实测数据后裁定签核；U1 复审仍不开；Notion 对齐单未动。**
 - 本轮提交：`scripts/ui_theme.gd`、`scripts/ui_icon.gd`、`scripts/world.gd`、`assets/ui/textures/button_green.png`、`assets/ui/textures/button_cream.png`、`Test/u5_reaudit_c7_parse.sh`、`Test/u5_reaudit_c7_run.sh`、`design/ui-reference/compare/U5.png`、`design/ui-reference/compare/U5_2400.png`、`design/ui-alignment-progress.md`。
 
+## U5 复审第八轮（2026-11-16 18:4x–19:1x，1x 显微残差打磨＋双档批＋全量复测＋compare 重建）
+
+- 动因：针对第 7 轮显微 1x 对照（`.tmp/u5_c7_micro_{top,mid,bot}.png`）检出的四处纯材质／描边／光影微残差做终极打磨（全部冻结几何尺寸、位置、行心、字体大小与汇总字号丝毫不动）：
+  1. **值 pill & 汇总 pill 立体轮廓（`assets/ui/textures/pill_gold.png`）**：保持渐变核心色域不变，外缘补齐定稿级顶淡高光边、底 1.5px 柔金棕描边及底部微投影。
+  2. **双钮文字／图标投影与明暗比例（`scripts/world.gd`、`scripts/ui_icon.gd`、`button_green.png`、`button_cream.png`）**：为「再次出发」白色 `Label`（`outline_size=5` + 投影）及 P5 专属 `result_refresh` 图标补深绿外描边与立体投影；上移 `button_green.png` 亮/暗翠绿分界至 `y=140` 使下半翠绿更沉稳饱满、增厚白外框，微润 `button_cream.png` 暖调与底倒角对比。
+  3. **绿缎带明润色阶与大标题阴影（`assets/ui/decorations/p5_ribbon_green.png`、`scripts/world.gd`）**：严格沿用既有 `p5_ribbon_green.png` Alpha 掩码（零像素轮廓变动），抹除中段生硬单斜线，主带按定稿采样重调为鲜嫩草绿（`166,204,44 -> 146,186,38` ＋ 顶部亮唇＋底部 `82,126,16` 立体收边＋两肩柔弧光），并为 `★ 全区通关！ ★` 补充深绿描边（`outline_size=6`）与立体制字阴影（`0, 3`）。
+  4. **汇总条细竖线与紫星描边（`scripts/world.gd`、`scripts/ui_icon.gd`）**：将汇总条粗字符 `"|"` 替换为居中 `2×28` 精致棕金细竖线（`Color("8a7035")`）；为 `result_spark` 紫星补齐外层深紫立体描边（`#5e289a`）。
+- 导入与解析门：本机与 NUC 均执行 `--headless --import` 并经 `.tmp/u5_c6_verify_import.py` 验证 `source_md5`、`dest_md5` 与 `.ctex` 字节数两端逐一匹配（`p5_ribbon_green`: `13062`B/`20803cdbfd19393ed505746dcc68a6dd`、`button_green`: `34460`B/`d39fe67c87ac10f0d45e29db1ec257ff`、`button_cream`: `27714`B/`4b0a5467a068a31c6590dc3a54acb845`、`pill_gold`: `3212`B/`1d1a240b042a88f5fa82fe5b9fdc4ac1`）；`addons/` `.import` churn 已撤回。`Test/u5_reaudit_c8_parse.sh` 三核心脚本在本机与 NUC `--check-only` 全 `rc=0`。
+- NUC 官方双档 `s100` 验证批（`Test/u5_reaudit_c8_run.sh`，`Test/out/u5_reaudit_c8.done` `ALLDONE 2026-11-16T19:07:56+08:00`）：
+  - `2400×1080`：`rc=0`，`PHONEHUD DONE checks=1549 fails=0`（0 条 `SCRIPT ERROR`/`Parse Error`/`FAIL`）；
+  - `2340×1080`：`rc=0`，`PHONEHUD DONE checks=1564 fails=0`（0 条 `SCRIPT ERROR`/`Parse Error`/`FAIL`）；
+  - 双档原始实拍 PNG 已拉回本地校验 MD5 一致（`2340`: `187c6678833911a45d63749d93c5a14a`、`2400`: `90e694f889f33e1a52361a121ae9e91d`）。
+- 同法复测（`.tmp/u5_reaudit_c8_full_audit.py`，结果存 `.tmp/u5_reaudit_c8_full_audit.txt`）：
+  - ✅ **① 三星逐枚（gold-mask 法）**：`2340` 宽 `5.51 / 5.47 / 5.56%W`、`2400` 宽 `5.38 / 5.33 / 5.42%W`，主纵 run 高 **`9.81%H`**，入带 **`+0.74 / -0.09 / +0.74%H`**，**中星拱起 `+0.83%H`**（定稿 `+0.96%H`）。
+  - ✅ **② 绿缎带（中心列绿法）**：`2340`/`2400` 均 `11.67..21.48%H`、高 **`9.91%H`**（定稿 `9.88%H`），无棕边（138 px 系拱起星底边及阴影抗锯齿边缘）。
+  - ✅ **③ 全局按钮纵向剖面＋矩阵 1x 亲检（`.tmp/u5_c8_button_matrix_1x.png`）**：`2340`/`2400` 绿钮 `x0.15/0.85` 5 点 `[(212,246,109),(197,241,92),(150,210,41),(150,210,41),(151,211,43)]`（定稿顶 `R=210..226, G≈245`、下半主翠绿 `150,210,41`），奶油钮 `[(254,247,222),(254,247,221),(253,243..244,213..215),(252,236,200),(252,236,200)]`；U5、U1 暂停「继续」/「回主菜单」、U6「复制地址」/「关闭」、商店「关闭」、U3 三钮、U2 顶部胶囊全员光滑真半圆胶囊，零尖刺、零方肩、零白斑。
+  - ✅ **④ 值 pill & 汇总 pill**：值 pill `[(254,234,162) .. (254,228,152)]`（`dG=5..6, dB=9..10`，与定稿 row1/3 `dG=5..6, dB=7..8` 同阶，加外缘金棕立体描边后肉眼雕琢感完全一致）；汇总 pill `[(254,234,162) .. (254,229,152)]`，`2340` `x=25.30..72.09%W`（边距 `L=2.74%W / R=2.69%W`）、`2400` `x=25.92..71.50%W`（边距 `L=2.67%W / R=2.58%W`）。
+  - ✅ **⑤ 行带分隔线**：基线 `34.0`，四峰均为 **`67`**，杂峰 `0` 个。
+  - ✅ **⑥ 金币新 mask 独立 run**：`2340` `61×51 px`（`2.61%W × 4.72%H`, `w/h=1.20`），`2400` `62×51 px`（`2.58%W × 4.72%H`, `w/h=1.22`），正圆交叠、凸边内盘柔双光晕保持。
+  - ✅ **全部冻结保持项**：双档面板框（`22.52..74.83%W`/`23.21..74.17%W`）、标题白字高（`6.67%H`）、tile1 左缘（`30.81%W`/`30.83%W`）、行标签字高（`3.80%H`）、汇总星高（`3.70%H`）、钮面字高（`4.35%/4.35%H`）及汇总字号全部冻结保持。
+- `compare` 重建与亲检：`design/ui-reference/compare/U5.png`（MD5 `72d24a9a6132739000d034491b07fe0a`）与 `design/ui-reference/compare/U5_2400.png`（MD5 `c8d279d0f931fd09dcf4b2927dd397a8`）已以第 8 轮双档原图重建（标签 `u5_reaudit_c8`），与 3 段显微裁切图 `.tmp/u5_c8_micro_{top,mid,bot}.png` 均已逐张亲看。
+- 真机安装验证：已编译第 8 轮 `E:/Projects/spritebonk-apk-build/build/android/SpriteBonk-c8-align.apk`（`com.spritebonk.game.align`，`CN=Godot`）并覆盖安装至 Seeker 手机（`SM02G4061952376`），真机启动地形加载正常、`logcat` 零脚本报错。
+- **状态：U5 第八轮材质光影打磨与全验证链完成，1x 与显微级已高度对齐定稿，待主控亲检 compare 与实测后裁定签核；U1 复审仍不开；Notion 对齐单未动。**
+- 本轮提交：`scripts/ui_icon.gd`、`scripts/world.gd`、`assets/ui/textures/button_green.png`、`assets/ui/textures/button_cream.png`、`assets/ui/textures/pill_gold.png`、`assets/ui/decorations/p5_ribbon_green.png`、`Test/u5_reaudit_c8_parse.sh`、`Test/u5_reaudit_c8_run.sh`、`design/ui-reference/compare/U5.png`、`design/ui-reference/compare/U5_2400.png`、`design/ui-alignment-progress.md`。
+
+
