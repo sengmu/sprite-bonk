@@ -6362,18 +6362,16 @@ func _build_result(root: Control) -> void:
 		var stars := HBoxContainer.new()
 		stars.alignment = BoxContainer.ALIGNMENT_CENTER
 		stars.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		# Crest-local coords: crest top = panel top + 14 (panel
-		# margin). Stars 96 tall; bottoms overlap the ribbon
-		# main-band top by ~22 design px (~31 screen px);
-		# ribbon centre on the panel top edge (crest-local -14).
-		# Bigger stars on phone (reference ~5.7% of frame width
-		# each); _fill_result swaps filled/empty per victory/defeat.
-		stars.position = Vector2(0, -125)
-		stars.size = Vector2(872, 96)
+		# P5 crest uses a dedicated faceted material and independent x/y fit.
+		# Keep the 100px centre pitch; lower the tips into the thin green band.
+		stars.position = Vector2(0, -118)
+		stars.add_theme_constant_override("separation", -2)
+		stars.size = Vector2(872, 88)
 		crest.add_child(stars)
-		var star_sz := Vector2(96, 96)
+		var star_sz := Vector2(102, 88)
 		for key in ["star_filled", "star_filled", "star_empty"]:
-			var st := UiTheme.art(key, star_sz)
+			var st := UiTheme.art("p5_" + key, star_sz)
+			st.stretch_mode = TextureRect.STRETCH_SCALE
 			stars.add_child(st)
 			_result_stars.append(st)
 		ribbon = PanelContainer.new()
@@ -6392,8 +6390,9 @@ func _build_result(root: Control) -> void:
 		ribbon.draw.connect(func() -> void:
 			var rw := ribbon.size.x * 0.88
 			var extent := Vector2(rw, 225)
-			ribbon.draw_texture_rect(UiTheme.asset("decorations", "ribbon_green"), Rect2(Vector2((ribbon.size.x - extent.x) / 2, 0), extent), false))
+			ribbon.draw_texture_rect(UiTheme.asset("decorations", "p5_ribbon_green"), Rect2(Vector2((ribbon.size.x - extent.x) / 2, 0), extent), false))
 		crest.add_child(ribbon)
+		crest.move_child(stars, -1)
 	else:
 		var stars := HBoxContainer.new()
 		stars.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -16790,6 +16789,23 @@ func _shiny_beam(pos: Vector3) -> void:
 ## (this economy pays stardust in-run; $SPRT settles only
 ## by 14-day season, tokenomics v1.0) and the online
 ## rivals/season block (no online system in this build).
+# P5-only gold material; no global chip/flat_box behaviour changes.
+func _p5_gold_pill(height: int = 60) -> StyleBoxTexture:
+	var box := StyleBoxTexture.new()
+	# Match the old flat-box cap radius at each authored height.
+	var image := UiTheme.asset("textures", "pill_gold").get_image()
+	image.resize(height * 4, height, Image.INTERPOLATE_LANCZOS)
+	box.texture = ImageTexture.create_from_image(image)
+	box.texture_margin_left = minf(height * 0.5, 29.0)
+	box.texture_margin_right = minf(height * 0.5, 29.0)
+	box.texture_margin_top = 0
+	box.texture_margin_bottom = 0
+	box.content_margin_left = 0
+	box.content_margin_right = 0
+	box.content_margin_top = 0
+	box.content_margin_bottom = 0
+	return box
+
 func _fill_result(victory: bool, score: float, dust: int) -> void:
 	_result_title.text = "★ 全区通关！★" if victory else "你倒下了…"
 	_result_body.text = "到达第 %d 关 · %s · 击杀 %d · 用时 %s · 总伤害 %d" % [
@@ -16805,14 +16821,21 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 	for i in _result_stars.size():
 		var st := _result_stars[i] as TextureRect
 		if st != null:
-			st.texture = UiTheme.asset("decorations", "star_filled" if (victory or i < 2) else "star_empty")
+			st.texture = UiTheme.asset("decorations", ("p5_" if _p5_on else "") + ("star_filled" if (victory or i < 2) else "star_empty"))
 	# Approved U5: four readable summary rows before extended statistics.
 	# On phone the rows + payout live in _result_core (always
 	# visible); on desktop they stay in the scroll as approved.
 	var core_box := _result_core if (_p5_on and _result_core != null) else _result_box
 	for data in [["tile_clock", "用时", _fmt_time(run_time)], ["tile_sword", "击杀", str(kills)], ["tile_star", "等级", str(player.level if player else 1)], ["tile_coin", "金币", str(int(gold))]]:
 		var plate := PanelContainer.new()
-		var row_style := UiTheme.panel_texture(3 if _p5_on else 14)
+		var row_style: StyleBox = UiTheme.panel_texture(14)
+		if _p5_on:
+			var face := UiTheme.flat_box(Color8(253, 246, 219) if core_box.get_child_count() % 2 == 0 else Color8(252, 244, 215), 0)
+			face.border_color = Color8(246, 229, 179)
+			face.border_width_bottom = 1
+			face.content_margin_left = 3
+			face.content_margin_right = 3
+			row_style = face
 		if _p5_on:
 			# Keep the accepted pitch and value-pill right edge intact.
 			row_style.content_margin_top = 1
@@ -16856,10 +16879,10 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 			value.custom_minimum_size.y = 45
 			value.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 			# Keep the authored height independent of chip content padding.
-			var vsb := value.get_theme_stylebox("panel") as StyleBoxFlat
-			if vsb != null:
-				vsb.content_margin_top = 0
-				vsb.content_margin_bottom = 0
+			var vsb := _p5_gold_pill(45)
+			vsb.content_margin_left = 8
+			vsb.content_margin_right = 8
+			value.add_theme_stylebox_override("panel", vsb)
 		row.add_child(value)
 		if _p5_on:
 			# U5 re-audit #2: trailing space + HBox separation = 138
@@ -16887,7 +16910,7 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 		# panel). Flat capsule, no border, mirroring the value pills.
 		# P5 only: desktop keeps the legacy 9-patch pill.
 		payout.add_theme_stylebox_override("panel",
-			UiTheme.flat_box(Color8(252, 232, 159), 29))
+			_p5_gold_pill())
 	if _p5_on:
 		# U5 re-audit #6: 60 * 0.952 = 57.1 logical px (~8%H).
 		payout.custom_minimum_size.y = 60

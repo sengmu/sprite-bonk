@@ -151,13 +151,14 @@ func _draw() -> void:
 			_poly([Vector2(12, 3), Vector2(15, 9), Vector2(21, 12), Vector2(15, 15), Vector2(12, 21), Vector2(9, 15), Vector2(3, 12), Vector2(9, 9)], color)
 			_poly([Vector2(12, 3), Vector2(12, 12), Vector2(3, 12), Vector2(9, 9)], color.lightened(0.35))
 		"result_coins":
-			# P5 payout uses a wide Control for two full round coins.
-			for cx in [2.5, 21.5]:
-				draw_set_transform(_p(cx, 12))
+			# Same visible 33x14 envelope; overlapping faces, right first.
+			for cx in [18.0, 6.0]:
+				draw_set_transform(_p(cx, 12), 0, Vector2(1.5, 1))
 				draw_circle(Vector2.ZERO, _u(7), Color("b9790d"))
-				draw_circle(Vector2.ZERO, _u(5.6875), Color("ffcf32"))
-				draw_arc(Vector2.ZERO, _u(4.375), 0, TAU, 32, Color("fff09a"), _u(1.05), true)
-				draw_line(Vector2(0, -_u(2.45)), Vector2(0, _u(2.45)), Color("d49210"), _u(1.3125), true)
+				draw_circle(Vector2.ZERO, _u(6.15), Color("edac1f"))
+				draw_circle(Vector2(0, -_u(0.3)), _u(5.5), Color("ffcf32"))
+				draw_arc(Vector2.ZERO, _u(4.75), PI * 1.05, PI * 1.85, 32, Color("fff09a"), _u(0.85), true)
+				draw_arc(Vector2.ZERO, _u(4.75), PI * 0.05, PI * 0.75, 32, Color("d49210"), _u(0.65), true)
 				draw_set_transform(Vector2.ZERO)
 		"home":
 			# U5: house glyph for the result screen's 返回菜单 button.
