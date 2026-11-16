@@ -16924,7 +16924,9 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 			if part == 0:
 				segment.add_child(UiIcon.new("result_spark", Color(0.62, 0.35, 0.95), 40))
 			elif part == 1:
-				segment.add_child(UiIcon.new("result_coins", UiTheme.GOLD, 48))
+				var coins := UiIcon.new("result_coins", UiTheme.GOLD, 48)
+				coins.custom_minimum_size = Vector2(88, 61)
+				segment.add_child(coins)
 			var text: String = ["星尘 +%d" % dust, "金币 %d" % int(gold), "得分 %s" % str(score)][part]
 			var caption := _mk_label(segment, text, 32, UiTheme.TEXT)
 			caption.add_theme_font_override("font", payout_bold)
