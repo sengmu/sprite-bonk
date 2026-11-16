@@ -248,21 +248,65 @@ const BTN_KINDS := {
 	"ghost": CREAM,
 }
 
-static func _btn_box(bg: Color, radius: int, border: Color, bw: int, pad: int) -> StyleBoxTexture:
-	var s := StyleBoxTexture.new()
+## 自适应真半圆胶囊按钮样式：按当前按钮实际高度等比例缩放左右半圆端盖，
+## 仅水平拉伸中间均匀过渡带（源图 x=224..800 为水平常值纯平列），
+## 彻底消除九宫格垂直压扁导致的左右尖刺，并避免大按钮被拉成方肩矩形。
+class CapsuleStyleBox extends StyleBox:
+	## 原始高分辨率按钮纹理（1024×320）
+	var texture: Texture2D = null
+	## 颜色调制（兼容禁用态透明度及 U3 蓝/红按钮着色）
+	var modulate_color: Color = Color.WHITE
+	## 源纹理左右端盖宽度（像素，覆盖半圆弧及左上斜高光区）
+	var cap_src_px: float = 224.0
+
+	func _draw(to_canvas_item: RID, rect: Rect2) -> void:
+		if texture == null or rect.size.x <= 0.0 or rect.size.y <= 0.0:
+			return
+		var sz := texture.get_size()
+		if sz.x <= 0.0 or sz.y <= 0.0:
+			return
+		var cap_w := (cap_src_px / sz.y) * rect.size.y
+		var total_cap := cap_w * 2.0
+		if total_cap > rect.size.x and total_cap > 0.0:
+			var k := rect.size.x / total_cap
+			cap_w *= k
+		var rid := texture.get_rid()
+		# 左半圆端盖（含左上角柔椭圆高光）
+		RenderingServer.canvas_item_add_texture_rect_region(
+			to_canvas_item,
+			Rect2(rect.position, Vector2(cap_w, rect.size.y)),
+			rid,
+			Rect2(0.0, 0.0, cap_src_px, sz.y),
+			modulate_color
+		)
+		# 中间水平均匀过渡带
+		var mid_w := rect.size.x - cap_w * 2.0
+		if mid_w > 0.0:
+			var mid_src_w := sz.x - cap_src_px * 2.0
+			RenderingServer.canvas_item_add_texture_rect_region(
+				to_canvas_item,
+				Rect2(Vector2(rect.position.x + cap_w, rect.position.y), Vector2(mid_w, rect.size.y)),
+				rid,
+				Rect2(cap_src_px, 0.0, mid_src_w, sz.y),
+				modulate_color
+			)
+		# 右半圆端盖
+		RenderingServer.canvas_item_add_texture_rect_region(
+			to_canvas_item,
+			Rect2(Vector2(rect.position.x + rect.size.x - cap_w, rect.position.y), Vector2(cap_w, rect.size.y)),
+			rid,
+			Rect2(sz.x - cap_src_px, 0.0, cap_src_px, sz.y),
+			modulate_color
+		)
+
+static func _btn_box(bg: Color, radius: int, border: Color, bw: int, pad: int) -> StyleBox:
+	var s := CapsuleStyleBox.new()
 	var key := "button_cream"
 	if bg.g > bg.r * 1.12 and bg.b < bg.g * 0.7:
 		key = "button_green"
 	elif bg.r > bg.g * 1.3 and bg.b < bg.g * 0.8:
 		key = "button_orange"
-	s.texture = scaled_texture(key)
-	s.texture_margin_left = 48
-	s.texture_margin_right = 48
-	s.texture_margin_top = 24
-	s.texture_margin_bottom = 24
-	# Destination borders at quarter scale; source slicing remains native.
-	s.axis_stretch_horizontal = StyleBoxTexture.AXIS_STRETCH_MODE_STRETCH
-	s.axis_stretch_vertical = StyleBoxTexture.AXIS_STRETCH_MODE_STRETCH
+	s.texture = asset("textures", key)
 	s.modulate_color = Color(1, 1, 1, bg.a)
 	s.content_margin_left = pad
 	s.content_margin_right = pad
@@ -277,10 +321,10 @@ static func _btn_box(bg: Color, radius: int, border: Color, bw: int, pad: int) -
 ## cream). The tint is solved against the face pixel of the
 ## cream texture (248,230,199) so the face lands on `bg`;
 ## the baked shading survives because only the tint changes.
-static func tinted_btn_box(bg: Color, radius: int, border: Color, bw: int, pad: int) -> StyleBoxTexture:
+static func tinted_btn_box(bg: Color, radius: int, border: Color, bw: int, pad: int) -> StyleBox:
 	var s := _btn_box(bg, radius, border, bw, pad)
 	var face := Color8(248, 230, 199)
-	s.modulate_color = Color(
+	(s as CapsuleStyleBox).modulate_color = Color(
 		clampf(bg.r / face.r, 0.0, 1.0),
 		clampf(bg.g / face.g, 0.0, 1.0),
 		clampf(bg.b / face.b, 0.0, 1.0),

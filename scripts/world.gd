@@ -6369,10 +6369,21 @@ func _build_result(root: Control) -> void:
 		stars.size = Vector2(872, 88)
 		crest.add_child(stars)
 		var star_sz := Vector2(102, 88)
-		for key in ["star_filled", "star_filled", "star_empty"]:
+		for idx_s in range(3):
+			var key: String = ["star_filled", "star_filled", "star_empty"][idx_s]
 			var st := UiTheme.art("p5_" + key, star_sz)
 			st.stretch_mode = TextureRect.STRETCH_SCALE
-			stars.add_child(st)
+			if idx_s == 1:
+				# 中星微抬约 0.7%H（6 设计 px）以复现定稿拱形排布，外层占位保持 HBox 间距
+				var slot := Control.new()
+				slot.custom_minimum_size = star_sz
+				slot.size = star_sz
+				slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				st.position = Vector2(0, -6)
+				slot.add_child(st)
+				stars.add_child(slot)
+			else:
+				stars.add_child(st)
 			_result_stars.append(st)
 		ribbon = PanelContainer.new()
 		ribbon.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
@@ -16948,7 +16959,7 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 				segment.add_child(UiIcon.new("result_spark", Color(0.62, 0.35, 0.95), 40))
 			elif part == 1:
 				var coins := UiIcon.new("result_coins", UiTheme.GOLD, 48)
-				coins.custom_minimum_size = Vector2(88, 61)
+				coins.custom_minimum_size = Vector2(46, 61)
 				segment.add_child(coins)
 			var text: String = ["星尘 +%d" % dust, "金币 %d" % int(gold), "得分 %s" % str(score)][part]
 			var caption := _mk_label(segment, text, 32, UiTheme.TEXT)

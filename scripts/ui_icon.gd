@@ -151,15 +151,30 @@ func _draw() -> void:
 			_poly([Vector2(12, 3), Vector2(15, 9), Vector2(21, 12), Vector2(15, 15), Vector2(12, 21), Vector2(9, 15), Vector2(3, 12), Vector2(9, 9)], color)
 			_poly([Vector2(12, 3), Vector2(12, 12), Vector2(3, 12), Vector2(9, 9)], color.lightened(0.35))
 		"result_coins":
-			# Same visible 33x14 envelope; overlapping faces, right first.
-			for cx in [18.0, 6.0]:
-				draw_set_transform(_p(cx, 12), 0, Vector2(1.5, 1))
-				draw_circle(Vector2.ZERO, _u(7), Color("b9790d"))
-				draw_circle(Vector2.ZERO, _u(6.15), Color("edac1f"))
-				draw_circle(Vector2(0, -_u(0.3)), _u(5.5), Color("ffcf32"))
-				draw_arc(Vector2.ZERO, _u(4.75), PI * 1.05, PI * 1.85, 32, Color("fff09a"), _u(0.85), true)
-				draw_arc(Vector2.ZERO, _u(4.75), PI * 0.05, PI * 0.75, 32, Color("d49210"), _u(0.65), true)
-				draw_set_transform(Vector2.ZERO)
+			# 移除横向拉伸，按高度等比绘制两枚正圆交叠金币（包络比例约 51:44，右先左后、左压右）
+			var cs := size.y / 24.0
+			var cy := size.y * 0.5
+			for i in range(2):
+				var cx := size.x * 0.5 + (1.5 if i == 0 else -1.5) * cs
+				var pos := Vector2(cx, cy)
+				# 最外圈深金棕轮廓线
+				draw_circle(pos, 7.0 * cs, Color("9e5d06"))
+				# 立体凸边金环（外沿主金＋上方高光受光层）
+				draw_circle(pos, 6.35 * cs, Color("dc8e0c"))
+				draw_circle(pos + Vector2(0.0, -0.22 * cs), 6.1 * cs, Color("f6bf20"))
+				# 凸边左上角白色亮弧高光（前枚较强、后枚稍收敛）
+				var arc_col := Color("fff7c2") if i == 1 else Color("ffe88a")
+				draw_arc(pos, 5.7 * cs, PI * 1.08, PI * 1.58, 24, arc_col, 0.72 * cs, true)
+				# 内盘凹槽深阴影环
+				draw_circle(pos, 4.75 * cs, Color("be7506"))
+				draw_circle(pos + Vector2(0.0, 0.2 * cs), 4.35 * cs, Color("e8a416"))
+				# 中心内盘亮金面
+				draw_circle(pos + Vector2(0.0, 0.1 * cs), 4.15 * cs, Color("ffd12e"))
+				# 内盘柔化双光晕（外柔晕＋内微亮斑，避免 1x/6x 出现硬点）
+				draw_circle(pos + Vector2(-0.8 * cs, 0.3 * cs), 1.0 * cs, Color(1.0, 0.94, 0.58, 0.45))
+				draw_circle(pos + Vector2(-0.8 * cs, 0.3 * cs), 0.55 * cs, Color("ffef96"))
+				draw_circle(pos + Vector2(1.55 * cs, 0.5 * cs), 1.45 * cs, Color(1.0, 0.96, 0.72, 0.5))
+				draw_circle(pos + Vector2(1.55 * cs, 0.5 * cs), 0.85 * cs, Color("fff6be"))
 		"home":
 			# U5: house glyph for the result screen's 返回菜单 button.
 			_poly([Vector2(2.5, 12.5), Vector2(12, 3.5), Vector2(21.5, 12.5)], color)
