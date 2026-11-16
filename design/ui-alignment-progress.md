@@ -1393,3 +1393,9 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 简报另写明：按钮纹理全局共用警告（s100 批为回归网，须写明是否扫到其他屏按钮异常）；纹理纪律（NUC --import 重建 .ctex＋source_md5 核验、.import 拉回入库、addons churn 撤回）；汇总字号已裁定不改；刷新钮 glyph 等不在处方内不得顺手改；派单权在主控，本轮不派、不代跑。
 - 断点不变：待主控审第六轮简报 → 派 Codex 池（日志 .tmp/u5_reaudit_codex6.log）→ 交付落盘后 parse 门 → Test/u5_reaudit_c6_run.sh（待建，沿 c5 式）双档 s100 → 同法复测（c6 量法脚本）→ 重建 compare/U5.png 与 U5_2400.png（标签 u5_reaudit_c6）→ 亲检再议签核；U5 未关闭；U1 复审仍不开。Notion 对齐单未动（U5 未关闭）。
 - 本轮提交：本节台账。
+
+## U5 复审第六轮已派（2026-11-16 13:3x，主控）
+
+- 第六轮派单 `.tmp/u5_reaudit_codex6_brief.md`（worker 13:1x 拟稿、主控已审：三星 gold-mask 法目标 9.7±0.4%H、缎带带高 9.9±0.6%H、钮纵向端点、值 pill 渐变落差、行分隔线峰 ≤75、金币内形交叠去竖条；含各向异性拟合警告、按钮纹理全局共用警告、纹理 --import＋source_md5 纪律）已派 Codex 池，日志 `.tmp/u5_reaudit_codex6.log`。
+- 主控审稿结论：六处处方与 12:3x 方向一致；三星量法已统一为新 gold-mask 法（旧法 10.20 不得混用）；按钮纹理为全局共用，s100 批为回归网、交付须单列其他屏按钮异常；汇总字号不得碰。
+- **下一轮只监看，不重派**：交付落地后走 parse 门（world.gd＋ui_icon.gd＋ui_theme.gd）→纹理 --import＋source_md5 核验→双档 s100 批→同法复测→重建 compare→亲检再议签核。U5 未关闭；U1 复审仍不开。
