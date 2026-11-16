@@ -43,21 +43,14 @@ func set_xp(frac: float) -> void:
 func _draw() -> void:
 	var centre := size * 0.5
 	var r := minf(size.x, size.y) * 0.5 - 2.0
-	# Medal disc + ink rim.
+	# 底盘与亮银金属外环（对齐定稿 U1_final.jpg 英雄圆框质感）
 	draw_circle(centre, r, medal)
-	draw_arc(centre, r, 0.0, TAU, 48, Color(1, 1, 1, 0.85), 2.5, true)
-	# Portrait disc (baked with transparent corners).
-	# U1 1:1 round 14 (coordinator): inset 7 -> 3.5 so the
-	# face fills the disc the way the reference's does, and
-	# the XP track slims to a neutral rim (the reference rim
-	# reads light; a 5 px ink track read as a thick dark
-	# border). The green sweep still rides on top.
 	if portrait != null:
-		var d := r * 2.0 - 3.5
+		var d := r * 2.0 - 4.0
 		draw_texture_rect(portrait, Rect2(centre - Vector2(d, d) * 0.5, Vector2(d, d)), false)
-	# XP ring: neutral track + swept arc from the top.
-	draw_arc(centre, r - 1.0, 0.0, TAU, 48, Color(0.45, 0.45, 0.55), 3.5, true)
+	# XP 环：浅银灰金属轨道 + 顶部起算的亮翠绿进度弧
+	draw_arc(centre, r - 1.0, 0.0, TAU, 48, Color(0.84, 0.89, 0.94, 0.92), 3.8, true)
 	if xp_frac > 0.001:
-		draw_arc(centre, r - 1.0, -PI / 2.0, -PI / 2.0 + TAU * xp_frac, 48, XP_COLOR, 3.5, true)
+		draw_arc(centre, r - 1.0, -PI / 2.0, -PI / 2.0 + TAU * xp_frac, 48, XP_COLOR, 3.8, true)
 	if press_a > 0.001:
 		draw_circle(centre, r, Color(1, 1, 1, press_a))

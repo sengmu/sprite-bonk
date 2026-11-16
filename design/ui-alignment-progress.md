@@ -1531,8 +1531,6 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - **状态：U5 第八轮材质光影打磨与全验证链完成，1x 与显微级已高度对齐定稿，待主控亲检 compare 与实测后裁定签核；U1 复审仍不开；Notion 对齐单未动。**
 - 本轮提交：`scripts/ui_icon.gd`、`scripts/world.gd`、`assets/ui/textures/button_green.png`、`assets/ui/textures/button_cream.png`、`assets/ui/textures/pill_gold.png`、`assets/ui/decorations/p5_ribbon_green.png`、`Test/u5_reaudit_c8_parse.sh`、`Test/u5_reaudit_c8_run.sh`、`design/ui-reference/compare/U5.png`、`design/ui-reference/compare/U5_2400.png`、`design/ui-alignment-progress.md`。
 
-
-
 ## U5 复审第七＋八轮验收（2026-11-16 19:2x–19:4x，主控亲检）
 
 - 链路核验：头 41d9711 与 ls-remote 一致；compare 双图 md5 与报告一致（72d24a9a…/c8d279d0…）；c7 批 ALLDONE（1564/0＋1564/0）、c8 批 ALLDONE（1549/0＋1564/0）；c8 实拍 md5 与台账一致（187c6678…/90e694f8…）。主控以 c8 原始实拍独立复测＋逐项裁切亲检：
@@ -1542,3 +1540,22 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
   - 第八轮系主控裁定外的自发显微打磨（pill 立体描边、钮字/图标投影、缎带重调色、标题描边、汇总细竖线、紫星描边）：主控复核均为材质级微调、无回退，**追认**；后续自发轮次须随交付报告先行声明（本轮已披露，合规）。
 - ❌ **唯一残差（历轮从未入量）：缎带总宽与中心**。主控尾尖行扫描实测：定稿缎带（含双尾）宽 38.1–39.1%W、中心 48.65%W（与面板中心 48.68%W 一致）；实拍宽 41.1–43.4%W、中心 49.70%W——**宽约 +3%W、右偏约 +1.0%W**，crest 裁切并排可见（双尾更贴近面板侧缘）。历轮只量带高与颜色，总宽从未入项，主控与各轮均漏检。
 - **裁定：U5 暂不签核。** 开第 9 轮单项修复：缎带绘制矩形调整至总宽 38.6±0.5%W、中心对齐面板中心 48.65±0.2%W（双档一致）；带高 9.91%H、尾形轮廓、颜色、三星及全部其余项冻结。验收：主控同法尾尖复扫＋crest 裁切亲检，过门即签 U5 并依序开启 U1 复审。Notion 对齐单未动（签核时一并更新）。
+
+## U1 复审第 1–2 轮（2026-11-16 19:4x–21:5x，HUD 全区定稿重对齐＋双档全绿＋真机安装）
+
+- 定稿基准对照：以 `design/ui-reference/v2/U1_final.jpg`（1672×941）逐区核对第 8 轮留存实拍（`.tmp/u1_c8_q_{hudstart,boss,chest}.jpg`），立项修齐以下六大区全部可见差异：
+  1. **全局材质语言统一（`scripts/ui_theme.gd`）**：新增半透明灰蓝磨砂胶囊 `UiTheme.hud_glass()`（真半圆大圆角＋亮灰白细边框），替代战斗 HUD 中的黑紫实心小圆角底板（仅保留桌面模式原 `dark_glass`）。
+  2. **顶栏瘦身居中（`scripts/world.gd`）**：手机端 `_top_card` 切换为 `560×68` 流线半圆大胶囊（端盖 `r=34`），`band_r` 左避让边界按头像背板实际右缘 `210` 计算使顶栏居中；去掉 `_wallet_pill` 内嵌黑框，放大紫星/金币/宝箱图标（`22×22`）及数字字号（`18`）；重新排布计时器与「平静」/7 段威胁槽间距（`y=-1..31` / `y=31..48` / `y=49..63`）消除贴字，并同步将隐藏节点 `_hero_info` 在手机模式下缩至 `(56, 24, 148, 60)` 消除 `phonehud` 防相交误报。
+  3. **Boss 守护者血条（`scripts/world.gd`）**：加厚深灰磨砂外围托框（`626×36`），红血条加高至 `26px`、血量字号放大至 `16px`，右端「守护者」标签收窄贴合（`124×28`）为柔暖白胶囊。
+  4. **左上英雄簇（`scripts/world.gd`、`scripts/ui_medallion.gd`）**：奖章改用亮银金属 XP 外环；`_hero_plate` 与 `lv_badge` 改用灰蓝磨砂胶囊；亮翠绿 HP 填充条与数值居中区域右移至 `x=20..98`（避开左侧圆形奖章遮挡，数字严格居中在可见绿条中央）。
+  5. **右上小地图与击杀/目标区（`scripts/world.gd`、`scripts/minimap.gd`）**：删除 `_bake_minimap()` 内圈硬编码的红色像素环（外缘红内环实测 **`0`** px），提亮暖草坪；`MinimapFrame` 改圆角 `999` 透明外框消除方肩露边，圆环改暖灰金双环；`KillsPill` 换为柔暖灰白磨砂（`alpha=0.74` 保持点击反馈）；`_obj_pill` / `_obj_drawer` 同步切为灰蓝磨砂。
+  6. **左下技能栏与右下触屏 4 钮（`scripts/world.gd`、`scripts/touch_controls.gd`、`assets/ui/touch/btn_*.png`）**：4× 超采样重绘定稿级 5 张触屏按钮贴图（`btn_ult`、`btn_ult_charging` 亮紫 12 段光环、「必」；修复 `btn_interact` 缺角；无凹口饱满箭 `btn_jump`；三条流线风纹 `btn_dash`），关闭有贴图按钮 `StyleBoxFlat` 绘制消除黑边漏框；右下改为底排微弧横排三钮（`dash 88 → jump 96 → interact 118`）+ 右上悬 `ult 108`；左下底带改灰蓝胶囊、已学槽配 `6px` 亮金环、纯白圆角「1级」牌下移至 `(20, 118, 90, 30)` 避免压圈、锁格改灰蓝透明配 `4px` 银边框。
+- 导入与解析门：本机与 NUC 均执行 `--headless --import`，5 张触屏新贴图（含重绘后 `btn_dash` MD5 `2f098edd298d4f9547714300366942fc`）`source_md5` 两端逐一核验 `match=True`；`addons/` `.import` churn 已撤回。`Test/u1_reaudit_c2_parse.sh` 在 Godot 4.3 `--check-only` 全核心脚本 + `Test/phonehud.gd` 全部 `rc=0`。
+- NUC 官方双档 `s100` 验证批（`Test/u1_reaudit_c2_run.sh`，`Test/out/u1_reaudit_c2.done` `ALLDONE 2026-11-16T21:14:45+08:00`）：
+  - `2400×1080`：`rc=0`，`PHONEHUD DONE checks=1549 fails=0`；
+  - `2340×1080`：`rc=0`，`PHONEHUD DONE checks=1564 fails=0`；
+  - PIL 原始 PNG 区域测绘：`minimap_top_arc_red_px=0`，双档右下 4 钮包络与 Boss 红条、`1级` 牌、顶栏比例均已与定稿对齐；交互气泡与横幅底板属后续 `S23` 浮层单范围。
+- `compare` 重建与亲检：`design/ui-reference/compare/U1.png`（MD5 `9561223fdc8c1555603a9c68883d7539`）与 `design/ui-reference/compare/U1_boss.png`（MD5 `1bd6e274ab90405d15a0725e6169affd`）已以第 2 轮 `2340×1080` 原始实拍图重建并回传本地亲检。
+- 真机安装验证：已编译并覆盖安装 `E:/Projects/spritebonk-apk-build/build/android/SpriteBonk-u1c2-align.apk`（`com.spritebonk.game.align`，更新时间 `2026-11-16 21:48:38`）至 Seeker 测试机（`SM02G4061952376`）。
+- **状态：U1 复审第 1–2 轮双档全绿及比对验收完成；先补齐 U5 第 9 轮「缎带总宽与中心」唯一单项修复使 U5 正式签核过门，随后立即推进 U2 主菜单复审。**
+- 本轮提交：`assets/ui/touch/btn_*.png`、`scripts/ui_theme.gd`、`scripts/touch_controls.gd`、`scripts/ui_medallion.gd`、`scripts/minimap.gd`、`scripts/world.gd`、`Test/u1_reaudit_c1_run.sh`、`Test/u1_reaudit_c2_parse.sh`、`Test/u1_reaudit_c2_run.sh`、`design/ui-reference/compare/U1.png`、`design/ui-reference/compare/U1_boss.png`、`design/ui-alignment-progress.md`。

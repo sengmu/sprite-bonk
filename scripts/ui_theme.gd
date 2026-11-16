@@ -226,6 +226,23 @@ static func dark_glass(radius: int = 16, alpha: float = 0.92,
 	s.set_content_margin_all(margin)
 	return s
 
+## U1 1:1 定稿半透明灰蓝磨砂玻璃语言（顶栏胶囊、英雄背板、技能底带、目标卡共用），
+## 支持真半圆胶囊大圆角（传 radius 即可，不强制覆写下限）及细亮白灰内描边。
+static func hud_glass(radius: int = 24, alpha: float = 0.74,
+		border: Color = Color(0.88, 0.94, 1.0, 0.62), bw: int = 2,
+		margin: int = 14) -> StyleBoxFlat:
+	var s := StyleBoxFlat.new()
+	s.bg_color = Color(0.22, 0.28, 0.36, alpha)
+	s.set_corner_radius_all(radius)
+	if bw > 0:
+		s.set_border_width_all(bw)
+		s.border_color = border
+	s.shadow_size = 6
+	s.shadow_color = Color(0.04, 0.07, 0.12, 0.30)
+	s.shadow_offset = Vector2(0, 4)
+	s.set_content_margin_all(margin)
+	return s
+
 static func flat_box(bg: Color, radius: int, border: Color = Color(0, 0, 0, 0), bw: int = 0) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
 	s.bg_color = bg

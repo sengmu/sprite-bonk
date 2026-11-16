@@ -113,26 +113,26 @@ func _ready() -> void:
 	add_child(_knob)
 	_reset_stick_visual()
 	var f := UiTheme.body_font()
-	_build_button(f, "interact", "exclaim", 96, -120, -24, -148, -52,
+	# U1 1:1 复审第 2 轮：按实拍比例将右下 4 钮放大至定稿饱满尺寸并拉开呼吸间距
+	_build_button(f, "interact", "exclaim", 118, -145, -27, -140, -22,
 		Color(1, 0.85, 0.3, 0.20), Color(1, 0.85, 0.3, 0.85))
-	_build_button(f, "jump", "up", 80, -216, -136, -128, -48,
+	_build_button(f, "jump", "up", 96, -258, -162, -120, -24,
 		Color(1, 1, 1, 0.13), Color(1, 1, 1, 0.55))
-	_build_button(f, "dash", "wind", 80, -216, -136, -224, -144,
+	_build_button(f, "dash", "wind", 88, -364, -276, -106, -18,
 		Color(1, 1, 1, 0.13), Color(1, 1, 1, 0.55))
 	# U1 1:1 round 10: no lock button — see the header note.
 	_build_button(f, "aim", "target", 56, -118, -62, -384, -328,
 		Color(1, 1, 1, 0.13), Color(1, 1, 1, 0.55))
 	_build_button(f, "pause", "pause", 56, -118, -62, -452, -396,
 		Color(1, 1, 1, 0.13), Color(1, 1, 1, 0.55))
-	# The cluster ult gauge (tc-ultb): the same UltGauge the
-	# HUD uses, fed by World.set_ult_state pushes.
+	# 紫宝石「必」钮置于右下大橙交互钮正上方，与定稿一致
 	ult_gauge = UltGauge.new()
 	ult_gauge.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
-	ult_gauge.offset_left = -124
-	ult_gauge.offset_right = -40
-	ult_gauge.offset_top = -248
-	ult_gauge.offset_bottom = -164
-	ult_gauge.set_meta("base_off", Vector4(-124, -248, -40, -164))
+	ult_gauge.offset_left = -140
+	ult_gauge.offset_right = -32
+	ult_gauge.offset_top = -264
+	ult_gauge.offset_bottom = -156
+	ult_gauge.set_meta("base_off", Vector4(-140, -264, -32, -156))
 	ult_gauge.pressed.connect(func() -> void: ult_pressed.emit())
 	add_child(ult_gauge)
 	# Icon order 2: the touch gauge wears the shipped ult art —
@@ -415,6 +415,11 @@ func _build_button(font: Font, kind: String, icon: String, size: int,
 		art = _art_rect(art_path)
 		panel.add_child(art)
 		ic.visible = false
+		# 保留 StyleBoxFlat 的 bg_color.a 供 P1/P3 状态与按压反馈检查，
+		# 关闭底框与中心绘制，防止黑底圆边从美术贴图外缘漏出
+		sb.draw_center = false
+		sb.set_border_width_all(0)
+		sb.shadow_size = 0
 	area.gui_input.connect(_on_button_input.bind(kind))
 	add_child(area)
 	_buttons[kind] = {"area": area, "panel": panel,
@@ -447,7 +452,7 @@ func _on_button_input(event: InputEvent, kind: String) -> void:
 			_interact_fill_a() if kind == "interact" else 0.13
 		var art_u: TextureRect = _buttons[kind].get("art")
 		if art_u != null:
-			art_u.modulate.a = 0.45 if kind == "interact" and _interact_mode == 0 else 1.0
+			art_u.modulate.a = 0.72 if kind == "interact" and _interact_mode == 0 else 1.0
 
 func held(kind: String) -> bool:
 	return bool(_held.get(kind, false))
@@ -499,7 +504,7 @@ func set_interact_mode(m: int) -> void:
 		1.0 if pressed else _interact_fill_a())
 	sb.border_color = Color(INTERACT_BORDER.r, INTERACT_BORDER.g,
 		INTERACT_BORDER.b, 0.30 if m == 0 else INTERACT_BORDER.a)
-	(rec["icon"] as Control).modulate.a = 0.45 if m == 0 else 1.0
+	(rec["icon"] as Control).modulate.a = 0.72 if m == 0 else 1.0
 	(rec["panel"] as Panel).queue_redraw()
 
 func _interact_fill_a() -> float:

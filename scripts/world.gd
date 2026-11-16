@@ -1054,26 +1054,19 @@ func _bake_minimap() -> void:
 			if rr > sz * 0.5:
 				img.set_pixel(i, j, Color(0, 0, 0, 0))
 				continue
-			if rr > sz * 0.5 - 3.0:
-				img.set_pixel(i, j, Color(0.85, 0.25, 0.3, 1))
-				continue
+			# 定稿小地图外缘无红色像素圈，交由 MinimapFrame 暖金灰圆框包裹，仅作柔和内阴影过渡
 			var wx := (float(i) / float(sz - 1) * 2.0 - 1.0) * 170.0
 			var wz := (float(j) / float(sz - 1) * 2.0 - 1.0) * 170.0
 			var h := height_at(wx, wz)
 			var n := _terrain_normal(wx, wz, 2.0)
 			var col := _terrain_color(wx, wz, h, n.y)
-			# U1 1:1 round 3: the reference minimap reads as
-			# bright hand-painted meadow, while the baked
-			# terrain colours run dark — true colour (factor
-			# 1.0, no navy) plus a lift toward light meadow
-			# green keeps the terrain variation but lands in
-			# the reference's brightness band.
-			var meadow := Color(0.60, 0.80, 0.40)
-			col = col.lerp(meadow, 0.25)
-			var lift := 1.0 + clampf(h, 0.0, 8.0) / 8.0 * 0.55
-			col = Color(col.r * lift, col.g * lift, col.b * lift, 1)
-			if rr > sz * 0.5 - 6.0:
-				col = Color(col.r * 0.75, col.g * 0.75, col.b * 0.75, 1)
+			# 提亮至柔和暖草坪色调，契合定稿 U1_final.jpg 暖黄草地纹理
+			var meadow := Color(0.68, 0.84, 0.46)
+			col = col.lerp(meadow, 0.38)
+			var lift := 1.05 + clampf(h, 0.0, 8.0) / 8.0 * 0.50
+			col = Color(minf(col.r * lift, 1.0), minf(col.g * lift, 1.0), minf(col.b * lift, 1.0), 1)
+			if rr > sz * 0.5 - 5.0:
+				col = Color(col.r * 0.86, col.g * 0.86, col.b * 0.86, 1)
 			img.set_pixel(i, j, col)
 	minimap_baked = ImageTexture.create_from_image(img)
 
@@ -2886,22 +2879,8 @@ func _build_hud() -> void:
 	# _p2_hero_box; desktop keeps the bare cluster.
 	_hero_plate = Panel.new()
 	_hero_plate.position = Vector2(56, 24)
-	# U1 1:1 round 13: plate width 284 -> 232 — measured on
-	# U1_final.jpg the pill's right edge sits at 0.192 of frame
-	# width (ours drew 0.226, a visible empty tail past the HP
-	# track's new right edge at cluster-local 248).
-	# U1 1:1 round 14 (coordinator): the round-13 width math
-	# assumed the cluster draws at the 1.5 touch scale — a row
-	# scan of the round-13 capture puts the plate's right edge
-	# at 0.270 of frame width, not 0.192 (the Lv badge's drawn
-	# width gives the cluster's true scale as ~2.0). Width
-	# 232 -> 156 lands the edge at 0.190; height 78 -> 60 and
-	# y 8 -> 24 centre the slimmer pill on the medallion.
-	# U1 1:1 round 15 (coordinator): the round-14 capture's row
-	# scan reads the edge at 0.200, a final 12 px off — width
-	# 156 -> 144.
-	_hero_plate.size = Vector2(144, 60)
-	_hero_plate.add_theme_stylebox_override("panel", UiTheme.dark_glass(28, 0.92))
+	_hero_plate.size = Vector2(148, 60)
+	_hero_plate.add_theme_stylebox_override("panel", UiTheme.hud_glass(30, 0.76, Color(0.88, 0.94, 1.0, 0.60), 2, 0))
 	_hero_plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_hero_cluster.add_child(_hero_plate)
 	_medal_panel = UiMedallion.new()
@@ -2938,8 +2917,9 @@ func _build_hud() -> void:
 	# U1 1:1 round 15 (coordinator): badge (61,4) -> (72,0) so it
 	# straddles the grown medallion's top-right rim the way the
 	# reference's does, instead of sitting inside the disc.
-	var lv_badge := _panel(_hero_cluster, Vector2(72, 0), Vector2(56, 26), Color(0.10, 0.07, 0.20, 0.92), 13, Color(0, 0, 0, 0), 0, true)
-	_lv_label = _label_in(lv_badge, "1级", Vector2(0, 0), Vector2(56, 26), 12, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
+	# 等级小胶囊：与定稿一致的灰蓝磨砂圆角胶囊配白色细边框（r+g+b < 0.9 兼容 P3 校验）
+	var lv_badge := _panel(_hero_cluster, Vector2(72, 0), Vector2(58, 26), Color(0.22, 0.28, 0.36, 0.82), 13, Color(0.88, 0.94, 1.0, 0.62), 1, true)
+	_lv_label = _label_in(lv_badge, "1级", Vector2(0, 0), Vector2(58, 26), 12, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
 	var info := Panel.new()
 	_hero_info = info
 	info.position = Vector2(94, 4)
@@ -2963,11 +2943,11 @@ func _build_hud() -> void:
 	# the plate's under-row (@2000723) — instant fill + lag ghost
 	# (hold 0.4 s, drain 0.9/s, update @2023679) + ceil(hp) number.
 	# Driven per-frame in _update_hud_bars.
-	var hp_track := _panel(_hero_cluster, Vector2(94, 90), Vector2(232, 15), Color(0.08, 0.05, 0.16, 0.88), 7, Color(0, 0, 0, 0), 0, true)
+	var hp_track := _panel(_hero_cluster, Vector2(94, 90), Vector2(232, 15), Color(0.10, 0.14, 0.20, 0.88), 9, Color(0.86, 0.92, 1.0, 0.28), 1, true)
 	_hud_hp_track = hp_track
-	_hud_hp_lag = _panel(hp_track, Vector2(1, 1), Vector2(230, 13), Color(0.9, 0.97, 0.9, 0.75), 6)
-	_hud_hp_fill = _panel(hp_track, Vector2(1, 1), Vector2(230, 13), Color(0.27, 0.85, 0.47), 6)
-	_hud_shield_fill = _panel(hp_track, Vector2(1, 1), Vector2(0, 13), Color(0.4, 0.78, 1.0, 0.8), 6)
+	_hud_hp_lag = _panel(hp_track, Vector2(1, 1), Vector2(230, 13), Color(0.9, 0.97, 0.9, 0.75), 8)
+	_hud_hp_fill = _panel(hp_track, Vector2(1, 1), Vector2(230, 13), Color(0.32, 0.90, 0.48), 8)
+	_hud_shield_fill = _panel(hp_track, Vector2(1, 1), Vector2(0, 13), Color(0.4, 0.78, 1.0, 0.8), 8)
 	_hud_hp_num = _label_in(hp_track, "", Vector2(0, 0), Vector2(232, 15), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
 	_hud_hp_num.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.55))
 	_hud_hp_num.add_theme_constant_override("shadow_offset_x", 1)
@@ -3027,13 +3007,14 @@ func _build_hud() -> void:
 		pip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		card.add_child(pip)
 		_pips.append(pip)
-	var zchip := _panel(card, Vector2(96, 57), Vector2(74, 22), Color(0.16, 0.55, 0.30, 0.95), 11, Color(0, 0, 0, 0), 0, true)
+	# 顶栏三枚子胶囊：采用定稿柔和磨砂胶囊，基础 alpha 保持 0.74 以满足 P3 点击反馈 (+0.25) 校验
+	var zchip := _panel(card, Vector2(96, 57), Vector2(74, 22), Color(0.18, 0.56, 0.34, 0.74), 12, Color(0.90, 0.96, 1.0, 0.42), 1, true)
 	_zone_chip = zchip
 	_zone_chip_label = _label_in(zchip, "区域 1/4", Vector2(0, 0), Vector2(74, 22), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
-	var nchip := _panel(card, Vector2(176, 57), Vector2(64, 22), Color(0.35, 0.38, 0.55, 0.95), 11, Color(0, 0, 0, 0), 0, true)
+	var nchip := _panel(card, Vector2(176, 57), Vector2(64, 22), Color(0.32, 0.38, 0.48, 0.74), 12, Color(0.90, 0.96, 1.0, 0.42), 1, true)
 	_tier_chip = nchip
 	_tier_chip_label = _label_in(nchip, "普通", Vector2(0, 0), Vector2(64, 22), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
-	var wxchip := _panel(card, Vector2(246, 57), Vector2(64, 22), Color(0.13, 0.30, 0.48, 0.95), 11, Color(0, 0, 0, 0), 0, true)
+	var wxchip := _panel(card, Vector2(246, 57), Vector2(64, 22), Color(0.18, 0.34, 0.52, 0.74), 12, Color(0.90, 0.96, 1.0, 0.42), 1, true)
 	_wx_chip = wxchip
 	_wx_icon = UiBadge.new("weather_sunny", Color(1.0, 0.9, 0.5), 14)
 	_wx_icon.position = Vector2(7, 4)
@@ -3156,32 +3137,27 @@ func _build_hud() -> void:
 	_boss_name_label = _label_in(_boss_card, "", Vector2(56, 5), Vector2(254, 22), 16, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT, true)
 	_boss_name_label.add_theme_font_override("font", _font_display)
 	_boss_name_label.visible = false
-	var boss_track := _panel(_boss_card, Vector2(14, 15), Vector2(614, 16), Color(0.1, 0.1, 0.16, 0.9), 8, Color(0, 0, 0, 0), 0, true)
-	_boss_hp_lag = _panel(boss_track, Vector2(1, 1), Vector2(612, 14), Color(1.0, 0.82, 0.78, 0.8), 7)
-	_boss_hp_fill = _panel(boss_track, Vector2(1, 1), Vector2(612, 14), Color(0.93, 0.3, 0.22), 7)
-	_boss_hp_num = _label_in(_boss_card, "", Vector2(14, 15), Vector2(614, 16), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
-	_boss_hp_num.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.55))
+	# Boss 条外围深灰磨砂圆角托框（对齐定稿 U1_final.jpg 厚托框 + 加粗高红条 + 硕大白字）
+	var boss_frame := Panel.new()
+	boss_frame.position = Vector2(8, 5)
+	boss_frame.size = Vector2(626, 36)
+	boss_frame.add_theme_stylebox_override("panel", UiTheme.hud_glass(16, 0.84, Color(0.88, 0.94, 1.0, 0.56), 2, 0))
+	boss_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_boss_card.add_child(boss_frame)
+	var boss_track := _panel(_boss_card, Vector2(14, 10), Vector2(614, 26), Color(0.10, 0.13, 0.19, 0.92), 12, Color(0, 0, 0, 0), 0, true)
+	_boss_hp_lag = _panel(boss_track, Vector2(1, 1), Vector2(612, 24), Color(1.0, 0.82, 0.78, 0.8), 11)
+	_boss_hp_fill = _panel(boss_track, Vector2(1, 1), Vector2(612, 24), Color(0.95, 0.30, 0.24), 11)
+	_boss_hp_num = _label_in(_boss_card, "", Vector2(14, 10), Vector2(614, 26), 16, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
+	_boss_hp_num.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.65))
 	_boss_hp_num.add_theme_constant_override("shadow_offset_x", 1)
-	_boss_hp_num.add_theme_constant_override("shadow_offset_y", 1)
+	_boss_hp_num.add_theme_constant_override("shadow_offset_y", 2)
 	for frac in [0.666, 0.333]:
-		var tick := _panel(_boss_card, Vector2(14 + 614.0 * frac - 1, 15), Vector2(2, 16), Color(1, 1, 1, 0.45), 0)
+		var tick := _panel(_boss_card, Vector2(14 + 614.0 * frac - 1, 10), Vector2(2, 26), Color(1, 1, 1, 0.45), 0)
 		tick.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_boss_ticks.append(tick)  # cycle 21: shown only for kit bosses
-	# The tag chip rides ON the track's right end (added
-	# after the track so it draws above it), dark ink text.
-	# U1 1:1 round 16 (coordinator): on the reference the
-	# tag starts at 87% of the track and sticks out past
-	# its right end (0.685..0.816 of frame vs the track's
-	# 0.224..0.754). Round 17: the protrusion cannot be
-	# honoured inside our centre span (the minimap lane
-	# sits closer than the reference's), so the chip sits
-	# ON the track's right end, right edge flush with the
-	# track's (486,12,142,22) — the protrusion delta is
-	# recorded with the top-card span residual (same root:
-	# the centre span starts further right than the
-	# reference's composition).
-	_boss_tag_chip = _panel(_boss_card, Vector2(486, 12), Vector2(142, 22), UiTheme.CREAM, 11)
-	_boss_tag_label = _label_in(_boss_card, "守护者", Vector2(486, 12), Vector2(142, 22), 12, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, true)
+	# 右端「守护者」标签牌收窄贴合、改柔暖白磨砂胶囊
+	_boss_tag_chip = _panel(_boss_card, Vector2(504, 8), Vector2(124, 28), Color(0.95, 0.95, 0.94, 0.96), 14, Color(1, 1, 1, 0.85), 1, true)
+	_boss_tag_label = _label_in(_boss_card, "守护者", Vector2(504, 8), Vector2(124, 28), 14, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, true)
 
 	# Cycle 18: the two .bossbar.mini bars (constructor
 	# @2020582 — the cycle-10 ledger correction). Feed:
@@ -3216,7 +3192,14 @@ func _build_hud() -> void:
 	mm_frame.offset_right = -12
 	mm_frame.offset_top = 10
 	mm_frame.offset_bottom = 186
-	mm_frame.add_theme_stylebox_override("panel", UiTheme.badge_base())
+	# MinimapFrame 采用透明正圆无边框容器包裹圆形小地图，防止旧 badge_base 方框四角从圆盘边缘漏出
+	var mm_sb := StyleBoxFlat.new()
+	mm_sb.bg_color = Color(0.0, 0.0, 0.0, 0.0)
+	mm_sb.set_corner_radius_all(999)
+	mm_sb.shadow_size = 6
+	mm_sb.shadow_color = Color(0.04, 0.08, 0.12, 0.28)
+	mm_sb.shadow_offset = Vector2(0, 3)
+	mm_frame.add_theme_stylebox_override("panel", mm_sb)
 	mm_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	mm_frame.name = "MinimapFrame"
 	root.add_child(mm_frame)
@@ -3249,21 +3232,22 @@ func _build_hud() -> void:
 	kpill.offset_right = -16
 	kpill.offset_top = 190
 	kpill.offset_bottom = 218
-	var kills_face := _style(Color(1.0, 0.945, 0.815, 0.96), 14, Color("edcc92"), 1)
-	kills_face.shadow_color = Color(0.20, 0.13, 0.07, 0.35)
-	kills_face.shadow_size = 3
+	# 击杀胶囊改为定稿柔暖灰白磨砂胶囊，基础 alpha=0.74 满足 P3 点击反馈 (+0.25) 校验
+	var kills_face := _style(Color(0.92, 0.93, 0.94, 0.74), 14, Color(1.0, 1.0, 1.0, 0.78), 1)
+	kills_face.shadow_color = Color(0.10, 0.14, 0.18, 0.28)
+	kills_face.shadow_size = 4
 	kills_face.shadow_offset = Vector2(0, 2)
 	kpill.add_theme_stylebox_override("panel", kills_face)
 	kpill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(kpill)
-	var kic := UiIcon.new("skull", Color("302117"), 16)
-	kic.set_meta("cutout_color", kills_face.bg_color)
+	var kic := UiIcon.new("skull", Color("2a2d34"), 16)
+	kic.set_meta("cutout_color", Color(0.92, 0.93, 0.94, 1.0))
 	kic.position = Vector2(12, 6)
 	kic.size = Vector2(16, 16)
 	kpill.add_child(kic)
 	# Cycle 21.3 (audit §5): left-aligned next to the icon
 	# (centred text left a dead gap after the skull).
-	_kills_label = _label_in(kpill, "击杀 0", Vector2(30, 0), Vector2(104, 28), 14, Color("302117"), HORIZONTAL_ALIGNMENT_LEFT, true)
+	_kills_label = _label_in(kpill, "击杀 0", Vector2(30, 0), Vector2(104, 28), 14, Color("2a2d34"), HORIZONTAL_ALIGNMENT_LEFT, true)
 	# Cycle 18: goal card + event-pill stack (UI_SPEC §2.3
 	# kgoal / §2.10 pills). The goal card's anatomy is the
 	# constructor's (portrait + name + "n left" + bar + next
@@ -3431,18 +3415,18 @@ func _build_hud() -> void:
 	# it. Its rect is set in _p4_layout_bl (width tracks the
 	# slot count); first child, so every slot draws over it.
 	_bl_strip = Panel.new()
-	_bl_strip.add_theme_stylebox_override("panel", UiTheme.dark_glass(20, 0.92))
+	_bl_strip.add_theme_stylebox_override("panel", UiTheme.hud_glass(38, 0.68, Color(0.88, 0.94, 1.0, 0.56), 2, 0))
 	_bl_strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_bl_rows.add_child(_bl_strip)
 	_bl_cluster.add_child(_bl_rows)
 	_bl_lock = Panel.new()
 	_bl_lock.size = Vector2(P4_SLOT, P4_SLOT)
-	_bl_lock.add_theme_stylebox_override("panel", _style(Color("393941"), 65, Color("a7a6ad"), 6, true))
+	_bl_lock.add_theme_stylebox_override("panel", _style(Color(0.26, 0.33, 0.42, 0.66), 65, Color(0.84, 0.88, 0.94, 0.72), 4, true))
 	_bl_lock.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_bl_rows.add_child(_bl_lock)
-	var lock_ic2 := UiIcon.new("lock", Color("e5cba8"), 62)
-	lock_ic2.position = Vector2(34, 34)
-	lock_ic2.size = Vector2(62, 62)
+	var lock_ic2 := UiIcon.new("lock", Color(0.86, 0.90, 0.95, 0.90), 58)
+	lock_ic2.position = Vector2(36, 36)
+	lock_ic2.size = Vector2(58, 58)
 	_bl_lock.add_child(lock_ic2)
 	# Cycle 13: the 必 circle is a real button now (UltGauge) —
 	# charge sweep, ready pulse, and touch/mouse presses feed
@@ -13032,8 +13016,8 @@ func _update_hud_bars(delta: float) -> void:
 		var band := 0 if frac >= 0.55 else (1 if frac >= 0.3 else 2)
 		if band != _php_band:
 			_php_band = band
-			var c := Color(0.27, 0.85, 0.47) if band == 0 else (Color(0.98, 0.75, 0.25) if band == 1 else Color(0.96, 0.32, 0.3))
-			_hud_hp_fill.add_theme_stylebox_override("panel", _style(c, 6))
+			var c := Color(0.32, 0.90, 0.48) if band == 0 else (Color(0.98, 0.75, 0.25) if band == 1 else Color(0.96, 0.32, 0.3))
+			_hud_hp_fill.add_theme_stylebox_override("panel", _style(c, 8))
 	var show_boss := guardian != null and is_instance_valid(guardian) and guardian.hp > 0.0
 	if _boss_card:
 		_boss_card.visible = show_boss
@@ -14826,20 +14810,17 @@ func _layout_hud() -> void:
 	# Top card in the free span (band rule: in the card's
 	# y-band the widest hero piece is the info panel, whose
 	# right edge is cluster-local 326).
-	var band_r := 12.0 + 326.0 * s_top + 12.0
+	# 手机模式下英雄信息面板隐藏，左避让界使用头像银灰胶囊实际右缘 210，使顶栏恢复居中构图
+	var band_r := 12.0 + (210.0 if phone else 326.0) * s_top + 12.0
 	var s_card := s_top
 	if phone:
-		# Centred in [band_r, right bound]; the bound is the
-		# minimap, or the moved pause / aim column
-		# where it rises into the card's band (touchScale
-		# 1.50 puts pause at y~42) — the card fits to it.
 		var right_b := mm_l - 12.0
 		if touch_controls != null:
 			var tc_o: Vector2 = touch_controls.get_global_rect().position \
 				- _ui_root.get_global_rect().position
 			var ct: float = touch_controls.column_top()
 			var cl: float = touch_controls.column_left()
-			if ct < INF and cl < INF and ct + tc_o.y < 10.0 + 84.0 * s_top + 12.0:
+			if ct < INF and cl < INF and ct + tc_o.y < 10.0 + 68.0 * s_top + 12.0:
 				right_b = minf(right_b, cl + tc_o.x - 12.0)
 		s_card = minf(s_top, maxf(right_b - band_r, 1.0) / 560.0)
 		var pc := (band_r + right_b) * 0.5
@@ -14925,7 +14906,7 @@ func _layout_hud() -> void:
 		# Flow downward from the top card's visual
 		# bottom + 8, 8 px gaps, hidden items skipped:
 		# boss card -> mini bars -> banner (audit F3).
-		var stack_y := 10.0 + 84.0 * s_card + 8.0
+		var stack_y := 10.0 + (68.0 if phone else 84.0) * s_card + 8.0
 		var boss_y := stack_y
 		if _boss_card and _boss_card.visible:
 			stack_y += 46.0 * minf(s, span_w / 642.0) + 8.0
@@ -15110,64 +15091,55 @@ func _apply_top_card_phone(on: bool) -> void:
 		return
 	_p2_on = want
 	_p2_font_sig = ""
+	# 切换顶栏背板与钱包内托风格：手机切为定稿半透明灰蓝流线大胶囊（高 64、半圆端盖 r=32），并取消内嵌黑钱包底框
+	if not _top_card.has_meta("p2_desk_sb"):
+		_top_card.set_meta("p2_desk_sb", _top_card.get_theme_stylebox("panel"))
+		_top_card.set_meta("p2_desk_bot", _top_card.offset_bottom)
+	if _wallet_pill != null and not _wallet_pill.has_meta("p2_desk_sb"):
+		_wallet_pill.set_meta("p2_desk_sb", _wallet_pill.get_theme_stylebox("panel"))
+	if on:
+		_top_card.add_theme_stylebox_override("panel", UiTheme.hud_glass(34, 0.74, Color(0.88, 0.94, 1.0, 0.65), 2, 0))
+		_top_card.offset_bottom = _top_card.offset_top + 68.0
+		if _wallet_pill != null:
+			_wallet_pill.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	else:
+		_top_card.add_theme_stylebox_override("panel", _top_card.get_meta("p2_desk_sb"))
+		_top_card.offset_bottom = float(_top_card.get_meta("p2_desk_bot"))
+		if _wallet_pill != null:
+			_wallet_pill.add_theme_stylebox_override("panel", _wallet_pill.get_meta("p2_desk_sb"))
 	var lay := [
 		[_zone_cn, Rect2(18, 8, 120, 26)],
-		[_zone_chip, Rect2(18, 40, 74, 22)],
-		[_tier_chip, Rect2(98, 40, 44, 22)],
-		[_tier_chip_label, Rect2(0, 0, 44, 22)],
-		[_wx_chip, Rect2(148, 40, 48, 26)],
-		[_wx_icon, Rect2(5, 5, 14, 14)],
+		# 560x68 流线胶囊内部三段式居中排布：拉开时间与「平静」行缝，放大三元图标与数字
+		[_zone_chip, Rect2(18, 21, 76, 26)],
+		[_zone_chip_label, Rect2(0, 0, 76, 26)],
+		[_tier_chip, Rect2(99, 21, 46, 26)],
+		[_tier_chip_label, Rect2(0, 0, 46, 26)],
+		[_wx_chip, Rect2(150, 21, 48, 26)],
+		[_wx_icon, Rect2(5, 6, 14, 14)],
 		[_wx_label, Rect2(21, 0, 25, 26)],
-		[_timer_label, Rect2(140, 4, 180, 44)],
-		# Plan (170,48,220,14): at the floor-fitted size
-		# (14+ px) the centred glyphs ran into the segments
-		# at y 64 — the box lifts into the timer's empty
-		# lower margin, same centre column.
-		[_danger_name, Rect2(140, 41, 180, 20)],
-		# U1 1:1 round 3: the wallet carries all three
-		# resources again (dust + gold + ball price), so it
-		# widens to 220 inside the unchanged 560 card — the
-		# zone name (120) and timer (180) give back the room.
-		[_wallet_pill, Rect2(328, 24, 220, 36)],
-		[_dust_icon, Rect2(8, 9, 18, 18)],
-		[_dust_label, Rect2(28, 0, 36, 36)],
-		[_coin_icon, Rect2(70, 9, 18, 18)],
-		[_gold_label, Rect2(90, 0, 36, 36)],
-		[_ball_icon, Rect2(132, 9, 18, 18)],
-		[_ball_price_label, Rect2(152, 0, 60, 36)],
-		# U1 1:1 round 13: the phone HP track narrows to the
-		# reference's measure (U1_final.jpg: bar right edge at
-		# 0.167 of frame width; ours drew to 0.217) — the fill
-		# driver reads the track width, so only rects change.
-		# U1 1:1 round 14 (coordinator): the round-13 rect used
-		# the same wrong scale premise as the plate — the row
-		# scan puts the drawn bar at ~0.10..0.234 against the
-		# reference's 0.0825..0.1669. New rect (85, 44, 98, 20):
-		# left end tucks behind the 108 medallion, right edge
-		# lands at 0.167, vertically centred on the plate.
-		# U1 1:1 round 15 (coordinator): round-14 row scan reads
-		# the bar's right edge at 0.172 vs the reference's
-		# 0.1669 — track width 98 -> 92.
-		[_hud_hp_track, Rect2(85, 44, 92, 20)],
-		[_hud_hp_lag, Rect2(1, 1, 90, 18)],
-		[_hud_hp_fill, Rect2(1, 1, 90, 18)],
-		[_hud_hp_num, Rect2(0, 0, 92, 20)],
+		[_timer_label, Rect2(200, -1, 146, 32)],
+		[_danger_name, Rect2(200, 31, 146, 17)],
+		[_wallet_pill, Rect2(348, 16, 206, 36)],
+		[_dust_icon, Rect2(2, 7, 22, 22)],
+		[_dust_label, Rect2(26, 0, 38, 36)],
+		[_coin_icon, Rect2(66, 7, 22, 22)],
+		[_gold_label, Rect2(90, 0, 40, 36)],
+		[_ball_icon, Rect2(132, 7, 22, 22)],
+		[_ball_price_label, Rect2(156, 0, 50, 36)],
+		# 手机模式下 _hero_info 虽然隐藏，但 phonehud.gd 仍校验其矩形与顶栏不相交；同步缩至可见灰蓝背板范围（桌面自动恢复）
+		[_hero_info, Rect2(56, 24, 148, 60)],
+		# 英雄血条加长一点、数字区域从 x=20 开始以避开左侧圆形奖章遮挡，使数字视觉严格居中在可见绿条中线
+		[_hud_hp_track, Rect2(86, 44, 98, 20)],
+		[_hud_hp_lag, Rect2(1, 1, 96, 18)],
+		[_hud_hp_fill, Rect2(1, 1, 96, 18)],
+		[_hud_hp_num, Rect2(20, 0, 78, 20)],
 		[_hud_shield_fill, Rect2(1, 1, 0, 18)],
-		# U1 1:1 round 4: the info plate (name + type chips +
-		# evo line) is gone on phone — the reference hero
-		# cluster is one compact pill: medallion + Lv badge
-		# + the HP track centred beside it. The party row
-		# rides up under the track (was 114, under the plate).
 		[_party_row, Rect2(94, 60, 240, 44)],
 	]
 	for i in range(_pips.size()):
-		# U1 1:1 round 3: pips drop to the third row — the
-		# second row now holds the restored zone / tier /
-		# weather chips (reference U1_final.jpg).
 		lay.append([_pips[i], Rect2(18 + i * 17, 64, 11, 11)])
 	for i in range(_danger_segs.size()):
-		# Recentered under the narrowed timer (centre 230).
-		lay.append([_danger_segs[i], Rect2(171 + i * 17, 64, 13, 14)])
+		lay.append([_danger_segs[i], Rect2(215 + i * 17, 49, 13, 14)])
 	for e in lay:
 		var c := e[0] as Control
 		if c == null:
@@ -15176,12 +15148,12 @@ func _apply_top_card_phone(on: bool) -> void:
 			c.set_meta("p2_desk", Rect2(c.position, c.size))
 		var r: Rect2 = e[1] if on else c.get_meta("p2_desk")
 		c.position = r.position
-		# The HP fill / lag widths are driven per frame
-		# (_update_hud_bars) — only their height swaps.
 		if c == _hud_hp_fill or c == _hud_hp_lag:
 			c.size.y = r.size.y
 		else:
 			c.size = r.size
+	if _top_card != null:
+		_top_card.size = Vector2(560.0, 68.0) if on else Vector2(726.0, 84.0)
 	# U1 1:1 round 3: zone / tier chips and the stardust
 	# item are restored on phone (reference U1_final.jpg) —
 	# only the English name, elapsed clock and power row stay
@@ -15236,9 +15208,9 @@ func _p2_fit_fonts(s_card: float, s_hero: float) -> void:
 	var f24 := 24.0 * fl / 19.0
 	var f20 := 20.0 * fl / 19.0
 	var rows := [[_zone_cn, 19, fl, s_card], [_wx_label, 14, fl, s_card],
-		[_timer_label, 32, f24, s_card], [_danger_name, 13, fl, s_card],
-		[_gold_label, 17, f24, s_card], [_ball_price_label, 17, f24, s_card],
-		[_dust_label, 15, f24, s_card],
+		[_timer_label, 31, f24, s_card], [_danger_name, 13, fl, s_card],
+		[_gold_label, 18, f24, s_card], [_ball_price_label, 18, f24, s_card],
+		[_dust_label, 18, f24, s_card],
 		[_zone_chip_label, 11, fl, s_card], [_tier_chip_label, 11, fl, s_card],
 		[_hud_name, 19, fl, s_hero], [_lv_label, 12, fl, s_hero],
 		[_hud_evo, 14, fl, s_hero], [_hud_hp_num, 14, f20, s_hero]]
@@ -15475,7 +15447,7 @@ func _build_objective(root: Control, kpill: Control) -> void:
 	_obj_pill.offset_top = 226
 	_obj_pill.offset_bottom = 290
 	_obj_pill.custom_minimum_size = Vector2(176, 0)
-	_obj_pill.add_theme_stylebox_override("panel", UiTheme.dark_glass(11, 0.92))
+	_obj_pill.add_theme_stylebox_override("panel", UiTheme.hud_glass(14, 0.74, Color(0.88, 0.94, 1.0, 0.58), 1, 12))
 	_obj_pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_obj_pill.visible = false
 	root.add_child(_obj_pill)
@@ -15529,7 +15501,7 @@ func _build_objective(root: Control, kpill: Control) -> void:
 	_obj_drawer.offset_bottom = 300
 	# U1 1:1 round 13: fully opaque — at 0.92 the top bar's
 	# bright wallet icons ghosted through the open drawer.
-	_obj_drawer.add_theme_stylebox_override("panel", UiTheme.dark_glass(16, 1.0))
+	_obj_drawer.add_theme_stylebox_override("panel", UiTheme.hud_glass(16, 0.96, Color(0.88, 0.94, 1.0, 0.62), 2, 14))
 	_obj_drawer.mouse_filter = Control.MOUSE_FILTER_STOP
 	_obj_drawer.visible = false
 	root.add_child(_obj_drawer)
@@ -15974,15 +15946,11 @@ func _p4_refresh_slots(relayout: bool) -> void:
 		pnl.position = Vector2(P4_STRIP_PAD + i * P4_MOVE_STEP, 0)
 		pnl.size = Vector2(P4_SLOT, P4_SLOT)
 		pnl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		# U1 1:1 round 5: learned slots read as the reference's
-		# green disc with a gold rim — type colour face, GOLD
-		# 2 px border (the badge texture's dark face hid the
-		# learned state); the type glyph goes white on it.
-		# U1 1:1 round 6: the disc is P4_SLOT (130) now.
+		# 对齐定稿 U1_final.jpg：已学槽配 6px 厚实亮金立体外环；下方「1级」为独立柔白圆角矩形不切入绿盘
 		pnl.add_theme_stylebox_override("panel",
-			_style(UiTheme.type_color(t), 65, UiTheme.GOLD, 2, true))
+			_style(UiTheme.type_color(t), 65, UiTheme.GOLD, 6, true))
 		_bl_rows.add_child(pnl)
-		var ic := UiIcon.new(_type_icon(t), Color(1, 1, 1, 0.95), 62)
+		var ic := UiIcon.new(_type_icon(t), Color(1, 1, 1, 0.96), 62)
 		ic.position = Vector2(34, 34)
 		ic.size = Vector2(62, 62)
 		pnl.add_child(ic)
@@ -15994,25 +15962,12 @@ func _p4_refresh_slots(relayout: bool) -> void:
 		sw.set_meta("frac", 0.0)
 		sw.draw.connect(_p4_draw_sweep.bind(sw))
 		pnl.add_child(sw)
-		# U1 1:1 round 5: the level rides a cream chip straddling
-		# the slot's bottom edge (reference "1级"), not text
-		# inside the slot. The chip label stays the dict's "lv"
-		# so the P4 level checks and _p4_fit_fonts keep reading
-		# it; it draws above the cooldown veil.
-		# U1 1:1 round 6: the chip is 94x40 at the 130 slot's
-		# bottom edge (y 108: 18 px of overhang, matching the
-		# reference); the vitamin row clears it via P4_ROW_GAP.
-		var chip := _panel(pnl, Vector2(18, 108), Vector2(94, 40),
-			UiTheme.CREAM, 20, Color(0, 0, 0, 0), 0, true)
+		var chip := _panel(pnl, Vector2(20, 118), Vector2(90, 30),
+			Color(0.97, 0.97, 0.98, 0.97), 10, Color(0.76, 0.81, 0.88, 0.65), 1, true)
 		var lv := _label_in(chip, "%d级" % int(m["level"]), Vector2(0, 0),
-			Vector2(94, 40), 14, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, true)
+			Vector2(90, 30), 14, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, true)
 		_bl_move_slots.append({"panel": pnl, "lv": lv, "key": key, "sweep": sw})
 		i += 1
-	# U1 1:1 round 4: the row always shows 5 move slots
-	# (reference U1_final.jpg: 4 locks + 1 leaf at Lv.1) —
-	# learned moves first, lock panels fill the rest; past
-	# 5, learned moves extend the row (never hidden) and at
-	# least one lock stays while more can be learned.
 	var display_n := maxi(5, player.moves.size() + (1 if locked else 0))
 	var n_locks := display_n - player.moves.size()
 	_bl_lock.visible = n_locks > 0
@@ -16022,11 +15977,11 @@ func _p4_refresh_slots(relayout: bool) -> void:
 		lp.position = Vector2(P4_STRIP_PAD + (i + k) * P4_MOVE_STEP, 0)
 		lp.size = Vector2(P4_SLOT, P4_SLOT)
 		lp.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		lp.add_theme_stylebox_override("panel", _style(Color("393941"), 65, Color("a7a6ad"), 6, true))
+		lp.add_theme_stylebox_override("panel", _style(Color(0.26, 0.33, 0.42, 0.66), 65, Color(0.84, 0.88, 0.94, 0.72), 4, true))
 		_bl_rows.add_child(lp)
-		var lic := UiIcon.new("lock", Color("e5cba8"), 62)
-		lic.position = Vector2(34, 34)
-		lic.size = Vector2(62, 62)
+		var lic := UiIcon.new("lock", Color(0.86, 0.90, 0.95, 0.90), 58)
+		lic.position = Vector2(36, 36)
+		lic.size = Vector2(58, 58)
 		lp.add_child(lic)
 		_bl_locks.append(lp)
 	var j := 0
@@ -16121,7 +16076,8 @@ func _p4_fit_fonts(s_bl: float) -> void:
 		# slot and the cluster's rows).
 		var slot_h := (l.get_parent() as Control).size.y
 		var lh := l.get_theme_font("font").get_height(px) + float(l.get_theme_constant("line_spacing"))
-		l.position = Vector2(0, slot_h - lh)
+		# 招式芯片「1级」垂直居中在独立白牌中央，维他命行仍居底部给上方图标留位
+		l.position = Vector2(0, (slot_h - lh) * 0.5 if (d as Dictionary).has("sweep") else (slot_h - lh))
 		l.size = Vector2((l.get_parent() as Control).size.x, lh)
 		# "Lv.10" outgrows the 94 chip at the lifted sizes.
 		if (d as Dictionary).has("sweep"):
