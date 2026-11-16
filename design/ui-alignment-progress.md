@@ -1399,3 +1399,14 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 第六轮派单 `.tmp/u5_reaudit_codex6_brief.md`（worker 13:1x 拟稿、主控已审：三星 gold-mask 法目标 9.7±0.4%H、缎带带高 9.9±0.6%H、钮纵向端点、值 pill 渐变落差、行分隔线峰 ≤75、金币内形交叠去竖条；含各向异性拟合警告、按钮纹理全局共用警告、纹理 --import＋source_md5 纪律）已派 Codex 池，日志 `.tmp/u5_reaudit_codex6.log`。
 - 主控审稿结论：六处处方与 12:3x 方向一致；三星量法已统一为新 gold-mask 法（旧法 10.20 不得混用）；按钮纹理为全局共用，s100 批为回归网、交付须单列其他屏按钮异常；汇总字号不得碰。
 - **下一轮只监看，不重派**：交付落地后走 parse 门（world.gd＋ui_icon.gd＋ui_theme.gd）→纹理 --import＋source_md5 核验→双档 s100 批→同法复测→重建 compare→亲检再议签核。U5 未关闭；U1 复审仍不开。
+
+## U5 复审第六轮：派单未执行、会话 34 秒即结束（2026-11-16 14:1x 轮，worker 监看）
+
+- 防撞核查：NUC 无在跑批次——最新 .done 仍为 u5_reaudit_c5.done（ALLDONE 12:03:08，双档 1549/0）；锚定 pgrep 无 Godot 在跑；无 u5_reaudit_c6.done、无 c6 批脚本。本机亦无 codex 进程在跑。
+- 第六轮派单会话已结束、未交付：Codex 池 acct3，会话 01a1e2d6-8980-71c2-b5a0-3d7c2c4966ec，13:31:20–13:31:54（仅 34 秒、输出 779 tokens、task_complete），rollout 在 acct3 home；日志 `.tmp/u5_reaudit_codex6.log`（141 行、17828 字节，末写 13:31）。池子先试 acct2（05:31:02 起另一 rollout，额度已用完）后换 acct3。
+- 未执行根因：会话把派单简报当作待审草稿、只做审稿未施工——简报正文头仍写「worker 拟稿，2026-11-16 13:1x，待主控审后派 Codex 池」，文末仍有「派单权在主控：本稿为 worker 拟稿，须主控审后派 Codex 池；本轮不派、不代跑」，模型据此自限为「只做派单前审稿，不改文件、不派单、不跑验证批」。另开场有 models 刷新超时 ERROR 一行（05:31:18Z），疑为瞬时、可忽略。
+- 本地树零交付：scripts/world.gd、ui_icon.gd、ui_theme.gd mtime 仍为 12:28（第五轮同步态），git status scripts/ 干净；无 `.tmp/u5_reaudit_codex6_changes.md`、无 c6 实拍、无 c6 批。**NUC 树 HEAD 仍为 bed176b（派单台账提交），无代码变动。**
+- 会话留下的六条审稿建议（在 `.tmp/u5_reaudit_codex6.log` 末段，主控再派前可酌）：①「保持几何」须列例外（①②⑥允许局部形状／落点调整、其余冻结、汇总字号绝对冻结）；②三星入带量以本轮实拍缎带顶为基准、三星分别报告；③ star_filled／star_empty／ribbon_green 共享引用须先列点、明确允许变化或改 P5 专属；④金币外框加可见轮廓保持约束（右枚先画、左枚后画，左压右）；⑤分隔线「四处目标峰 ≤75、其余杂峰 ≤50」，pill 固定五采样点、四行及汇总分别报告；⑥导入交付改「实际改动纹理的 .import sidecar＋source_md5 核验」，NUC 导入成功＋缓存更新为开批前置门；另「五项→六处」统一称六项处方。
+- 本轮不重派（派单权在主控）、不改简报、不改树、不起批。断点不变：待主控裁定六条建议是否入简报 → 修简报头尾（去「待审／不派」字样、改为执行指令）→ 重派 Codex 池（新日志）→ 交付落盘后 parse 门 → 纹理 --import＋source_md5 核验 → Test/u5_reaudit_c6_run.sh（待建，沿 c5 式）双档 s100 → 同法复测（c6 量法脚本）→ 重建 compare/U5.png 与 U5_2400.png（标签 u5_reaudit_c6）→ 亲检再议签核；U5 未关闭；U1 复审仍不开。Notion 对齐单未动。
+- 另核：同日 06:05Z 的 acct 默认 home rollout（01a1e2f5，html5-platform/war3-def）为剑阁 Boss 伤害门修复线、task_complete 06:07，与 U5 无关。
+- 本轮提交：本节台账。
