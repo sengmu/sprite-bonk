@@ -1264,3 +1264,17 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 
 - 第三轮验收未过关闭门（批 ALLDONE 02:58:10，2ede84f，双档 1564/0）：十项中八项落定；残差两项＝汇总 pill 过宽（x 23.12..74.23%W、边距仅 0.56%W，定稿边距约 2.7%W）与汇总金币图标偏小（币面高 2.78 vs 定稿 3.61%H）。
 - 第四轮派单 `.tmp/u5_reaudit_codex4_brief.md`（worker 03:35 拟稿、主控已审：仅两项——汇总 pill 横向 inset 每侧约 2.1%W、result_coins 约 48 设计 px；含 scan2 量法警示与纹理族范围外说明）已派 Codex 池，日志 `.tmp/u5_reaudit_codex4.log`。**下一轮只监看，不重派**：交付落地后走 parse 门→双档 s100 批→同法复测→重建 compare→亲检再议签核。U5 未关闭；U1 复审仍不开。
+
+## U5 复审 Codex 第四轮已交付、会话中途结束（2026-11-16 08:2x 轮，worker）
+
+- 防撞核查：NUC 无在跑批次——最新 .done 仍为 u5_reaudit_c3.done（ALLDONE 02:58:10）；锚定 pgrep（argv0 `^[^ ]*/Godot_v4`）无 Godot 在跑；无 u5_reaudit_c4.done。本地亦无 Godot 在跑。
+- 第四轮会话：Codex 池 acct5，会话 01a1e180-b997-7413-997c-33b6a8ee933c，07:18:05–07:27:28 CST（rollout 最后写盘 07:27:28，约 9.5 分钟）。**会话中途结束**：最后事件为 45 秒 sleep 轮询（07:27:27 留言「2400 档已到解锁面板，累计 57 项通过，尚无 FAIL」），其后无最终留言、无 task_complete、无 changes.md；`.tmp/u5_reaudit_codex4.log` 0 字节（与第三轮同型）。结束原因未明（非正常收尾），待主控核实。
+- 交付已落本地树：仅 `M scripts/world.gd`（13+/2-，diff 已存 `.tmp/u5_reaudit_codex4_world.diff`，另存全份 `.tmp/u5_reaudit_codex4_world.gd`，md5 90f6c597…）。与派单两项逐项对上：
+  - ① 汇总 pill：P5 专属 MarginContainer，margin_left/right 各 34 设计 px（y 带不动、三段内部布局不动）；另按派单「得分段右锚」把 part==2 的 segment.alignment 由 CENTER 改 END（星段仍左锚）。
+  - ② result_coins：38→48 设计 px（星不动、汇总字不动）。
+  - 注意：派单正文写「≈17 设计 px」，代码用 34 设计 px——代码注释称 34 设计 px ≈ 每侧 2.1%W（电话 fit 尺度）；验收以 %W 为准（目标 pill x ≈25.1..72.2%W、边距 2.5–2.9%W），复测时以实测值裁定，17 与 34 之差留主控核对 diff 时定性。
+- Parse 门（会话自带 `.tmp/u5_c4_verify.sh`，本机跑）：world.gd rc=0、ui_icon.gd rc=0；两日志 0 条 SCRIPT ERROR（仅 GDExtension load_extensions 常规告警行）。`.tmp/u5_reaudit_c4.done` 记 parse 双 rc=0。
+- 会话自起的本地自验批**未跑完、已随会话死亡**：2400 腿 START 23:19:44Z（`.tmp/u5_reaudit_c4_phonehud_2400.log`，7497 字节，末写 07:27），实测 57 PASS / 0 FAIL / 无 PHONEHUD DONE，走到 unlock 模态，未到 victory 实拍；2340 腿未起；无 ALLDONE。Test/out 胜利实拍仍为第三轮 03:16/03:17 件。**此本地批不替代 NUC 验收批**：验收仍须走 Test/u5_reaudit_c4_run.sh（待建，沿 c3 式）双档 s100。改后基线 `.tmp/u5_c4_before_2340.png`／`_2400.png`＋scan2/extra 结果在位（07:19）。
+- 本轮不提交代码、不起批（按第三轮分工：diff 核对＋changes.md＋提交＋起批由主控接手）。
+- 断点不变：待主控核对 diff（重点：34 设计 px 与派单 17 之差、part==2 END 是否合意）→ changes.md → 提交推送 → NUC 双档 s100 批 → 同法复测（汇总带 scan2 goldblob5 法、pill 边距、币面高）→ 重建 compare/U5.png 与 U5_2400.png → 亲检再议签核；U5 未关闭；U1 复审仍不开。
+- 本轮提交：本节台账（＋.tmp 内 c4 diff/全份/verify 脚本留档，未入库）。
