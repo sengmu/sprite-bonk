@@ -1426,3 +1426,10 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 同步：本机 .git 仍在 e6bd9ff，落后 NUC 4e3a5ac；本地树含会话进行中的未提交交付，**本轮不做 .git 反向同步＋reset（会干扰在跑会话）**，台账直接写 NUC 侧提交；本地同步留待交付落盘、会话结束后再按铁律处理。
 - 断点不变：待批 ALLDONE → 拉回双档新拍＋双日志逐字节核验 → 同法复测（c6 量法：三星 gold-mask 法、缎带中心绿法、钮纵向端点、pill 渐变落差、行分隔峰、金币 dark-gold 外框＋内形 4x/6x 裁切目视）→ 重建 compare/U5.png 与 U5_2400.png（标签 u5_reaudit_c6）→ 亲检再议签核；U5 未关闭；U1 复审仍不开。Notion 对齐单未动。
 - 本轮提交：本节台账。
+
+## U5 复审第六轮代码已提交推送（2026-11-16 16:0x，主控，用户令「更新到github」）
+
+- 第六轮交付已提交 **c57ac72** 并推送 GitHub（ls-remote 核验 align-fix13=c57ac72）：world.gd、ui_icon.gd、button_green／button_cream 重做、新增 P5 专属 p5_star_filled／p5_star_empty／p5_ribbon_green／pill_gold（各带 .import 侧车）、c6 parse／run 脚本，共 14 文件；addons 的 .import churn 已 checkout 撤回、未入提交。六张纹理的 .godot/imported sidecar source_md5 与盘上文件逐一核对一致。
+- **批口径澄清**：Test/out/u5_reaudit_c6.done 末行虽写 BATCH FAILED，但双腿实为全绿——2400 腿 PHONEHUD DONE checks=1564 fails=0、2340 腿 1549/0。失败原因是 c6 run 脚本把 ALLDONE 条件写死为双腿各 1549，而 2400 腿本轮跑满横幅瞬态检查共 1564 项（计数随横幅时序在 1549/1564 间交替，判据应为 fails=0）。脚本计数 bug 在案，验收按 fails=0 计。
+- Codex 第六轮会话仍在跑（池内已轮换账号），后续若再落盘改动，须另行同步＋提交。
+- **未完**：同法复测（c6 量法六项）、compare 重建、主控亲检、U1 窄钮高光点名复核均未做；U5 未签核；U1 复审仍不开。
