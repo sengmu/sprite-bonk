@@ -1317,3 +1317,12 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 第五轮派单 `.tmp/u5_reaudit_codex5_brief.md`（worker 09:3x 拟稿、主控已审：唯一任务＝重绘 result_coins，首选 A 非方形 Control 88×61＋去 squash、两枚整圆半径 7、圆心 cx 约 2.5/21.5，宽高双目标 5.08%W×4.68%H；B 为回退；含三种量法警示）已派 Codex 池，日志 `.tmp/u5_reaudit_codex5.log`。
 - 主控裁定（汇总字尺寸方法分歧）：中文 glyph 法（+25%）与数字法（+11%）均称我方汇总字大于定稿，但两法差值大、定稿 JPEG 边缘柔化＋粗体权重可疑；**本轮不改字号**，待金币落地后另以数字法为主复核再定。纹理族仍在代码范围外。
 - **下一轮只监看，不重派**：交付落地后走 parse 门→双档 s100 批→同法复测（金币 dark-gold 法）→重建 compare→亲检再议签核。U5 未关闭；U1 复审仍不开。
+## U5 复审 Codex 第五轮：监看轮（2026-11-16 10:1x 轮，worker）
+
+- 防撞核查：NUC 无在跑批次——最新 .done 仍为 u5_reaudit_c4.done（ALLDONE 08:56:48）；/proc exe 锚定扫描无 Godot 在跑；无 u5_reaudit_c5.done。
+- 第五轮已派：NUC HEAD 55ad031（主控 09:51 派单提交「U5 re-audit round 5 dispatched to Codex」；派单 brief .tmp/u5_reaudit_codex5_brief.md 09:40，6596 字节；汇总字号待方法核查、暂不改）。
+- Codex 第五轮进行中（本机 acct5 池）：会话 01a1e20c-9bba-7772-ad16-0bcfbf9d13ab，09:50:44 起；rollout 最后写盘 10:12:45，末事件为 45 秒 sleep 轮询；codex 进程在跑。改动已落本地树：world.gd／ui_icon.gd mtime 09:52，diff vs 本地 HEAD 9686e1c 为 ui_icon.gd 14 行、world.gd 4 行（未逐行核对，待交付后验收）；.tmp/u5_reaudit_codex5_changes.md 尚未落盘、.log 仍 0 字节——交付未到，无可验收内容。
+- 会话自起本地自验批在跑：2400 腿，10:13:37 已到宝箱提示场景、累计 485 PASS／0 FAIL（末三条 assistant 留言：233→350→485 PASS）；会话自述 c5 脚本后续运行超时已放宽、当前腿仍受原 1500 秒超时控制，完整检查可能超时——此本地批不替代 NUC 验收批（验收仍须走 Test/u5_reaudit_c5_run.sh 双档 s100，待建）。
+- 本轮只监看：不实施、不起批、不改树、不做 .git 同步——Codex 正在本机树上施工，sync_to_nuc 会把半成品抄上 NUC；本机 .git 落后 NUC 一个提交（55ad031，派单台账提交），待交付落盘后再按铁律接续。
+- 断点不变：待 .tmp/u5_reaudit_codex5_changes.md 落盘后，按验收口径（parse 门＋双档 s100 批＋同法复测：汇总 pill 边距、币面宽×高双目标 5.08%W×4.68%H、汇总带 scan2 goldblob5 法）→重建 compare→亲检再议签核；U5 未关闭；U1 复审仍不开。
+- 本轮提交：本节台账。
