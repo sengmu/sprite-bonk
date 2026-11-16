@@ -1416,3 +1416,13 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 首派未执行（acct3 会话 01a1e2d6 仅 34 秒即 task_complete、零交付）：根因是简报头尾仍留“待审／不派”表述，模型据此自限只做审稿。主控已修简报（md5 e1180049…）：头改为“主控审定、已派单”＋文首执行指令（立即施工、改文件、写 changes.md、跑本地 parse 门与自验批，不得只审不改）；文末“派单权在主控／本轮不派、不代跑”改为“派单已生效”；grep 核验简报内已无“待审／不派／不代跑／草稿／拟稿”字样。
 - 会话六条审稿建议**全部采纳**入简报：①“保持几何”列例外（仅①②⑥局部形状／落点可调、其余冻结、汇总字号绝对冻结）；②三星入带量以本轮实拍缎带顶为基准、三星分别报告；③星／缎带共享纹理先 grep 列引用点、共用则写明允许变化或改 P5 专属；④金币外框加可见轮廓保持约束（右枚先画、左枚后画，左压右；不得用透明留白凑外框）；⑤分隔线“四处目标峰 ≤75、其余杂峰 ≤50”，pill 五采样点、四行及汇总分别报告；⑥导入交付改“实际改动纹理的 .import sidecar＋source_md5 核验”，NUC 导入成功＋缓存更新为开批前置门；“五项→六处”统一为“六项处方”。
 - 重派已出（新日志 `.tmp/u5_reaudit_codex6b.log`，旧 `.tmp/u5_reaudit_codex6.log` 为 34 秒空转会话留档）。**下一轮只监看**：交付落地后走 parse 门（world.gd＋ui_icon.gd＋ui_theme.gd）→纹理 --import＋source_md5 核验→双档 s100 批→同法复测→重建 compare→亲检再议签核。U5 未关闭；U1 复审仍不开。
+
+## U5 复审第六轮：监看轮（2026-11-16 15:1x 轮，worker）
+
+- 防撞核查：NUC 有在跑批次——Test/out/u5_reaudit_c6.done 仅 START 2026-11-16T15:12:18+08:00（HEAD 4e3a5ac），无 ALLDONE；2400 腿 Godot PID 4034320 在跑（15:14 时已 02:02，日志 24612 字节，233 PASS／0 FAIL，行至 P4 hud_start）。本机 Codex acct3 会话亦在跑（PID 15728，约 56 分钟），本地自验批 .tmp/u5_c6_local_fast.sh 的 2400 腿 48 PASS（早期 shop/menu 段）。**本轮只监看：不实施、不起批、不改树、不做 .git 同步。**
+- 第六轮交付已落盘（会话未结束、changes.md 在位）：本地 .tmp/u5_reaudit_codex6_changes.md（6238 字节，14:54）；NUC 树已同步交付、未提交——M scripts/world.gd、scripts/ui_icon.gd、assets/ui/textures/button_cream.png、button_green.png；新 assets/ui/decorations/p5_star_filled.png、p5_star_empty.png、p5_ribbon_green.png 与 assets/ui/textures/pill_gold.png 各带 .import 侧车；Test/u5_reaudit_c6_run.sh 与 Test/u5_reaudit_c6_parse.sh 已建（14:28）。NUC HEAD 仍为 4e3a5ac（重派台账提交）；addons 的 .import churn 为既有未提交残留，不动、不提交。
+- 批脚本口径（Test/u5_reaudit_c6_run.sh）：2400 s100 → 2340 s100，每腿 timeout 1500 秒，须双腿各 PHONEHUD DONE checks=1549 fails=0 方写 ALLDONE；c5 用时约 29 分钟，本批预计 ALLDONE 约 15:35–15:45。批于 15:12:18 起跑，起跑人在本轮证据中未确立（脚本为 Codex 会话 14:28 所建；起跑时间在本轮 cron 触发 15:11:25 之后一分钟，本轮自身只跑过只读命令、未起批）——只记事实，不归因。
+- changes.md 要点（待验收轮核对）：① P5 专属三星／缎带／pill_gold 新建，共享原资源保留（star／ribbon 引用审计已列点）；② 两张全局按钮纹理像素重做，alpha 轮廓逐像素一致、9-patch 分片不动；③ 行 plate 无重边＋1px 细分隔，四峰均 67、杂峰 ≤37；④ 金币内形交叠去竖条，外框 5.0855%W×4.7222%H 维持；⑤ 校准三星 gold-mask 高约 9.81%H、入带 0.74%H，缎带中心绿法高 9.9074%H；⑥ 六张纹理 source_md5 与 .ctex md5 表在 changes.md 内；⑦ 量法污染如实保留：左星同列 confetti_strip 金色彩屑 y236 会把左星原始输出记成 19.2593%H，须用主纵 run [29,134] 读 9.8148%，未改彩屑；⑧ 全局按钮副作用单列：U1 窄型继续钮顶部高光／白缘在窄 9-patch 压缩下折角亮斑更显眼，须主控点名复核，截图 .tmp/u5_c6_other_buttons.jpg。
+- 同步：本机 .git 仍在 e6bd9ff，落后 NUC 4e3a5ac；本地树含会话进行中的未提交交付，**本轮不做 .git 反向同步＋reset（会干扰在跑会话）**，台账直接写 NUC 侧提交；本地同步留待交付落盘、会话结束后再按铁律处理。
+- 断点不变：待批 ALLDONE → 拉回双档新拍＋双日志逐字节核验 → 同法复测（c6 量法：三星 gold-mask 法、缎带中心绿法、钮纵向端点、pill 渐变落差、行分隔峰、金币 dark-gold 外框＋内形 4x/6x 裁切目视）→ 重建 compare/U5.png 与 U5_2400.png（标签 u5_reaudit_c6）→ 亲检再议签核；U5 未关闭；U1 复审仍不开。Notion 对齐单未动。
+- 本轮提交：本节台账。
