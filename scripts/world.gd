@@ -16891,7 +16891,16 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 	if _p5_on:
 		# U5 re-audit #6: 60 * 0.952 = 57.1 logical px (~8%H).
 		payout.custom_minimum_size.y = 60
-	core_box.add_child(payout)
+	if _p5_on:
+		# Inset only the payout: 34 design px is ~2.1%W per side
+		# at the phone fit scale. Keep its height and row centres fixed.
+		var payout_inset := MarginContainer.new()
+		payout_inset.add_theme_constant_override("margin_left", 34)
+		payout_inset.add_theme_constant_override("margin_right", 34)
+		core_box.add_child(payout_inset)
+		payout_inset.add_child(payout)
+	else:
+		core_box.add_child(payout)
 	var prow := HBoxContainer.new()
 	prow.add_theme_constant_override("separation", 10)
 	prow.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -16909,11 +16918,13 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 			segment.add_theme_constant_override("separation", 8)
 			segment.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			segment.alignment = BoxContainer.ALIGNMENT_BEGIN if part == 0 else BoxContainer.ALIGNMENT_CENTER
+			if part == 2:
+				segment.alignment = BoxContainer.ALIGNMENT_END
 			prow.add_child(segment)
 			if part == 0:
 				segment.add_child(UiIcon.new("result_spark", Color(0.62, 0.35, 0.95), 40))
 			elif part == 1:
-				segment.add_child(UiIcon.new("result_coins", UiTheme.GOLD, 38))
+				segment.add_child(UiIcon.new("result_coins", UiTheme.GOLD, 48))
 			var text: String = ["星尘 +%d" % dust, "金币 %d" % int(gold), "得分 %s" % str(score)][part]
 			var caption := _mk_label(segment, text, 32, UiTheme.TEXT)
 			caption.add_theme_font_override("font", payout_bold)
