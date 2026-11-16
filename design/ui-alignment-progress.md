@@ -1326,3 +1326,19 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 本轮只监看：不实施、不起批、不改树、不做 .git 同步——Codex 正在本机树上施工，sync_to_nuc 会把半成品抄上 NUC；本机 .git 落后 NUC 一个提交（55ad031，派单台账提交），待交付落盘后再按铁律接续。
 - 断点不变：待 .tmp/u5_reaudit_codex5_changes.md 落盘后，按验收口径（parse 门＋双档 s100 批＋同法复测：汇总 pill 边距、币面宽×高双目标 5.08%W×4.68%H、汇总带 scan2 goldblob5 法）→重建 compare→亲检再议签核；U5 未关闭；U1 复审仍不开。
 - 本轮提交：本节台账。
+
+## U5 复审 Codex 第五轮：会话中途结束、交付在位待主控接手（2026-11-16 11:1x 轮，worker）
+
+- 防撞核查：NUC 无在跑 sprite-bonk 批次——最新 .done 仍为 u5_reaudit_c4.done（ALLDONE 08:56:48），无 u5_reaudit_c5.done；NUC 锚定 pgrep 仅命中 Sanguo godot3d 的两个 Godot（3739909／3740009，cwd 桌面/sanguo-rules-v12/godot3d），无 sprite-bonk Godot。本机 /proc cwd 锚定扫描亦无 sprite-bonk Godot（仅 recon-jiange harness 与本轮自身命令）。
+- 第五轮会话已中途结束（与第四轮同型）：Codex 池 acct5，会话 01a1e20c-9bba-7772-ad16-0bcfbf9d13ab，09:50:44 起；rollout 最后写盘 10:20:54（末事件为 token_count，02:20:53–54Z），其后约 50 分钟无任何事件；无最终留言、无 task_complete、无 changes.md、.tmp/u5_reaudit_codex5.log 仍 0 字节。结束原因未明，待主控核实；本轮不重派。
+- 交付已落本地树、未提交：仅 M scripts/world.gd（4 行）／scripts/ui_icon.gd（14 行），mtime 09:52，自 10:1x 轮后无变化。worker 已逐项核对 diff 与派单 brief A 全对上：
+  - ui_icon.gd result_coins：圆心 cx [2.5, 21.5]（原 [15.0, 9.0]）、去 squash（draw_set_transform 无缩放向量）、半径 8→7（内圆 5.6875、弧 4.375、竖线 ±2.45）。
+  - world.gd _fill_result part==1：UiIcon.new("result_coins", GOLD, 48) 加 coins.custom_minimum_size = Vector2(88, 61)。
+  - 范围：仅 P5 结算汇总币图标；其余文件不动、玩法数值不动。
+- Parse 门（本机跑，Godot 4.3 --headless --check-only --script）：world.gd rc=0、ui_icon.gd rc=0；两日志 0 条 SCRIPT ERROR（仅 GDExtension SolanaSDK 4.4 常规告警）。结果记 .tmp/u5_reaudit_c5.done；工作树 md5：world.gd 4f514579…、ui_icon.gd d4a2d568…。
+- 会话自起的本地自验批随会话死亡：attempt1 2400 腿 rc=124（1500 秒超时）、2340 腿 interrupted；attempt2（Test/out/u5_reaudit_c5.done，START 10:18:58Z）2400 腿末写 10:20:48，仅 9 条 PASS（P5 菜单段）、无 DONE、无胜利实拍。**本地 c5.done 现为 stale 在途标记**——无 Godot 在跑、日志自 10:20:48 静默，下一轮不得误判为在跑批次。此本地批不替代 NUC 验收批。
+- acct5 当日另两 rollout（10:58:48／11:00:31 起）已核实为 Sanguo 线（改 scripts/main.gd 与 Test/harness.gd、均 task_complete），与 U5 无关；acct5 sqlite 11:05 写盘属彼等，非 U5 会话。
+- 同步：本机 .git 仍在 9686e1c（NUC 52e45c9）；本地树含未提交第五轮交付，**本轮不做 .git 反向同步＋reset（会抹掉交付）**，台账直接写 NUC 侧提交；本地同步留待主控接手交付时按铁律处理。
+- 本轮只监看：不提交代码、不起批、不改树。
+- 断点不变：待主控核对 diff → changes.md → 提交推送 → NUC 双档 s100 批（Test/u5_reaudit_c5_run.sh 待建，沿 c3/c4 式）→ 同法复测（金币 dark-gold 法宽×高双目标 5.08%W×4.68%H、汇总 pill 边距、汇总带 scan2 goldblob5 法）→ 重建 compare/U5.png 与 U5_2400.png → 亲检再议签核；U5 未关闭；U1 复审仍不开。
+- 本轮提交：本节台账。
