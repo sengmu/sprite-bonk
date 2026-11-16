@@ -1342,3 +1342,12 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 本轮只监看：不提交代码、不起批、不改树。
 - 断点不变：待主控核对 diff → changes.md → 提交推送 → NUC 双档 s100 批（Test/u5_reaudit_c5_run.sh 待建，沿 c3/c4 式）→ 同法复测（金币 dark-gold 法宽×高双目标 5.08%W×4.68%H、汇总 pill 边距、汇总带 scan2 goldblob5 法）→ 重建 compare/U5.png 与 U5_2400.png → 亲检再议签核；U5 未关闭；U1 复审仍不开。
 - 本轮提交：本节台账。
+
+## U5 复审第五轮验收链已接续（2026-11-16 11:3x，主控）
+
+- Codex 会话 acct5（01a1e20c）10:20:54 中途结束（无最终留言、log 0 字节、未写 change log、本地自验批未跑完：attempt2 2400 腿仅 9 PASS）。主控已逐项核对 diff，与派单 A 逐项相符：
+  - ui_icon.gd `result_coins`：圆心 [2.5, 21.5]、去 squash、半径 7；内圈/亮弧/竖线均按 7/8 同步缩小。绘出 33×14 单位；另按 `_p`/`_u` 实现复核：24 盒居中、倍率取 min(size.x,size.y)/24——88×61 Control 下绘出约 84 设计 px 宽（≈5.1%W）、约 36 设计 px 高（≈4.7%H），与目标 5.08%W×4.68%H 相符，左右各留约 2 设计 px 空白。
+  - world.gd：P5 汇总币段图标加 `custom_minimum_size = Vector2(88, 61)`；其余不动。汇总字不动（方法分歧留后裁）。
+- 同步：反向 rsync NUC .git 前后共遇 5 次「Connection closed by UNKNOWN port 65535」传输抖动（含 1 次纯探针失败），重试＋退避后恢复；铁律未破——反向同步完成（VM .git 到 408629a）后才跑 sync_to_nuc；parity 910 文件 0 diff。另记：反向同步后工作树台账文件须单文件 `git checkout --` 对齐新 HEAD，**切勿 reset --hard**（会抹掉未提交交付）。
+- Parse 门 Test/u5_reaudit_c5_parse.sh（NUC）：world.gd rc=0、ui_icon.gd rc=0。
+- 提交 bc9ef86 已推送（ls-remote 核验）；验证批 Test/u5_reaudit_c5_run.sh 11:34:29 起跑，.done 路径 Test/out/u5_reaudit_c5.done，预计 ALLDONE 约 12:00–12:05。**下一轮只监看批、取新拍复测（金币 dark-gold 法宽×高双目标）、重建 compare、亲检再议签核。** U5 未关闭；U1 复审仍不开。
