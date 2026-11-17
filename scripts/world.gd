@@ -371,6 +371,7 @@ var _font_display: Font
 var _banner: Label
 var _banner_back: Panel      # cycle 19: stageIntro backing band
 var _modal_scrim: ColorRect  # cycle 19: shared modal dim
+var _modal_fullscreen_bg: PanelContainer  # 手机全屏界面无缝延伸覆盖挖孔安全区的唯一底板
 var _prompt: Label
 var _timer_label: Label
 var _elapsed_label: Label
@@ -3586,6 +3587,12 @@ func _build_hud() -> void:
 	_modal_scrim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_modal_scrim.visible = false
 	root.add_child(_modal_scrim)
+	_modal_fullscreen_bg = PanelContainer.new()
+	_modal_fullscreen_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_modal_fullscreen_bg.add_theme_stylebox_override("panel", _style(Color("f5ead8"), 0, Color(0, 0, 0, 0), 0, true))
+	_modal_fullscreen_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_modal_fullscreen_bg.visible = false
+	root.add_child(_modal_fullscreen_bg)
 
 	_build_wallet_panel(root)
 	_refresh_wallet_ui()
@@ -4731,7 +4738,7 @@ func _build_lab_panel(root: Control) -> void:
 	_lab_panel.offset_top = -280
 	_lab_panel.offset_bottom = 280
 	_lab_panel.visible = false
-	_lab_panel.add_theme_stylebox_override("panel", UiTheme.panel_texture())
+	_lab_panel.add_theme_stylebox_override("panel", _p5_fullscreen_panel_style())
 	root.add_child(_lab_panel)
 	var vb := VBoxContainer.new()
 	vb.add_theme_constant_override("separation", 4 if _p5_on else 8)
@@ -5346,7 +5353,7 @@ func _build_shop_panel(root: Control) -> void:
 	_shop_panel.offset_top = -252
 	_shop_panel.offset_bottom = 252
 	_shop_panel.visible = false
-	_shop_panel.add_theme_stylebox_override("panel", UiTheme.panel_texture())
+	_shop_panel.add_theme_stylebox_override("panel", _p5_fullscreen_panel_style())
 	root.add_child(_shop_panel)
 	var vb := VBoxContainer.new()
 	vb.add_theme_constant_override("separation", 3 if _p5_on else 7)
@@ -5667,7 +5674,7 @@ func _build_sound_panel(root: Control) -> void:
 	_sound_panel.offset_top = -285
 	_sound_panel.offset_bottom = 285
 	_sound_panel.visible = false
-	_sound_panel.add_theme_stylebox_override("panel", UiTheme.panel_texture())
+	_sound_panel.add_theme_stylebox_override("panel", _p5_fullscreen_panel_style())
 	root.add_child(_sound_panel)
 	var hb := HBoxContainer.new()
 	hb.add_theme_constant_override("separation", 14 if _p5_on else 12)
@@ -6268,7 +6275,7 @@ func _build_unlock_panel(root: Control) -> void:
 	_unlock_panel.offset_top = -280
 	_unlock_panel.offset_bottom = 280
 	_unlock_panel.visible = false
-	_unlock_panel.add_theme_stylebox_override("panel", UiTheme.panel_texture())
+	_unlock_panel.add_theme_stylebox_override("panel", _p5_fullscreen_panel_style())
 	root.add_child(_unlock_panel)
 	var vb := VBoxContainer.new()
 	vb.add_theme_constant_override("separation", 8)
@@ -9711,7 +9718,7 @@ func _build_shop(root: Control) -> void:
 	_meowth_panel.offset_top = -215
 	_meowth_panel.offset_bottom = 215
 	_meowth_panel.visible = false
-	_meowth_panel.add_theme_stylebox_override("panel", UiTheme.panel_texture())
+	_meowth_panel.add_theme_stylebox_override("panel", _p5_fullscreen_panel_style())
 	root.add_child(_meowth_panel)
 	var vb := VBoxContainer.new()
 	vb.add_theme_constant_override("separation", 10)
@@ -14805,6 +14812,16 @@ func _process(delta: float) -> void:
 		var mo := _any_modal_open()
 		if _modal_scrim.visible != mo:
 			_modal_scrim.visible = mo
+	if _modal_fullscreen_bg:
+		var fs_open := _p5_on and (
+			(_lab_panel != null and _lab_panel.visible)
+			or (_shop_panel != null and _shop_panel.visible)
+			or (_unlock_panel != null and _unlock_panel.visible)
+			or (_sound_panel != null and _sound_panel.visible)
+			or (_pause_panel != null and _pause_panel.visible)
+			or (_meowth_panel != null and _meowth_panel.visible))
+		if _modal_fullscreen_bg.visible != fs_open:
+			_modal_fullscreen_bg.visible = fs_open
 	if _p5_on:
 		_p5_tick()
 	# Effects (cycle 11: beam ribbons / ground rings / legacy beams).
@@ -15929,6 +15946,13 @@ func _p5_menu_reference_layout(width: float) -> void:
 		_menu_hint.position = backing.position + Vector2(36, (hint_h - _menu_hint.get_combined_minimum_size().y) * 0.5)
 		_menu_hint.size = Vector2(hint_w - 44.0, _menu_hint.get_combined_minimum_size().y)
 
+func _p5_fullscreen_panel_style() -> StyleBox:
+	if _p5_on:
+		var sb := StyleBoxEmpty.new()
+		sb.set_content_margin_all(14)
+		return sb
+	return UiTheme.panel_texture()
+
 func _safe_insets() -> Vector4:
 	# Cycle 21.3 (audit F6): the gate's simulated insets win.
 	if debug_safe_insets.x >= 0.0:
@@ -15967,6 +15991,11 @@ func _apply_safe_area() -> void:
 		_modal_scrim.offset_top = -ins.y
 		_modal_scrim.offset_right = ins.z
 		_modal_scrim.offset_bottom = ins.w
+	if _modal_fullscreen_bg:
+		_modal_fullscreen_bg.offset_left = -ins.x
+		_modal_fullscreen_bg.offset_top = -ins.y
+		_modal_fullscreen_bg.offset_right = ins.z
+		_modal_fullscreen_bg.offset_bottom = ins.w
 	if touch_controls:
 		touch_controls.offset_left = ins.x
 		touch_controls.offset_top = ins.y
@@ -18390,7 +18419,7 @@ func _build_pause(root: Control) -> void:
 	_pause_panel.offset_top = -270
 	_pause_panel.offset_bottom = 270
 	_pause_panel.visible = false
-	_pause_panel.add_theme_stylebox_override("panel", UiTheme.panel_texture())
+	_pause_panel.add_theme_stylebox_override("panel", _p5_fullscreen_panel_style())
 	root.add_child(_pause_panel)
 	var vb := VBoxContainer.new()
 	vb.add_theme_constant_override("separation", 5 if _p5_on else 10)

@@ -1771,6 +1771,15 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 验证：Godot 解析门通过；`verify_u2_switch.gd` 实测点击第 2/3 卡均保持主菜单不跳转（`loadout_vis=false`）且石台分别切换为 `charmander` / `squirtle`，已 `Read` `u2_sw_charmander.png` 与 `u2_sw_squirtle.png` 目检踩台居中无悬空；正同步推送 NUC 与重装 Seeker 真机。
 - 本轮提交：`scripts/world.gd`、`design/ui-alignment-progress.md`。
 
+## 全屏界面直角无边框全面屏延伸覆盖挖孔安全区（2026-11-17 20:5x）
+
+- **解决 Seeker 实机反馈「`[Image #9]` 没全屏，左边」及「四角的圆角也不要」（`scripts/world.gd`）**：
+  - 定位根因：Seeker 左侧摄像头挖孔使 `_safe_insets()` 为 `_ui_root` 引入左侧推进边距（`ins.x ≈ 85` 逻辑 px），导致位于 `_ui_root` 内的全屏面板左缘退后约 `135px` 露出底层树景；同时 `UiTheme.panel_texture()` 四角带圆角金边会在四个屏幕角留下小三角黑隙。
+  - **重构方案**：在 `root` 与 `_modal_scrim` 同层增设 `_modal_fullscreen_bg`（使用精确采样自 `panel_9patch` 中心像素的纯暖奶油色 `#f5ead8` 直角无圆角 `StyleBoxFlat(corner_radius=0)`），在 `_apply_safe_area()` 中反向延伸 `-ins.x..+ins.z` 100% 铺满全部物理屏幕（涵盖左挖孔侧边），当 `U4 / S08 / S09 / S10 / S11 / S12` 任意全屏大面板开启时自动显现，同时 6 个面板自身切换为同内距 `StyleBoxEmpty(14)` 消除框中框，既保持所有交互区安全避开前置摄像头挖孔并 100% 通过 `Test/phonehud.gd` `inside_ui` 硬断言，又在视觉上实现真正四角直角、边缘零缝的原生级全面屏。
+- 验证：在模拟 Seeker 挖孔 `debug_safe_insets=Vector4(85,0,0,0)` 下实测 `NOTCH_CHK bg=[P:(0,0), S:(1600,720)] lp_inside_ui=true`，已 `Read` `seeker_u4_notch_fix.png` 与 `seeker_s10_notch_fix.png` 确认四角直角满屏、左边无缝；无刘海双档 `verify_fullscreen.gd` 22 态全部 `inside=true`。
+- 本轮提交：`scripts/world.gd`、`design/ui-alignment-progress.md`。
+
+
 
 
 
