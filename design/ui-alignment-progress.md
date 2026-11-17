@@ -1746,6 +1746,15 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 本地全 8 脚本解析门全绿；`verify_fullscreen.gd`（双档 22 态）及 `verify_rest_screens.gd`（11 屏）全部 `inside=true`, `prim_ok=true`, `min_b>=76.1`, `min_t>=21.7`（标签 `>=17.0`），并已入库更新 `compare/{U4,S11,S13,S14}.png` 逐张 `Read` 过目；正同步推至 NUC 起跑终验并刷新真机 APK。
 - 本轮提交：`scripts/world.gd`、`design/ui-reference/compare/{U4,S11,S13,S14}.png`、`design/ui-alignment-progress.md`。
 
+## 全屏启动载入画重制＋消零黑边＋Seeker真机边距微收（2026-11-17 20:1x）
+
+- **解决 Seeker 实机反馈「载入画面没全屏，左右有黑色区域」（`assets/ui/splash.png`、`project.godot`）**：
+  - 查明原 `assets/ui/splash.png` 为 `1672×941`（`16:9`），而 Godot `boot_splash/fullsize=true` 采用居中等比 Contain 缩放，在 Seeker `2670×1200`（`2.225:1`）全面屏上左右各自露出 `268px` 深黑蓝边（`bg_color=(0.078,0.11,0.16)`）。
+  - 将原图以精准无失真广角构图重构为 **`2094×941`（`2.225:1` 超宽全屏图，切除原图极边暗线，完整保留萌宠与拱门飞瀑蘑菇主体，零镜像伪影）**，重跑 `--import` 刷新 `.ctex`，并将 `project.godot` 的 `boot_splash/bg_color` 调整为自然森林青草色调 `Color(0.32, 0.48, 0.16, 1)`。
+- **Seeker 实拍暂停状态栏极微滚动滑道清零（`scripts/world.gd`）**：同步将 `S08` 状态双栏内卡片外边距从 `8` 微调为 `6`，进一步确保在真机刘海安全区内彻底零滚动条。
+- 本轮提交：`assets/ui/splash.png`、`project.godot`、`scripts/world.gd`、`design/ui-alignment-progress.md`。
+
+
 
 
 

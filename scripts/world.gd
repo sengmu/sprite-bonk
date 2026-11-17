@@ -18637,7 +18637,7 @@ func _pause_fill_status() -> void:
 		lcard.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		lcard.size_flags_stretch_ratio = 52.0
 		var l_sb := _style(Color(1.0, 0.99, 0.96, 0.92), 14, Color("e5cfa0"), 1.5, true)
-		l_sb.set_content_margin_all(8)
+		l_sb.set_content_margin_all(6)
 		lcard.add_theme_stylebox_override("panel", l_sb)
 		cols.add_child(lcard)
 		var lvb := VBoxContainer.new()
@@ -18647,7 +18647,7 @@ func _pause_fill_status() -> void:
 		rcard.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		rcard.size_flags_stretch_ratio = 48.0
 		var r_sb := _style(Color(1.0, 0.99, 0.96, 0.92), 14, Color("e5cfa0"), 1.5, true)
-		r_sb.set_content_margin_all(8)
+		r_sb.set_content_margin_all(6)
 		rcard.add_theme_stylebox_override("panel", r_sb)
 		cols.add_child(rcard)
 		var rvb := VBoxContainer.new()
