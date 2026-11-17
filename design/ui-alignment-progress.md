@@ -1779,6 +1779,15 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 验证：在模拟 Seeker 挖孔 `debug_safe_insets=Vector4(85,0,0,0)` 下实测 `NOTCH_CHK bg=[P:(0,0), S:(1600,720)] lp_inside_ui=true`，已 `Read` `seeker_u4_notch_fix.png` 与 `seeker_s10_notch_fix.png` 确认四角直角满屏、左边无缝；无刘海双档 `verify_fullscreen.gd` 22 态全部 `inside=true`。
 - 本轮提交：`scripts/world.gd`、`design/ui-alignment-progress.md`。
 
+## U6 钱包界面 1:1 重构＋只读脱敏地址＋复制反馈（2026-11-17 21:0x）
+
+- **依据用户 `[Image #10]` / `[Image #11]` 与「钱包地址应该不能编辑的，不要全部显示，加个复制地址的功能」完成钱包彻底升级（`scripts/ui_icon.gd`、`scripts/world.gd`）**：
+  1. **只读脱敏地址胶囊＋复制反馈（`_build_wallet_panel` / `_refresh_wallet_ui`）**：将 `_wallet_edit` 全面锁定为只读不可编辑（`editable=false`, `selecting_enabled=false`, `focus_mode=FOCUS_NONE`），禁用手机输入法弹出；已连接时居中以粗黑体展示脱敏缩写 `wallet.short_address()`（如 `7xK1…Ab3d`），彻底不再展示完整 44 位长地址；「复制地址」按钮复制真实完整 `wallet.address` 到系统剪贴板并给出 `1.5s` 「已复制 ✓」即时提示反馈（未连接则提示「请先连接」）。
+  2. **1:1 视觉重造对齐 `U6_final.jpg`**：新增 `UiIcon` `"wallet_white"` 绘制洁白立体小钱包配天蓝渐变描边大圆盘（`72×72`）；顶部「钱包」切换至 `40px` `NotoSC-Black-sub` 粗黑字配 `34px` 对称嫩叶；浅奶金圆角地址条（`#faebc7`）；余额放大为 `48px` 超粗巨字；三颗底部糖果胶囊增高至 `60px` 配 `24px` 白粗描边字，并居中垂直对齐 `vb`。
+- 验证：Godot 解析门全绿，未连接态 `editable=false scale=1.7`、已连接态 `text='7xK1…Ab3d' bal='1.2500 SOL'`，已重建并 `Read` 审看 `compare/U6.png`；正在提交推送、覆盖安装最新 Seeker 真机包并同步 NUC 最终双档验收。
+- 本轮提交：`scripts/ui_icon.gd`、`scripts/world.gd`、`design/ui-reference/compare/U6.png`、`design/ui-alignment-progress.md`。
+
+
 
 
 

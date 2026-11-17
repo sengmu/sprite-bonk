@@ -127,6 +127,15 @@ func _draw() -> void:
 			# 锐利高光闪电（电系图标）
 			_poly([Vector2(14, 2.5), Vector2(6.5, 12.5), Vector2(11.5, 12.5),
 				Vector2(9.5, 21.5), Vector2(17.5, 11), Vector2(12.5, 11)], color)
+		"wallet_white":
+			# U6 天蓝圆徽内专属洁白立体钱包图标（圆角机身＋右上翻盖折痕＋右侧搭扣圆点）
+			_poly([Vector2(4.5, 6.2), Vector2(18.0, 6.2), Vector2(19.5, 7.8), Vector2(19.5, 18.2),
+				Vector2(18.0, 19.8), Vector2(4.5, 19.8), Vector2(3.0, 18.2), Vector2(3.0, 7.8)], color)
+			_poly([Vector2(5.2, 5.2), Vector2(16.8, 4.0), Vector2(17.8, 5.4), Vector2(5.2, 6.4)], color)
+			draw_line(_p(3.8, 8.2), _p(18.5, 8.2), Color("2998e4"), _u(1.1), true)
+			_poly([Vector2(14.5, 11.2), Vector2(20.6, 11.2), Vector2(21.2, 12.0), Vector2(21.2, 15.2),
+				Vector2(20.6, 16.0), Vector2(14.5, 16.0), Vector2(13.6, 15.0), Vector2(13.6, 12.2)], color)
+			_circ(16.2, 13.6, 1.3, Color("2998e4"))
 		"sword":
 			_poly([Vector2(6, 18), Vector2(15.5, 8.5), Vector2(19, 5), Vector2(18.5, 10.5), Vector2(9, 20)], color)
 			_line([Vector2(5, 15), Vector2(9, 19)], 2.6)

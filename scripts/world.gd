@@ -3642,7 +3642,7 @@ func _build_hud() -> void:
 	_p5_register(_shop_panel, 1200.0, 460.0)
 	_p5_register(_unlock_panel, 1200.0, 460.0)
 	_p5_register(_sound_panel, 1200.0, 460.0)
-	_p5_register(_wallet_panel, 640.0, 430.0)
+	_p5_register(_wallet_panel, 680.0, 420.0)
 	for c in _loadout_panel.get_children():
 		if c is PanelContainer:
 			_p5_register(c, 960.0, 462.0)
@@ -4562,21 +4562,24 @@ func _build_wallet_panel(root: Control) -> void:
 	_wallet_panel.add_theme_stylebox_override("panel", UiTheme.panel_texture())
 	root.add_child(_wallet_panel)
 	var vb := VBoxContainer.new()
-	vb.add_theme_constant_override("separation", 16)
+	vb.add_theme_constant_override("separation", 12 if _p5_on else 16)
+	if _p5_on:
+		vb.alignment = BoxContainer.ALIGNMENT_CENTER
 	_wallet_panel.add_child(vb)
-	# 对齐定稿 U6_final.jpg：顶部两侧嫩绿叶簇夹粗大「钱包」，地址条配天蓝圆盘钱包徽标，三颗糖果大胶囊配洁白描边粗字
+	# 对齐定稿 U6_final.jpg：粗黑大字「钱包」＋双嫩叶＋亮天蓝钱包圆盘＋浅金圆角只读地址条＋50px巨字余额＋60px胖糖果按钮
 	if _p5_on:
 		var title_wrap := CenterContainer.new()
 		vb.add_child(title_wrap)
 		var title_row := HBoxContainer.new()
-		title_row.add_theme_constant_override("separation", 10)
+		title_row.add_theme_constant_override("separation", 12)
 		title_wrap.add_child(title_row)
-		var ll := UiTheme.art("leaf_sprig", Vector2(28, 28))
+		var ll := UiTheme.art("leaf_sprig", Vector2(34, 34))
 		ll.flip_h = true
 		title_row.add_child(ll)
-		var title := _mk_dlabel(title_row, "钱包", 32, UiTheme.TEXT)
+		var title := _mk_label(title_row, "钱包", 40, UiTheme.TEXT)
+		title.add_theme_font_override("font", load("res://assets/fonts/NotoSC-Black-sub.ttf") as Font)
 		title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		var lr := UiTheme.art("leaf_sprig", Vector2(28, 28))
+		var lr := UiTheme.art("leaf_sprig", Vector2(34, 34))
 		title_row.add_child(lr)
 	else:
 		var title := _mk_dlabel(vb, "钱包", 30, UiTheme.TEXT)
@@ -4584,30 +4587,55 @@ func _build_wallet_panel(root: Control) -> void:
 	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation", 14)
 	vb.add_child(header)
-	var w_badge := UiBadge.new("wallet", Color("2ea8f0"), 60)
-	w_badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	header.add_child(w_badge)
+	if _p5_on:
+		var w_disc := PanelContainer.new()
+		w_disc.custom_minimum_size = Vector2(72, 72)
+		w_disc.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		var wd_sb := _style(Color("31a4ed"), 34, Color("ffffff"), 2.5, true)
+		wd_sb.shadow_color = Color(0.08, 0.36, 0.58, 0.30)
+		wd_sb.shadow_size = 4
+		wd_sb.shadow_offset = Vector2(0, 2)
+		wd_sb.set_content_margin_all(14)
+		w_disc.add_theme_stylebox_override("panel", wd_sb)
+		w_disc.add_child(UiIcon.new("wallet_white", Color.WHITE, 40))
+		header.add_child(w_disc)
+	else:
+		var w_badge := UiBadge.new("wallet", Color("2ea8f0"), 60)
+		w_badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		header.add_child(w_badge)
 	_wallet_edit = LineEdit.new()
-	_wallet_edit.placeholder_text = "粘贴公开地址"
+	_wallet_edit.placeholder_text = "尚未连接 Solana 钱包"
+	_wallet_edit.editable = false
+	_wallet_edit.selecting_enabled = false
+	_wallet_edit.focus_mode = Control.FOCUS_NONE
+	_wallet_edit.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_wallet_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_wallet_edit.add_theme_font_override("font", _font)
-	_wallet_edit.add_theme_font_size_override("font_size", 17)
+	_wallet_edit.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_wallet_edit.add_theme_font_override("font", (load("res://assets/fonts/NotoSC-Black-sub.ttf") as Font) if _p5_on else _font)
+	_wallet_edit.add_theme_font_size_override("font_size", 24 if _p5_on else 17)
 	_wallet_edit.add_theme_color_override("font_color", UiTheme.TEXT)
+	_wallet_edit.add_theme_color_override("font_uneditable_color", UiTheme.TEXT)
 	_wallet_edit.add_theme_color_override("font_placeholder_color", UiTheme.MUTED)
-	var edit_sb := _style(Color(1.0, 0.99, 0.955, 0.96), 24, Color("e2c68e"), 1.5, true)
-	edit_sb.content_margin_left = 18
-	edit_sb.content_margin_right = 18
-	edit_sb.content_margin_top = 10
-	edit_sb.content_margin_bottom = 10
+	var edit_sb := _style(Color("faebc7") if _p5_on else Color(1.0, 0.99, 0.955, 0.96), 28 if _p5_on else 24, Color("dfbf84") if _p5_on else Color("e2c68e"), 1.5, true)
+	edit_sb.content_margin_left = 22
+	edit_sb.content_margin_right = 22
+	edit_sb.content_margin_top = 12 if _p5_on else 10
+	edit_sb.content_margin_bottom = 12 if _p5_on else 10
 	_wallet_edit.add_theme_stylebox_override("normal", edit_sb)
+	_wallet_edit.add_theme_stylebox_override("read_only", edit_sb)
 	header.add_child(_wallet_edit)
 	var bal_row := HBoxContainer.new()
 	bal_row.add_theme_constant_override("separation", 12)
 	vb.add_child(bal_row)
-	_wallet_balance = _mk_dlabel(bal_row, "尚未连接", 40 if _p5_on else 36, UiTheme.TEXT)
+	_wallet_balance = _mk_label(bal_row, "尚未连接", 48 if _p5_on else 36, UiTheme.TEXT)
+	if _p5_on:
+		_wallet_balance.add_theme_font_override("font", load("res://assets/fonts/NotoSC-Black-sub.ttf") as Font)
+	else:
+		_wallet_balance.add_theme_font_override("font", _font_display)
 	_wallet_balance.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_wallet_balance.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_wallet_balance.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_wallet_balance.custom_minimum_size.y = 76
+	_wallet_balance.custom_minimum_size.y = 74 if _p5_on else 76
 	_wallet_balance.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_wallet_retry = UiTheme.make_button("重试读取余额", "ghost", "small")
 	_wallet_retry.visible = false
@@ -4615,7 +4643,7 @@ func _build_wallet_panel(root: Control) -> void:
 	_wallet_retry.pressed.connect(func() -> void: wallet.fetch_balance())
 	bal_row.add_child(_wallet_retry)
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
+	row.add_theme_constant_override("separation", 14 if _p5_on else 12)
 	vb.add_child(row)
 	var cbtn := UiTheme.make_button("连接", "green", "big")
 	cbtn.pressed.connect(func() -> void:
@@ -4636,7 +4664,19 @@ func _build_wallet_panel(root: Control) -> void:
 			_wallet_balance.text = "授权未完成：%s" % reason
 	)
 	var copy := UiTheme.make_button("复制地址", "blue", "big")
-	copy.pressed.connect(func() -> void: DisplayServer.clipboard_set(wallet.address if wallet.is_wallet_connected() else _wallet_edit.text))
+	copy.pressed.connect(func() -> void:
+		if wallet.is_wallet_connected():
+			DisplayServer.clipboard_set(wallet.address)
+			if audio:
+				audio.click()
+			copy.text = "已复制 ✓"
+		else:
+			if audio:
+				audio.deny()
+			copy.text = "请先连接"
+		_later(1.5, func() -> void:
+			if is_instance_valid(copy):
+				copy.text = "复制地址"))
 	row.add_child(copy)
 	var xbtn := UiTheme.make_button("关闭", "orange", "big")
 	xbtn.pressed.connect(func() -> void: _wallet_panel.visible = false)
@@ -4646,6 +4686,8 @@ func _build_wallet_panel(root: Control) -> void:
 		var btn_c := btn_info[0] as Button
 		btn_c.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		if _p5_on:
+			btn_c.custom_minimum_size.y = 60
+			btn_c.add_theme_font_size_override("font_size", 24)
 			for st in ["font_color", "font_hover_color", "font_pressed_color"]:
 				btn_c.add_theme_color_override(st, Color.WHITE)
 			btn_c.add_theme_color_override("font_outline_color", btn_info[1])
@@ -4679,7 +4721,7 @@ func _refresh_wallet_ui() -> void:
 		if wallet.last_balance_sol >= 0.0:
 			bal = "%.4f SOL" % wallet.last_balance_sol
 		_wallet_status.text = wallet.short_address()
-		_wallet_edit.text = wallet.address
+		_wallet_edit.text = wallet.short_address()
 		_wallet_balance.text = "余额读取失败" if failed else bal
 		_wallet_retry.visible = failed
 	else:
