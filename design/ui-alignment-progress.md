@@ -1611,7 +1611,8 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
   - `S11` 伙伴营挑战（月桂枝蓝字标题＋奶白卡配圆角物种头像与中文稀有度）、`S14` 古石祭坛（月桂枝标题＋色区上收内嵌 `offset=14/15` 圆角贴合相框内沿＋效果文本居中）、`S15` 大地图（`402` 方图＋天蓝「大地图」与浅金「已探索」胶囊）、`S13/S21/S22` 通用选择卡（亮紫渐层立体卡配白粗投影字消灭白底白字）及 `S23` 交互气泡（暖奶油气泡底配深棕字）。
 - 本地全量检验：`Test/u2_shop_reaudit_parse.sh` 全绿通过；`verify_polish_all.gd` 与 `verify_fix_touch_choice.gd` 输出并逐张 `Read` 审阅全部实拍图：`U4_lab`、`U6_wallet`、`S09_settings`、`S07_loadout`、`S08_pause`、`S20_pause_settings`、`S14_blessing`、`S12_shop_fix`、`S13_chest`、`S22_mimic` 全项 `inside=true`, `min_b >= 76.4`, `min_t >= 21.4`（标签芯片 `>= 17.8`）。
 - 根因修复与通用卡升华：修复 `_build_lab_panel` 初始化期调用 `_lab_set_mode -> _refresh_lab -> _apply_ui_scale()` 提前把 `_p3_on` 置 `1` 而当时 `touch_controls` 尚未创建导致后续跳过 `set_layout_classic(false)` 的隐蔽时序问题（`_refresh_lab` 加 `_lab_panel.visible` 保护并在 `touch_controls` 挂载处显式同步 `_new_layout()`），经 `TOUCH_CLASSIC_CHECK` 实测 `classic=false aim_vis=false pause_vis=false`；同步为通用选择弹窗 `_choice_show`（S13 宝箱 / S22 拟态团）加入月桂枝标题与选项首行反查挂载居中高清物品图标及 `_item_zh_name` 中性译名，并将 `"未知祭坛"` / `"百变怪"` 正名对齐为 `"古石祭坛"` / `"拟态团"`。
-- **状态：已提交推送并同步至 NUC 执行 `--import` 核验后重跑双档 `s100` 全量验收批（`Test/u4_u6_full_reaudit_run.sh`），并同步打包真机 APK 安装至 Seeker 测试机。**
-- 本轮提交：`assets/ui/textures/button_blue.png(.import)`、`scripts/ui_theme.gd`、`scripts/world.gd`、`Test/u2_shop_reaudit_parse.sh`、`Test/u4_u6_full_reaudit_run.sh`、`design/ui-reference/compare/U2.png`、`design/ui-reference/compare/U2_2400.png`、`design/ui-alignment-progress.md`。
+- 尾项弹窗精修：`S15` 大地图标题补 `raw=true` 纯白粗投影修正黑字问题、`S11` 伙伴营挑战标题改实心亮蓝字消除细斜体空心轮廓、`S17` 目标抽屉提至 `0.99` 遮底防透字并为「查看全部挑战」蓝钮补白粗深蓝描边、`S18` 暂停图例小标题统一接入 `_mk_sky_banner` 天蓝横幅；四项均已本地渲染导出 `Read` 验收通过，并新增 `Test/make_compare_u4.py` 与 `Test/make_compare_u6.py` 拼图脚本。
+- **状态：已提交推送并同步至 NUC 起跑终版双档 `s100` 全量验收批（`Test/u4_u6_full_reaudit_run.sh`），并同步更新真机 APK 安装至 Seeker 测试机。**
+- 本轮提交：`assets/ui/textures/button_blue.png(.import)`、`scripts/ui_theme.gd`、`scripts/world.gd`、`Test/u2_shop_reaudit_parse.sh`、`Test/u4_u6_full_reaudit_run.sh`、`Test/make_compare_u4.py`、`Test/make_compare_u6.py`、`design/ui-reference/compare/U2.png`、`design/ui-reference/compare/U2_2400.png`、`design/ui-alignment-progress.md`。
 
 

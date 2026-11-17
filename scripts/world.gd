@@ -5735,9 +5735,9 @@ func _build_unlock_panel(root: Control) -> void:
 		var ll := UiTheme.art("laurel_gold", Vector2(26, 30))
 		ll.flip_h = true
 		head_row.add_child(ll)
-		var t := _mk_dlabel(head_row, "伙伴营挑战 · 终身挑战", 24, Color("3ea6eb"))
-		t.add_theme_color_override("font_outline_color", Color("144e7d"))
-		t.add_theme_constant_override("outline_size", 4)
+		var t := _mk_label(head_row, "伙伴营挑战 · 终身挑战", 24, Color("298ad6"), true)
+		t.add_theme_color_override("font_shadow_color", Color(0.08, 0.25, 0.45, 0.45))
+		t.add_theme_constant_override("shadow_offset_y", 2)
 		var lr := UiTheme.art("laurel_gold", Vector2(26, 30))
 		head_row.add_child(lr)
 		var info_pill := PanelContainer.new()
@@ -16103,7 +16103,7 @@ func _build_objective(root: Control, kpill: Control) -> void:
 	_obj_drawer.offset_bottom = 300
 	# U1 1:1 round 13: fully opaque — at 0.92 the top bar's
 	# bright wallet icons ghosted through the open drawer.
-	_obj_drawer.add_theme_stylebox_override("panel", UiTheme.hud_glass(16, 0.96, Color(0.88, 0.94, 1.0, 0.62), 2, 14))
+	_obj_drawer.add_theme_stylebox_override("panel", UiTheme.hud_glass(16, 0.99, Color(0.88, 0.94, 1.0, 0.65), 2, 14))
 	_obj_drawer.mouse_filter = Control.MOUSE_FILTER_STOP
 	_obj_drawer.visible = false
 	root.add_child(_obj_drawer)
@@ -16120,6 +16120,10 @@ func _build_objective(root: Control, kpill: Control) -> void:
 	_obj_drawer_scroll.add_child(_obj_drawer_box)
 	# A fixed footer (never scrolls out of reach).
 	_obj_drawer_all = UiTheme.make_button("查看全部挑战", "blue", "small")
+	for st in ["font_color", "font_hover_color", "font_pressed_color"]:
+		_obj_drawer_all.add_theme_color_override(st, Color.WHITE)
+	_obj_drawer_all.add_theme_color_override("font_outline_color", Color("13548c"))
+	_obj_drawer_all.add_theme_constant_override("outline_size", 3)
 	_obj_drawer_all.pressed.connect(_obj_open_challenges)
 	dvb.add_child(_obj_drawer_all)
 
@@ -18063,7 +18067,7 @@ func _p5_wrap_page(box: Control, rows: bool = true) -> void:
 				(last as Label).size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 func _pause_fill_legend(box: VBoxContainer) -> void:
-	_mk_dlabel(box, "地图图例", 16, UiTheme.SKY)
+	_mk_sky_banner(box, "地图图例", 16, false)
 	# Ring colors from the bundle's marker table (gR @2093942).
 	var rows := [["守护者", Color("ff2a4a")], ["头领", Color("ff8a2a")],
 		["可结伴目标", Color("5af0ff")], ["宝藏", Color("ffc83a")],
@@ -18078,7 +18082,7 @@ func _pause_fill_legend(box: VBoxContainer) -> void:
 		dot.add_theme_stylebox_override("panel", UiTheme.flat_box(r[1], 7))
 		hb.add_child(dot)
 		_mk_label(hb, String(r[0]), 14)
-	_mk_dlabel(box, "稀有度", 16, UiTheme.SKY)
+	_mk_sky_banner(box, "稀有度", 16, false)
 	var rb := HBoxContainer.new()
 	rb.add_theme_constant_override("separation", 6)
 	box.add_child(rb)
@@ -18191,10 +18195,12 @@ func _build_bigmap(root: Control) -> void:
 	if _p5_on:
 		var map_cap := PanelContainer.new()
 		map_cap.add_theme_stylebox_override("panel", UiTheme._btn_box(UiTheme.SKY, 18, Color(0, 0, 0, 0.15), 1, 14))
-		var mt := _mk_dlabel(map_cap, "大地图", 22, Color.WHITE)
+		var mt := _mk_label(map_cap, "大地图", 22, Color.WHITE, true)
 		mt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		mt.add_theme_color_override("font_outline_color", Color("13548c"))
-		mt.add_theme_constant_override("outline_size", 3)
+		mt.add_theme_color_override("font_shadow_color", Color("14548a"))
+		mt.add_theme_constant_override("shadow_offset_y", 2)
+		mt.add_theme_color_override("font_outline_color", Color("176098"))
+		mt.add_theme_constant_override("outline_size", 1)
 		side_box.add_child(map_cap)
 	else:
 		_mk_dlabel(side_box, "大地图", 20, UiTheme.TEXT)
