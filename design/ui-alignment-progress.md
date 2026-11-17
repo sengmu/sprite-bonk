@@ -1712,6 +1712,17 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 本地全 8 脚本解析门与满载多图 `Read` 审看全部通过，已更新 `compare/{U1,S07,S24}.png` 并正同步提交推送至 `origin/align-fix13`、打包终版瘦身 APK 及开启 NUC 双档最终认证批。
 - 本轮提交：`scripts/ui_icon.gd`、`scripts/world.gd`、`design/ui-reference/compare/{U1,S07,S24}.png`、`design/ui-alignment-progress.md`。
 
+## 左上队友圆框＋维生素纯白显数＋商店确认亮橙胶囊终极点睛（2026-11-17 19:1x）
+
+- **解决中后期满载画面细节残余（`scripts/ui_icon.gd`、`scripts/world.gd`）**：
+  1. **左上队友头像金环圆盘（`_refresh_party`）**：保持 `38+1+5=44px` P2 盒高限制，为每只队友小头像加装 `38×38` 柔深灰蓝配暖金边圆框（流光队友配亮金边框），彻底防止头像贴草地糊边。
+  2. **左下维生素纯白显数＋普通系提亮（`_p4_refresh_slots`、`UiIcon`）**：修复维生素数字未传 `raw=true` 导致在深绿圆点上变成黑字看不清的缺陷，启用 `Color.WHITE` + `2px` 深绿描边使数字锐利醒目；同时为 `UiIcon` `"spark"` 增设左上亮面高光切面并提亮普通系圆盘暖银金底色，告别暗灰感。
+  3. **`S12` 出售二次确认高对比（`_shop_refresh`）**：首次点击出售武装态按钮切为亮橙立体真胶囊配纯白深橙描边字，防止玩家误解无响应。
+  4. **`S07` 档案预设横向平滑滚动（`_build_loadout`）**：为 `_ls_archive_row` 外挂禁用竖向的横向 `ScrollContainer`，3 套长名称预设绝不撑出右侧边框。
+- 本地全 8 脚本解析门全绿通过，已重绘更新并亲检 `compare/{U1,S12}.png`，同步推送并起跑最终收官全量认证与 APK 构建。
+- 本轮提交：`scripts/ui_icon.gd`、`scripts/world.gd`、`design/ui-reference/compare/{U1,S12}.png`、`design/ui-alignment-progress.md`。
+
+
 
 
 

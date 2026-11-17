@@ -239,6 +239,7 @@ func _draw() -> void:
 			_poly([Vector2(6, 3.4), Vector2(18, 3.4), Vector2(13.8, 10.6), Vector2(18, 17.8), Vector2(18, 20.6), Vector2(6, 20.6), Vector2(6, 17.8), Vector2(10.2, 10.6)], color)
 		"spark":
 			_poly([Vector2(12, 2.2), Vector2(14.6, 9.4), Vector2(21.8, 12), Vector2(14.6, 14.6), Vector2(12, 21.8), Vector2(9.4, 14.6), Vector2(2.2, 12), Vector2(9.4, 9.4)], color)
+			_poly([Vector2(12, 2.2), Vector2(12, 12), Vector2(2.2, 12), Vector2(9.4, 9.4)], color.lightened(0.38))
 		"coin":
 			_ring(12, 12, 8.6, 2.4)
 			_ring(12, 12, 4.4, 1.7)

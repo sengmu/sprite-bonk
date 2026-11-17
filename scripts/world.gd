@@ -9583,10 +9583,16 @@ func _shop_refresh() -> void:
 		for k in keys:
 			var key := String(k)
 			var val := _sell_value(GameData.item_rarity(key))
+			var armed_sell := _shop_armed_key == key
 			var sell_txt := ("确认出售 %s +%d" % [_item_zh_name(key), val]) \
-				if _shop_armed_key == key else \
+				if armed_sell else \
 				("出售 %s +%d" % [_item_zh_name(key), val])
-			var sb := UiTheme.make_button(sell_txt, "ghost", "small")
+			var sb := UiTheme.make_button(sell_txt, "orange" if armed_sell else "ghost", "small")
+			if armed_sell:
+				for st in ["font_color", "font_hover_color", "font_pressed_color"]:
+					sb.add_theme_color_override(st, Color.WHITE)
+				sb.add_theme_color_override("font_outline_color", Color("8f3905"))
+				sb.add_theme_constant_override("outline_size", 3)
 			sb.clip_text = false
 			var sfont := sb.get_theme_font("font")
 			var sfs := 15 if _p5_on else 13
@@ -17117,8 +17123,8 @@ func _p4_refresh_slots(relayout: bool) -> void:
 		pnl.position = Vector2(P4_STRIP_PAD + i * P4_MOVE_STEP, 0)
 		pnl.size = Vector2(P4_SLOT, P4_SLOT)
 		pnl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		# 对齐定稿 U1_final.jpg：已学槽配 6px 厚实暖金立体圆环（radius=62避开Godot正圆对撞十字线与12点缺口）
-		var tc := UiTheme.type_color(t)
+		# 对齐定稿 U1_final.jpg：已学槽配 6px 厚实暖金立体圆环（radius=62避开Godot正圆对撞十字线与12点缺口）；普通系提亮暖银金避免死灰
+		var tc := Color("a69c88") if t == "normal" else UiTheme.type_color(t)
 		pnl.add_theme_stylebox_override("panel",
 			_style(tc, 62, Color("efc038"), 6, true))
 		_bl_rows.add_child(pnl)
@@ -17173,12 +17179,14 @@ func _p4_refresh_slots(relayout: bool) -> void:
 			Color(1, 1, 1, 0.25), 1))
 		_bl_rows.add_child(pv)
 		var vic := UiIcon.new(String(P4_VIT_ICON.get(String(vd.get("acc", "")), "flask")),
-			Color(1, 1, 1, 0.9), 15)
-		vic.position = Vector2(9.5, 1)
-		vic.size = Vector2(15, 15)
+			Color(1, 1, 1, 0.98), 16)
+		vic.position = Vector2(9, 1)
+		vic.size = Vector2(16, 16)
 		pv.add_child(vic)
 		var vl := _label_in(pv, str(int(player.vit_levels[vk])), Vector2(0, 14), Vector2(34, 20),
-			14, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER)
+			14, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
+		vl.add_theme_color_override("font_outline_color", Color("1c470b"))
+		vl.add_theme_constant_override("outline_size", 2)
 		_bl_vit_slots.append({"panel": pv, "lv": vl, "key": String(vk)})
 		j += 1
 	_bl_font_sig = ""
@@ -19085,13 +19093,19 @@ func _refresh_party() -> void:
 		var cell := VBoxContainer.new()
 		cell.add_theme_constant_override("separation", 1)
 		_party_row.add_child(cell)
+		var pring := PanelContainer.new()
+		pring.custom_minimum_size = Vector2(38, 38)
+		pring.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var p_sb := _style(Color(0.22, 0.28, 0.36, 0.84), 19, Color("ffe066") if e.shiny else Color("e5c470"), 1.5, true)
+		p_sb.set_content_margin_all(2)
+		pring.add_theme_stylebox_override("panel", p_sb)
+		cell.add_child(pring)
 		var tr := TextureRect.new()
-		tr.custom_minimum_size = Vector2(38, 38)
 		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tr.texture = UiTheme.portrait(e.species_id)
 		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		cell.add_child(tr)
+		pring.add_child(tr)
 		var track := Panel.new()
 		track.custom_minimum_size = Vector2(38, 5)
 		track.add_theme_stylebox_override("panel",
@@ -19457,7 +19471,15 @@ func _build_loadout(root: Control) -> void:
 	# the pre-run screen @1880686; empty until unlocked).
 	_ls_archive_row = HBoxContainer.new()
 	_ls_archive_row.add_theme_constant_override("separation", 6)
-	right.add_child(_ls_archive_row)
+	if _p5_on:
+		var asc := ScrollContainer.new()
+		asc.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		asc.custom_minimum_size.y = 38
+		asc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		right.add_child(asc)
+		asc.add_child(_ls_archive_row)
+	else:
+		right.add_child(_ls_archive_row)
 	var brow := HBoxContainer.new()
 	brow.add_theme_constant_override("separation", 10)
 	right.add_child(brow)
