@@ -336,7 +336,8 @@ func fire() -> void:
 	world.count_event("ultimates")  # lifetime counter, at cast (meta.count)
 	# player.onUltimate() is a poke-flute item hook — no-op here.
 	p.set("_invuln_t", maxf(float(p.get("_invuln_t")), active + 0.6))
-	Input.vibrate_handheld(320)  # eo(.8, 320) rumble approximation
+	if bool(GameProfile.setting("shakeOn")):
+		Input.vibrate_handheld(320)  # eo(.8, 320) rumble approximation（遵循震动总开关且已补齐Android震动权限）
 	var quiet := bool(GameProfile.setting("autoUlt"))
 	if not quiet:
 		# Cycle 16: the bundle ducks the music under the ult
