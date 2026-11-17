@@ -22,14 +22,14 @@ const KITS := {
 ## option's rarity pe when drafted. `acc` names the player accumulator
 ## the value feeds (percent points unless the key is flat: iron/hp/regen/luck).
 const VITAMINS := {
-	"protein": {"label": "蛋白质 Protein", "acc": "phys_pct", "per": 10.0, "fmt": "物理伤害 +%s%%"},
-	"calcium": {"label": "钙片 Calcium", "acc": "spec_pct", "per": 10.0, "fmt": "特殊伤害 +%s%%"},
-	"iron": {"label": "钢铁 Iron", "acc": "armor_flat", "per": 5.0, "fmt": "护甲 +%s"},
-	"carbos": {"label": "速度剂 Carbos", "acc": "speed_pct", "per": 7.0, "fmt": "移速 +%s%%"},
+	"protein": {"label": "蛋白质", "acc": "phys_pct", "per": 10.0, "fmt": "物理伤害 +%s%%"},
+	"calcium": {"label": "钙片", "acc": "spec_pct", "per": 10.0, "fmt": "特殊伤害 +%s%%"},
+	"iron": {"label": "钢铁", "acc": "armor_flat", "per": 5.0, "fmt": "护甲 +%s"},
+	"carbos": {"label": "速度剂", "acc": "speed_pct", "per": 7.0, "fmt": "移速 +%s%%"},
 	"hp-up": {"label": "HP 增强剂", "acc": "hp_flat", "per": 18.0, "fmt": "最大 HP +%s"},
-	"ether": {"label": "以太 Ether", "acc": "atkspd_pct", "per": 8.0, "fmt": "攻速 +%s%%"},
-	"dire-hit": {"label": "要害镜 Dire Hit", "acc": "crit_pct", "per": 5.0, "fmt": "暴击率 +%s%%"},
-	"exp-candy": {"label": "经验糖 Exp Candy", "acc": "xp_pct", "per": 10.0, "fmt": "经验 +%s%%"},
+	"ether": {"label": "以太", "acc": "atkspd_pct", "per": 8.0, "fmt": "攻速 +%s%%"},
+	"dire-hit": {"label": "要害镜", "acc": "crit_pct", "per": 5.0, "fmt": "暴击率 +%s%%"},
+	"exp-candy": {"label": "经验糖", "acc": "xp_pct", "per": 10.0, "fmt": "经验 +%s%%"},
 	"nugget": {"label": "金块", "acc": "gold_pct", "per": 15.0, "fmt": "金币 +%s%%"},
 	"super-potion": {"label": "超级伤药", "acc": "regen_flat", "per": 0.7, "fmt": "再生 +%s/s"},
 	"star-piece": {"label": "星星碎片", "acc": "luck_flat", "per": 10.0, "fmt": "幸运 +%s"},

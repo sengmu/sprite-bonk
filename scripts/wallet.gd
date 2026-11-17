@@ -17,7 +17,7 @@ signal balance_updated(sol: float)
 signal balance_failed(reason: String)
 signal auth_failed(reason: String)
 
-const ERR_MWA_UNAVAILABLE := "此版本无法打开移动钱包，可输入公开地址查询余额。"
+const ERR_MWA_UNAVAILABLE := "未检测到移动钱包授权组件，请在支持 Solana MWA 的设备上重试。"
 
 const RPC_MAINNET := "https://api.mainnet-beta.solana.com"
 const RPC_DEVNET := "https://api.devnet.solana.com"

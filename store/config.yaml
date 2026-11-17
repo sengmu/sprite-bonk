@@ -98,4 +98,4 @@ release:
       new_in_version: "首发版本：3 大元素伙伴、4 大生态地带、守护者试炼与 Solana MWA 原生钱包支持。"
 solana_mobile_dapp_publisher_portal:
   google_store_package: ""
-  testing_instructions: "Guest play needs no account or wallet: launch the app, pick any starter, play. Wallet connect (optional, read-only) is on the main menu — use 'Connect Wallet', paste any Solana address, and the menu shows the address and its SOL balance. No transactions are possible in this build."
+  testing_instructions: "Guest play needs no account or wallet: launch the app, tap any starter, tap Start, and play with on-screen touch controls. Wallet connect (optional, read-only) is on the main menu — tap Wallet then Connect to authorize via Solana Mobile Wallet Adapter (MWA) and view your read-only short address and SOL balance, or tap Copy Address to copy it. No transactions or signing fees are possible in this build."

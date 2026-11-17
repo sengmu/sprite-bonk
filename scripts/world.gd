@@ -462,6 +462,8 @@ var _wallet_panel: PanelContainer
 var _wallet_edit: LineEdit
 var _wallet_balance: Label
 var _wallet_retry: Button
+var _wallet_note: Label
+const WALLET_DEFAULT_NOTE := "可选 · 仅查看公开余额，不签名、不交易。断开连接会清除保存的地址。"
 var _menu_panel: Control
 var _menu_intro_items: Array = []  # cycle 19: stagger set
 var _menu_badges := {}             # cycle 19: mm-badge chips
@@ -2945,7 +2947,7 @@ func _build_hud() -> void:
 	info.add_theme_stylebox_override("panel", UiTheme.dark_glass(16, 0.92))
 	info.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_hero_cluster.add_child(info)
-	_hud_name = _label_in(info, "妙蛙种子 Bulbasaur", Vector2(14, 6), Vector2(210, 27), 19, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT, true)
+	_hud_name = _label_in(info, "妙蛙种子", Vector2(14, 6), Vector2(210, 27), 19, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT, true)
 	_hud_name.add_theme_font_override("font", _font_display)
 	_hud_chips = HBoxContainer.new()
 	_hud_chips.position = Vector2(14, 36)
@@ -3642,7 +3644,9 @@ func _build_hud() -> void:
 	_p5_register(_shop_panel, 1200.0, 460.0)
 	_p5_register(_unlock_panel, 1200.0, 460.0)
 	_p5_register(_sound_panel, 1200.0, 460.0)
-	_p5_register(_wallet_panel, 680.0, 420.0)
+	_p5_register(_wallet_panel, 610.0, 412.0)
+	if _p5_on and _wallet_panel:
+		_wallet_panel.set_meta("p5_h_ratio", 0.78)
 	for c in _loadout_panel.get_children():
 		if c is PanelContainer:
 			_p5_register(c, 960.0, 462.0)
@@ -4649,19 +4653,34 @@ func _build_wallet_panel(root: Control) -> void:
 	cbtn.pressed.connect(func() -> void:
 		if wallet.is_wallet_connected():
 			wallet.disconnect_wallet()
+			if _wallet_note:
+				_wallet_note.text = WALLET_DEFAULT_NOTE
+				_wallet_note.add_theme_color_override("font_color", UiTheme.MUTED)
 		elif _wallet_edit.text.strip_edges() != "":
 			if not wallet.connect_with_address(_wallet_edit.text):
-				_wallet_balance.text = "地址无效，请重试"
+				_wallet_balance.text = "地址无效"
+				if _wallet_note:
+					_wallet_note.text = "Solana 地址格式无效，请检查后重试。"
+					_wallet_note.add_theme_color_override("font_color", Color("b63a2e"))
 		else:
-			_wallet_balance.text = "正在唤起 Solana 钱包授权..."
+			_wallet_balance.text = "授权中…"
+			if _wallet_note:
+				_wallet_note.text = "正在唤起 Solana 移动钱包，请在弹窗中确认连接。"
+				_wallet_note.add_theme_color_override("font_color", UiTheme.MUTED)
 			var err := wallet.request_authorize()
 			if err != "":
-				_wallet_balance.text = err
+				_wallet_balance.text = "暂不可用"
+				if _wallet_note:
+					_wallet_note.text = err
+					_wallet_note.add_theme_color_override("font_color", Color("b63a2e"))
 	)
 	row.add_child(cbtn)
 	wallet.auth_failed.connect(func(reason: String) -> void:
 		if _wallet_balance:
-			_wallet_balance.text = "授权未完成：%s" % reason
+			_wallet_balance.text = "授权未完成"
+		if _wallet_note:
+			_wallet_note.text = "授权未完成：%s" % reason
+			_wallet_note.add_theme_color_override("font_color", Color("b63a2e"))
 	)
 	var copy := UiTheme.make_button("复制地址", "blue", "big")
 	copy.pressed.connect(func() -> void:
@@ -4679,7 +4698,12 @@ func _build_wallet_panel(root: Control) -> void:
 				copy.text = "复制地址"))
 	row.add_child(copy)
 	var xbtn := UiTheme.make_button("关闭", "orange", "big")
-	xbtn.pressed.connect(func() -> void: _wallet_panel.visible = false)
+	xbtn.pressed.connect(func() -> void:
+		_wallet_panel.visible = false
+		if _wallet_note:
+			_wallet_note.text = WALLET_DEFAULT_NOTE
+			_wallet_note.add_theme_color_override("font_color", UiTheme.MUTED)
+	)
 	xbtn.set_meta("p5_primary", true)
 	row.add_child(xbtn)
 	for btn_info in [[cbtn, Color("326b08")], [copy, Color("13548c")], [xbtn, Color("8f3905")]]:
@@ -4694,9 +4718,9 @@ func _build_wallet_panel(root: Control) -> void:
 			btn_c.add_theme_constant_override("outline_size", 4)
 	cbtn.set_meta("wallet_connect", true)
 	_wallet_panel.set_meta("connect_button", cbtn)
-	var note := _mk_label(vb, "可选 · 仅查看公开余额，不签名、不交易。断开连接会清除保存的地址。", 14, UiTheme.MUTED)
-	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_wallet_note = _mk_label(vb, WALLET_DEFAULT_NOTE, 14, UiTheme.MUTED)
+	_wallet_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_wallet_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
 func _refresh_wallet_ui() -> void:
 	if _wallet_status == null or wallet == null:
@@ -4724,6 +4748,9 @@ func _refresh_wallet_ui() -> void:
 		_wallet_edit.text = wallet.short_address()
 		_wallet_balance.text = "余额读取失败" if failed else bal
 		_wallet_retry.visible = failed
+		if _wallet_note:
+			_wallet_note.text = ("余额同步失败：%s" % wallet.balance_error) if (failed and wallet.balance_error != "") else WALLET_DEFAULT_NOTE
+			_wallet_note.add_theme_color_override("font_color", Color("b63a2e") if failed else UiTheme.MUTED)
 	else:
 		_wallet_status.text = "游客模式"
 		_wallet_balance.text = "尚未连接"
@@ -14580,7 +14607,13 @@ func consume_touch_interact() -> bool:
 	return touch_controls != null and touch_controls.consume_interact()
 
 func _touch_wanted() -> bool:
-	return _touch_forced or OS.get_name() == "Android" or DisplayServer.is_touchscreen_available()
+	if _touch_forced:
+		return true
+	if debug_phone_factor >= 0.0 and debug_phone_factor <= 1.01:
+		return false
+	if "--mode=desktop" in OS.get_cmdline_user_args():
+		return false
+	return _p5_on or OS.get_name() == "Android" or DisplayServer.is_touchscreen_available()
 
 func _input(event: InputEvent) -> void:
 	# UI-mobile P3 (plan I4): a press outside the open drawer
@@ -15499,8 +15532,12 @@ func _kr() -> float:
 func _phone_factor() -> float:
 	if debug_phone_factor >= 0.0:
 		return debug_phone_factor
-	if OS.get_name() != "Android" and not DisplayServer.is_touchscreen_available():
+	if "--mode=desktop" in OS.get_cmdline_user_args():
 		return 1.0
+	if OS.get_name() != "Android" and not DisplayServer.is_touchscreen_available():
+		# 纯 Sol 手游：在电脑桌面直接 F5/Debug 运行默认启用 Seeker 基准精绘手游 UI（factor=1.925），
+		# 彻底避免误落入旧桌面界面；仅测试参数显式传 --mode=desktop 或 debug_phone_factor=1.0 时回退基线。
+		return clampf((720.0 / (1080.0 / (420.0 / 160.0))) * 1.1, 1.0, 2.0)
 	var dpi := DisplayServer.screen_get_dpi()
 	var phys := DisplayServer.screen_get_size()
 	if dpi <= 0 or phys.y <= 0:
@@ -15617,7 +15654,8 @@ func _p5_place_modal(c: Control, s: float, post_layout: bool = false) -> void:
 	# fell to scale 0.53 on the s100 run for exactly this). Panels
 	# opt in via the p5_fixed_h meta (result only, for now).
 	var content_h := spec.y if bool(c.get_meta("p5_fixed_h", false)) else maxf(spec.y, c.get_combined_minimum_size().y)
-	var sm := minf(s, (area.y - 6.0) / content_h)
+	var h_ratio := float(c.get_meta("p5_h_ratio", 1.0))
+	var sm := minf(s, (area.y * h_ratio - 6.0) / content_h)
 	var w := floorf(minf(spec.x, (area.x - 24.0) / sm))
 	# U5 re-audit #1: authored frame-relative translation survives every
 	# placement pass. Other modals retain the zero translation default.
@@ -15999,6 +16037,9 @@ func _safe_insets() -> Vector4:
 	# Cycle 21.3 (audit F6): the gate's simulated insets win.
 	if debug_safe_insets.x >= 0.0:
 		return debug_safe_insets
+	if OS.get_name() != "Android" and not DisplayServer.is_touchscreen_available():
+		# 电脑桌面非触屏窗口无挖孔/刘海，不可把系统任务栏高度从游戏窗口内减去
+		return Vector4.ZERO
 	# Audit §9.2: get_display_safe_area() returns PHYSICAL
 	# screen px while the UI lives in logical canvas units —
 	# convert per axis (physical x logical/screen), or the
@@ -16023,6 +16064,13 @@ func _apply_safe_area() -> void:
 		_ui_root.offset_top = ins.y
 		_ui_root.offset_right = -ins.z
 		_ui_root.offset_bottom = -ins.w
+	if _menu_panel:
+		var forest := _menu_panel.get_node_or_null("MenuForestBackground") as Control
+		if forest:
+			forest.offset_left = -ins.x - 40.0
+			forest.offset_top = -ins.y - 24.0
+			forest.offset_right = ins.z + 40.0
+			forest.offset_bottom = ins.w + 24.0
 	# Cycle 21.3 (audit §3): the modal scrim must cover
 	# the WHOLE screen, not just the inset UI area — it
 	# is a _ui_root child, so its offsets reach back out

@@ -1787,6 +1787,28 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 验证：Godot 解析门全绿，未连接态 `editable=false scale=1.7`、已连接态 `text='7xK1…Ab3d' bal='1.2500 SOL'`，已重建并 `Read` 审看 `compare/U6.png`；正在提交推送、覆盖安装最新 Seeker 真机包并同步 NUC 最终双档验收。
 - 本轮提交：`scripts/ui_icon.gd`、`scripts/world.gd`、`design/ui-reference/compare/U6.png`、`design/ui-alignment-progress.md`。
 
+## U6 钱包弹窗居中比例对齐（2026-11-17 21:2x）
+
+- **解决真机手测反馈「`[Image #12]` 弹窗比例不对」（`scripts/world.gd`）**：
+  - 定位根因：`_p5_place_modal` 原将居中弹窗高度强制贴满 `area.y - 6.0`（导致钱包弹窗高度铺满上下 714 逻辑 px），失去 `U6_final.jpg` 居中紧凑卡片上下露出森林与主页按钮的视觉呼吸感。
+  - **重构方案**：在 `_p5_place_modal` 引入仅按需启用的 `p5_h_ratio` 元数据（其余弹窗维持 `1.0` 默认不变），为手机端 `_wallet_panel` 设置 `spec=(610.0, 412.0)` 与 `p5_h_ratio=0.78` 并垂直居中 `vb.alignment = ALIGNMENT_CENTER`。
+- 验证：
+  - `verify_u6_redesign.gd` 实测正常态与余额读取失败态均精准对齐 `U6_final.jpg` `1.48:1` 黄金比例（`rect=(823, 556)`, `sc=1.349`, `prim_c=(1068, 498)`, `pass_br=true`, `prim_h=83.6 >= 83.0`）；
+  - `verify_fullscreen.gd`（双档 22 屏）、`verify_rest_screens.gd`（11 屏）、`verify_seeker_notch.gd`、`verify_gameplay_smoke.gd`、`check_legal.py`（4/4）与 `c23/c24` 全部 356 项核心单测 100% 通过。
+- 本轮提交：`scripts/world.gd`、`design/ui-reference/compare/U6.png`、`design/ui-alignment-progress.md`。
+
+## 全平台默认纯手游启动、桌面安全区修复与上线文案收口（2026-11-17 21:3x）
+
+- **解决「`[Image #13]` 怎么变成旧界面了」及桌面运行 9px 露底缝（`scripts/world.gd`、`Test/phonehud.gd`）**：
+  1. **全平台默认手游 UI**：调整 `_phone_factor()` 与 `_touch_wanted()`——正常启动游戏（包括 Windows/Linux/macOS 调试运行 `SpriteBonk 3D (DEBUG)`）默认启用 Seeker 基准手游精绘模式（`factor=1.925`、`_p5_on=true`、`_touch_wanted()=true`），不再退回已弃用的旧桌面 UI；仅在显式传入 `--mode=desktop` 或 `debug_phone_factor=1.0` 时保留给 `Test/phonehud.gd` 回归基线。同步将 `1280×720` 默认桌面启动截屏实测确认呈现全套精绘主菜单与触控提示。
+  2. **修复桌面窗口任务栏误扣 33px 露底缝及异形屏扩展覆盖**：`_safe_insets()` 在非 Android 非触屏桌面窗口直接返回 `Vector4.ZERO`，不再误把操作系统任务栏高度扣除进 `_ui_root`；同步在 `_apply_safe_area()` 令 `MenuForestBackground` 向四边按 `-ins.x..+ins.z` 反向扩边 `±40/±24px`，彻底消除桌面底端 `9px` 3D 绿边透出与手机挖孔露缝。
+- **钱包异常防撑爆保护与文案统一（`scripts/world.gd`、`scripts/wallet.gd`）**：
+  - 将 48px 超粗 `_wallet_balance` 严格保留给简短状态/金额（`授权中…`/`暂不可用`/`授权未完成`/`尚未连接`/`1.2500 SOL`），详细状态或失败原因写入 14px `_wallet_note`，确保任意无 MWA 或取消授权状态都不会撑破 `823×556` (`1.48:1`) 比例；同步更新 `ERR_MWA_UNAVAILABLE` 与 `store/config.yaml` 测试指引去除过时的手动粘贴地址描述。
+- **游戏内残留中英混杂收尾清理（`scripts/game_data.gd`、`scripts/world.gd`）**：
+  - 清除 `VITAMINS`（`蛋白质`/`钙片`/`钢铁`/`速度剂`/`以太`/`要害镜`/`经验糖`）英文后缀及 `_hud_name` 初始占位英文后缀，确保全链路界面纯正规范中文。
+- 验证：`scripts/*.gd` 与 `Test/phonehud.gd` 解析全绿；`verify_fullscreen`（22态）、`verify_rest_screens`（11态）、`verify_seeker_notch`、`verify_u6_redesign`（正常态+失败态+异常态防撑爆）、`verify_gameplay_smoke`、`check_legal.py`（4/4）及 `c23/c24` 全部 356 项单元单测 100% 通过。
+- 本轮提交：`scripts/world.gd`、`scripts/wallet.gd`、`scripts/game_data.gd`、`Test/phonehud.gd`、`store/config.yaml`、`design/ui-reference/compare/U6.png`、`design/ui-alignment-progress.md`。
+
 
 
 

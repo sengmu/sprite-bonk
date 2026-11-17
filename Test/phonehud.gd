@@ -287,6 +287,7 @@ func _run() -> void:
 		factor = clampf((720.0 / css_h) * 1.1, 1.0, 2.0)
 	else:
 		win = Vector2i(1280, 720)
+		factor = 1.0
 	get_window().size = win
 	await _frames(8)
 	var ps: PackedScene = load("res://scenes/main.tscn")
