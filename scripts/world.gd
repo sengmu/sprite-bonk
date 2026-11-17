@@ -3878,8 +3878,8 @@ func _build_menu(root: Control) -> void:
 		# 左右适当宽延 80px 封死超宽刘海安全区边缘露缝，垂直严格保持 0 偏移确保萌宠与石台同中心基准
 		forest.offset_left = -80.0
 		forest.offset_right = 80.0
-		forest.offset_top = 0.0
-		forest.offset_bottom = 0.0
+		forest.offset_top = -24.0
+		forest.offset_bottom = 24.0
 		forest.texture = load("res://assets/menu/v2-background.png")
 		forest.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		forest.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
@@ -4321,18 +4321,23 @@ func _build_menu(root: Control) -> void:
 	start.name = "StartButton"
 	start.position = Vector2(760, 554) if not _p5_on else Vector2(710, 348)
 	start.size = Vector2(340, 80) if not _p5_on else Vector2(236, 88)
-	start.add_theme_font_size_override("font_size", 44 if _p5_on else 32)
+	start.add_theme_font_size_override("font_size", 38 if _p5_on else 32)
 	if _p5_on:
-		# 改用 CapsuleStyleBox 真半圆胶囊绘制橙钮，采用敦厚黑体粗白字配柔和橙棕描边对齐定稿
+		# 改用 CapsuleStyleBox 真半圆胶囊绘制橙钮，字体收至 38 并上抬 content_margin 补偿思源黑体下沉基线与底部厚边框
 		var start_font := load("res://assets/fonts/NotoSC-Black-sub.ttf") as Font
 		start.set_meta("u2_start_font", start_font)
 		start.add_theme_font_override("font", start_font)
 		for state in ["font_color", "font_hover_color", "font_pressed_color"]:
 			start.add_theme_color_override(state, Color.WHITE)
 		start.add_theme_color_override("font_outline_color", Color("963b06"))
-		start.add_theme_constant_override("outline_size", 5)
+		start.add_theme_constant_override("outline_size", 4)
 		start.add_theme_color_override("font_shadow_color", Color(0.50, 0.19, 0.01, 0.65))
-		start.add_theme_constant_override("shadow_offset_y", 3)
+		start.add_theme_constant_override("shadow_offset_y", 2)
+		for st in ["normal", "hover", "pressed"]:
+			var sb_c := start.get_theme_stylebox(st)
+			if sb_c != null:
+				sb_c.content_margin_top = 0.0
+				sb_c.content_margin_bottom = 14.0
 	start.pressed.connect(func() -> void: _open_loadout(_menu_hero_sp))
 	_menu_design.add_child(start)
 	if _p5_on:
@@ -15763,9 +15768,9 @@ func _p5_menu_reference_layout(width: float) -> void:
 
 	var resources := _menu_design.get_node_or_null("Resources") as Control
 	var res_x := resources.position.x if resources != null else width
-	var hero_w := 200.0
-	var hero_top := 25.0 if (stage_cx + hero_w * 0.52) < res_x - 6.0 else 48.0
-	var hero_bot := 259.5
+	var hero_w := 178.0
+	var hero_top := 54.0 if (stage_cx + hero_w * 0.52) < res_x - 6.0 else 66.0
+	var hero_bot := 259.0
 	var hero_h := hero_bot - hero_top
 	hero_w = hero_h * (947.0 / 1109.0)
 
@@ -15815,12 +15820,12 @@ func _p5_menu_reference_layout(width: float) -> void:
 			art.size = Vector2(extent.x * 0.68, title.position.y - 10)
 			art.position = Vector2((extent.x - art.size.x) * 0.5, 6)
 	var start := _menu_design.get_node("StartButton") as Control
-	start.add_theme_font_size_override("font_size", 44)
+	start.add_theme_font_size_override("font_size", 38)
 	for leaf_side in [false, true]:
 		var leaf := start.get_node("StartLeafRight" if leaf_side else "StartLeafLeft") as Control
 		leaf.size = Vector2(24, 18)
 		var lx_leaf := (start.size.x - 46.0) if leaf_side else 22.0
-		leaf.position = Vector2(lx_leaf, (start.size.y - leaf.size.y) * 0.5 + 1.0)
+		leaf.position = Vector2(lx_leaf, (start.size.y - leaf.size.y) * 0.5 - 4.0)
 	var caption := _menu_design.get_node("StartCaption") as Label
 	var caption_back := _menu_design.get_node("StartCaptionBack") as Control
 	caption_back.size.y = maxf(32.0, caption.get_combined_minimum_size().y + 12.0)
@@ -15829,16 +15834,16 @@ func _p5_menu_reference_layout(width: float) -> void:
 	caption.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 
 	# 唯一高清石台与萌宠脚底投影随 _menu_design 完全同比例同坐标系定位：
-	# 萌宠实底 y=258 踩入石台青苔顶面 y=255（深嵌入 3 设计 px），跨屏 0 悬空
+	# 萌宠比例精缩至 ~42% 画高后实底仍深嵌入石台青苔顶面 y=255，跨屏 0 悬空
 	var stone := _menu_panel.get_node_or_null("MenuHeroStone") as Control
 	if stone != null:
-		var stone_sz := Vector2(344.0, 116.0)
+		var stone_sz := Vector2(314.0, 106.0)
 		var stone_pos := Vector2(stage_cx - stone_sz.x * 0.5, 255.0 - stone_sz.y * 0.34)
 		stone.position = _menu_design.position + stone_pos * _menu_design.scale
 		stone.size = stone_sz * _menu_design.scale
 	var hero_shadow := _menu_panel.get_node_or_null("MenuHeroShadow") as Control
 	if hero_shadow != null:
-		var sh_sz := Vector2(138.0, 26.0)
+		var sh_sz := Vector2(124.0, 23.0)
 		var sh_pos := Vector2(stage_cx - sh_sz.x * 0.5, 255.0 - sh_sz.y * 0.45)
 		hero_shadow.position = _menu_design.position + sh_pos * _menu_design.scale
 		hero_shadow.size = sh_sz * _menu_design.scale

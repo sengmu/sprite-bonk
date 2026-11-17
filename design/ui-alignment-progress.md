@@ -1754,6 +1754,16 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - **Seeker 实拍暂停状态栏极微滚动滑道清零（`scripts/world.gd`）**：同步将 `S08` 状态双栏内卡片外边距从 `8` 微调为 `6`，进一步确保在真机刘海安全区内彻底零滚动条。
 - 本轮提交：`assets/ui/splash.png`、`project.godot`、`scripts/world.gd`、`design/ui-alignment-progress.md`。
 
+## 主菜单「开始」文字居中修复＋萌宠比例缩调＋底缝封口（2026-11-17 20:2x）
+
+- **响应 Seeker 真机实测截图反馈（`[Image #6]` 与 `[Image #7]`），完成主菜单三项精细对齐（`scripts/world.gd`）**：
+  1. **「开始」按钮文字切底边根治（`_build_menu` / `_p5_layout_menu`）**：定位到 `NotoSC-Black-sub` 44px 叠加外描边且基线偏下、加上 `CapsuleStyleBox` 底部立体厚度边导致字底被底框切边。现将 `StartButton` 字号收至 `38`，在不 `.duplicate()` 自定义 `CapsuleStyleBox` 的前提下直接调整原生三态 `content_margin_top=0, content_margin_bottom=14` 将文字中心上托 `7px`，并同步将左右两片小绿叶 Y 轴上移 `4px` 对齐中轴，文字稳居橙色高光胶囊正中央。
+  2. **主菜单萌宠适度缩小与石台匹配（`_p5_layout_menu`）**：将 `MenuPartnerHero` 顶缘由 `25.0` 适度下调至 `54.0`（保持底缘 `259.0` 深踩 `y=255.0` 石台零悬空），同步将 `MenuHeroStone` 协调缩至 `314×106`、`MenuHeroShadow` 至 `124×23`，释出上方大片晴朗蓝天与绿树空间，比例更协调萌态十足。
+  3. **底部手势安全区严密封边（`_build_menu`）**：为 `MenuForestBackground` 增设上下对称 `±24px` 延伸，彻底消除超宽屏下端安全区外缘偶现 `3D` 场地细缝。
+- 本地解析门 `PARSE_OK`，重建并 `Read` 审看 `u2_fixed.png` 与 `compare/U2_2400.png` 通过，正同步推进至 NUC 双档最终验收与 Seeker 真机更新安装实拍。
+- 本轮提交：`scripts/world.gd`、`design/ui-reference/compare/U2_2400.png`、`design/ui-alignment-progress.md`。
+
+
 
 
 
