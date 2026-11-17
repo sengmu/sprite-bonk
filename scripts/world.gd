@@ -5802,17 +5802,41 @@ func _st_switch(parent: Container, label: String, key: String,
 
 func _settings_page_sound() -> void:
 	_mk_sky_banner(_settings_page, "声音", 20)
+	var host: Container = _settings_page
+	if _p5_on:
+		var card := PanelContainer.new()
+		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var c_sb := _style(Color(1.0, 0.99, 0.96, 0.95), 14, Color("e5cfa0"), 1.5, true)
+		c_sb.set_content_margin_all(14)
+		card.add_theme_stylebox_override("panel", c_sb)
+		_settings_page.add_child(card)
+		var cvb := VBoxContainer.new()
+		cvb.add_theme_constant_override("separation", 10)
+		card.add_child(cvb)
+		host = cvb
 	for row in [["主音量", "master"], ["音乐", "music"], ["音效", "sfx"], ["叫声", "cries"]]:
-		_st_slider(_settings_page, String(row[0]), String(row[1]),
+		_st_slider(host, String(row[0]), String(row[1]),
 			0.0, 1.0, 0.05, "%.0f%%", func() -> void: _apply_audio_settings(), 100.0)
-	_st_switch(_settings_page, "后台静音", "muteHidden",
+	_st_switch(host, "后台静音", "muteHidden",
 		func() -> void: _apply_audio_settings())
 
 func _settings_page_gfx() -> void:
 	_mk_sky_banner(_settings_page, "图形", 20)
-	_st_switch(_settings_page, "屏幕震动", "shakeOn")
-	_st_slider(_settings_page, "震动强度", "screenShake", 0.0, 2.0, 0.1, "%.1f")
-	var hb := _st_row(_settings_page, "帧率上限")
+	var host: Container = _settings_page
+	if _p5_on:
+		var card := PanelContainer.new()
+		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var c_sb := _style(Color(1.0, 0.99, 0.96, 0.95), 14, Color("e5cfa0"), 1.5, true)
+		c_sb.set_content_margin_all(14)
+		card.add_theme_stylebox_override("panel", c_sb)
+		_settings_page.add_child(card)
+		var cvb := VBoxContainer.new()
+		cvb.add_theme_constant_override("separation", 10)
+		card.add_child(cvb)
+		host = cvb
+	_st_switch(host, "屏幕震动", "shakeOn")
+	_st_slider(host, "震动强度", "screenShake", 0.0, 2.0, 0.1, "%.1f")
+	var hb := _st_row(host, "帧率上限")
 	var opts := ["关", "30", "60", "90", "120"]
 	var vals := [0, 30, 60, 90, 120]
 	var cur := vals.find(int(GameProfile.setting("fpsCap")))
@@ -5829,6 +5853,52 @@ func _settings_page_gfx() -> void:
 
 func _settings_page_controls() -> void:
 	_mk_sky_banner(_settings_page, "控制", 20)
+	if _p5_on:
+		# 手机全屏化优化：5 枚开关改 2 列卡片网格 + 下面 3 条全宽滑块，一屏全部呈现告别截字滚动
+		var card := PanelContainer.new()
+		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var c_sb := _style(Color(1.0, 0.99, 0.96, 0.95), 14, Color("e5cfa0"), 1.5, true)
+		c_sb.content_margin_left = 14
+		c_sb.content_margin_right = 14
+		c_sb.content_margin_top = 6
+		c_sb.content_margin_bottom = 6
+		card.add_theme_stylebox_override("panel", c_sb)
+		_settings_page.add_child(card)
+		var cvb := VBoxContainer.new()
+		cvb.add_theme_constant_override("separation", 3)
+		card.add_child(cvb)
+		var sw_grid := GridContainer.new()
+		sw_grid.columns = 2
+		sw_grid.add_theme_constant_override("h_separation", 24)
+		sw_grid.add_theme_constant_override("v_separation", 2)
+		sw_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		cvb.add_child(sw_grid)
+		_st_switch(sw_grid, "大招自动释放", "autoUlt")
+		_st_switch(sw_grid, "大招演出姿势", "ultPose")
+		_st_switch(sw_grid, "镜头辅助（瞄准）", "camAssist",
+			func() -> void:
+				if touch_controls:
+					touch_controls.set_aim_state(bool(GameProfile.setting("camAssist"))))
+		_st_switch(sw_grid, "固定摇杆", "fixedStick",
+			func() -> void:
+				if touch_controls:
+					touch_controls.fixed_stick = bool(GameProfile.setting("fixedStick")))
+		_st_switch(sw_grid, "镜头 Y 轴反转", "invertY")
+		for ch in sw_grid.get_children():
+			if ch is Control:
+				(ch as Control).size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var sep := ColorRect.new()
+		sep.color = Color("ead8b5")
+		sep.custom_minimum_size.y = 1.5
+		cvb.add_child(sep)
+		_st_slider(cvb, "触控按钮大小", "touchScale", 0.7, 1.5, 0.05, "%.2f",
+			func() -> void:
+				if touch_controls:
+					touch_controls.apply_scale(float(GameProfile.setting("touchScale"))))
+		_st_slider(cvb, "镜头距离", "camDist", 4.5, 20.0, 0.5, "%.1f",
+			func() -> void: cam_dist = float(GameProfile.setting("camDist")))
+		_st_slider(cvb, "镜头灵敏度", "camSpeed", 0.5, 2.0, 0.1, "%.1f")
+		return
 	_st_switch(_settings_page, "大招自动释放", "autoUlt")
 	_st_switch(_settings_page, "大招演出姿势", "ultPose")
 	_st_switch(_settings_page, "镜头辅助（瞄准）", "camAssist",
@@ -5922,44 +5992,134 @@ func _settings_page_keys() -> void:
 
 func _settings_page_hud() -> void:
 	_mk_sky_banner(_settings_page, "界面", 20)
-	_st_slider(_settings_page, "界面缩放", "hudScale", 0.8, 1.3, 0.05, "%.2f",
+	var host: Container = _settings_page
+	if _p5_on:
+		var card := PanelContainer.new()
+		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var c_sb := _style(Color(1.0, 0.99, 0.96, 0.95), 14, Color("e5cfa0"), 1.5, true)
+		c_sb.set_content_margin_all(12)
+		card.add_theme_stylebox_override("panel", c_sb)
+		_settings_page.add_child(card)
+		var cvb := VBoxContainer.new()
+		cvb.add_theme_constant_override("separation", 8)
+		card.add_child(cvb)
+		host = cvb
+	_st_slider(host, "界面缩放", "hudScale", 0.8, 1.3, 0.05, "%.2f",
 		func() -> void: _apply_ui_scale())
-	_st_slider(_settings_page, "界面不透明度", "hudOpacity", 0.4, 1.0, 0.05, "%.0f%%",
+	_st_slider(host, "界面不透明度", "hudOpacity", 0.4, 1.0, 0.05, "%.0f%%",
 		func() -> void: _apply_visibility_settings(), 100.0)
-	_st_slider(_settings_page, "Boss 条不透明度", "bossOpacity", 0.4, 1.0, 0.05, "%.0f%%",
+	_st_slider(host, "Boss 条不透明度", "bossOpacity", 0.4, 1.0, 0.05, "%.0f%%",
 		func() -> void: _apply_visibility_settings(), 100.0)
-	_st_slider(_settings_page, "小地图大小", "minimapScale", 0.75, 1.5, 0.05, "%.2f",
+	_st_slider(host, "小地图大小", "minimapScale", 0.75, 1.5, 0.05, "%.2f",
 		func() -> void: _apply_visibility_settings())
 	# UI-mobile P3 (plan D6): the classic layout (21.3.2 HUD
 	# geometry + pause / aim column) for 1-2 versions.
-	var csw := _st_switch(_settings_page, "经典布局（旧版 HUD 排布）", "classicLayout",
+	var csw := _st_switch(host, "经典布局（旧版 HUD 排布）", "classicLayout",
 		func() -> void: _apply_ui_scale())
 	csw.name = "ClassicLayoutSwitch"
 
 func _settings_page_account() -> void:
 	_mk_sky_banner(_settings_page, "账户", 20)
-	var wstat := _mk_label(_settings_page, "", 14)
-	_refresh_account_label(wstat)
-	var wb := UiTheme.make_button("钱包面板", "blue", "normal")
 	if _p5_on:
+		# 手机端账户页卡片化排版：上卡为钱包绑定与法律文件，下卡为红边警戒区与实心珊瑚红重置钮（消除超宽晾衣杆与白字鬼影）
+		var wcard := PanelContainer.new()
+		wcard.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var w_sb := _style(Color(1.0, 0.99, 0.96, 0.95), 14, Color("e5cfa0"), 1.5, true)
+		w_sb.set_content_margin_all(14)
+		wcard.add_theme_stylebox_override("panel", w_sb)
+		_settings_page.add_child(wcard)
+		var wvb := VBoxContainer.new()
+		wvb.add_theme_constant_override("separation", 10)
+		wcard.add_child(wvb)
+		var wrow := HBoxContainer.new()
+		wrow.add_theme_constant_override("separation", 12)
+		wvb.add_child(wrow)
+		var wstat := _mk_label(wrow, "", 15, UiTheme.TEXT)
+		wstat.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		wstat.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		_refresh_account_label(wstat)
+		var wb := UiTheme.make_button("钱包面板", "blue", "normal")
+		wb.custom_minimum_size = Vector2(210, 44)
 		for st in ["font_color", "font_hover_color", "font_pressed_color"]:
 			wb.add_theme_color_override(st, Color.WHITE)
 		wb.add_theme_color_override("font_outline_color", Color("13548c"))
 		wb.add_theme_constant_override("outline_size", 3)
+		wb.pressed.connect(func() -> void:
+			audio.click()
+			_sound_panel.visible = false
+			_wallet_panel.visible = true)
+		wrow.add_child(wb)
+		var lsep := ColorRect.new()
+		lsep.color = Color("ead8b5")
+		lsep.custom_minimum_size.y = 1.5
+		wvb.add_child(lsep)
+		var lrow := HBoxContainer.new()
+		lrow.add_theme_constant_override("separation", 12)
+		wvb.add_child(lrow)
+		var linfo := _mk_label(lrow, "法律条款与数据声明（纯本地单机存储）", 14, UiTheme.MUTED)
+		linfo.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		linfo.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		var legal_button := UiTheme.make_button("隐私政策与服务条款", "ghost")
+		legal_button.custom_minimum_size = Vector2(240, 44)
+		legal_button.pressed.connect(func() -> void:
+			audio.click()
+			_settings_show_tab("legal"))
+		lrow.add_child(legal_button)
+		var dcard := PanelContainer.new()
+		dcard.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var d_sb := _style(Color("fff3f1"), 14, Color("e38d84"), 1.5, true)
+		d_sb.set_content_margin_all(14)
+		dcard.add_theme_stylebox_override("panel", d_sb)
+		_settings_page.add_child(dcard)
+		var drow := HBoxContainer.new()
+		drow.add_theme_constant_override("separation", 12)
+		dcard.add_child(drow)
+		var dvb := VBoxContainer.new()
+		dvb.add_theme_constant_override("separation", 2)
+		dvb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		drow.add_child(dvb)
+		_mk_label(dvb, "危险操作 · 重置本地存档", 15, Color("b82d20"))
+		_mk_label(dvb, "将清除全部游戏进度、图鉴与萤尘（需连续点击两次确认）", 14, Color("7d4c46"))
+		var resetb := UiTheme.make_button("重置存档", "red", "normal")
+		resetb.custom_minimum_size = Vector2(210, 44)
+		var red_sb := _style(Color("e0473b"), 24, Color("9e2118"), 2, true)
+		red_sb.content_margin_left = 18
+		red_sb.content_margin_right = 18
+		var red_hov := _style(Color("ed584c"), 24, Color("9e2118"), 2, true)
+		red_hov.content_margin_left = 18
+		red_hov.content_margin_right = 18
+		resetb.add_theme_stylebox_override("normal", red_sb)
+		resetb.add_theme_stylebox_override("hover", red_hov)
+		resetb.add_theme_stylebox_override("pressed", _style(Color("c4372c"), 24, Color("7a160e"), 2, true))
+		for st in ["font_color", "font_hover_color", "font_pressed_color"]:
+			resetb.add_theme_color_override(st, Color.WHITE)
+		resetb.add_theme_color_override("font_outline_color", Color("7a1c15"))
+		resetb.add_theme_constant_override("outline_size", 3)
+		var armed := [false]
+		resetb.pressed.connect(func() -> void:
+			audio.click()
+			if not armed[0]:
+				armed[0] = true
+				resetb.text = "再点一次确认重置（3 秒）"
+				_later(3.0, func() -> void:
+					armed[0] = false
+					if is_instance_valid(resetb):
+						resetb.text = "重置存档")
+			else:
+				GameProfile.reset_all()
+				get_tree().reload_current_scene())
+		drow.add_child(resetb)
+		return
+	var wstat := _mk_label(_settings_page, "", 14)
+	_refresh_account_label(wstat)
+	var wb := UiTheme.make_button("钱包面板", "blue", "normal")
 	wb.pressed.connect(func() -> void:
 		audio.click()
 		_sound_panel.visible = false
 		_wallet_panel.visible = true)
 	_settings_page.add_child(wb)
 	_mk_label(_settings_page, "危险操作", 13, Color("c44734"))
-	# Two-step armed confirm (the bundle's account danger
-	# pattern: the button arms for 3 s, a second press fires).
 	var resetb := UiTheme.make_button("重置存档", "red", "normal")
-	if _p5_on:
-		for st in ["font_color", "font_hover_color", "font_pressed_color"]:
-			resetb.add_theme_color_override(st, Color.WHITE)
-		resetb.add_theme_color_override("font_outline_color", Color("7a1c15"))
-		resetb.add_theme_constant_override("outline_size", 3)
 	var armed := [false]
 	resetb.pressed.connect(func() -> void:
 		audio.click()
@@ -5984,23 +6144,53 @@ func _settings_page_legal(doc: String = "privacy", lang: String = "zh") -> void:
 		child.queue_free()
 	var english := lang == "en"
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
+	row.add_theme_constant_override("separation", 10)
 	_settings_page.add_child(row)
 	for entry in [["privacy", "Privacy" if english else "隐私政策"], ["terms", "Terms" if english else "服务条款"]]:
-		var button := UiTheme.make_button(String(entry[1]), "green" if doc == entry[0] else "ghost", "small")
+		var active: bool = doc == String(entry[0])
+		var button := UiTheme.make_button(String(entry[1]), "green" if active else "ghost", "small")
+		if _p5_on and active:
+			for st in ["font_color", "font_hover_color", "font_pressed_color"]:
+				button.add_theme_color_override(st, Color.WHITE)
+			button.add_theme_color_override("font_outline_color", Color("326b08"))
+			button.add_theme_constant_override("outline_size", 3)
 		var selected: String = entry[0]
-		button.pressed.connect(func() -> void: _settings_page_legal(selected, lang))
+		button.pressed.connect(func() -> void:
+			audio.click()
+			_settings_page_legal(selected, lang))
 		row.add_child(button)
 	var language := UiTheme.make_button("中文" if english else "English", "ghost", "small")
-	language.pressed.connect(func() -> void: _settings_page_legal(doc, "zh" if english else "en"))
+	language.pressed.connect(func() -> void:
+		audio.click()
+		_settings_page_legal(doc, "zh" if english else "en"))
 	row.add_child(language)
-	var body := _mk_label(_settings_page, "", 16, UiTheme.TEXT)
-	body.text = load("res://assets/legal/%s_%s.tres" % [doc, lang]).text
+	if _p5_on:
+		var sp := Control.new()
+		sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(sp)
+		var back_b := UiTheme.make_button("Back" if english else "← 返回账户", "ghost", "small")
+		back_b.pressed.connect(func() -> void:
+			audio.click()
+			_settings_show_tab("account"))
+		row.add_child(back_b)
+	var txt_parent: Container = _settings_page
+	if _p5_on:
+		var tcard := PanelContainer.new()
+		tcard.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var t_sb := _style(Color(1.0, 0.995, 0.975, 0.96), 14, Color("e5cfa0"), 1.5, true)
+		t_sb.set_content_margin_all(14)
+		tcard.add_theme_stylebox_override("panel", t_sb)
+		_settings_page.add_child(tcard)
+		txt_parent = tcard
+	var body := _mk_label(txt_parent, "", 15 if _p5_on else 16, UiTheme.TEXT)
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.custom_minimum_size.x = 300
 	body.text = str(load("res://assets/legal/%s_%s.tres" % [doc, lang]).get("text"))
 	var online := UiTheme.make_button("Online version" if english else "在线版", "ghost", "small")
+	if _p5_on:
+		online.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		online.custom_minimum_size.x = 180
 	online.pressed.connect(func() -> void: OS.shell_open("https://spritebonk-site.musen-ai-9527.workers.dev/" + doc))
 	_settings_page.add_child(online)
 
