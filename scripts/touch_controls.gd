@@ -452,7 +452,7 @@ func _on_button_input(event: InputEvent, kind: String) -> void:
 			_interact_fill_a() if kind == "interact" else 0.13
 		var art_u: TextureRect = _buttons[kind].get("art")
 		if art_u != null:
-			art_u.modulate.a = 0.72 if kind == "interact" and _interact_mode == 0 else 1.0
+			art_u.modulate.a = 0.86 if kind == "interact" and _interact_mode == 0 else 1.0
 
 func held(kind: String) -> bool:
 	return bool(_held.get(kind, false))
@@ -504,7 +504,7 @@ func set_interact_mode(m: int) -> void:
 		1.0 if pressed else _interact_fill_a())
 	sb.border_color = Color(INTERACT_BORDER.r, INTERACT_BORDER.g,
 		INTERACT_BORDER.b, 0.30 if m == 0 else INTERACT_BORDER.a)
-	(rec["icon"] as Control).modulate.a = 0.72 if m == 0 else 1.0
+	(rec["icon"] as Control).modulate.a = 0.86 if m == 0 else 1.0
 	(rec["panel"] as Panel).queue_redraw()
 
 func _interact_fill_a() -> float:

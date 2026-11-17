@@ -2878,9 +2878,9 @@ func _build_hud() -> void:
 	# proud of the pill's left edge; phone-only, sized in
 	# _p2_hero_box; desktop keeps the bare cluster.
 	_hero_plate = Panel.new()
-	_hero_plate.position = Vector2(56, 24)
-	_hero_plate.size = Vector2(148, 60)
-	_hero_plate.add_theme_stylebox_override("panel", UiTheme.hud_glass(30, 0.76, Color(0.88, 0.94, 1.0, 0.60), 2, 0))
+	_hero_plate.position = Vector2(56, 22)
+	_hero_plate.size = Vector2(182, 62)
+	_hero_plate.add_theme_stylebox_override("panel", UiTheme.hud_glass(31, 0.78, Color(0.88, 0.94, 1.0, 0.62), 2, 0))
 	_hero_plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_hero_cluster.add_child(_hero_plate)
 	_medal_panel = UiMedallion.new()
@@ -2917,9 +2917,9 @@ func _build_hud() -> void:
 	# U1 1:1 round 15 (coordinator): badge (61,4) -> (72,0) so it
 	# straddles the grown medallion's top-right rim the way the
 	# reference's does, instead of sitting inside the disc.
-	# 等级小胶囊：与定稿一致的灰蓝磨砂圆角胶囊配白色细边框（r+g+b < 0.9 兼容 P3 校验）
-	var lv_badge := _panel(_hero_cluster, Vector2(72, 0), Vector2(58, 26), Color(0.22, 0.28, 0.36, 0.82), 13, Color(0.88, 0.94, 1.0, 0.62), 1, true)
-	_lv_label = _label_in(lv_badge, "1级", Vector2(0, 0), Vector2(58, 26), 12, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
+	# 等级小胶囊：紧贴奖章右肩，深灰蓝磨砂底配亮银细边框（r+g+b < 0.9 兼容 P3 校验）
+	var lv_badge := _panel(_hero_cluster, Vector2(72, 2), Vector2(56, 24), Color(0.18, 0.22, 0.28, 0.88), 12, Color(0.88, 0.94, 1.0, 0.72), 1.5, true)
+	_lv_label = _label_in(lv_badge, "1级", Vector2(0, 0), Vector2(56, 24), 12, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
 	var info := Panel.new()
 	_hero_info = info
 	info.position = Vector2(94, 4)
@@ -3007,14 +3007,14 @@ func _build_hud() -> void:
 		pip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		card.add_child(pip)
 		_pips.append(pip)
-	# 顶栏三枚子胶囊：采用定稿柔和磨砂胶囊，基础 alpha 保持 0.74 以满足 P3 点击反馈 (+0.25) 校验
-	var zchip := _panel(card, Vector2(96, 57), Vector2(74, 22), Color(0.18, 0.56, 0.34, 0.74), 12, Color(0.90, 0.96, 1.0, 0.42), 1, true)
+	# 顶栏三枚子胶囊：对标 U1_final.jpg 翠绿「区域」＋柔暖奶油「普通」＋深蓝灰磨砂「晴」（天气保留 alpha=0.74 满足 P3 点击反馈）
+	var zchip := _panel(card, Vector2(96, 57), Vector2(74, 22), Color("45b828"), 13, Color("8ae568"), 1.5, true)
 	_zone_chip = zchip
 	_zone_chip_label = _label_in(zchip, "区域 1/4", Vector2(0, 0), Vector2(74, 22), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
-	var nchip := _panel(card, Vector2(176, 57), Vector2(64, 22), Color(0.32, 0.38, 0.48, 0.74), 12, Color(0.90, 0.96, 1.0, 0.42), 1, true)
+	var nchip := _panel(card, Vector2(176, 57), Vector2(64, 22), Color(0.95, 0.94, 0.91, 0.96), 13, Color(1.0, 1.0, 1.0, 0.88), 1, true)
 	_tier_chip = nchip
-	_tier_chip_label = _label_in(nchip, "普通", Vector2(0, 0), Vector2(64, 22), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
-	var wxchip := _panel(card, Vector2(246, 57), Vector2(64, 22), Color(0.18, 0.34, 0.52, 0.74), 12, Color(0.90, 0.96, 1.0, 0.42), 1, true)
+	_tier_chip_label = _label_in(nchip, "普通", Vector2(0, 0), Vector2(64, 22), 11, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, true)
+	var wxchip := _panel(card, Vector2(246, 57), Vector2(64, 22), Color(0.20, 0.27, 0.36, 0.74), 13, Color(0.90, 0.96, 1.0, 0.45), 1, true)
 	_wx_chip = wxchip
 	_wx_icon = UiBadge.new("weather_sunny", Color(1.0, 0.9, 0.5), 14)
 	_wx_icon.position = Vector2(7, 4)
@@ -3171,7 +3171,7 @@ func _build_hud() -> void:
 		mp.offset_right = 150
 		mp.offset_top = 238 + mi * 46
 		mp.offset_bottom = 238 + mi * 46 + 40
-		mp.add_theme_stylebox_override("panel", UiTheme.dark_glass(13, 0.92, Color(1, 1, 1, 0.25), 1, 0))
+		mp.add_theme_stylebox_override("panel", UiTheme.hud_glass(14, 0.88, Color(0.88, 0.94, 1.0, 0.56), 2, 0))
 		mp.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		mp.visible = false
 		root.add_child(mp)
@@ -3240,14 +3240,12 @@ func _build_hud() -> void:
 	kpill.add_theme_stylebox_override("panel", kills_face)
 	kpill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(kpill)
-	var kic := UiIcon.new("skull", Color("2a2d34"), 16)
-	kic.set_meta("cutout_color", Color(0.92, 0.93, 0.94, 1.0))
-	kic.position = Vector2(12, 6)
-	kic.size = Vector2(16, 16)
+	var kic := UiIcon.new("skull", Color("2a2d34"), 18)
+	kic.set_meta("cutout_color", Color(0.94, 0.95, 0.95, 1.0))
+	kic.position = Vector2(16, 5)
+	kic.size = Vector2(18, 18)
 	kpill.add_child(kic)
-	# Cycle 21.3 (audit §5): left-aligned next to the icon
-	# (centred text left a dead gap after the skull).
-	_kills_label = _label_in(kpill, "击杀 0", Vector2(30, 0), Vector2(104, 28), 14, Color("2a2d34"), HORIZONTAL_ALIGNMENT_LEFT, true)
+	_kills_label = _label_in(kpill, "击杀 0", Vector2(36, 0), Vector2(96, 28), 14, Color("2a2d34"), HORIZONTAL_ALIGNMENT_LEFT, true)
 	# Cycle 18: goal card + event-pill stack (UI_SPEC §2.3
 	# kgoal / §2.10 pills). The goal card's anatomy is the
 	# constructor's (portrait + name + "n left" + bar + next
@@ -3421,12 +3419,12 @@ func _build_hud() -> void:
 	_bl_cluster.add_child(_bl_rows)
 	_bl_lock = Panel.new()
 	_bl_lock.size = Vector2(P4_SLOT, P4_SLOT)
-	_bl_lock.add_theme_stylebox_override("panel", _style(Color(0.26, 0.33, 0.42, 0.66), 65, Color(0.84, 0.88, 0.94, 0.72), 4, true))
+	_bl_lock.add_theme_stylebox_override("panel", _style(Color(0.24, 0.27, 0.34, 0.72), 65, Color("d8dde8"), 5, true))
 	_bl_lock.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_bl_rows.add_child(_bl_lock)
-	var lock_ic2 := UiIcon.new("lock", Color(0.86, 0.90, 0.95, 0.90), 58)
-	lock_ic2.position = Vector2(36, 36)
-	lock_ic2.size = Vector2(58, 58)
+	var lock_ic2 := UiIcon.new("lock", Color(0.98, 0.98, 0.99, 0.95), 68)
+	lock_ic2.position = Vector2(31, 31)
+	lock_ic2.size = Vector2(68, 68)
 	_bl_lock.add_child(lock_ic2)
 	# Cycle 13: the 必 circle is a real button now (UltGauge) —
 	# charge sweep, ready pulse, and touch/mouse presses feed
@@ -3471,22 +3469,25 @@ func _build_hud() -> void:
 	_banner_back.offset_right = 446
 	_banner_back.offset_top = 148
 	_banner_back.offset_bottom = 204
-	# Cycle 21.3 (audit §5): backing alpha 0.55 -> 0.75
-	# (0.55 over bright terrain read muddy).
-	_banner_back.add_theme_stylebox_override("panel", UiTheme.dark_glass(12, 0.75))
+	# 对齐定稿 S23_v1.jpg：战斗通知横幅升级为圆润暖奶油金边大胶囊配深棕粗字，淘汰半透暗黑框
+	var banner_sb := _style(Color(1.0, 0.985, 0.94, 0.96), 24, Color("e0be78"), 2, true)
+	banner_sb.shadow_color = Color(0.18, 0.12, 0.04, 0.25)
+	banner_sb.shadow_size = 6
+	banner_sb.shadow_offset = Vector2(0, 3)
+	_banner_back.add_theme_stylebox_override("panel", banner_sb)
 	_banner_back.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_banner_back.modulate.a = 0.0
 	root.add_child(_banner_back)
-	_banner = _mk_label(root, "", 30, Color(1, 0.9, 0.45))
+	_banner = _mk_label(root, "", 30, UiTheme.TEXT, true)
 	_banner.set_anchors_preset(Control.PRESET_CENTER_TOP)
 	_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_banner.offset_top = 158
 	_banner.offset_left = -430
 	_banner.offset_right = 430
-	_banner.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.55))
-	_banner.add_theme_constant_override("shadow_offset_x", 2)
+	_banner.add_theme_color_override("font_shadow_color", Color(1.0, 0.96, 0.86, 0.70))
+	_banner.add_theme_constant_override("shadow_offset_x", 0)
 	_banner.add_theme_constant_override("shadow_offset_y", 2)
-	_banner.add_theme_font_override("font", _font_display)
+	_banner.add_theme_font_override("font", _font)
 
 	_banner.modulate.a = 0.0
 	# Cycle 21.3 (audit §5 + F5): the prompt was white
@@ -13760,7 +13761,7 @@ func _refresh_hud() -> void:
 		var bc := _chest_cost()
 		_ball_price_label.text = str(bc)
 		_ball_price_label.add_theme_color_override("font_color",
-			Color.WHITE if gold >= float(bc) else Color(0.95, 0.5, 0.45))
+			Color.WHITE if gold >= float(bc) else Color("ffa694"))
 	if player and is_instance_valid(player):
 		_lv_label.text = "%d级" % player.level
 		var frac := clampf(player.xp / maxf(float(player.xp_next()), 1.0), 0.0, 1.0)
@@ -15412,8 +15413,8 @@ func _layout_hud() -> void:
 	# Top card in the free span (band rule: in the card's
 	# y-band the widest hero piece is the info panel, whose
 	# right edge is cluster-local 326).
-	# 手机模式下英雄信息面板隐藏，左避让界使用头像银灰胶囊实际右缘 210，使顶栏恢复居中构图
-	var band_r := 12.0 + (210.0 if phone else 326.0) * s_top + 12.0
+	# 手机模式下英雄信息面板隐藏，左避让界对齐修长英雄背板右缘 242，维持顶栏居中呼吸缝
+	var band_r := 12.0 + (242.0 if phone else 326.0) * s_top + 12.0
 	var s_card := s_top
 	if phone:
 		var right_b := mm_l - 12.0
@@ -15590,7 +15591,7 @@ func _layout_hud() -> void:
 				tw = maxf(_banner.get_theme_font("font").get_string_size(
 					_banner.text, HORIZONTAL_ALIGNMENT_LEFT, -1.0,
 					_banner.get_theme_font_size("font_size")).x, 1.0)
-			var bsc := minf(s, span_w * 0.96 / tw)
+			var bsc := minf(s, span_w * 0.90 / tw)
 			# UI-mobile P3 (plan Z4): the centre stack ends by
 			# 0.55·vh; past it the toast drops to scale 1.0 (the
 			# cut-in + boss + side-by-side bars stack pushed the
@@ -15636,7 +15637,7 @@ func _layout_hud() -> void:
 					b_r = maxf(lane, b_l + 1.0)
 					b_w = b_r - b_l
 					b_c = (b_l + b_r) * 0.5
-					bsc = minf(bsc, b_w * 0.96 / tw)
+					bsc = minf(bsc, b_w * 0.90 / tw)
 			_set_scaled(_banner, bsc)
 			_banner.offset_left = b_c - vw * 0.5 - 430.0
 			_banner.offset_right = b_c - vw * 0.5 + 430.0
@@ -15651,7 +15652,7 @@ func _layout_hud() -> void:
 			# phone widths — scaling it with the label
 			# would re-create O3/O4); only its height
 			# scales with bsc.
-			var back_w := b_w / bsc
+			var back_w := minf(b_w / bsc, tw + 48.0)
 			_set_scaled(_banner_back, bsc)
 			_banner_back.offset_left = b_c - vw * 0.5 - back_w * 0.5
 			_banner_back.offset_right = b_c - vw * 0.5 + back_w * 0.5
@@ -15721,20 +15722,20 @@ func _apply_top_card_phone(on: bool) -> void:
 		[_wx_label, Rect2(21, 0, 25, 26)],
 		[_timer_label, Rect2(200, -1, 146, 32)],
 		[_danger_name, Rect2(200, 31, 146, 17)],
-		[_wallet_pill, Rect2(348, 16, 206, 36)],
-		[_dust_icon, Rect2(2, 7, 22, 22)],
-		[_dust_label, Rect2(26, 0, 38, 36)],
-		[_coin_icon, Rect2(66, 7, 22, 22)],
-		[_gold_label, Rect2(90, 0, 40, 36)],
-		[_ball_icon, Rect2(132, 7, 22, 22)],
-		[_ball_price_label, Rect2(156, 0, 50, 36)],
-		# 手机模式下 _hero_info 虽然隐藏，但 phonehud.gd 仍校验其矩形与顶栏不相交；同步缩至可见灰蓝背板范围（桌面自动恢复）
-		[_hero_info, Rect2(56, 24, 148, 60)],
-		# 英雄血条加长一点、数字区域从 x=20 开始以避开左侧圆形奖章遮挡，使数字视觉严格居中在可见绿条中线
-		[_hud_hp_track, Rect2(86, 44, 98, 20)],
-		[_hud_hp_lag, Rect2(1, 1, 96, 18)],
-		[_hud_hp_fill, Rect2(1, 1, 96, 18)],
-		[_hud_hp_num, Rect2(20, 0, 78, 20)],
+		[_wallet_pill, Rect2(344, 16, 210, 36)],
+		[_dust_icon, Rect2(0, 5, 26, 26)],
+		[_dust_label, Rect2(28, 0, 38, 36)],
+		[_coin_icon, Rect2(68, 5, 26, 26)],
+		[_gold_label, Rect2(96, 0, 40, 36)],
+		[_ball_icon, Rect2(138, 5, 26, 26)],
+		[_ball_price_label, Rect2(166, 0, 46, 36)],
+		# 手机模式下 _hero_info 虽然隐藏，但 phonehud.gd 仍校验其矩形与顶栏不相交；同步缩至修长灰蓝背板范围（桌面自动恢复）
+		[_hero_info, Rect2(56, 22, 182, 62)],
+		# 英雄血条加长至 140、数字区域从 x=22 开始以避开左侧圆形奖章遮挡，使数字视觉严格居中在可见绿条中线
+		[_hud_hp_track, Rect2(84, 44, 140, 20)],
+		[_hud_hp_lag, Rect2(1, 1, 138, 18)],
+		[_hud_hp_fill, Rect2(1, 1, 138, 18)],
+		[_hud_hp_num, Rect2(22, 0, 118, 20)],
 		[_hud_shield_fill, Rect2(1, 1, 0, 18)],
 		[_party_row, Rect2(94, 60, 240, 44)],
 	]
@@ -16552,13 +16553,13 @@ func _p4_refresh_slots(relayout: bool) -> void:
 		pnl.position = Vector2(P4_STRIP_PAD + i * P4_MOVE_STEP, 0)
 		pnl.size = Vector2(P4_SLOT, P4_SLOT)
 		pnl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		# 对齐定稿 U1_final.jpg：已学槽配 6px 厚实亮金立体外环；下方「1级」为独立柔白圆角矩形不切入绿盘
+		# 对齐定稿 U1_final.jpg：已学槽配 6px 厚实暖金立体外环；下方「1级」为立体奶油圆角小牌
 		pnl.add_theme_stylebox_override("panel",
-			_style(UiTheme.type_color(t), 65, UiTheme.GOLD, 6, true))
+			_style(UiTheme.type_color(t), 65, Color("efc038"), 6, true))
 		_bl_rows.add_child(pnl)
-		var ic := UiIcon.new(_type_icon(t), Color(1, 1, 1, 0.96), 62)
-		ic.position = Vector2(34, 34)
-		ic.size = Vector2(62, 62)
+		var ic := UiIcon.new(_type_icon(t), Color(1, 1, 1, 0.98), 64)
+		ic.position = Vector2(33, 33)
+		ic.size = Vector2(64, 64)
 		pnl.add_child(ic)
 		# Cooldown sweep (UltGauge-style arc): the remaining
 		# fraction of the move's cooldown, drawn over the face.
@@ -16568,8 +16569,8 @@ func _p4_refresh_slots(relayout: bool) -> void:
 		sw.set_meta("frac", 0.0)
 		sw.draw.connect(_p4_draw_sweep.bind(sw))
 		pnl.add_child(sw)
-		var chip := _panel(pnl, Vector2(20, 118), Vector2(90, 30),
-			Color(0.97, 0.97, 0.98, 0.97), 10, Color(0.76, 0.81, 0.88, 0.65), 1, true)
+		var chip := _panel(pnl, Vector2(20, 114), Vector2(90, 30),
+			Color(0.98, 0.97, 0.94, 0.98), 11, Color("c4b79e"), 2, true)
 		var lv := _label_in(chip, "%d级" % int(m["level"]), Vector2(0, 0),
 			Vector2(90, 30), 14, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, true)
 		_bl_move_slots.append({"panel": pnl, "lv": lv, "key": key, "sweep": sw})
@@ -16583,11 +16584,11 @@ func _p4_refresh_slots(relayout: bool) -> void:
 		lp.position = Vector2(P4_STRIP_PAD + (i + k) * P4_MOVE_STEP, 0)
 		lp.size = Vector2(P4_SLOT, P4_SLOT)
 		lp.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		lp.add_theme_stylebox_override("panel", _style(Color(0.26, 0.33, 0.42, 0.66), 65, Color(0.84, 0.88, 0.94, 0.72), 4, true))
+		lp.add_theme_stylebox_override("panel", _style(Color(0.24, 0.27, 0.34, 0.72), 65, Color("d8dde8"), 5, true))
 		_bl_rows.add_child(lp)
-		var lic := UiIcon.new("lock", Color(0.86, 0.90, 0.95, 0.90), 58)
-		lic.position = Vector2(36, 36)
-		lic.size = Vector2(58, 58)
+		var lic := UiIcon.new("lock", Color(0.98, 0.98, 0.99, 0.95), 68)
+		lic.position = Vector2(31, 31)
+		lic.size = Vector2(68, 68)
 		lp.add_child(lic)
 		_bl_locks.append(lp)
 	var j := 0

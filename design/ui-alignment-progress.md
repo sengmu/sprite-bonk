@@ -1615,4 +1615,17 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - **状态：已提交推送并同步至 NUC 起跑终版双档 `s100` 全量验收批（`Test/u4_u6_full_reaudit_run.sh`），并同步更新真机 APK 安装至 Seeker 测试机。**
 - 本轮提交：`assets/ui/textures/button_blue.png(.import)`、`scripts/ui_theme.gd`、`scripts/world.gd`、`Test/u2_shop_reaudit_parse.sh`、`Test/u4_u6_full_reaudit_run.sh`、`Test/make_compare_u4.py`、`Test/make_compare_u6.py`、`design/ui-reference/compare/U2.png`、`design/ui-reference/compare/U2_2400.png`、`design/ui-alignment-progress.md`。
 
+## U1 战斗界面第 3 轮＋S23 战斗浮层 1:1 终极精修（2026-11-17 13:5x，全区质感对标 U1_final.jpg＋S23_v1.jpg）
+
+- 依据用户指令「继续对齐战斗界面」，对照 `U1_final.jpg` 与 `S23_v1.jpg` 完成 6 大战斗 HUD 与浮层像素级升级（全部守护 `Test/phonehud.gd` 既定几何与硬断言）：
+  1. **顶栏 560×68 三段胶囊与资源图标放大（`scripts/world.gd`）**：`区域 1/4` 子胶囊切换为鲜亮翠绿（`#45b828`），`普通` 难度子胶囊切换为柔暖奶油白配深墨粗字（`UiTheme.TEXT`），`晴` 天气保留 `alpha=0.74` 磨砂点击反馈态；紫星、金币、木宝箱三大资源图标放大至 `26×26`（垂直居中于 `36px` 胶囊内），宝箱价格不足色提亮至暖珊瑚粉（`#ffa694`）。
+  2. **左上英雄血条簇比例重塑（`scripts/world.gd`）**：将 `_hero_plate` 灰蓝背板与 `_hud_hp_track` 分别延展至 `182×62` 与 `140×20`（右缘至 `238`，`band_r` 同步避让 `242.0`，严格确保 `s_card == s_t` 与零相交），`1级` 等级徽调整为紧贴奖章右肩的深灰蓝银边胶囊（`0.68 < 0.9` 保 `Lv badge` 校验）。
+  3. **左下技能 5 格与高对比锁格（`scripts/world.gd`）**：已学技能槽亮金环增亮为 `#efc038`，`1级` 牌升格为立体暖奶油胶囊（`2px` 暖金灰描边 `#c4b79e`）；4 颗锁格提升至 `5px` 亮银环 `#d8dde8` 配 `68px` 高对比亮白锁图标。
+  4. **战斗大横幅与头领 Mini 条全面脱黑（`scripts/world.gd`）**：淘汰原本生硬的半透黑底 `_banner_back`，升级为 `S23_v1.jpg` 同款圆润暖奶油金边大胶囊（`#e0be78` 立体描边＋柔和投影＋深棕粗字，文本左右按 `tw + 48.0` 动态裹紧且保留 10% 边距留白），并将双 `头领` 精英 Mini 血条统一接入 `UiTheme.hud_glass` 灰蓝磨砂框。
+  5. **右上 `KillsPill` 紧凑居中（`scripts/world.gd`）**：放大骷髅图标至 `18×18` 居中微调，视觉更凝练平衡。
+  6. **右下 4 枚触屏大圆钮 4× 超采样重绘（`assets/ui/touch/btn_*.png`、`scripts/touch_controls.gd`）**：重绘并本地校验 `--import` 一致（`btn_ult` `7708bea675b4ca32ce9e556601c3edcf`、`btn_ult_charging` `bff4f0f5f76a2ae2fc659187ec8e0f44`、`btn_dash` `83c1143dfc0a84d52e7976af2ed5be33`、`btn_jump` `61a2c6d56bd136b0c95ceba7b4f0335a`、`btn_interact` `a6b8be4444eee84f81c5ef8e07192e9c`）——大招外环 12 段弧加粗加亮并附带柔紫发光外晕，冲刺风纹「3」粗壮饱满并对齐双速度线，所有按钮加厚立体纯白金属圈；闲置互动按钮透度微调为 `0.86` 保持鲜橙清透（`sb.bg_color.a` 维持 `0.06` 通过 `idle <= 0.10` 门）。
+- 本地渲染验证：`Test/u2_shop_reaudit_parse.sh` 通过（`U2_SHOP PARSE GATE OK`）；`.tmp/verify_u1_now.gd` 导出开局带横幅、Boss＋双头领带横幅、宝箱就绪三态实拍并全部 `Read` 目检通过。
+- **状态：正在提交推送并触发 NUC 双档 `s100` 全量终审（`Test/u1_final_reaudit_run.sh`），同时同步最新资产打包覆装 Seeker 真机。**
+- 本轮提交：`assets/ui/touch/btn_*.png`、`scripts/touch_controls.gd`、`scripts/world.gd`、`Test/u1_final_reaudit_run.sh`、`design/ui-alignment-progress.md`。
+
 
