@@ -6380,12 +6380,18 @@ func _build_result(root: Control) -> void:
 		# screen px per rect px); centre unchanged, so the star
 		# overlap grows to ~30 screen px, inside the reference
 		# range (~16-32).
+		# U5 第 9 轮单项修复：保持 ribbon.size 固定为 872x225 与第 8 轮一致确保 _result_title 不折行不丢字，
+		# 仅在 crest 就绪后平移 ribbon.position.x 与绘制宽度 690.0 对齐面板中心（48.65±0.2%W），
+		# 其余带高 9.91%H、尾形、颜色、三星及全部保持项全冻结。
 		ribbon.position = Vector2(0, -126)
 		ribbon.size = Vector2(872, 225)
+		crest.resized.connect(func() -> void:
+			if crest.size.x > 100.0:
+				ribbon.position.x = (crest.size.x - ribbon.size.x) * 0.5)
 		ribbon.draw.connect(func() -> void:
-			var rw := ribbon.size.x * 0.88
+			var rw := 690.0
 			var extent := Vector2(rw, 225)
-			ribbon.draw_texture_rect(UiTheme.asset("decorations", "p5_ribbon_green"), Rect2(Vector2((ribbon.size.x - extent.x) / 2, 0), extent), false))
+			ribbon.draw_texture_rect(UiTheme.asset("decorations", "p5_ribbon_green"), Rect2(Vector2((ribbon.size.x - extent.x) * 0.5, 0), extent), false))
 		crest.add_child(ribbon)
 		crest.move_child(stars, -1)
 	else:
@@ -6451,7 +6457,8 @@ func _build_result(root: Control) -> void:
 		# Match the body stack's descent so rows and summary baseline stay put.
 		summary_bold.spacing_bottom = 1
 		_result_body.add_theme_font_override("font", summary_bold)
-		_result_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		# 丝带单行大标题严禁自动换行，防止 PanelContainer 在首次排版计算窄宽时折成 7 竖行撑爆到 541px 高度把文字压飞
+		_result_title.autowrap_mode = TextServer.AUTOWRAP_OFF
 		_result_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		# U5: the four summary rows + payout pill live in their own
 		# fixed box above the scroll on phone (reference: always
