@@ -1559,3 +1559,20 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 真机安装验证：已编译并覆盖安装 `E:/Projects/spritebonk-apk-build/build/android/SpriteBonk-u1c2-align.apk`（`com.spritebonk.game.align`，更新时间 `2026-11-16 21:48:38`）至 Seeker 测试机（`SM02G4061952376`）。
 - **状态：U1 复审第 1–2 轮双档全绿及比对验收完成；先补齐 U5 第 9 轮「缎带总宽与中心」唯一单项修复使 U5 正式签核过门，随后立即推进 U2 主菜单复审。**
 - 本轮提交：`assets/ui/touch/btn_*.png`、`scripts/ui_theme.gd`、`scripts/touch_controls.gd`、`scripts/ui_medallion.gd`、`scripts/minimap.gd`、`scripts/world.gd`、`Test/u1_reaudit_c1_run.sh`、`Test/u1_reaudit_c2_parse.sh`、`Test/u1_reaudit_c2_run.sh`、`design/ui-reference/compare/U1.png`、`design/ui-reference/compare/U1_boss.png`、`design/ui-alignment-progress.md`。
+
+## U5 复审第九轮（2026-11-17 11:3x–12:0x，绿缎带总宽与中心唯一单项修复＋双档过门）
+
+- 依据 `6840710` 主控裁定，仅对 U5 绿缎带总宽与中心做精确单项修复，带高 `9.91%H`、尾形轮廓、颜色、三星与其余保持项全部冻结：
+  - **根因定位（`scripts/world.gd:6383-6392` & `6461`）**：原硬编码 `ribbon.size = Vector2(872, 225)` 宽于 `_result_panel` 内芯 `crest`（`838–839`），导致中心右偏 `+1.0%W`；且首次以 `88%` 比例绘图过宽（`41.1..43.4%W`）。现保持 `ribbon.size = Vector2(872, 225)` 并设 `_result_title.autowrap_mode = TextServer.AUTOWRAP_OFF`（防止 `PanelContainer` 在首次排版算得窄宽时折行撑爆至 `541px` 高），通过 `crest.resized` 动态居中 `ribbon.position.x = (crest.size.x - ribbon.size.x) * 0.5`，并将绘制宽度收至 **`690.0`**。
+- 解析门与 NUC 双档 `s100` 验证批（`Test/u5_reaudit_c9_parse.sh` + `Test/u5_reaudit_c9_run.sh`，`Test/out/u5_reaudit_c9.done` `ALLDONE 2026-11-17T11:56:50+08:00`）：
+  - `2400×1080`：`rc=0`，`PHONEHUD DONE checks=1564 fails=0`；
+  - `2340×1080`：`rc=0`，`PHONEHUD DONE checks=1549 fails=0`；
+  - 实拍原图 MD5：`2340` `d055dea8db3347425bbdabb3690fef3e`、`2400` `33ba64706d9b2d7aecc2aa002b40bd6b`。
+- 主控同法尾尖行扫描复测（原始 PNG vs `U5_final.jpg`）：
+  - **`2340`**：`panel_cx=48.68%W`，绿缎带 `y=14/16/18/21%H` 总宽 **`39.06 / 39.02 / 37.61 / 38.12%W`**，中心 **`48.72 / 48.74 / 48.72 / 48.72%W`**（`delta = +0.04..+0.06%W`）；`center_green_h=10.00%H`、`stars_arch=+0.83%H`、`title_white_px=7584`。
+  - **`2400`**：`panel_cx=48.69%W`，绿缎带 `y=14/16/18/21%H` 总宽 **`38.12 / 38.04 / 36.71 / 37.17%W`**，中心 **`48.69 / 48.69 / 48.69 / 48.71%W`**（`delta = +0.00..+0.02%W`）；`center_green_h=10.00%H`、`stars_arch=+0.83%H`、`title_white_px=7556`。
+  - 全部精确命中 `38.6±0.5%W` 与 `48.65±0.2%W` 指标。
+- `compare` 重建与亲检：已重建 `design/ui-reference/compare/U5.png`（MD5 `9d60837648984833b40708fbdd465af9`）与 `design/ui-reference/compare/U5_2400.png`（MD5 `c2573d9ac389f6fe69b0bc2c0f62dd40`），并与 1x crest 裁切图 `.tmp/u5_c9_final_crest.jpg` 逐项亲看，零可见偏差。
+- **状态：U5 第 9 轮全部指标零偏差通过并达成关闭门，正式签核结项；队列正式转入 U2 主菜单与商店界面（S10/S12）对齐实施。**
+- 本轮提交：`scripts/world.gd`、`Test/u5_reaudit_c9_parse.sh`、`Test/u5_reaudit_c9_run.sh`、`design/ui-reference/compare/U5.png`、`design/ui-reference/compare/U5_2400.png`、`design/ui-alignment-progress.md`。
+
