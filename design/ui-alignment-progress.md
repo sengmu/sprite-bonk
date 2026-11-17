@@ -1631,7 +1631,12 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
   2. 为无骨骼程序化模型将攻击突刺加大至 `0.72` 单位叠加 `0.22` 弧形腾跃与 `−0.18 / +0.36 rad` 蓄力俯冲角，并将出招挤压脉冲提升至 `0.22`；
   3. 为 `Player` 新增 `0.24s` 出招朝向锁定窗口 `_attack_face_t`，防止边移动边自动攻击时下一物理帧立刻将朝向拧回跑动方向；加粗 `spawn_strike_fx()` 挥砍光弧（宽度 `0.68`、持续 `0.24s`、爆闪 `0.85 * range`）提升辨识度。
 - **S23 必杀技切入横幅＋S24 流光队友卡补齐收口（`scripts/world.gd`）**：将 `_cutin_panel` 与 `show_ult_cutin` 由左上角小黑框升级为 `S23_v1.jpg` 同款深翠青发光圆角大胶囊（`radius=32`、`2.5px` 亮发光边框、左右对称嫩叶 `leaf_sprig`、居中 `22px/19px` 立体粗投影字）；为 `S24` 流光队友替换紫卡自动挂载新/旧流光物种大肖像（`88×88`），并全部本地通过解析门与渲染 `Read` 目检。
-- **状态：已提交推送至 `origin/align-fix13`，静默覆盖安装最新终版 APK 至 Seeker 测试机；NUC 端待 Tailscale 中继恢复后同步跑齐双档 `s100` 验收与 `compare/` 重建。**
-- 本轮提交：`assets/ui/touch/btn_*.png`、`scripts/touch_controls.gd`、`scripts/ui_theme.gd`、`scripts/model_rig.gd`、`scripts/player.gd`、`scripts/world.gd`、`Test/u1_final_reaudit_run.sh`、`design/ui-alignment-progress.md`。
+- **U1 战斗界面第 4 轮极致 1:1 打磨（`scripts/ui_medallion.gd`、`scripts/minimap.gd`、`scripts/touch_controls.gd`、`scripts/world.gd`）**：
+  1. 英雄圆框外环升级为 `U1_final.jpg` 同款立体暖金铜双环（`#6b501e / #e5c470 / #b48f40`），并在英雄绿血条与守护者红血条内部顶缘补入动态随宽的玻璃高光条实现果冻立体质感；
+  2. 左下技能连接轨道 `_bl_strip` 提实至 `0.84` 透明度，将 `1级` 奶油牌上提至 `y=110` 紧吻圆槽金边底沿，同时将 `KillsPill` 换为雪亮暖白胶囊（保持 `0.74` 按压反馈余量）与纯白高光框；
+  3. 提暖小地图草坪烘焙底色（`Color(0.74, 0.88, 0.44)` `lerp 0.45`）配暖白金厚实双环，7 颗威胁豆改圆润 `radius=7` 胶囊豆并下移 `1px` 拉开与文字间距；
+  4. 右下 4 枚触屏圆钮尺寸微调对齐 `U1_final.jpg` 饱满比例（`dash 92 / jump 102 / interact 118 / ult 112`，保持左缘 `-362` 不挤占气泡宽），并将待机态互动钮改为柔亮暖橙色（`sb.bg_color.a` 维持 `0.06` 保 `idle <= 0.10` 门）彻底告别透底发脏。
+- **状态：已提交推送至 `origin/align-fix13`，更新 `compare/U1.png`、`compare/U1_boss.png` 并打包覆盖安装终版 APK 至 Seeker 测试机；NUC 端待 Tailscale 中继恢复后同步跑齐双档 `s100` 全量验收。**
+- 本轮提交：`assets/ui/touch/btn_*.png`、`scripts/ui_medallion.gd`、`scripts/minimap.gd`、`scripts/touch_controls.gd`、`scripts/ui_theme.gd`、`scripts/model_rig.gd`、`scripts/player.gd`、`scripts/world.gd`、`Test/u1_final_reaudit_run.sh`、`design/ui-reference/compare/U1.png`、`design/ui-reference/compare/U1_boss.png`、`design/ui-alignment-progress.md`。
 
 

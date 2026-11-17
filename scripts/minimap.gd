@@ -64,10 +64,10 @@ func _draw() -> void:
 		draw_texture_rect(baked, Rect2(Vector2.ZERO, size), false)
 	else:
 		draw_circle(center, radius, Color(0.16, 0.13, 0.26, 0.92))
-	# 对齐定稿 U1_final.jpg 暖金灰立体双圆外框
-	draw_arc(center, radius + 1.5, 0, TAU, 64, Color(0.24, 0.28, 0.24, 0.50), 2.0, true)
-	draw_arc(center, radius - 0.5, 0, TAU, 64, Color(0.87, 0.86, 0.78, 0.96), 6.5, true)
-	draw_arc(center, radius - 4.0, PI * 1.10, PI * 1.72, 32, Color(1, 1, 1, 0.65), 2.0, true)
+	# 对齐定稿 U1_final.jpg 暖白金立体双圆外框
+	draw_arc(center, radius + 1.5, 0, TAU, 64, Color(0.20, 0.25, 0.18, 0.55), 2.2, true)
+	draw_arc(center, radius - 0.5, 0, TAU, 64, Color("edece0"), 7.0, true)
+	draw_arc(center, radius - 4.2, PI * 1.10, PI * 1.72, 32, Color(1, 1, 1, 0.72), 2.2, true)
 	if world == null:
 		return
 	# Cycle 22: fog blinding (sx.blind, bundle minimap

@@ -113,12 +113,12 @@ func _ready() -> void:
 	add_child(_knob)
 	_reset_stick_visual()
 	var f := UiTheme.body_font()
-	# U1 1:1 复审第 2 轮：按实拍比例将右下 4 钮放大至定稿饱满尺寸并拉开呼吸间距
-	_build_button(f, "interact", "exclaim", 118, -145, -27, -140, -22,
+	# U1 1:1 终极比例对齐：饱满 92/102/118 底排三钮与 112 悬浮紫大招钮，保持最左缘 -362 兼容气泡校验
+	_build_button(f, "interact", "exclaim", 118, -144, -26, -140, -22,
 		Color(1, 0.85, 0.3, 0.20), Color(1, 0.85, 0.3, 0.85))
-	_build_button(f, "jump", "up", 96, -258, -162, -120, -24,
+	_build_button(f, "jump", "up", 102, -258, -156, -124, -22,
 		Color(1, 1, 1, 0.13), Color(1, 1, 1, 0.55))
-	_build_button(f, "dash", "wind", 88, -364, -276, -106, -18,
+	_build_button(f, "dash", "wind", 92, -362, -270, -108, -16,
 		Color(1, 1, 1, 0.13), Color(1, 1, 1, 0.55))
 	# U1 1:1 round 10: no lock button — see the header note.
 	_build_button(f, "aim", "target", 56, -118, -62, -384, -328,
@@ -128,11 +128,11 @@ func _ready() -> void:
 	# 紫宝石「必」钮置于右下大橙交互钮正上方，与定稿一致
 	ult_gauge = UltGauge.new()
 	ult_gauge.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
-	ult_gauge.offset_left = -140
-	ult_gauge.offset_right = -32
-	ult_gauge.offset_top = -264
+	ult_gauge.offset_left = -142
+	ult_gauge.offset_right = -30
+	ult_gauge.offset_top = -268
 	ult_gauge.offset_bottom = -156
-	ult_gauge.set_meta("base_off", Vector4(-140, -264, -32, -156))
+	ult_gauge.set_meta("base_off", Vector4(-142, -268, -30, -156))
 	ult_gauge.pressed.connect(func() -> void: ult_pressed.emit())
 	add_child(ult_gauge)
 	# Icon order 2: the touch gauge wears the shipped ult art —
@@ -444,7 +444,7 @@ func _on_button_input(event: InputEvent, kind: String) -> void:
 		(panel.get_theme_stylebox("panel") as StyleBoxFlat).bg_color.a = 1.0 if kind == "interact" else 0.42
 		var art_d: TextureRect = _buttons[kind].get("art")
 		if art_d != null:
-			art_d.modulate.a = 1.0
+			art_d.modulate = Color(1, 1, 1, 1)
 	elif up:
 		_held[kind] = false
 		var panel2: Panel = _buttons[kind]["panel"]
@@ -452,7 +452,7 @@ func _on_button_input(event: InputEvent, kind: String) -> void:
 			_interact_fill_a() if kind == "interact" else 0.13
 		var art_u: TextureRect = _buttons[kind].get("art")
 		if art_u != null:
-			art_u.modulate.a = 0.86 if kind == "interact" and _interact_mode == 0 else 1.0
+			art_u.modulate = Color(0.94, 0.90, 0.86, 0.96) if kind == "interact" and _interact_mode == 0 else Color(1, 1, 1, 1)
 
 func held(kind: String) -> bool:
 	return bool(_held.get(kind, false))
@@ -504,7 +504,7 @@ func set_interact_mode(m: int) -> void:
 		1.0 if pressed else _interact_fill_a())
 	sb.border_color = Color(INTERACT_BORDER.r, INTERACT_BORDER.g,
 		INTERACT_BORDER.b, 0.30 if m == 0 else INTERACT_BORDER.a)
-	(rec["icon"] as Control).modulate.a = 0.86 if m == 0 else 1.0
+	(rec["icon"] as Control).modulate = Color(0.94, 0.90, 0.86, 0.96) if m == 0 else Color(1, 1, 1, 1)
 	(rec["panel"] as Panel).queue_redraw()
 
 func _interact_fill_a() -> float:

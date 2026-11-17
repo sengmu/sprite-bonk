@@ -1061,8 +1061,8 @@ func _bake_minimap() -> void:
 			var n := _terrain_normal(wx, wz, 2.0)
 			var col := _terrain_color(wx, wz, h, n.y)
 			# 提亮至柔和暖草坪色调，契合定稿 U1_final.jpg 暖黄草地纹理
-			var meadow := Color(0.68, 0.84, 0.46)
-			col = col.lerp(meadow, 0.38)
+			var meadow := Color(0.74, 0.88, 0.44)
+			col = col.lerp(meadow, 0.45)
 			var lift := 1.05 + clampf(h, 0.0, 8.0) / 8.0 * 0.50
 			col = Color(minf(col.r * lift, 1.0), minf(col.g * lift, 1.0), minf(col.b * lift, 1.0), 1)
 			if rr > sz * 0.5 - 5.0:
@@ -2964,6 +2964,13 @@ func _build_hud() -> void:
 	_hud_hp_track = hp_track
 	_hud_hp_lag = _panel(hp_track, Vector2(1, 1), Vector2(230, 13), Color(0.9, 0.97, 0.9, 0.75), 8)
 	_hud_hp_fill = _panel(hp_track, Vector2(1, 1), Vector2(230, 13), Color(0.32, 0.90, 0.48), 8)
+	# 顶部晶莹玻璃高光层，随填充宽度自动伸缩打造立体果冻绿血条
+	var hp_hi := _panel(_hud_hp_fill, Vector2(2, 1), Vector2(226, 4), Color(1, 1, 1, 0.32), 2)
+	hp_hi.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	hp_hi.offset_left = 3
+	hp_hi.offset_right = -3
+	hp_hi.offset_top = 1
+	hp_hi.offset_bottom = 5
 	_hud_shield_fill = _panel(hp_track, Vector2(1, 1), Vector2(0, 13), Color(0.4, 0.78, 1.0, 0.8), 8)
 	_hud_hp_num = _label_in(hp_track, "", Vector2(0, 0), Vector2(232, 15), 11, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
 	_hud_hp_num.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.55))
@@ -3166,6 +3173,13 @@ func _build_hud() -> void:
 	var boss_track := _panel(_boss_card, Vector2(14, 10), Vector2(614, 26), Color(0.10, 0.13, 0.19, 0.92), 12, Color(0, 0, 0, 0), 0, true)
 	_boss_hp_lag = _panel(boss_track, Vector2(1, 1), Vector2(612, 24), Color(1.0, 0.82, 0.78, 0.8), 11)
 	_boss_hp_fill = _panel(boss_track, Vector2(1, 1), Vector2(612, 24), Color(0.95, 0.30, 0.24), 11)
+	# 顶部立体果冻高光条，对齐定稿 U1_final.jpg 守护者红条玻璃反光质感
+	var bhp_hi := _panel(_boss_hp_fill, Vector2(4, 2), Vector2(604, 6), Color(1, 1, 1, 0.32), 3)
+	bhp_hi.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	bhp_hi.offset_left = 4
+	bhp_hi.offset_right = -4
+	bhp_hi.offset_top = 2
+	bhp_hi.offset_bottom = 8
 	_boss_hp_num = _label_in(_boss_card, "", Vector2(14, 10), Vector2(614, 26), 16, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
 	_boss_hp_num.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.65))
 	_boss_hp_num.add_theme_constant_override("shadow_offset_x", 1)
@@ -3251,8 +3265,8 @@ func _build_hud() -> void:
 	kpill.offset_right = -16
 	kpill.offset_top = 190
 	kpill.offset_bottom = 218
-	# 击杀胶囊改为定稿柔暖灰白磨砂胶囊，基础 alpha=0.74 满足 P3 点击反馈 (+0.25) 校验
-	var kills_face := _style(Color(0.92, 0.93, 0.94, 0.74), 14, Color(1.0, 1.0, 1.0, 0.78), 1)
+	# 击杀胶囊改为定稿纯净雪亮奶白磨砂胶囊，基础 alpha=0.74 满足 P3 点击反馈 (+0.25) 校验
+	var kills_face := _style(Color(0.99, 0.98, 0.95, 0.74), 14, Color(1.0, 1.0, 1.0, 0.94), 1.5)
 	kills_face.shadow_color = Color(0.10, 0.14, 0.18, 0.28)
 	kills_face.shadow_size = 4
 	kills_face.shadow_offset = Vector2(0, 2)
@@ -3432,7 +3446,7 @@ func _build_hud() -> void:
 	# it. Its rect is set in _p4_layout_bl (width tracks the
 	# slot count); first child, so every slot draws over it.
 	_bl_strip = Panel.new()
-	_bl_strip.add_theme_stylebox_override("panel", UiTheme.hud_glass(38, 0.68, Color(0.88, 0.94, 1.0, 0.56), 2, 0))
+	_bl_strip.add_theme_stylebox_override("panel", UiTheme.hud_glass(40, 0.84, Color(0.92, 0.96, 1.0, 0.68), 2, 0))
 	_bl_strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_bl_rows.add_child(_bl_strip)
 	_bl_cluster.add_child(_bl_rows)
@@ -13827,7 +13841,7 @@ func _refresh_hud() -> void:
 	_danger_name.add_theme_color_override("font_color", UiTheme.DANGER_COLORS[tier])
 	for i in range(_danger_segs.size()):
 		var c: Color = UiTheme.DANGER_COLORS[i] if i <= tier else Color(1, 1, 1, 0.16)
-		(_danger_segs[i] as Panel).add_theme_stylebox_override("panel", _style(c, 5))
+		(_danger_segs[i] as Panel).add_theme_stylebox_override("panel", _style(c, 7))
 	_refresh_weather_chip()
 	# Cycle 18 HUD remainder, on the same 0.15 s tick.
 	_refresh_party()
@@ -15738,7 +15752,7 @@ func _apply_top_card_phone(on: bool) -> void:
 	if _wallet_pill != null and not _wallet_pill.has_meta("p2_desk_sb"):
 		_wallet_pill.set_meta("p2_desk_sb", _wallet_pill.get_theme_stylebox("panel"))
 	if on:
-		_top_card.add_theme_stylebox_override("panel", UiTheme.hud_glass(34, 0.74, Color(0.88, 0.94, 1.0, 0.65), 2, 0))
+		_top_card.add_theme_stylebox_override("panel", UiTheme.hud_glass(34, 0.80, Color(0.90, 0.95, 1.0, 0.72), 2, 0))
 		_top_card.offset_bottom = _top_card.offset_top + 68.0
 		if _wallet_pill != null:
 			_wallet_pill.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
@@ -15779,7 +15793,7 @@ func _apply_top_card_phone(on: bool) -> void:
 	for i in range(_pips.size()):
 		lay.append([_pips[i], Rect2(18 + i * 17, 64, 11, 11)])
 	for i in range(_danger_segs.size()):
-		lay.append([_danger_segs[i], Rect2(215 + i * 17, 49, 13, 14)])
+		lay.append([_danger_segs[i], Rect2(215 + i * 17, 50, 13, 14)])
 	for e in lay:
 		var c := e[0] as Control
 		if c == null:
@@ -16087,7 +16101,7 @@ func _build_objective(root: Control, kpill: Control) -> void:
 	_obj_pill.offset_top = 226
 	_obj_pill.offset_bottom = 290
 	_obj_pill.custom_minimum_size = Vector2(176, 0)
-	_obj_pill.add_theme_stylebox_override("panel", UiTheme.hud_glass(14, 0.74, Color(0.88, 0.94, 1.0, 0.58), 1, 12))
+	_obj_pill.add_theme_stylebox_override("panel", UiTheme.hud_glass(16, 0.74, Color(0.92, 0.96, 1.0, 0.70), 1.5, 12))
 	_obj_pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_obj_pill.visible = false
 	root.add_child(_obj_pill)
@@ -16612,8 +16626,8 @@ func _p4_refresh_slots(relayout: bool) -> void:
 		sw.set_meta("frac", 0.0)
 		sw.draw.connect(_p4_draw_sweep.bind(sw))
 		pnl.add_child(sw)
-		var chip := _panel(pnl, Vector2(20, 114), Vector2(90, 30),
-			Color(0.98, 0.97, 0.94, 0.98), 11, Color("c4b79e"), 2, true)
+		var chip := _panel(pnl, Vector2(20, 110), Vector2(90, 30),
+			Color(0.99, 0.98, 0.95, 0.98), 11, Color("c0b090"), 2, true)
 		var lv := _label_in(chip, "%d级" % int(m["level"]), Vector2(0, 0),
 			Vector2(90, 30), 14, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, true)
 		_bl_move_slots.append({"panel": pnl, "lv": lv, "key": key, "sweep": sw})
