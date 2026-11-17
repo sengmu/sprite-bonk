@@ -3452,7 +3452,7 @@ func _build_hud() -> void:
 	_bl_cluster.add_child(_bl_rows)
 	_bl_lock = Panel.new()
 	_bl_lock.size = Vector2(P4_SLOT, P4_SLOT)
-	_bl_lock.add_theme_stylebox_override("panel", _style(Color(0.24, 0.27, 0.34, 0.72), 65, Color("d8dde8"), 5, true))
+	_bl_lock.add_theme_stylebox_override("panel", _style(Color(0.24, 0.27, 0.34, 0.90), 62, Color("d8dde8"), 5, true))
 	_bl_lock.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_bl_rows.add_child(_bl_lock)
 	var lock_ic2 := UiIcon.new("lock", Color(0.98, 0.98, 0.99, 0.95), 68)
@@ -5054,10 +5054,10 @@ func _refresh_lab_items() -> void:
 		c.queue_free()
 	var cap := GameProfile.archive_capacity()
 	var arch := GameProfile.archived_items()
-	var head := _mk_label(_lab_items_list, "档案 %d/%d" % [arch.size(), cap], 16, UiTheme.TEXT)
-	head.add_theme_font_override("font", UiTheme.display_font())
-	head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	if cap <= 0:
+		var head := _mk_label(_lab_items_list, "档案 %d/%d" % [arch.size(), cap], 16, UiTheme.TEXT)
+		head.add_theme_font_override("font", UiTheme.display_font())
+		head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		var empty_card := PanelContainer.new()
 		empty_card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		var ec_sb := _style(Color(1.0, 0.99, 0.96, 0.94), 16, Color("e5cfa0"), 1.5, true)
@@ -5072,8 +5072,16 @@ func _refresh_lab_items() -> void:
 		if _p5_on and _lab_panel != null and _lab_panel.scale.x > 0.01:
 			_p5_fit(_lab_panel, float(_lab_panel.get_meta("p5_sm", _lab_panel.scale.x)))
 		return
-	var hint2 := _mk_label(_lab_items_list, "归档的物品不会再从宝箱中开出。", 13, Color("6e502f"))
-	hint2.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	if _p5_on:
+		var head := _mk_label(_lab_items_list, "档案 %d/%d · 归档的物品不会再从宝箱中开出" % [arch.size(), cap], 15, UiTheme.TEXT)
+		head.add_theme_font_override("font", UiTheme.display_font())
+		head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	else:
+		var head := _mk_label(_lab_items_list, "档案 %d/%d" % [arch.size(), cap], 16, UiTheme.TEXT)
+		head.add_theme_font_override("font", UiTheme.display_font())
+		head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		var hint2 := _mk_label(_lab_items_list, "归档的物品不会再从宝箱中开出。", 13, Color("6e502f"))
+		hint2.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	# Presets: save the current set (max 3), apply, delete
 	# (deleting a preset never changes the Archive itself).
 	var presets := GameProfile.archive_presets()
@@ -5088,6 +5096,11 @@ func _refresh_lab_items() -> void:
 		var ab := UiTheme.make_button(
 			String(pd.get("name", "预设")) + ("（使用中）" if GameProfile.archive_preset_active() == i else ""),
 			"green", "small")
+		if _p5_on:
+			for st in ["font_color", "font_hover_color", "font_pressed_color", "font_disabled_color"]:
+				ab.add_theme_color_override(st, Color.WHITE)
+			ab.add_theme_color_override("font_outline_color", Color("326b08"))
+			ab.add_theme_constant_override("outline_size", 3)
 		ab.disabled = GameProfile.archive_preset_active() == i
 		ab.pressed.connect(func() -> void:
 			var missed := GameProfile.archive_preset_apply(idx)
@@ -5097,6 +5110,8 @@ func _refresh_lab_items() -> void:
 			_refresh_lab_items())
 		prow.add_child(ab)
 		var db := UiTheme.make_button("删", "ghost", "small")
+		if _p5_on:
+			db.custom_minimum_size.x = 58
 		db.pressed.connect(func() -> void:
 			GameProfile.archive_preset_delete(idx)
 			audio.click()
@@ -9832,7 +9847,7 @@ func _choice_show(title: String, sub: String, options: Array, foot_text: String,
 			if sp_ally != "" and UiTheme.portrait(sp_ally) != null:
 				var ptr := TextureRect.new()
 				ptr.texture = UiTheme.portrait(sp_ally)
-				ptr.custom_minimum_size = Vector2(88, 88) if _p5_on else Vector2(48, 48)
+				ptr.custom_minimum_size = Vector2(100, 100) if _p5_on else Vector2(48, 48)
 				ptr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 				ptr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 				ptr.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -17102,19 +17117,19 @@ func _p4_refresh_slots(relayout: bool) -> void:
 		pnl.position = Vector2(P4_STRIP_PAD + i * P4_MOVE_STEP, 0)
 		pnl.size = Vector2(P4_SLOT, P4_SLOT)
 		pnl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		# 对齐定稿 U1_final.jpg：已学槽配 6px 厚实暖金立体外环；下方「1级」为立体奶油圆角小牌
+		# 对齐定稿 U1_final.jpg：已学槽配 6px 厚实暖金立体圆环（radius=62避开Godot正圆对撞十字线与12点缺口）
 		var tc := UiTheme.type_color(t)
 		pnl.add_theme_stylebox_override("panel",
-			_style(tc, 65, Color("efc038"), 6, true))
+			_style(tc, 62, Color("efc038"), 6, true))
 		_bl_rows.add_child(pnl)
-		# 先绘一层偏深色立体浮雕阴影，保证高亮度浅底属性（如普通系白星）在真机强光下依然立体锐利
-		var ic_sh := UiIcon.new(_type_icon(t), tc.darkened(0.45), 64)
-		ic_sh.position = Vector2(33, 37)
-		ic_sh.size = Vector2(64, 64)
+		# 先绘一层偏深色立体浮雕阴影，主图标稍上移至 y=21 给底部「1级」牌让出清晰呼吸空间
+		var ic_sh := UiIcon.new(_type_icon(t), tc.darkened(0.45), 62)
+		ic_sh.position = Vector2(34, 25)
+		ic_sh.size = Vector2(62, 62)
 		pnl.add_child(ic_sh)
-		var ic := UiIcon.new(_type_icon(t), Color(1, 1, 1, 0.98), 64)
-		ic.position = Vector2(33, 33)
-		ic.size = Vector2(64, 64)
+		var ic := UiIcon.new(_type_icon(t), Color(1, 1, 1, 0.99), 62)
+		ic.position = Vector2(34, 21)
+		ic.size = Vector2(62, 62)
 		pnl.add_child(ic)
 		# Cooldown sweep (UltGauge-style arc): the remaining
 		# fraction of the move's cooldown, drawn over the face.
@@ -17124,10 +17139,11 @@ func _p4_refresh_slots(relayout: bool) -> void:
 		sw.set_meta("frac", 0.0)
 		sw.draw.connect(_p4_draw_sweep.bind(sw))
 		pnl.add_child(sw)
-		var chip := _panel(pnl, Vector2(20, 110), Vector2(90, 30),
-			Color(0.99, 0.98, 0.95, 0.98), 11, Color("c0b090"), 2, true)
+		# 精巧真胶囊「1级」牌居中轻吻金环底沿（72x24 位于 y=102..126，不挡图标也不压死下方维生素小圆点）
+		var chip := _panel(pnl, Vector2(29, 102), Vector2(72, 24),
+			Color(0.99, 0.98, 0.95, 0.98), 12, Color("c4b292"), 1.5, true)
 		var lv := _label_in(chip, "%d级" % int(m["level"]), Vector2(0, 0),
-			Vector2(90, 30), 14, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, true)
+			Vector2(72, 24), 14, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, true)
 		_bl_move_slots.append({"panel": pnl, "lv": lv, "key": key, "sweep": sw})
 		i += 1
 	var display_n := maxi(5, player.moves.size() + (1 if locked else 0))
@@ -17139,7 +17155,7 @@ func _p4_refresh_slots(relayout: bool) -> void:
 		lp.position = Vector2(P4_STRIP_PAD + (i + k) * P4_MOVE_STEP, 0)
 		lp.size = Vector2(P4_SLOT, P4_SLOT)
 		lp.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		lp.add_theme_stylebox_override("panel", _style(Color(0.24, 0.27, 0.34, 0.72), 65, Color("d8dde8"), 5, true))
+		lp.add_theme_stylebox_override("panel", _style(Color(0.24, 0.27, 0.34, 0.90), 62, Color("d8dde8"), 5, true))
 		_bl_rows.add_child(lp)
 		var lic := UiIcon.new("lock", Color(0.98, 0.98, 0.99, 0.95), 68)
 		lic.position = Vector2(31, 31)
@@ -17195,8 +17211,9 @@ func _p4_layout_bl(s: float, vw: float, vh: float) -> void:
 	# U1 1:1 round 6: the band is the move row's bar only —
 	# overhangs the outer slots by P4_STRIP_PAD, slots
 	# protrude above/below it (reference U1_final.jpg).
-	_bl_strip.position = Vector2(0, (P4_SLOT - P4_BAND_H) * 0.5)
-	_bl_strip.size = Vector2(cw, P4_BAND_H)
+	# 背后长条左右内收至首尾两颗圆圈中心背后，消除外露灰蓝耳朵（外框 cw 与 P4 盒宽断言保持不变）
+	_bl_strip.position = Vector2(P4_STRIP_PAD + P4_SLOT * 0.48, (P4_SLOT - P4_BAND_H) * 0.5)
+	_bl_strip.size = Vector2(maxf(cw - 2.0 * P4_STRIP_PAD - P4_SLOT * 0.96, P4_BAND_H), P4_BAND_H)
 	var s_bl := minf(s, 1.35)
 	s_bl = minf(s_bl, maxf((0.30 * vw - 23.0) / cw, (0.15 * vh - 12.0) / P4_ROWS_H))
 	# The cluster's geometry, visible or not: a layout pass
@@ -17278,8 +17295,9 @@ func _p4_draw_sweep(sw: Control) -> void:
 	var r := minf(sw.size.x, sw.size.y) * 0.5 - 3.0
 	# Remaining cooldown: a dim veil + the arc shrinking toward
 	# the top, as the ult gauge's sweep fills from it.
-	sw.draw_circle(c, r, Color(0, 0, 0, 0.28 * f + 0.10))
-	sw.draw_arc(c, r, -PI / 2.0, -PI / 2.0 + TAU * f, 32, Color(1, 1, 1, 0.85), 3.0, true)
+	# 极淡冷却提示配清晰白色高亮读条弧，避免在自动连续释放技能时整张黑圆把主图标闷成灰色
+	sw.draw_circle(c, r, Color(0, 0, 0, 0.14 * f))
+	sw.draw_arc(c, r, -PI / 2.0, -PI / 2.0 + TAU * f, 32, Color(1, 1, 1, 0.90), 4.0, true)
 
 ## Plan §B1 C5 / §B4 P4 (Z6): the interaction bubble. Right
 ## edge = the thumb cluster's left - 16, left bound = the BL
@@ -19528,12 +19546,12 @@ func _loadout_fill_detail() -> void:
 		# 对齐定稿 S07_v1.jpg：居中立体暖金圆头像框＋居中名称与标签＋温暖棕草绿属性条
 		var avatar_ring := PanelContainer.new()
 		avatar_ring.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		var av_sb := _style(Color("dff2ff"), 48, Color("e6b650"), 3, true)
+		var av_sb := _style(Color("dff2ff"), 44, Color("e6b650"), 3, true)
 		av_sb.set_content_margin_all(4)
 		avatar_ring.add_theme_stylebox_override("panel", av_sb)
 		_ls_detail.add_child(avatar_ring)
 		var tr := TextureRect.new()
-		tr.custom_minimum_size = Vector2(84, 84)
+		tr.custom_minimum_size = Vector2(78, 78)
 		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tr.texture = UiTheme.portrait(sp)
@@ -19649,7 +19667,11 @@ func _loadout_fill_detail() -> void:
 			int(pwv) if pwv != null else 0], 13 if _p5_on else 12)
 		if _p5_on:
 			ml.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	# Matchups.
+	# Matchups（手机端前留 22px 呼吸缓冲，首屏完整止步于初始四招不腰斩半根蓝色横幅）
+	if _p5_on:
+		var msp := Control.new()
+		msp.custom_minimum_size.y = 22
+		_ls_detail.add_child(msp)
 	_mk_sky_banner(_ls_detail, "相性", 15, false)
 	var weak: Array = []
 	var resist: Array = []
@@ -19996,7 +20018,7 @@ func _offer_shiny_ally(e: Enemy) -> void:
 	e.remove_from_group("allies")
 	e.set_physics_process(false)
 	e.visible = false
-	_choice_show("流光队友", "只能带一只流光队友；替换后旧队友回到森林", ["留下新队友", "放生新队友"], "放生新队友",
+	_choice_show("流光队友", "只能带一只流光队友；替换后旧队友回到森林", ["留下新队友", "保留原队友"], "放生新队友",
 		func(i: int) -> void: _settle_shiny_swap(i == 0), func() -> void: _settle_shiny_swap(false))
 
 func _settle_shiny_swap(keep: bool) -> void:

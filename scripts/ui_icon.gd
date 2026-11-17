@@ -104,6 +104,29 @@ func _draw() -> void:
 			draw_texture_rect(_tex, Rect2((size - Vector2.ONE * side) * 0.5, Vector2.ONE * side), false)
 			return
 	match icon:
+		"leaf":
+			# 双层光泽叶片（草系主招式与升级卡片图标）
+			_poly([Vector2(4, 20), Vector2(5, 11), Vector2(11, 5), Vector2(20, 3),
+				Vector2(19, 12), Vector2(14, 18), Vector2(7, 20)], color)
+			_poly([Vector2(7, 17), Vector2(8, 11), Vector2(12, 7), Vector2(18, 5),
+				Vector2(17, 11), Vector2(13, 15)], Color("b8f570"))
+			draw_line(_p(5, 19), _p(17, 6), Color("569b1a"), _u(1.4), true)
+			_poly([Vector2(14, 19), Vector2(16, 15), Vector2(21, 14), Vector2(19, 18)], color)
+		"flame":
+			# 立体双层火焰（火系图标）
+			_poly([Vector2(12, 2.5), Vector2(16, 7.5), Vector2(19, 11), Vector2(18, 17),
+				Vector2(14, 21), Vector2(10, 21), Vector2(6, 17), Vector2(5.5, 11.5), Vector2(9, 7)], color)
+			_poly([Vector2(12, 8.5), Vector2(15, 13), Vector2(14.5, 18), Vector2(12, 19.5),
+				Vector2(9.5, 18), Vector2(9, 13)], Color("ffda66"))
+		"drop":
+			# 晶莹高光水滴（水系图标）
+			_circ(12, 14.5, 5.8)
+			_poly([Vector2(12, 3), Vector2(17.2, 12.2), Vector2(6.8, 12.2)], color)
+			_arc(12, 14.5, 3.8, PI * 0.15, PI * 0.65, 1.8)
+		"bolt":
+			# 锐利高光闪电（电系图标）
+			_poly([Vector2(14, 2.5), Vector2(6.5, 12.5), Vector2(11.5, 12.5),
+				Vector2(9.5, 21.5), Vector2(17.5, 11), Vector2(12.5, 11)], color)
 		"sword":
 			_poly([Vector2(6, 18), Vector2(15.5, 8.5), Vector2(19, 5), Vector2(18.5, 10.5), Vector2(9, 20)], color)
 			_line([Vector2(5, 15), Vector2(9, 19)], 2.6)
