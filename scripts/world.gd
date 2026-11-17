@@ -9375,24 +9375,75 @@ func _choice_show(title: String, sub: String, options: Array, foot_text: String,
 				ptr.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 				ptr.mouse_filter = Control.MOUSE_FILTER_IGNORE
 				cvb.add_child(ptr)
-		var l := Label.new()
-		l.text = opt_text
-		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		l.add_theme_font_override("font", UiTheme.body_font())
-		l.add_theme_font_size_override("font_size", 15 if _p5_on else 14)
-		l.add_theme_color_override("font_color", Color.WHITE)
-		l.add_theme_color_override("font_shadow_color", Color("481f80"))
-		l.add_theme_constant_override("shadow_offset_y", 2)
-		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		cvb.add_child(l)
+		if _p5_on and title == "流光队友":
+			# 对齐定稿 S24_v1.jpg：流光卡底部内嵌天蓝/亮紫动作大胶囊，新队友卡角用 anchor/offset 定尺挂载小金星防止缩放膨胀
+			if i == 0:
+				var st_l := TextureRect.new()
+				st_l.texture = load("res://assets/ui/decorations/star_filled.png") as Texture2D
+				st_l.set_anchors_preset(Control.PRESET_TOP_LEFT)
+				st_l.offset_left = 14; st_l.offset_top = 14; st_l.offset_right = 34; st_l.offset_bottom = 34
+				st_l.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+				st_l.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+				st_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				b.add_child(st_l)
+				var st_r := TextureRect.new()
+				st_r.texture = st_l.texture
+				st_r.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+				st_r.offset_left = -34; st_r.offset_top = 14; st_r.offset_right = -14; st_r.offset_bottom = 34
+				st_r.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+				st_r.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+				st_r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				b.add_child(st_r)
+			var act_pill := PanelContainer.new()
+			act_pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			act_pill.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+			if i == 0:
+				act_pill.add_theme_stylebox_override("panel", UiTheme._btn_box(UiTheme.SKY, 16, Color(0, 0, 0, 0.15), 1, 16))
+			else:
+				var pur_sb := _style(Color("884ad8"), 20, Color("dcbfff"), 2, true)
+				pur_sb.content_margin_left = 18
+				pur_sb.content_margin_right = 18
+				pur_sb.content_margin_top = 6
+				pur_sb.content_margin_bottom = 6
+				act_pill.add_theme_stylebox_override("panel", pur_sb)
+			cvb.add_child(act_pill)
+			var l := _mk_label(act_pill, opt_text, 15, Color.WHITE, true)
+			l.add_theme_font_override("font", UiTheme.display_font())
+			l.add_theme_color_override("font_shadow_color", Color("144e7d") if i == 0 else Color("3b1270"))
+			l.add_theme_constant_override("shadow_offset_y", 2)
+			l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		else:
+			var l := Label.new()
+			l.text = opt_text
+			l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			l.add_theme_font_override("font", UiTheme.body_font())
+			l.add_theme_font_size_override("font_size", 15 if _p5_on else 14)
+			l.add_theme_color_override("font_color", Color.WHITE)
+			l.add_theme_color_override("font_shadow_color", Color("481f80"))
+			l.add_theme_constant_override("shadow_offset_y", 2)
+			l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			cvb.add_child(l)
 		var idx := i
 		b.pressed.connect(func() -> void: _choice_pick(idx))
 		_choice_opts_box.add_child(b)
+	var want_coin := _p5_on and ("金币" in foot_text)
 	_choice_foot.visible = foot_text != ""
-	_choice_foot.text = foot_text
+	_choice_foot.text = ("    " + foot_text) if want_coin else foot_text
+	if _p5_on:
+		var old_ic := _choice_foot.get_node_or_null("ChoiceCoinIcon") as Control
+		if want_coin and old_ic == null:
+			var cic := UiIcon.new("coin", UiTheme.GOLD, 22)
+			cic.name = "ChoiceCoinIcon"
+			cic.position = Vector2(16, 13)
+			cic.size = Vector2(22, 22)
+			_choice_foot.add_child(cic)
+			old_ic = cic
+		if old_ic != null:
+			old_ic.visible = want_coin
+		_choice_foot.custom_minimum_size.x = 250 if want_coin else 200
 	_choice_panel.visible = true
 
 func _choice_pick(idx: int) -> void:
@@ -15583,7 +15634,7 @@ func _layout_hud() -> void:
 		if _boss_card and _boss_card.visible:
 			stack_y += 46.0 * bs_top + 8.0
 		if phone and _cutin_panel:
-			var cs := minf(s_top, sym_w_vis / 460.0)
+			var cs := minf(s_top, sym_w_safe / 460.0)
 			_cutin_panel.offset_left = align_c - vw * 0.5 - 230.0
 			_cutin_panel.offset_right = align_c - vw * 0.5 + 230.0
 			_cutin_panel.size = Vector2(460.0, 64.0)
@@ -15612,10 +15663,9 @@ func _layout_hud() -> void:
 			if (bar["panel"] as Control).visible:
 				vis_bars += 1
 		if phone and vis_bars == 2:
-			# 若双头领条已经落在头像圆底缘之下则以居中对称宽展开，否则安全退回 span_l 避让 hero_deep
-			var bar_clear := bars_top >= 12.0 + 108.0 * s_top + 2.0
-			var b_area_w := sym_w_vis if bar_clear else span_w
-			var b_area_l := (align_c - sym_w_vis * 0.5) if bar_clear else span_l
+			# 严守 [span_l, span_r] 安全横跨并以屏幕正中 align_c 为中缝对称，兼顾居中与断言全绿
+			var b_area_w := sym_w_safe
+			var b_area_l := align_c - sym_w_safe * 0.5
 			var bar_s2 := minf(s_top, (b_area_w * 0.5 - 8.0) / 300.0)
 			var k := 0
 			for bar in _mini_bars:
@@ -15652,13 +15702,11 @@ func _layout_hud() -> void:
 				tw = maxf(_banner.get_theme_font("font").get_string_size(
 					_banner.text, HORIZONTAL_ALIGNMENT_LEFT, -1.0,
 					_banner.get_theme_font_size("font_size")).x, 1.0)
-			# 判断当前 y 高度带是否仍在头像区右缘碰撞区内（未过 108*s_top 下方则按 sym_w_safe 对齐中轴线，过线则按全对称）
-			var ban_clear := stack_y >= 12.0 + 108.0 * s_top + 2.0
-			var b_l := (align_c - sym_w_vis * 0.5) if (phone and ban_clear) else span_l
-			var b_r := (align_c + sym_w_vis * 0.5) if (phone and ban_clear) else span_r
-			var b_w := maxf(b_r - b_l, 1.0)
+			var b_l := span_l
+			var b_r := span_r
+			var b_w := span_w
 			var b_c := align_c if phone else span_c
-			var max_sym_w := maxf(2.0 * minf(b_c - b_l, b_r - b_c), 1.0) if phone else span_w
+			var max_sym_w := sym_w_safe if phone else span_w
 			var bsc := minf(s, max_sym_w / maxf(tw + 48.0, 1.0))
 			if phone and stack_y + 56.0 * bsc > 0.55 * vh:
 				bsc = minf(bsc, 1.0)
@@ -18112,12 +18160,48 @@ func _p5_wrap_page(box: Control, rows: bool = true) -> void:
 				(last as Label).size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 func _pause_fill_legend(box: VBoxContainer) -> void:
-	_mk_sky_banner(box, "地图图例", 16, false)
-	# Ring colors from the bundle's marker table (gR @2093942).
 	var rows := [["守护者", Color("ff2a4a")], ["头领", Color("ff8a2a")],
 		["可结伴目标", Color("5af0ff")], ["宝藏", Color("ffc83a")],
 		["祭坛 / 图腾", Color("c25aff")], ["队友", Color("3ac85a")],
 		["玩家标记（大地图）", UiTheme.PIN]]
+	if _p5_on:
+		# 对齐定稿 S18_v1.jpg：手机端采用左右双栏并排（左图例、右稀有度），一屏全显不截字不滚动
+		var cols := HBoxContainer.new()
+		cols.add_theme_constant_override("separation", 18)
+		cols.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		box.add_child(cols)
+		var lcol := VBoxContainer.new()
+		lcol.add_theme_constant_override("separation", 3)
+		lcol.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		lcol.size_flags_stretch_ratio = 55.0
+		cols.add_child(lcol)
+		_mk_sky_banner(lcol, "地图图例", 16, false)
+		for r in rows:
+			var hb := HBoxContainer.new()
+			hb.add_theme_constant_override("separation", 8)
+			lcol.add_child(hb)
+			var dot := Panel.new()
+			dot.custom_minimum_size = Vector2(14, 14)
+			dot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			dot.add_theme_stylebox_override("panel", UiTheme.flat_box(r[1], 7))
+			hb.add_child(dot)
+			_mk_label(hb, String(r[0]), 14)
+		var rcol := VBoxContainer.new()
+		rcol.add_theme_constant_override("separation", 8)
+		rcol.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		rcol.size_flags_stretch_ratio = 45.0
+		cols.add_child(rcol)
+		_mk_sky_banner(rcol, "稀有度", 16, false)
+		var rb := HFlowContainer.new()
+		rb.add_theme_constant_override("h_separation", 8)
+		rb.add_theme_constant_override("v_separation", 8)
+		rcol.add_child(rb)
+		var rar_cols := [Color("3b93e6"), Color("54bd38"), Color("9d56e6"), Color("f0ae24")]
+		for i in range(4):
+			var chip := UiTheme.chip(["普通", "稀有", "史诗", "传说"][i], rar_cols[i], 14, Color.WHITE)
+			rb.add_child(chip)
+		return
+	_mk_sky_banner(box, "地图图例", 16, false)
 	for r in rows:
 		var hb := HBoxContainer.new()
 		hb.add_theme_constant_override("separation", 8)
@@ -18128,11 +18212,11 @@ func _pause_fill_legend(box: VBoxContainer) -> void:
 		hb.add_child(dot)
 		_mk_label(hb, String(r[0]), 14)
 	_mk_sky_banner(box, "稀有度", 16, false)
-	var rb := HBoxContainer.new()
-	rb.add_theme_constant_override("separation", 6)
-	box.add_child(rb)
+	var rb2 := HBoxContainer.new()
+	rb2.add_theme_constant_override("separation", 6)
+	box.add_child(rb2)
 	for i in range(4):
-		rb.add_child(UiTheme.chip(["普通", "稀有", "史诗", "传说"][i],
+		rb2.add_child(UiTheme.chip(["普通", "稀有", "史诗", "传说"][i],
 			Color(UiTheme.rarity_color(i), 0.85)))
 
 ## Cycle 19 (audit punch #13): a kbd cap naming a tool
@@ -18334,6 +18418,11 @@ func _bigmap_refresh_list() -> void:
 		["标记", _map_pins.size(), "map_pin_player"]]
 	for r in rows:
 		_bigmap_legend_row(String(r[2]), "%s · %d" % [String(r[0]), int(r[1])], UiTheme.TEXT)
+		if _p5_on:
+			var sep_m := ColorRect.new()
+			sep_m.color = Color("ead8b5")
+			sep_m.custom_minimum_size.y = 1.0
+			_bigmap_list.add_child(sep_m)
 	if guardian != null and is_instance_valid(guardian) and guardian.hp > 0.0:
 		_bigmap_legend_row("event_dot_red", "守护者 · 存活", Color("c4421a"))
 	if _shiny_e != null and is_instance_valid(_shiny_e):
