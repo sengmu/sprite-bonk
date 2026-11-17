@@ -1722,6 +1722,20 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 本地全 8 脚本解析门全绿通过，已重绘更新并亲检 `compare/{U1,S12}.png`，同步推送并起跑最终收官全量认证与 APK 构建。
 - 本轮提交：`scripts/ui_icon.gd`、`scripts/world.gd`、`design/ui-reference/compare/{U1,S12}.png`、`design/ui-alignment-progress.md`。
 
+## 全测试套件排查＋16:9 窄屏控制与快捷设置横向爆框修复（2026-11-17 19:2x）
+
+- **全本地测试运行成果**：
+  - 6 套内核单元场景（`c23_damage` 169、`c23_pickups` 38、`c23_pickup_stats` 50、`c24_fossils` 26、`c24_shiny` 33、`c24_live` 40）共 **356 项测试全绿 `fails=0`**；
+  - `Test/check_legal.py`（`PYTHONUTF8=1`）**4/4 法律合规文件完全通过**；
+  - `verify_gameplay_smoke.gd` 三角色大招震动、1→4 关跨区、安卓返回手势与经济购买全绿零报错。
+- **抓获并根除 16:9 手机端横向撑爆屏幕隐患（`scripts/world.gd` `_st_row` / `_p5_slider_len`）**：
+  - `verify_fullscreen.gd` 在 `1280×720`（16:9）巡检中暴露 `S09` 控制页（`rect=1310`）、`S09` 声音页（`1271`）与 `S08` 快捷设置页（`1391`）横向溢出 `1256` 安全框（`inside=false`）。
+  - 定位根因：`2 列 GridContainer` 内 `_st_row()` 强制固定 `200px` 标签宽且 `_p5_slider_len()` 未扣除卡片 `28px` 内边距与左纵栏扩宽后的 `138px` 占宽。
+  - 修复方案：当位于双列 `GridContainer` 内时将 `_st_row` 标签改设 `115px + SIZE_EXPAND_FILL` 自适应流式排布，单列行保持 `165px` 最小宽并在 `_p5_slider_len()` 中精确扣除卡片 `28px` 边距与左栏宽（下限 `220` / 上限 `440`）。
+  - 复测 `verify_fullscreen.gd` 在 `2400×1080` 与 `1280×720` 双档共 22 屏全部恢复 **`rect=(1256, 714)` `inside=true`, `prim_ok=true`, `min_b>=76.1`, `min_t>=21.1`（芯片 >=18.1）, `sl>=71.4`**。
+- 本轮提交：`scripts/world.gd`、`design/ui-alignment-progress.md`。
+
+
 
 
 

@@ -5756,8 +5756,12 @@ func _st_row(parent: Container, label: String, hint: String = "") -> HBoxContain
 	var lab := _mk_label(hb, label + (" — " + hint if hint != "" else ""), 14)
 	lab.custom_minimum_size = Vector2(210, 0)
 	if _p5_on:
-		# 全屏化后放宽左侧标签至 200px，减少设置标题折行，让滑块更长更顺手
-		lab.custom_minimum_size = Vector2(200, 0)
+		# 双列开关网格内标签紧致且随列宽自适应，单列行保持 165 防止在 16:9 窄屏把设置和暂停弹窗撑爆出屏外
+		if parent is GridContainer:
+			lab.custom_minimum_size = Vector2(115, 0)
+			lab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		else:
+			lab.custom_minimum_size = Vector2(165, 0)
 		lab.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		lab.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	return hb
@@ -5798,8 +5802,8 @@ func _st_slider(parent: Container, label: String, key: String,
 ## the settings page is wide enough (20:9); on 16:9 the page
 ## width minus the label / value columns (D7 second line).
 func _p5_slider_len() -> float:
-	var w := _p5_w(_sound_panel, 1000.0) - 32.0 - 138.0 - 14.0 - 14.0
-	return clampf(w - 200.0 - 64.0 - 16.0, 240.0, 480.0)
+	var w := _p5_w(_sound_panel, 800.0) - 32.0 - 138.0 - 14.0 - 14.0 - 28.0
+	return clampf(w - 165.0 - 64.0 - 16.0, 220.0, 440.0)
 
 func _st_switch(parent: Container, label: String, key: String,
 		apply: Callable = Callable()) -> Button:
