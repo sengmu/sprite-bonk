@@ -3647,6 +3647,7 @@ func _build_hud() -> void:
 	_p5_register(_wallet_panel, 610.0, 412.0)
 	if _p5_on and _wallet_panel:
 		_wallet_panel.set_meta("p5_h_ratio", 0.78)
+		_wallet_panel.set_meta("p5_fixed_h", true)
 	for c in _loadout_panel.get_children():
 		if c is PanelContainer:
 			_p5_register(c, 960.0, 462.0)
@@ -3703,6 +3704,7 @@ func _build_hud() -> void:
 		for c in _p5_spec.keys():
 			_p5_place_modal(c, s5)
 		_p5_layout_menu(s5)
+		call_deferred("_on_viewport_resized")
 
 func _move_zh(key: String) -> String:
 	return String(MOVE_ZH.get(key, key.capitalize().replace("-", " ")))
@@ -4569,6 +4571,7 @@ func _build_wallet_panel(root: Control) -> void:
 	vb.add_theme_constant_override("separation", 12 if _p5_on else 16)
 	if _p5_on:
 		vb.alignment = BoxContainer.ALIGNMENT_CENTER
+		vb.custom_minimum_size = Vector2(560.0, 0.0)
 	_wallet_panel.add_child(vb)
 	# 对齐定稿 U6_final.jpg：粗黑大字「钱包」＋双嫩叶＋亮天蓝钱包圆盘＋浅金圆角只读地址条＋50px巨字余额＋60px胖糖果按钮
 	if _p5_on:
@@ -4638,7 +4641,7 @@ func _build_wallet_panel(root: Control) -> void:
 		_wallet_balance.add_theme_font_override("font", _font_display)
 	_wallet_balance.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_wallet_balance.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_wallet_balance.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_wallet_balance.autowrap_mode = TextServer.AUTOWRAP_OFF if _p5_on else TextServer.AUTOWRAP_WORD_SMART
 	_wallet_balance.custom_minimum_size.y = 74 if _p5_on else 76
 	_wallet_balance.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_wallet_retry = UiTheme.make_button("重试读取余额", "ghost", "small")
@@ -15746,10 +15749,16 @@ func _p5_fit(root: Control, sm: float) -> void:
 					b.set_meta("fs_over", fs)
 					UiTheme.set_icon_button_text(b, il.text)
 		elif n is LineEdit:
-			_p5_floor_font(n as Control, ft)
-			(n as Control).custom_minimum_size.y = maxf((n as Control).custom_minimum_size.y, hb)
+			var le := n as LineEdit
+			_p5_floor_font(le, ft)
+			if not le.has_meta("p5_h0"):
+				le.set_meta("p5_h0", le.custom_minimum_size.y)
+			le.custom_minimum_size.y = maxf(float(le.get_meta("p5_h0")), hb)
 		elif n is HSlider:
-			(n as Control).custom_minimum_size.y = maxf((n as Control).custom_minimum_size.y, hs)
+			var sl := n as HSlider
+			if not sl.has_meta("p5_h0"):
+				sl.set_meta("p5_h0", sl.custom_minimum_size.y)
+			sl.custom_minimum_size.y = maxf(float(sl.get_meta("p5_h0")), hs)
 		for ch in (n as Node).get_children():
 			stack.append(ch)
 
@@ -15768,15 +15777,21 @@ func _p5_tick() -> void:
 		i += 1
 	if not _p5_dirty and sig == _p5_vis_sig:
 		return
+	var prev_sig := _p5_vis_sig
 	_p5_dirty = false
 	_p5_vis_sig = sig
 	if _menu_design:
 		var shake_switch := _menu_design.get_node_or_null("MenuShake/ShakeSwitch") as Button
 		if shake_switch:
 			UiTheme.set_switch(shake_switch, bool(GameProfile.setting("shakeOn")))
+	var s_now := _kr() * float(GameProfile.setting("hudScale"))
+	var idx := 0
 	for p in _p5_spec.keys():
 		if is_instance_valid(p) and (p as Control).is_visible_in_tree():
+			if (prev_sig & (1 << idx)) == 0:
+				_p5_place_modal(p, s_now)
 			_p5_fit(p, float((p as Control).get_meta("p5_sm", (p as Control).scale.x)))
+		idx += 1
 	if _menu_design and _menu_design.is_visible_in_tree():
 		_p5_fit(_menu_design, _menu_design.scale.x)
 

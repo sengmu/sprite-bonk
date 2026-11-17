@@ -1809,6 +1809,18 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 验证：`scripts/*.gd` 与 `Test/phonehud.gd` 解析全绿；`verify_fullscreen`（22态）、`verify_rest_screens`（11态）、`verify_seeker_notch`、`verify_u6_redesign`（正常态+失败态+异常态防撑爆）、`verify_gameplay_smoke`、`check_legal.py`（4/4）及 `c23/c24` 全部 356 项单元单测 100% 通过。
 - 本轮提交：`scripts/world.gd`、`scripts/wallet.gd`、`scripts/game_data.gd`、`Test/phonehud.gd`、`store/config.yaml`、`design/ui-reference/compare/U6.png`、`design/ui-alignment-progress.md`。
 
+## 根治 Seeker 真机钱包弹窗正反馈坍缩成竖条的底层缺陷（2026-11-17 22:0x）
+
+- **解决 Seeker 实机截屏 `u6_seeker_crop.png` 捕获的钱包弹窗缩成 `412×601` 竖条、天蓝圆盘缩成 22px 豆丁的重大缺陷（`scripts/world.gd`）**：
+  1. **定位真因**：真机 `sensor_landscape` 启动或安全区瞬态帧中 `sm` 短暂下降后，`_p5_fit` 内的 `LineEdit` 与 `HSlider` 高度只存大不恢复（缺 `p5_h0` 幂等恢复元数据），使 `415px` 虚高 `LineEdit` 与窄折行的 `_wallet_note` 将 `get_combined_minimum_size().y` 永久抬破上限；在无 `p5_fixed_h` 下 `_p5_place_modal` 锁死在第二个不动点 `sm≈0.183`，连带天蓝圆盘缩为 `22px` 豆丁、三颗糖果按钮挤成圆球。
+  2. **四重彻底根治**：
+     - 给 `_wallet_panel` 启用 `p5_fixed_h = true`，缩放永久由名义规格 `412` 计算、彻底免疫 `autowrap` 反馈死循环；
+     - `_build_wallet_panel` 内 `vb` 设 `custom_minimum_size.x = 560.0`（`_p5_on`）且 `_wallet_balance` 禁用折行，保证任何状态下绝不向内缩窄；
+     - 修复 `_p5_fit` 中 `LineEdit` 与 `HSlider` 补齐 `p5_h0` 基线元信息，实现全控件 100% 幂等可逆缩放；
+     - `_ready()` 补 `call_deferred("_on_viewport_resized")` 并在 `_p5_tick()` 于任何模态刚变为可见帧用实时 `_kr()` 重校一次 `_p5_place_modal`，彻底消除冷启动与安全区延迟偏差。
+- 验证：模拟极端窄矮瞬态帧压缩 (`sc=0.326`) 后恢复至 Seeker 视口，立即回弹为精准 `wp.size=(610, 412), sc=1.349, ratio=1.48`；`verify_fullscreen`（22态）、`verify_rest_screens`（11态）、`verify_u6_redesign`（正常+失败态）及 `verify_seeker_notch` 全部通过。
+- 本轮提交：`scripts/world.gd`、`design/ui-alignment-progress.md`。
+
 
 
 
