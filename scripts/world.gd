@@ -4368,7 +4368,7 @@ func _build_menu(root: Control) -> void:
 		start_caption.name = "StartCaption"
 		start_caption.add_theme_color_override("font_color", Color("fffdf2"))
 		start_caption.add_theme_color_override("font_outline_color", Color("4b2810"))
-		start_caption.add_theme_constant_override("outline_size", 5)
+		start_caption.add_theme_constant_override("outline_size", 6)
 		start_caption.add_theme_color_override("font_shadow_color", Color(0.18, 0.09, 0.02, 0.6))
 		start_caption.add_theme_constant_override("shadow_offset_y", 2)
 		start_caption.size = Vector2(220, 22)
@@ -4916,37 +4916,39 @@ func _refresh_lab() -> void:
 	var det_sb := _style(Color(1.0, 0.99, 0.96, 0.96), 18, Color("e5cfa0"), 1.5, true)
 	det_sb.content_margin_left = 18
 	det_sb.content_margin_right = 18
-	det_sb.content_margin_top = 6
-	det_sb.content_margin_bottom = 6
+	det_sb.content_margin_top = 4 if _p5_on else 6
+	det_sb.content_margin_bottom = 4 if _p5_on else 6
 	detail.add_theme_stylebox_override("panel", det_sb)
 	columns.add_child(detail)
 	_lab_detail = VBoxContainer.new()
-	_lab_detail.add_theme_constant_override("separation", 7 if _p5_on else 3)
+	_lab_detail.add_theme_constant_override("separation", 3)
 	detail.add_child(_lab_detail)
 	var cfg: Dictionary = GameProfile.LAB[_lab_selected]
 	var level := GameProfile.lab_level(_lab_selected)
 	var cost := GameProfile.lab_cost(_lab_selected)
-	# 顶部天蓝发光方圆图标卡（全屏模式下尺寸稍舒展更饱满）
+	# 顶部天蓝发光方圆图标卡（紧致 42px 高度让出右侧实时效果预览行，保障 20:9 与 16:9 均不撑破高度）
 	var hero_card := PanelContainer.new()
 	hero_card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	var hc_sb := _style(Color("bfe8ff"), 16, Color("8cc8ec"), 2, true)
-	hc_sb.set_content_margin_all(6 if _p5_on else 4)
+	var hc_sb := _style(Color("bfe8ff"), 14, Color("8cc8ec"), 2, true)
+	hc_sb.set_content_margin_all(4)
 	hero_card.add_theme_stylebox_override("panel", hc_sb)
 	_lab_detail.add_child(hero_card)
-	var hero := UiBadge.new(_lab_icon(_lab_selected), UiTheme.GREEN_DEEP, 52 if _p5_on else 72)
+	var hero := UiBadge.new(_lab_icon(_lab_selected), UiTheme.GREEN_DEEP, 42 if _p5_on else 72)
 	hero_card.add_child(hero)
-	var title := _mk_dlabel(_lab_detail, String(cfg["label"]), 20 if _p5_on else 18, UiTheme.TEXT)
+	var title := _mk_dlabel(_lab_detail, String(cfg["label"]), 19 if _p5_on else 18, UiTheme.TEXT)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	for stat_pair in [
 		["当前等级", "%d" % level],
 		["最高等级", "%d" % int(cfg["max"])],
+		["当前效果", _lab_effect_preview(_lab_selected, level, int(cfg["max"]))],
 		["升级消耗", ("%d 萤尘" % cost) if cost >= 0 else "已满级"]
 	]:
 		var srow := HBoxContainer.new()
 		var sl_l := _mk_label(srow, String(stat_pair[0]), 16 if _p5_on else 15, Color("6b4f2f"))
 		sl_l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		var sl_r := _mk_label(srow, String(stat_pair[1]), 16 if _p5_on else 15, UiTheme.TEXT)
+		var is_eff := String(stat_pair[0]) == "当前效果"
+		var sl_r := _mk_label(srow, String(stat_pair[1]), 16 if _p5_on else 15, Color("3c8c14") if is_eff else UiTheme.TEXT, is_eff)
 		sl_r.add_theme_font_override("font", UiTheme.display_font())
 		sl_r.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		_lab_detail.add_child(srow)
@@ -5004,6 +5006,33 @@ const LAB_ICON := {
 }
 func _lab_icon(id: String) -> String:
 	return String(LAB_ICON.get(id, "lab_sparkle"))
+
+## 实验室右侧详情实时增益预览（避免玩家手算乘算当前等级加成）
+func _lab_effect_preview(id: String, lv: int, mx: int) -> String:
+	const PER := {
+		"dmg": [4.0, "%", true], "hp": [8.0, "", false], "spd": [2.5, "%", true],
+		"xp": [5.0, "%", true], "gold": [8.0, "%", true], "luck": [5.0, "", false],
+		"magnet": [0.6, "", false], "regen": [0.2, "/s", false], "armor": [2.0, "", false],
+		"crit": [1.0, "%", true], "atkspd": [2.0, "%", true], "area": [3.0, "%", true],
+		"ult": [4.0, "%", true], "research": [25.0, "%", true],
+		"reroll": [1.0, " 次", false], "skip": [1.0, " 次", false], "banish": [1.0, " 次", false],
+		"slot-move": [1.0, " 格", false], "slot-vit": [1.0, " 格", false],
+		"archive": [5.0, " 位", false],
+	}
+	if id in ["choice4", "revive", "party", "bag"]:
+		return "已开启 ✓" if lv >= mx else "未解锁 → 升级开启"
+	if not PER.has(id):
+		return "%d / %d 级" % [lv, mx]
+	var cfg: Array = PER[id]
+	var step := float(cfg[0])
+	var unit := String(cfg[1])
+	var fmt_v := func(val: float) -> String:
+		var num := ("%.1f" % val) if absf(val - round(val)) > 0.01 else ("%d" % int(round(val)))
+		return ("+" if val > 0.0 else "") + num + unit
+	var cur_s: String = fmt_v.call(step * float(lv))
+	if lv >= mx:
+		return "%s (已满)" % cur_s
+	return "%s → %s" % [cur_s, fmt_v.call(step * float(lv + 1))]
 
 ## Cycle 19: Lab tab switch (the bundle's Lab screen has
 ## lab/items modes; SL @1897612).
@@ -5447,18 +5476,18 @@ func _refresh_shop() -> void:
 			# 手机全屏 3列×2行 精致商品陈列卡：紧致高度控制确保 20:9 与 16:9 均实现零滚动条一屏全显
 			card.size_flags_vertical = Control.SIZE_EXPAND_FILL
 			var cvb := VBoxContainer.new()
-			cvb.add_theme_constant_override("separation", 2)
+			cvb.add_theme_constant_override("separation", 1)
 			card.add_child(cvb)
 			var top_hb := HBoxContainer.new()
 			top_hb.add_theme_constant_override("separation", 8)
 			cvb.add_child(top_hb)
 			var ic_ring := PanelContainer.new()
-			ic_ring.custom_minimum_size = Vector2(36, 36)
+			ic_ring.custom_minimum_size = Vector2(34, 34)
 			ic_ring.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-			var ring_sb := _style(Color("f7e8c6"), 18, Color("e2c68e"), 1.5, false)
+			var ring_sb := _style(Color("f7e8c6"), 17, Color("e2c68e"), 1.5, false)
 			ring_sb.set_content_margin_all(3)
 			ic_ring.add_theme_stylebox_override("panel", ring_sb)
-			ic_ring.add_child(_item_icon_rect(id, 26.0))
+			ic_ring.add_child(_item_icon_rect(id, 24.0))
 			top_hb.add_child(ic_ring)
 			var name_vb := VBoxContainer.new()
 			name_vb.add_theme_constant_override("separation", 0)
@@ -6353,12 +6382,22 @@ func _refresh_unlock_panel() -> void:
 			head.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		for p in GameProfile.challenge_parts(key):
 			var pd := p as Dictionary
-			var txt := "· %s：%d / %d" % [String(pd["desc"]), int(float(pd["value"])), int(float(pd["goal"]))]
+			var v_num := float(pd["value"])
+			var g_num := maxf(float(pd["goal"]), 1.0)
+			var txt := "· %s：%d / %d" % [String(pd["desc"]), int(v_num), int(g_num)]
 			if bool(pd.get("unsupported", false)):
 				txt += "（系统未实装）"
 			var pl := _mk_label(cvb, txt, 14 if _p5_on else 13, Color("6e502f"))
 			if _p5_on:
 				pl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+				var pb := ProgressBar.new()
+				pb.custom_minimum_size = Vector2(0, 5)
+				pb.show_percentage = false
+				pb.max_value = 1.0
+				pb.value = clampf(v_num / g_num, 0.0, 1.0)
+				pb.add_theme_stylebox_override("background", UiTheme.flat_box(Color("ebdcb9"), 3))
+				pb.add_theme_stylebox_override("fill", UiTheme.flat_box(Color("68c426") if (v_num >= g_num or done or in_league) else Color("f2a024"), 3))
+				cvb.add_child(pb)
 		_unlock_list.add_child(card)
 	if _p5_on and _unlock_panel != null and _unlock_panel.scale.x > 0.01:
 		_p5_fit(_unlock_panel, float(_unlock_panel.get_meta("p5_sm", _unlock_panel.scale.x)))
@@ -9848,9 +9887,21 @@ func _choice_show(title: String, sub: String, options: Array, foot_text: String,
 		cvb.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		margin.add_child(cvb)
 		if item_key != "":
-			var ic := _item_icon_rect(item_key, 56.0 if _p5_on else 36.0)
-			ic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-			cvb.add_child(ic)
+			if _p5_on:
+				var ic_glow := PanelContainer.new()
+				ic_glow.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+				var ig_sb := _style(Color(1.0, 1.0, 1.0, 0.22), 31, Color(1.0, 1.0, 1.0, 0.45), 1.5, true)
+				ig_sb.set_content_margin_all(6)
+				ic_glow.add_theme_stylebox_override("panel", ig_sb)
+				ic_glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				var ic := _item_icon_rect(item_key, 56.0)
+				ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				ic_glow.add_child(ic)
+				cvb.add_child(ic_glow)
+			else:
+				var ic := _item_icon_rect(item_key, 36.0)
+				ic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+				cvb.add_child(ic)
 		elif title == "流光队友" and (is_instance_valid(_shiny_ally) or is_instance_valid(_pending_shiny_ally)):
 			# 对齐定稿 S24_v1.jpg：左侧「留下新队友」配新流光头像，右侧「放生新队友」配当前队伍旧流光头像
 			var sp_ally := String(_pending_shiny_ally.species_id) if (i == 0 and is_instance_valid(_pending_shiny_ally)) else (String(_shiny_ally.species_id) if is_instance_valid(_shiny_ally) else "")
@@ -9901,19 +9952,36 @@ func _choice_show(title: String, sub: String, options: Array, foot_text: String,
 			l.add_theme_constant_override("shadow_offset_y", 2)
 			l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		else:
-			var l := Label.new()
-			l.text = opt_text
-			l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			l.add_theme_font_override("font", UiTheme.body_font())
-			l.add_theme_font_size_override("font_size", 15 if _p5_on else 14)
-			l.add_theme_color_override("font_color", Color.WHITE)
-			l.add_theme_color_override("font_shadow_color", Color("481f80"))
-			l.add_theme_constant_override("shadow_offset_y", 2)
-			l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-			l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			cvb.add_child(l)
+			var parts := opt_text.split("\n", false)
+			if _p5_on and parts.size() >= 2:
+				var l_title := _mk_label(cvb, parts[0], 17, Color.WHITE, true)
+				l_title.add_theme_font_override("font", UiTheme.display_font())
+				l_title.add_theme_color_override("font_shadow_color", Color("481f80"))
+				l_title.add_theme_constant_override("shadow_offset_y", 2)
+				l_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+				l_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+				for pi in range(1, parts.size()):
+					var is_last := pi == parts.size() - 1
+					var col := Color("ebd9ff") if is_last else Color("fff2a6")
+					var l_sub := _mk_label(cvb, parts[pi], 14 if is_last else 15, col, true)
+					l_sub.add_theme_color_override("font_shadow_color", Color("3e1770"))
+					l_sub.add_theme_constant_override("shadow_offset_y", 1)
+					l_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+					l_sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			else:
+				var l := Label.new()
+				l.text = opt_text
+				l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				l.add_theme_font_override("font", UiTheme.body_font())
+				l.add_theme_font_size_override("font_size", 15 if _p5_on else 14)
+				l.add_theme_color_override("font_color", Color.WHITE)
+				l.add_theme_color_override("font_shadow_color", Color("481f80"))
+				l.add_theme_constant_override("shadow_offset_y", 2)
+				l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+				l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+				l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+				l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				cvb.add_child(l)
 		var idx := i
 		b.pressed.connect(func() -> void: _choice_pick(idx))
 		_choice_opts_box.add_child(b)
@@ -9921,17 +9989,21 @@ func _choice_show(title: String, sub: String, options: Array, foot_text: String,
 	_choice_foot.visible = foot_text != ""
 	_choice_foot.text = ("    " + foot_text) if want_coin else foot_text
 	if _p5_on:
+		_choice_foot.custom_minimum_size.x = 250 if want_coin else 200
 		var old_ic := _choice_foot.get_node_or_null("ChoiceCoinIcon") as Control
 		if want_coin and old_ic == null:
 			var cic := UiIcon.new("coin", UiTheme.GOLD, 22)
 			cic.name = "ChoiceCoinIcon"
-			cic.position = Vector2(16, 13)
 			cic.size = Vector2(22, 22)
 			_choice_foot.add_child(cic)
 			old_ic = cic
 		if old_ic != null:
 			old_ic.visible = want_coin
-		_choice_foot.custom_minimum_size.x = 250 if want_coin else 200
+			if want_coin:
+				var fnt := _choice_foot.get_theme_font("font")
+				var fsz := _choice_foot.get_theme_font_size("font_size")
+				var tw := fnt.get_string_size(_choice_foot.text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, fsz).x
+				old_ic.position = Vector2(maxf((_choice_foot.custom_minimum_size.x - tw) * 0.5 - 6.0, 14.0), 13)
 	_choice_panel.visible = true
 
 func _choice_pick(idx: int) -> void:
@@ -12470,6 +12542,10 @@ func _render_blessing() -> void:
 		tl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		tl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		flow.add_child(tl)
+		if _p5_on:
+			var bl_sub := _mk_label(flow, "本局全队实时生效", 14, Color("8a6e4c"))
+			bl_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			bl_sub.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var bsp := Control.new()
 		bsp.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		bsp.mouse_filter = Control.MOUSE_FILTER_IGNORE
