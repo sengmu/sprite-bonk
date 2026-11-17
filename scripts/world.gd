@@ -3634,7 +3634,7 @@ func _build_hud() -> void:
 	_p5_register(_wallet_panel, 640.0, 430.0)
 	for c in _loadout_panel.get_children():
 		if c is PanelContainer:
-			_p5_register(c, 4000.0, 440.0)
+			_p5_register(c, 960.0, 462.0)
 	# Touch controls (Android): joystick + action cluster, on
 	# top of the HUD layer; visibility is managed per-frame in
 	# _process. Lives on the OUTER root (see _ui_root note).
@@ -18707,7 +18707,7 @@ func _build_loadout(root: Control) -> void:
 	root.add_child(_loadout_panel)
 	var dim := ColorRect.new()
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.color = Color(0.05, 0.03, 0.10, 0.72)
+	dim.color = Color(0.10, 0.14, 0.08, 0.56)
 	_loadout_panel.add_child(dim)
 	var panel := PanelContainer.new()
 	panel.set_anchors_preset(Control.PRESET_CENTER)
@@ -18718,25 +18718,26 @@ func _build_loadout(root: Control) -> void:
 	panel.add_theme_stylebox_override("panel", UiTheme.panel_texture())
 	_loadout_panel.add_child(panel)
 	var hb := HBoxContainer.new()
-	hb.add_theme_constant_override("separation", 14)
+	hb.add_theme_constant_override("separation", 12)
 	panel.add_child(hb)
 	var dscroll := ScrollContainer.new()
 	dscroll.custom_minimum_size = Vector2(330, 0)
 	dscroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	hb.add_child(dscroll)
 	if _p5_on:
-		# UI-mobile P5 (plan §B3 G12): the loadout is a full-
-		# screen page (M0 W flows to the safe area, H 440): the
-		# detail column takes 38 %, the right side 62 %.
 		dscroll.custom_minimum_size = Vector2(0, 0)
 		dscroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		dscroll.size_flags_stretch_ratio = 38.0
+		dscroll.size_flags_stretch_ratio = 37.0
+		var vdiv := ColorRect.new()
+		vdiv.color = Color("e5cfa0")
+		vdiv.custom_minimum_size = Vector2(1.5, 0)
+		hb.add_child(vdiv)
 	_ls_detail = VBoxContainer.new()
-	_ls_detail.add_theme_constant_override("separation", 6)
+	_ls_detail.add_theme_constant_override("separation", 4 if _p5_on else 6)
 	_ls_detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	dscroll.add_child(_ls_detail)
 	var right := VBoxContainer.new()
-	right.add_theme_constant_override("separation", 8)
+	right.add_theme_constant_override("separation", 4 if _p5_on else 8)
 	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hb.add_child(right)
 	if _p5_on:
@@ -18858,28 +18859,55 @@ func _loadout_fill_detail() -> void:
 	var sp := _ls_species
 	var sd: Dictionary = GameData.species(sp)
 	var info := _hud_info_for(sp)
-	var tr := TextureRect.new()
-	tr.custom_minimum_size = Vector2(110, 110)
-	tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	tr.texture = UiTheme.portrait(sp)
-	_ls_detail.add_child(tr)
-	var nm := _mk_dlabel(_ls_detail, String(info["name"]), 22, UiTheme.TEXT)
-	var chips := HBoxContainer.new()
-	chips.add_theme_constant_override("separation", 5)
-	_ls_detail.add_child(chips)
-	for t in sd.get("types", []):
-		chips.add_child(UiTheme.chip(String((TYPE_HUD.get(String(t), [String(t)]) as Array)[0]),
-			Color(UiTheme.type_color(String(t)), 0.85), 11))
-	var rentry := GameData.roster_for_species(sp)
-	if not rentry.is_empty():
-		# Rank arrives as an EN slug — localize (audit §7 class).
-		var rank_zh: String = String({"common": "普通", "uncommon": "优秀", "rare": "稀有",
-			"epic": "史诗", "legendary": "传说"}.get(String(rentry.get("rank", "")), ""))
-		if rank_zh != "":
-			chips.add_child(UiTheme.chip("伙伴册 · " + rank_zh, Color(0.16, 0.13, 0.30, 0.95), 11))
-	# Base stats with bars (frac of 180). The species dict
-	# keys them "stats" (the starter cards read the same).
+	if _p5_on:
+		# 对齐定稿 S07_v1.jpg：居中立体暖金圆头像框＋居中名称与标签＋温暖棕草绿属性条
+		var avatar_ring := PanelContainer.new()
+		avatar_ring.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		var av_sb := _style(Color("dff2ff"), 52, Color("e6b650"), 3, true)
+		av_sb.set_content_margin_all(4)
+		avatar_ring.add_theme_stylebox_override("panel", av_sb)
+		_ls_detail.add_child(avatar_ring)
+		var tr := TextureRect.new()
+		tr.custom_minimum_size = Vector2(92, 92)
+		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tr.texture = UiTheme.portrait(sp)
+		avatar_ring.add_child(tr)
+		var nm := _mk_dlabel(_ls_detail, String(info["name"]), 21, UiTheme.TEXT)
+		nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		var chips := HBoxContainer.new()
+		chips.add_theme_constant_override("separation", 5)
+		chips.alignment = BoxContainer.ALIGNMENT_CENTER
+		_ls_detail.add_child(chips)
+		for t in sd.get("types", []):
+			chips.add_child(UiTheme.chip(String((TYPE_HUD.get(String(t), [String(t)]) as Array)[0]),
+				Color(UiTheme.type_color(String(t)), 0.85), 11))
+		var rentry := GameData.roster_for_species(sp)
+		if not rentry.is_empty():
+			var rank_zh: String = String({"common": "普通", "uncommon": "优秀", "rare": "稀有",
+				"epic": "史诗", "legendary": "传说"}.get(String(rentry.get("rank", "")), ""))
+			if rank_zh != "":
+				chips.add_child(UiTheme.chip("伙伴册 · " + rank_zh, Color("294e36"), 11, Color.WHITE))
+	else:
+		var tr := TextureRect.new()
+		tr.custom_minimum_size = Vector2(110, 110)
+		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tr.texture = UiTheme.portrait(sp)
+		_ls_detail.add_child(tr)
+		var nm := _mk_dlabel(_ls_detail, String(info["name"]), 22, UiTheme.TEXT)
+		var chips := HBoxContainer.new()
+		chips.add_theme_constant_override("separation", 5)
+		_ls_detail.add_child(chips)
+		for t in sd.get("types", []):
+			chips.add_child(UiTheme.chip(String((TYPE_HUD.get(String(t), [String(t)]) as Array)[0]),
+				Color(UiTheme.type_color(String(t)), 0.85), 11))
+		var rentry := GameData.roster_for_species(sp)
+		if not rentry.is_empty():
+			var rank_zh: String = String({"common": "普通", "uncommon": "优秀", "rare": "稀有",
+				"epic": "史诗", "legendary": "传说"}.get(String(rentry.get("rank", "")), ""))
+			if rank_zh != "":
+				chips.add_child(UiTheme.chip("伙伴册 · " + rank_zh, Color(0.16, 0.13, 0.30, 0.95), 11))
 	var base: Dictionary = sd.get("stats", {})
 	for row in [["hp", "体力"], ["atk", "攻击"], ["def", "防御"],
 			["spa", "特攻"], ["spd", "特防"], ["spe", "速度"]]:
@@ -18893,13 +18921,13 @@ func _loadout_fill_detail() -> void:
 		track.custom_minimum_size = Vector2(150, 9)
 		track.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		track.add_theme_stylebox_override("panel",
-			UiTheme.flat_box(Color(0.08, 0.05, 0.16, 0.9), 4))
+			UiTheme.flat_box(Color("54402b") if _p5_on else Color(0.08, 0.05, 0.16, 0.9), 4))
 		hb.add_child(track)
 		var fillp := Panel.new()
 		fillp.position = Vector2(1, 1)
 		fillp.size = Vector2(1, 7)
 		fillp.add_theme_stylebox_override("panel",
-			UiTheme.flat_box(Color(0.45, 0.85, 0.55), 3))
+			UiTheme.flat_box(Color("74cf2c") if _p5_on else Color(0.45, 0.85, 0.55), 3))
 		fillp.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		track.add_child(fillp)
 		fillp.set_meta("frac", clampf(float(v) / 180.0, 0.0, 1.0))
@@ -19052,7 +19080,7 @@ func _loadout_fill_team() -> void:
 				break
 	for i in range(6):
 		var slot := Button.new()
-		slot.custom_minimum_size = Vector2(64, 64)
+		slot.custom_minimum_size = Vector2(56, 56) if _p5_on else Vector2(64, 64)
 		slot.focus_mode = Control.FOCUS_NONE
 		var sp := ""
 		if i == 0:
@@ -19070,11 +19098,23 @@ func _loadout_fill_team() -> void:
 				if _ls_playable(captured2):
 					_ls_hero = captured2
 				_loadout_refresh())
+			if _p5_on:
+				var sb_team := _style(Color(1.0, 0.99, 0.95, 0.98), 14, Color("e6b23a") if i == 0 else Color("dfd0b0"), 3 if i == 0 else 1.5, true)
+				sb_team.set_content_margin_all(4)
+				slot.add_theme_stylebox_override("normal", sb_team)
+				slot.add_theme_stylebox_override("hover", _style(Color(1.0, 0.99, 0.95, 1.0), 14, Color("f0c456"), 3, true))
+			else:
+				slot.add_theme_stylebox_override("normal", UiTheme.card_box(UiTheme.GOLD if i == 0 else Color(1, 1, 1, 0.25), false))
 		else:
 			slot.text = "·"
 			slot.disabled = true
-		slot.add_theme_stylebox_override("normal", UiTheme.card_box(
-			UiTheme.GOLD if i == 0 else Color(1, 1, 1, 0.25), false))
+			if _p5_on:
+				var empty_sb := _style(Color("dad2c2"), 14, Color("c4bba8"), 1.5, false)
+				for st in ["normal", "hover", "pressed", "disabled"]:
+					slot.add_theme_stylebox_override(st, empty_sb)
+				slot.add_theme_color_override("font_disabled_color", Color("8f8470"))
+			else:
+				slot.add_theme_stylebox_override("normal", UiTheme.card_box(Color(1, 1, 1, 0.25), false))
 		_ls_team.add_child(slot)
 	if not _p5_on:
 		_mk_label(_ls_team, "队伍（点队友可换为出战）", 11, UiTheme.MUTED)
@@ -19108,8 +19148,9 @@ func _loadout_fill_grid() -> void:
 			ptr.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			if not playable:
 				ptr.modulate = Color(0.68, 0.72, 0.80, 0.75)
-				var lk_badge := UiBadge.new("lab_locked", UiTheme.MUTED, 22)
-				lk_badge.position = Vector2(46, 40)
+				var no_pic := ptr.texture == null
+				var lk_badge := UiBadge.new("lab_locked", UiTheme.MUTED, 32 if no_pic else 22)
+				lk_badge.position = Vector2(20, 16) if no_pic else Vector2(46, 40)
 				ptr.add_child(lk_badge)
 			tile.add_child(ptr)
 			var tl := _mk_label(tile, tname, 12, Color("6d6255") if not playable else UiTheme.TEXT)
@@ -19129,10 +19170,19 @@ func _loadout_fill_grid() -> void:
 		tile.add_theme_color_override("font_color", UiTheme.TEXT if _p5_on else Color.WHITE)
 		var accent := UiTheme.GOLD if sp == _ls_hero else (
 			Color(0.5, 0.55, 0.7) if not playable else Color(1, 1, 1, 0.3))
-		if _p5_on and not playable:
-			var lsb := _style(Color("eae4d6"), 16, Color("c8bda8"), 1.5, false)
-			tile.add_theme_stylebox_override("normal", lsb)
-			tile.add_theme_stylebox_override("hover", _style(Color("f0ebdf"), 16, Color("b4a68e"), 1.5, false))
+		if _p5_on:
+			if not playable:
+				var lsb := _style(Color("ebe6dc"), 16, Color("ccc2af"), 1.5, false)
+				tile.add_theme_stylebox_override("normal", lsb)
+				tile.add_theme_stylebox_override("hover", _style(Color("f2ede4"), 16, Color("b4a68e"), 2.0, false))
+			elif sp == _ls_hero or sp == _ls_species:
+				var sel_sb := _style(Color(1.0, 0.99, 0.94, 0.98), 16, Color("f0b428"), 3.5, true)
+				tile.add_theme_stylebox_override("normal", sel_sb)
+				tile.add_theme_stylebox_override("hover", _style(Color(1.0, 0.995, 0.96, 1.0), 16, Color("ffc83d"), 3.5, true))
+			else:
+				var ok_sb := _style(Color(1.0, 0.995, 0.975, 0.96), 16, Color("e0cfab"), 1.5, false)
+				tile.add_theme_stylebox_override("normal", ok_sb)
+				tile.add_theme_stylebox_override("hover", _style(Color("fff8ea"), 16, Color("d8b972"), 2.0, false))
 		else:
 			tile.add_theme_stylebox_override("normal", UiTheme.card_box(accent, false))
 			tile.add_theme_stylebox_override("hover", UiTheme.card_box(accent, true))
@@ -19162,9 +19212,25 @@ func _loadout_fill_bag() -> void:
 		var n := GameProfile.bag_count(id)
 		if n <= 0:
 			continue
+		var active := _ls_boosts.has(id)
+		var disp_nm := _item_zh_name(id) if _p5_on else String(it["name"])
 		var b := UiTheme.make_icon_button(String(LS_ITEM_ICONS.get(id, "bag")),
-			"%s ×%d" % [String(it["name"]), n],
-			"green" if _ls_boosts.has(id) else "ghost", "small")
+			"%s ×%d" % [disp_nm, n],
+			"green" if active else "ghost", "small")
+		if _p5_on:
+			var row := b.get_child(0) as HBoxContainer
+			if row and row.get_child_count() > 0:
+				var old_ic := row.get_child(0) as Control
+				old_ic.visible = false
+				var pic := _item_icon_rect(id, 22.0)
+				pic.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+				row.add_child(pic)
+				row.move_child(pic, 0)
+			if active:
+				var blab := b.get_meta("label") as Label
+				blab.add_theme_color_override("font_color", Color.WHITE)
+				blab.add_theme_color_override("font_outline_color", Color("326b08"))
+				blab.add_theme_constant_override("outline_size", 3)
 		var captured4: String = id
 		b.pressed.connect(func() -> void:
 			audio.click()

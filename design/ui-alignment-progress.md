@@ -1648,7 +1648,12 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
   - 将卡片顶区色块内缩至 `offset_left=13, offset_right=-13, offset_top=14` 并配顶圆角 `18` 彻底消除方角压框漏边；主推中卡显式切换 `card_frame_box(4)` 纯正金相框消除青绿与金框双色重边；标题左右三叶簇设 `z_index = 2` 对称外展不遮盖；全局 `_modal_scrim` 加深为 `Color(0.10, 0.14, 0.08, 0.56)` 柔和护目遮罩提升弹窗聚焦度。
 - **本地解析门与全套并排对照图亲检**：`Test/u2_shop_reaudit_parse.sh` 全绿通过；已重建并全部 `Read` 目检确认最新并排图 **`compare/U1.png`**、**`compare/U1_boss.png`**、**`compare/U3.png`**、**`compare/U4.png`**、**`compare/U6.png`**（连同之前过门的 `U2.png` / `U2_2400.png` / `U5.png` / `U5_2400.png`）。
 - **真机释放技能闪退（`VIBRATE` JNI SecurityException）根除修复（`export_presets.cfg`、`scripts/ult.gd`）**：抓取 Seeker 真机 `adb logcat -b crash` 定位到使用大招触发 `scripts/ult.gd:339` `Input.vibrate_handheld(320)` 时，因 `export_presets.cfg` 中 `permissions/vibrate=false` 导致 Android 16 抛出 `SecurityException: Neither user 10388 nor current process has android.permission.VIBRATE` 引爆 `SIGABRT` 秒退。现已开启 `permissions/vibrate=true`（并在打包清单模板补充 `android.permission.VIBRATE` 声明，经 `aapt2 dump permissions` 核验 APK 权限完整落盘）及为 `ult.gd` 绑定 `GameProfile.setting("shakeOn")` 开关保护。
-- **状态：已提交推送至 `origin/align-fix13`，重新打包带 `VIBRATE` 权限的最新 APK 覆盖安装至 Seeker 测试机 `SM02G4061952376`（同时 NUC 端拉取跑齐最新双档 `s100` 验收）。**
-- 本轮提交：`export_presets.cfg`、`scripts/ult.gd`、`scripts/world.gd`、`design/ui-reference/compare/U1.png`、`design/ui-reference/compare/U1_boss.png`、`design/ui-reference/compare/U3.png`、`design/ui-reference/compare/U4.png`、`design/ui-reference/compare/U6.png`、`design/ui-alignment-progress.md`。
+- **S07 备战界面（出战配置）1:1 终极对齐（`scripts/world.gd` `_build_loadout` / `_loadout_fill_detail` / `_loadout_fill_team` / `_loadout_fill_grid` / `_loadout_fill_bag`）**：
+  1. 外围弹窗由撑爆全屏的 `4000×440` 调为居中 `960×462`（配森林柔暖遮罩 `0.56` 与 `1.5px` 分栏细线），四周边框完整展现圆角金边与森景背景；
+  2. 左栏新增居中立体暖金圆框大头像（`92×92`）、居中名称与三枚标签（`伙伴册·普通` 改森林墨绿胶囊）、温暖深棕底配鲜亮草绿六维属性条，并微收间距使基础属性＋特性＋初始招式（含飞叶快刀）一屏完整展示无切字；
+  3. 右上队伍 6 格彻底替换掉 Godot 默认深灰方块禁用态（改为圆角暖灰石空位卡＋亮金粗描边出战主将卡）；中部图鉴格高亮区分 `sp == _ls_hero / _ls_species` 选中态金边框，为无肖像 `ekans` 居中放大锁徽；背包带入栏接入 `_item_zh_name()` 中性译名（`成长星糖`/`福运蛋`）＋真实高清彩色道具图标及亮翠绿白粗字激活胶囊。
+  4. 本地解析门 `U2_SHOP PARSE GATE OK` 与 `S07_CHK`（`inside=true min_b=77.3 min_t=17.0`）全绿通过，并已生成并 `Read` 亲审 `design/ui-reference/compare/S07.png`。
+- **状态：已提交推送至 `origin/align-fix13`，同步打包最新全对齐 APK 覆盖安装至 Seeker 测试机 `SM02G4061952376`。**
+- 本轮提交：`export_presets.cfg`、`scripts/ult.gd`、`scripts/world.gd`、`design/ui-reference/compare/S07.png`、`design/ui-reference/compare/U1.png`、`design/ui-reference/compare/U1_boss.png`、`design/ui-reference/compare/U3.png`、`design/ui-reference/compare/U4.png`、`design/ui-reference/compare/U6.png`、`design/ui-alignment-progress.md`。
 
 
