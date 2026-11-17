@@ -1169,7 +1169,7 @@ func _p1_phone_block(vp: Vector2) -> void:
 	var page := _world.get("_settings_page") as Control
 	_check("P1: settings keys tab is the touch ops page",
 		ktab != null and ktab.text == "操作"
-		and _p1_find_label(page, "摇杆") and _p1_find_label(page, "外接键盘"),
+		and _p1_find_label(page, "摇杆") and not _p1_find_label(page, "外接键盘") and not _p1_find_label(page, "W A S D"),
 		"tab=" + (ktab.text if ktab else "null"))
 	await _p1_snap("settings_ops")
 	_world._close_settings()

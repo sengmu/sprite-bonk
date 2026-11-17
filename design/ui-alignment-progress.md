@@ -1661,4 +1661,20 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - **状态：全套 U1–U6 与 S07–S24 视觉 1:1 对齐及本地解析/控件门均已达成并入库完结，正在推送并打包终版 APK 安装至 Seeker 测试机 `SM02G4061952376`。**
 - 本轮提交：`export_presets.cfg`、`scripts/ult.gd`、`scripts/world.gd`、`design/ui-reference/compare/*.png`、`design/ui-alignment-progress.md`。
 
+## 长列表 5 大界面全屏化多列改造＋全面纯手游化（2026-11-17 17:4x，本地双档实拍全过＋去 PC 键位）
+
+- **响应用户拍板「优化」与产品定位「把电脑的操作完全去掉，这是一个完全 sol 手机游戏」**：
+  1. **5 大核心长列表界面全面扩宽至全屏安全区（`1200×460` / `S12` `1100×456`）**：
+     - **`U4 实验室`**：顶部栏页签与紫星萤尘胶囊同行省高，左区升级树由 4 列扩为 **`6×4` 全树一屏零滚动全显**（连线动态自适应 `cols=6`），右区详单饱满舒展；第二标签「物品档案」改为 **`GridContainer(columns = 2)` 双列圆角白卡**，翻阅量直减半。
+     - **`S10 萤尘商店`**：顶部保留金星三叶招牌，余额与刷新倒计时并排成行；下区改为 **`3 列 × 2 行` 货架陈列（`GridContainer(columns = 3)`）**，6 件商品在 20:9 全屏下 **100% 一屏零滚动全部展露**，不足态改清晰简洁的 `✦ %d（不足）`。
+     - **`S11 伙伴营挑战`**：40 只挑战改 **`GridContainer(columns = 2)` 双列展示**（保持 `debug_unlock_rows() == 40`），单屏同框展示 8 只伙伴，效率翻倍且进度明晰。
+     - **`S08 暂停界面`**：锁定 `p5_fixed_h = true` 恢复全屏比例（`sc=1.552`, `1575×714`）；「状态」页拆分为 **左栏（战力 / 招式 / 维生素）＋ 右栏（物品 / 队伍 / 本局双列统计）并排双栏**，在 20:9 全屏下达到 **100% 一屏零滚动全览**（同步保留 `PwChips`、`zrow["en"]` 与 `GameData.item_def()["name"]` 全部 P1/P2/P4 断言兼容）。
+     - **`S09 设置界面`**：拓宽左纵栏至 `138px` 并将滑块长度上限扩至 `480px`，操作更舒展从容。
+  2. **彻底清除手机端一切电脑／键盘操作痕记（`scripts/world.gd`、`Test/phonehud.gd`）**：
+     - 手机模式下设置页左 tab 初始即定名 `操作`，`_settings_page_keys()` **彻底移除整块「外接键盘」与 `W A S D / Shift / E / Esc / 1–9` 键盘列表**，重做为 **左右双栏纯手机全触控操作攻略（「移动与视角」＋「技能与交互动作」）**。
+     - 同步确保 `_touch_text_sync()`、选卡「查看我的队伍」与 3D 祭坛提示在手机端绝不回退或闪烁 `[Tab]` / `按 E` / `键位`；更新 `Test/phonehud.gd:1172` 为正反双验（必含 `"摇杆"`、严禁 `"外接键盘"` 与 `"W A S D"`）。
+- 本地双分辨率校验与对照图入库：`Godot --check-only` 解析门 `scripts/world.gd` 与 `Test/phonehud.gd` 双绿；`verify_fullscreen.gd` 在 `2400×1080` 与 `1280×720` 双档实测 22 个状态全部 **`inside=true`, `prim_ok=true`, `min_b >= 76.1`, `min_t >= 21.1`（芯片 `18.6 >= 17.0`）, `sl >= 71.4`**，`20:9` 下 `U4_up` / `S10` / `S09_sound` / `S09_keys` / `S08_t0` / `S08_t1` / `S12` 全部零滚动条。已更新并 `Read` 审看 `compare/{U4,S08,S09,S10,S11,S12}.png`。
+- 本轮提交：`scripts/world.gd`、`Test/phonehud.gd`、`design/ui-reference/compare/{U4,S08,S09,S10,S11,S12}.png`、`design/ui-alignment-progress.md`。
+
+
 

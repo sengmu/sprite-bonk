@@ -599,14 +599,14 @@ var _lab_items_list: VBoxContainer
 var _lab_tab_upgrades: Button
 var _lab_tab_items: Button
 var _unlock_panel: PanelContainer
-var _unlock_list: VBoxContainer
+var _unlock_list: Container
 var _unlock_info: Label
 var _starter_unlock_box: BoxContainer
 # Cycle 16: audio (scripts/audio.gd) + the meta daily shop panel
 # + the sound settings panel.
 var audio: GameAudio
 var _shop_panel: PanelContainer
-var _shop_list: VBoxContainer
+var _shop_list: Container
 var _shop_info: Label
 var _shop_countdown: Label
 var _sound_panel: PanelContainer
@@ -2661,7 +2661,7 @@ func _build_altar() -> void:
 	add_child(_ring)
 
 	_altar_label = Label3D.new()
-	_altar_label.text = "Boss 祭坛 · 按 E 召唤守护者"  # P1.1: _touch_text_sync
+	_altar_label.text = "Boss 祭坛 · " + _ik() + " 召唤守护者"  # P1.1: _touch_text_sync
 	_altar_label.font = _font_display
 	_altar_label.font_size = 72
 	_altar_label.modulate = Color(1.0, 0.85, 0.4)
@@ -3610,9 +3610,11 @@ func _build_hud() -> void:
 	_p5_register(_draft_panel, 985.0, 475.0)
 	_p5_register(_blessing_panel, 985.0, 467.0)
 	_p5_register(_choice_panel, 860.0, 360.0)
-	_p5_register(_meowth_panel, 920.0, 446.0)
-	_p5_register(_pause_panel, 1000.0, 430.0)
-	_p5_register(_bigmap_panel, 900.0, 460.0)
+	_p5_register(_meowth_panel, 1100.0, 456.0)
+	_p5_register(_pause_panel, 1200.0, 460.0)
+	if _p5_on and _pause_panel:
+		_pause_panel.set_meta("p5_fixed_h", true)
+	_p5_register(_bigmap_panel, 960.0, 460.0)
 	# U5 fix4/5: result fits against its nominal design height only
 	# (see _p5_place_modal p5_fixed_h); the 14 px spill from its
 	# live min (787 vs spec 750) is fixed by trimming the live min
@@ -3629,10 +3631,10 @@ func _build_hud() -> void:
 	else:
 		_p5_register(_result_panel, 900.0, 750.0)
 		_result_panel.set_meta("p5_fixed_h", true)
-	_p5_register(_lab_panel, 800.0, 446.0)
-	_p5_register(_shop_panel, 740.0, 446.0)
-	_p5_register(_unlock_panel, 900.0, 430.0)
-	_p5_register(_sound_panel, 900.0, 430.0)
+	_p5_register(_lab_panel, 1200.0, 460.0)
+	_p5_register(_shop_panel, 1200.0, 460.0)
+	_p5_register(_unlock_panel, 1200.0, 460.0)
+	_p5_register(_sound_panel, 1200.0, 460.0)
 	_p5_register(_wallet_panel, 640.0, 430.0)
 	for c in _loadout_panel.get_children():
 		if c is PanelContainer:
@@ -4723,7 +4725,8 @@ func _build_lab_panel(root: Control) -> void:
 	var vb := VBoxContainer.new()
 	vb.add_theme_constant_override("separation", 4 if _p5_on else 8)
 	_lab_panel.add_child(vb)
-	# 对齐定稿 U4_final.jpg：顶部金色月桂枝夹着粗金立体大字标题，下方纯白紫色星尘胶囊＋切换页签
+	# 手机端全屏舒展顶栏：第一行月桂＋大标题，第二行左右舒展「页签组 + 紫星萤尘胶囊」节省垂直空间以实现6×4技能树一屏全显
+	var bal_pill: PanelContainer = null
 	if _p5_on:
 		var head_wrap := CenterContainer.new()
 		vb.add_child(head_wrap)
@@ -4740,16 +4743,14 @@ func _build_lab_panel(root: Control) -> void:
 		t.add_theme_constant_override("shadow_offset_y", 2)
 		var lr := UiTheme.art("laurel_gold", Vector2(26, 30))
 		head_row.add_child(lr)
-		var bal_wrap := CenterContainer.new()
-		vb.add_child(bal_wrap)
-		var bal_pill := PanelContainer.new()
+		bal_pill = PanelContainer.new()
 		var b_sb := _style(Color(1.0, 0.995, 0.975, 0.95), 14, Color("e5cfa0"), 1.5, true)
 		b_sb.content_margin_left = 16
 		b_sb.content_margin_right = 16
-		b_sb.content_margin_top = 2
-		b_sb.content_margin_bottom = 2
+		b_sb.content_margin_top = 4
+		b_sb.content_margin_bottom = 4
 		bal_pill.add_theme_stylebox_override("panel", b_sb)
-		bal_wrap.add_child(bal_pill)
+		bal_pill.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		var bal_hb := HBoxContainer.new()
 		bal_hb.add_theme_constant_override("separation", 6)
 		bal_pill.add_child(bal_hb)
@@ -4765,17 +4766,24 @@ func _build_lab_panel(root: Control) -> void:
 		_lab_info = _mk_label(vb, "", 14, Color("6e502f"))
 		_lab_info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var tabrow := HBoxContainer.new()
-	tabrow.add_theme_constant_override("separation", 10)
+	tabrow.add_theme_constant_override("separation", 12)
 	tabrow.alignment = BoxContainer.ALIGNMENT_CENTER
 	vb.add_child(tabrow)
 	_lab_tab_upgrades = UiTheme.make_button("升级", "ghost", "normal" if _p5_on else "small")
-	_lab_tab_upgrades.custom_minimum_size = Vector2(130, 36 if _p5_on else 32)
+	_lab_tab_upgrades.custom_minimum_size = Vector2(140, 36 if _p5_on else 32)
 	_lab_tab_upgrades.pressed.connect(func() -> void: _lab_set_mode("upgrades"))
 	tabrow.add_child(_lab_tab_upgrades)
 	_lab_tab_items = UiTheme.make_button("物品档案", "ghost", "normal" if _p5_on else "small")
-	_lab_tab_items.custom_minimum_size = Vector2(130, 36 if _p5_on else 32)
+	_lab_tab_items.custom_minimum_size = Vector2(140, 36 if _p5_on else 32)
 	_lab_tab_items.pressed.connect(func() -> void: _lab_set_mode("items"))
 	tabrow.add_child(_lab_tab_items)
+	if _p5_on and bal_pill != null:
+		var tsep := ColorRect.new()
+		tsep.color = Color("e0c694")
+		tsep.custom_minimum_size = Vector2(1.5, 24)
+		tsep.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		tabrow.add_child(tsep)
+		tabrow.add_child(bal_pill)
 	# 手机端取消外层整页套娃 ScrollContainer，让左右栏一屏完整展示不再把右侧「升级」大按钮截出画外；仅物品档案页独立滚动
 	var scroll: ScrollContainer = null
 	_lab_list = VBoxContainer.new()
@@ -4821,33 +4829,48 @@ func _refresh_lab() -> void:
 	columns.add_theme_constant_override("separation", 16)
 	columns.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_lab_list.add_child(columns)
+	# 全屏化改造：手机端由 4×6 升级为 6×4 宽排技能树网格，配合同行顶部栏一屏免滚动全显全部 24 节点
+	var cols := 6 if _p5_on else 4
 	var grid := GridContainer.new()
-	grid.columns = 4
-	grid.add_theme_constant_override("h_separation", 14)
-	grid.add_theme_constant_override("v_separation", 8)
+	grid.columns = cols
+	grid.add_theme_constant_override("h_separation", 14 if _p5_on else 14)
+	grid.add_theme_constant_override("v_separation", 5 if _p5_on else 8)
+	grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	grid.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	var node_scroll := ScrollContainer.new()
-	node_scroll.custom_minimum_size = Vector2(360 if _p5_on else 300, 200 if _p5_on else 300)
+	node_scroll.custom_minimum_size = Vector2(465 if _p5_on else 300, 180 if _p5_on else 300)
+	node_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	node_scroll.size_flags_stretch_ratio = 58.0
 	node_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	node_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	columns.add_child(node_scroll)
-	node_scroll.add_child(grid)
+	if _p5_on:
+		var gcenter := CenterContainer.new()
+		gcenter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		gcenter.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		node_scroll.add_child(gcenter)
+		gcenter.add_child(grid)
+	else:
+		node_scroll.add_child(grid)
 	grid.draw.connect(func() -> void:
 		for i in range(grid.get_child_count()):
 			var node := grid.get_child(i) as Control
-			var c_a := node.position + Vector2(node.size.x * 0.5, 29.0)
-			for j in [i + 1 if i % 4 < 3 else -1, i + 4]:
+			var c_a := node.position + Vector2(node.size.x * 0.5, 25.0 if _p5_on else 29.0)
+			for j in [i + 1 if i % cols < cols - 1 else -1, i + cols]:
 				if j >= 0 and j < grid.get_child_count():
 					var other := grid.get_child(j) as Control
-					var c_b := other.position + Vector2(other.size.x * 0.5, 29.0)
-					grid.draw_line(c_a, c_b, Color("b89660"), 4.5, true))
+					var c_b := other.position + Vector2(other.size.x * 0.5, 25.0 if _p5_on else 29.0)
+					grid.draw_line(c_a, c_b, Color("b89660"), 4.0 if _p5_on else 4.5, true))
 	grid.resized.connect(func() -> void: grid.queue_redraw())
 	for id in GameProfile.LAB_ORDER:
 		var lv := GameProfile.lab_level(id)
-		# 定稿 U4_final.jpg 透明底节点按钮：圆盘居中＋下方小胶囊等级牌，消除难看的椭圆奶油底壳
+		# 定稿 U4_final.jpg 透明底节点按钮：手机端精巧尺寸 66×64 确保 4 行总高 <=271px 免滚动全显
+		var bw := 66.0 if _p5_on else 74.0
+		var bh := 64.0 if _p5_on else 72.0
 		var b := Button.new()
 		b.text = ""
-		b.custom_minimum_size = Vector2(74, 72)
-		b.size = Vector2(74, 72)
+		b.custom_minimum_size = Vector2(bw, bh)
+		b.size = Vector2(bw, bh)
 		var empty_sb := StyleBoxEmpty.new()
 		for st in ["normal", "hover", "pressed", "disabled"]:
 			b.add_theme_stylebox_override(st, empty_sb)
@@ -4857,27 +4880,28 @@ func _refresh_lab() -> void:
 		if is_sel:
 			# 选中态亮金色发光圆环（居中贴合圆盘，不越界切上格）
 			var glow_ring := Panel.new()
-			glow_ring.position = Vector2(8, 0)
-			glow_ring.size = Vector2(58, 58)
+			glow_ring.position = Vector2((bw - 52.0) * 0.5, 0) if _p5_on else Vector2(8, 0)
+			glow_ring.size = Vector2(52, 52) if _p5_on else Vector2(58, 58)
 			glow_ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			glow_ring.add_theme_stylebox_override("panel", _style(Color(1.0, 0.84, 0.25, 0.28), 29, Color("ffb81c"), 3, false))
+			glow_ring.add_theme_stylebox_override("panel", _style(Color(1.0, 0.84, 0.25, 0.28), 26 if _p5_on else 29, Color("ffb81c"), 3, false))
 			b.add_child(glow_ring)
 		var accent := UiTheme.GREEN_DEEP if lv > 0 else UiTheme.MUTED
 		if is_sel:
 			accent = UiTheme.ORANGE
 		# 全部亮出对应能力的彩底圆盘图标（对齐定稿 U4_final.jpg）；仅 0 级且未选中时微柔和区分已点亮态
-		var badge := UiBadge.new(_lab_icon(id), accent, 54)
-		badge.position = Vector2(10, 2)
+		var badge_sz := 48 if _p5_on else 54
+		var badge := UiBadge.new(_lab_icon(id), accent, badge_sz)
+		badge.position = Vector2((bw - float(badge_sz)) * 0.5, 2)
 		if lv == 0 and not is_sel:
 			badge.modulate = Color(0.92, 0.90, 0.86, 0.90)
 		b.add_child(badge)
 		var lv_pill := PanelContainer.new()
-		lv_pill.position = Vector2(10, 48)
-		lv_pill.size = Vector2(54, 24)
+		lv_pill.position = Vector2((bw - 52.0) * 0.5, 42 if _p5_on else 48)
+		lv_pill.size = Vector2(52, 21) if _p5_on else Vector2(54, 24)
 		lv_pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		lv_pill.add_theme_stylebox_override("panel", _style(Color("fff6df") if is_sel else (Color("e8f6da") if lv > 0 else Color(1.0, 0.99, 0.96, 0.94)), 11, Color("c98b2c") if is_sel else (Color("8ec24f") if lv > 0 else Color("d8c094")), 1.5, false))
 		b.add_child(lv_pill)
-		var lvl_l := _label_in(lv_pill, "已满" if GameProfile.lab_cost(id) < 0 else "%d级" % lv, Vector2.ZERO, Vector2(54, 24), 14, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER)
+		var lvl_l := _label_in(lv_pill, "已满" if GameProfile.lab_cost(id) < 0 else "%d级" % lv, Vector2.ZERO, lv_pill.size, 14, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER)
 		lvl_l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		var selected: String = id
 		b.pressed.connect(func() -> void:
@@ -4885,8 +4909,9 @@ func _refresh_lab() -> void:
 			_refresh_lab())
 		grid.add_child(b)
 	var detail := PanelContainer.new()
-	detail.custom_minimum_size = Vector2(310 if _p5_on else 280, 0)
+	detail.custom_minimum_size = Vector2(275 if _p5_on else 280, 0)
 	detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	detail.size_flags_stretch_ratio = 42.0
 	detail.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var det_sb := _style(Color(1.0, 0.99, 0.96, 0.96), 18, Color("e5cfa0"), 1.5, true)
 	det_sb.content_margin_left = 18
@@ -4896,21 +4921,21 @@ func _refresh_lab() -> void:
 	detail.add_theme_stylebox_override("panel", det_sb)
 	columns.add_child(detail)
 	_lab_detail = VBoxContainer.new()
-	_lab_detail.add_theme_constant_override("separation", 3)
+	_lab_detail.add_theme_constant_override("separation", 7 if _p5_on else 3)
 	detail.add_child(_lab_detail)
 	var cfg: Dictionary = GameProfile.LAB[_lab_selected]
 	var level := GameProfile.lab_level(_lab_selected)
 	var cost := GameProfile.lab_cost(_lab_selected)
-	# 顶部天蓝发光方圆图标卡（对齐定稿 U4_final.jpg）
+	# 顶部天蓝发光方圆图标卡（全屏模式下尺寸稍舒展更饱满）
 	var hero_card := PanelContainer.new()
 	hero_card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	var hc_sb := _style(Color("bfe8ff"), 14, Color("8cc8ec"), 2, true)
-	hc_sb.set_content_margin_all(4)
+	var hc_sb := _style(Color("bfe8ff"), 16, Color("8cc8ec"), 2, true)
+	hc_sb.set_content_margin_all(6 if _p5_on else 4)
 	hero_card.add_theme_stylebox_override("panel", hc_sb)
 	_lab_detail.add_child(hero_card)
-	var hero := UiBadge.new(_lab_icon(_lab_selected), UiTheme.GREEN_DEEP, 38 if _p5_on else 72)
+	var hero := UiBadge.new(_lab_icon(_lab_selected), UiTheme.GREEN_DEEP, 52 if _p5_on else 72)
 	hero_card.add_child(hero)
-	var title := _mk_dlabel(_lab_detail, String(cfg["label"]), 18, UiTheme.TEXT)
+	var title := _mk_dlabel(_lab_detail, String(cfg["label"]), 20 if _p5_on else 18, UiTheme.TEXT)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	for stat_pair in [
@@ -4919,9 +4944,9 @@ func _refresh_lab() -> void:
 		["升级消耗", ("%d 萤尘" % cost) if cost >= 0 else "已满级"]
 	]:
 		var srow := HBoxContainer.new()
-		var sl_l := _mk_label(srow, String(stat_pair[0]), 15, Color("6b4f2f"))
+		var sl_l := _mk_label(srow, String(stat_pair[0]), 16 if _p5_on else 15, Color("6b4f2f"))
 		sl_l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		var sl_r := _mk_label(srow, String(stat_pair[1]), 15, UiTheme.TEXT)
+		var sl_r := _mk_label(srow, String(stat_pair[1]), 16 if _p5_on else 15, UiTheme.TEXT)
 		sl_r.add_theme_font_override("font", UiTheme.display_font())
 		sl_r.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		_lab_detail.add_child(srow)
@@ -5053,10 +5078,10 @@ func _refresh_lab_items() -> void:
 	# (deleting a preset never changes the Archive itself).
 	var presets := GameProfile.archive_presets()
 	var prow := HBoxContainer.new()
-	prow.add_theme_constant_override("separation", 6)
+	prow.add_theme_constant_override("separation", 10 if _p5_on else 6)
 	prow.alignment = BoxContainer.ALIGNMENT_CENTER
 	_lab_items_list.add_child(prow)
-	var pl := _mk_label(prow, "档案预设", 14, UiTheme.TEXT)
+	var pl := _mk_label(prow, "档案预设", 15 if _p5_on else 14, UiTheme.TEXT)
 	for i in range(presets.size()):
 		var pd: Dictionary = presets[i]
 		var idx := i
@@ -5091,6 +5116,16 @@ func _refresh_lab_items() -> void:
 	# defs (126 keys), not the retired vitamin pool.
 	var item_keys := GameData.item_keys()
 	item_keys.sort()
+	# 全屏化优化：物品档案在手机端改为双列网格圆角卡片，充分利用横屏宽阔空间，翻阅量直减半
+	var items_container: Container = _lab_items_list
+	if _p5_on:
+		var igrid := GridContainer.new()
+		igrid.columns = 2
+		igrid.add_theme_constant_override("h_separation", 10)
+		igrid.add_theme_constant_override("v_separation", 6)
+		igrid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_lab_items_list.add_child(igrid)
+		items_container = igrid
 	for key in item_keys:
 		var k := String(key)
 		var idef := GameData.item_def(k)
@@ -5100,13 +5135,22 @@ func _refresh_lab_items() -> void:
 		row.add_child(_item_icon_rect(k, 28.0))
 		var name_l := _mk_label(row, "%s【%s】" % [_item_zh_name(k),
 			String(GameData.RARITY_NAMES[GameData.item_rarity(k)])], 15, UiTheme.TEXT)
-		name_l.custom_minimum_size = Vector2(300, 0)
+		if _p5_on:
+			name_l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			name_l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		else:
+			name_l.custom_minimum_size = Vector2(300, 0)
 		if is_arch:
 			var st := UiTheme.chip("已归档", Color(UiTheme.INK_DEEP, 0.92), 12, UiTheme.GOLD)
 			st.custom_minimum_size = Vector2(64, 28)
 			row.add_child(st)
 		var b := UiTheme.make_button("取回" if is_arch else "归档",
 			"ghost" if is_arch else "green", "small")
+		if _p5_on:
+			b.custom_minimum_size.x = 92
+			if not is_arch:
+				for st in ["font_color", "font_hover_color", "font_pressed_color"]:
+					b.add_theme_color_override(st, Color.WHITE)
 		b.disabled = (not is_arch) and full
 		var captured: String = k
 		var captured_arch: bool = is_arch
@@ -5117,7 +5161,19 @@ func _refresh_lab_items() -> void:
 			else:
 				audio.deny())
 		row.add_child(b)
-		_lab_items_list.add_child(row)
+		if _p5_on:
+			var icard := PanelContainer.new()
+			icard.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			var i_sb := _style(Color("fff8e2") if is_arch else Color(1.0, 0.99, 0.96, 0.95), 12, Color("dfb86c") if is_arch else Color("e5cfa0"), 1.5, true)
+			i_sb.content_margin_left = 10
+			i_sb.content_margin_right = 10
+			i_sb.content_margin_top = 6
+			i_sb.content_margin_bottom = 6
+			icard.add_theme_stylebox_override("panel", i_sb)
+			icard.add_child(row)
+			items_container.add_child(icard)
+		else:
+			items_container.add_child(row)
 
 # ------------------------------------------------- cycle 16: audio glue
 ## applySettings (bundle @2146366): push the profile's four
@@ -5189,9 +5245,9 @@ func _build_shop_panel(root: Control) -> void:
 	_shop_panel.add_theme_stylebox_override("panel", UiTheme.panel_texture())
 	root.add_child(_shop_panel)
 	var vb := VBoxContainer.new()
-	vb.add_theme_constant_override("separation", 5 if _p5_on else 7)
+	vb.add_theme_constant_override("separation", 3 if _p5_on else 7)
 	_shop_panel.add_child(vb)
-	# 对齐定稿 S10_v1.jpg：顶部压沿金星＋立体暖金圆角标题牌＋左右三叶绿簇＋纯白星尘胶囊
+	# 全屏化优化：保留华丽金星三叶标题，第二行横向并排「萤尘余额胶囊 + 刷新倒计时胶囊」，下方 3列×2行 六宫格商品陈列免滚动一屏全览
 	if _p5_on:
 		var title_wrap := CenterContainer.new()
 		vb.add_child(title_wrap)
@@ -5201,67 +5257,86 @@ func _build_shop_panel(root: Control) -> void:
 		title_row.add_child(_draft_leaf_cluster(false))
 		var gold_banner := PanelContainer.new()
 		var g_sb := _style(Color("ffd966"), 16, Color("c98b2c"), 2, true)
-		g_sb.content_margin_left = 34
-		g_sb.content_margin_right = 34
-		g_sb.content_margin_top = -8
-		g_sb.content_margin_bottom = 4
+		g_sb.content_margin_left = 30
+		g_sb.content_margin_right = 30
+		g_sb.content_margin_top = -10
+		g_sb.content_margin_bottom = 2
 		gold_banner.add_theme_stylebox_override("panel", g_sb)
 		title_row.add_child(gold_banner)
 		var g_vb := VBoxContainer.new()
-		g_vb.add_theme_constant_override("separation", 1)
+		g_vb.add_theme_constant_override("separation", 0)
 		gold_banner.add_child(g_vb)
 		var st_wrap := CenterContainer.new()
 		g_vb.add_child(st_wrap)
 		var hstar := TextureRect.new()
 		hstar.texture = load("res://assets/ui/decorations/star_filled.png") as Texture2D
-		hstar.custom_minimum_size = Vector2(28, 28)
+		hstar.custom_minimum_size = Vector2(20, 20)
 		hstar.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		hstar.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		st_wrap.add_child(hstar)
-		var t := _mk_dlabel(g_vb, "萤尘商店", 24, UiTheme.TEXT)
+		var t := _mk_dlabel(g_vb, "萤尘商店", 20, UiTheme.TEXT)
 		t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		title_row.add_child(_draft_leaf_cluster(true))
-		var bal_wrap := CenterContainer.new()
-		vb.add_child(bal_wrap)
+		var meta_row := HBoxContainer.new()
+		meta_row.alignment = BoxContainer.ALIGNMENT_CENTER
+		meta_row.add_theme_constant_override("separation", 12)
+		vb.add_child(meta_row)
 		var bal_pill := PanelContainer.new()
-		var b_sb := _style(Color(1.0, 0.995, 0.975, 0.95), 16, Color("e5cfa0"), 1.5, true)
-		b_sb.content_margin_left = 18
-		b_sb.content_margin_right = 18
-		b_sb.content_margin_top = 4
-		b_sb.content_margin_bottom = 4
+		var b_sb := _style(Color(1.0, 0.995, 0.975, 0.95), 14, Color("e5cfa0"), 1.5, true)
+		b_sb.content_margin_left = 14
+		b_sb.content_margin_right = 14
+		b_sb.content_margin_top = 2
+		b_sb.content_margin_bottom = 2
 		bal_pill.add_theme_stylebox_override("panel", b_sb)
-		bal_wrap.add_child(bal_pill)
+		meta_row.add_child(bal_pill)
 		var bal_hb := HBoxContainer.new()
 		bal_hb.add_theme_constant_override("separation", 6)
 		bal_pill.add_child(bal_hb)
-		var sp_ic := UiIcon.new("spark", Color("9a42de"), 18)
+		var sp_ic := UiIcon.new("spark", Color("9a42de"), 15)
 		sp_ic.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		bal_hb.add_child(sp_ic)
-		_shop_info = _mk_label(bal_hb, "", 16, UiTheme.TEXT)
+		_shop_info = _mk_label(bal_hb, "", 14, UiTheme.TEXT)
 		_shop_info.add_theme_font_override("font", UiTheme.display_font())
 		_shop_info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		var cd_pill := PanelContainer.new()
+		var cd_sb := _style(Color(1.0, 0.985, 0.94, 0.92), 14, Color("e5cfa0"), 1.5, false)
+		cd_sb.content_margin_left = 14
+		cd_sb.content_margin_right = 14
+		cd_sb.content_margin_top = 2
+		cd_sb.content_margin_bottom = 2
+		cd_pill.add_theme_stylebox_override("panel", cd_sb)
+		meta_row.add_child(cd_pill)
+		_shop_countdown = _mk_label(cd_pill, "", 14, Color("6e502f"))
+		_shop_countdown.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	else:
 		var t := _mk_dlabel(vb, "萤尘商店", 22, UiTheme.TEXT)
 		t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_shop_info = _mk_label(vb, "", 15, Color("6e502f"))
 		_shop_info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_shop_countdown = _mk_label(vb, "", 13, Color("6e502f"))
-	_shop_countdown.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_shop_countdown = _mk_label(vb, "", 13, Color("6e502f"))
+		_shop_countdown.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var note := _mk_label(vb, "背包道具，供接下来的对局使用。今天每多买一份，下一份越贵；名额在 00:00 UTC 刷新。", 12, Color("7a5f40"))
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	# 对齐定稿 S10_v1.jpg，手机端省略长句说明以腾出高度完整呈现三行以上大卡片
+	# 对齐定稿 S10_v1.jpg，手机端省略长句说明以腾出高度完整呈现 6 张货架大卡片
 	note.visible = not _p5_on
-	_shop_list = VBoxContainer.new()
-	_shop_list.add_theme_constant_override("separation", 10 if _p5_on else 6)
 	var ssc: ScrollContainer = null
 	if _p5_on:
+		var sgrid := GridContainer.new()
+		sgrid.columns = 3
+		sgrid.add_theme_constant_override("h_separation", 12)
+		sgrid.add_theme_constant_override("v_separation", 4)
+		sgrid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		sgrid.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		_shop_list = sgrid
 		ssc = ScrollContainer.new()
 		ssc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 		vb.add_child(ssc)
-		_shop_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		ssc.add_child(_shop_list)
 	else:
+		var svb := VBoxContainer.new()
+		svb.add_theme_constant_override("separation", 6)
+		_shop_list = svb
 		vb.add_child(_shop_list)
 	var xbtn := UiTheme.make_button("关闭", "green" if _p5_on else "ghost", "big" if _p5_on else "small")
 	if _p5_on:
@@ -5279,7 +5354,7 @@ func _refresh_shop_countdown() -> void:
 	if _shop_countdown == null:
 		return
 	var secs := GameProfile.shop_seconds_to_reset(GameProfile.shop_now())
-	_shop_countdown.text = "今日名额刷新倒计时：%d 小时 %d 分（00:00 UTC）" % [secs / 3600, (secs % 3600) / 60]
+	_shop_countdown.text = ("今日名额刷新：%d 小时 %d 分（00:00 UTC）" if _p5_on else "今日名额刷新倒计时：%d 小时 %d 分（00:00 UTC）") % [secs / 3600, (secs % 3600) / 60]
 
 func _refresh_shop() -> void:
 	if _shop_list == null:
@@ -5296,14 +5371,100 @@ func _refresh_shop() -> void:
 		var daily := int(it["daily"])
 		var in_bag := GameProfile.bag_count(id)
 		var price := GameProfile.shop_price(id, now)
-		# 每行包装为定稿 S10_v1.jpg 奶油白立体圆角卡片，带行首圆形实体图标与竖直分隔线
 		var card := PanelContainer.new()
+		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var c_sb := _style(Color(1.0, 0.985, 0.945, 0.96), 16, Color("e5cfa0"), 1.5, true)
-		c_sb.content_margin_left = 12
-		c_sb.content_margin_right = 12
-		c_sb.content_margin_top = 11
-		c_sb.content_margin_bottom = 11
+		c_sb.content_margin_left = 10 if _p5_on else 12
+		c_sb.content_margin_right = 10 if _p5_on else 12
+		c_sb.content_margin_top = 4 if _p5_on else 11
+		c_sb.content_margin_bottom = 4 if _p5_on else 11
 		card.add_theme_stylebox_override("panel", c_sb)
+		if _p5_on:
+			# 手机全屏 3列×2行 精致商品陈列卡：紧致高度控制确保 20:9 与 16:9 均实现零滚动条一屏全显
+			card.size_flags_vertical = Control.SIZE_EXPAND_FILL
+			var cvb := VBoxContainer.new()
+			cvb.add_theme_constant_override("separation", 2)
+			card.add_child(cvb)
+			var top_hb := HBoxContainer.new()
+			top_hb.add_theme_constant_override("separation", 8)
+			cvb.add_child(top_hb)
+			var ic_ring := PanelContainer.new()
+			ic_ring.custom_minimum_size = Vector2(36, 36)
+			ic_ring.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			var ring_sb := _style(Color("f7e8c6"), 18, Color("e2c68e"), 1.5, false)
+			ring_sb.set_content_margin_all(3)
+			ic_ring.add_theme_stylebox_override("panel", ring_sb)
+			ic_ring.add_child(_item_icon_rect(id, 26.0))
+			top_hb.add_child(ic_ring)
+			var name_vb := VBoxContainer.new()
+			name_vb.add_theme_constant_override("separation", 0)
+			name_vb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			name_vb.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			var title_l := _mk_label(name_vb, _item_zh_name(id), 15, UiTheme.TEXT)
+			title_l.add_theme_font_override("font", UiTheme.display_font())
+			_mk_label(name_vb, "背包 %d/%d · 今日 %d/%d" % [in_bag, GameProfile.SHOP_BAG_CAP, bought, daily], 14, Color("6e502f"))
+			top_hb.add_child(name_vb)
+			var desc_l := _mk_label(cvb, String(it["desc"]), 14, Color("5e4427"))
+			desc_l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			desc_l.size_flags_vertical = Control.SIZE_EXPAND_FILL
+			var sep := ColorRect.new()
+			sep.color = Color("ead8b5")
+			sep.custom_minimum_size.y = 1.5
+			cvb.add_child(sep)
+			var bot_hb := HBoxContainer.new()
+			bot_hb.add_theme_constant_override("separation", 8)
+			cvb.add_child(bot_hb)
+			var next_txt := ""
+			if bought >= daily:
+				next_txt = "今日已买满"
+			elif bought + 1 < daily:
+				next_txt = "下份 ✦ %d" % int(round(float(it["price"]) * (1.0 + GameProfile.SHOP_PRICE_STEP * float(bought + 1))))
+			else:
+				next_txt = "最后 1 份"
+			var next_l := _mk_label(bot_hb, next_txt, 14, Color("7a5f40"))
+			next_l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			next_l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			var b := UiTheme.make_button("", "green", "normal")
+			b.custom_minimum_size = Vector2(138, 44)
+			b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			var is_dis := false
+			if bought >= daily:
+				b.text = "今日售罄"
+				is_dis = true
+			elif in_bag >= GameProfile.SHOP_BAG_CAP:
+				b.text = "背包已满"
+				is_dis = true
+			elif GameProfile.stardust() < price:
+				b.text = "✦ %d（不足）" % price
+				is_dis = true
+			else:
+				b.text = "购买 ✦ %d" % price
+			b.disabled = is_dis
+			if is_dis:
+				var gray_sb := _style(Color(0.66, 0.67, 0.70, 0.94), 22, Color(0.52, 0.53, 0.56, 0.90), 1.5, true)
+				gray_sb.content_margin_left = 10
+				gray_sb.content_margin_right = 10
+				for st in ["normal", "hover", "pressed", "disabled"]:
+					b.add_theme_stylebox_override(st, gray_sb)
+				b.add_theme_color_override("font_disabled_color", Color(1.0, 1.0, 1.0, 0.95))
+				b.add_theme_color_override("font_color", Color.WHITE)
+			else:
+				for st in ["font_color", "font_hover_color", "font_pressed_color"]:
+					b.add_theme_color_override(st, Color.WHITE)
+				b.add_theme_color_override("font_outline_color", Color("326b08"))
+				b.add_theme_constant_override("outline_size", 3)
+			var captured_id: String = id
+			b.pressed.connect(func() -> void:
+				var err := GameProfile.shop_buy(captured_id)
+				if err == "":
+					audio.power()
+					_refresh_meta()
+				else:
+					audio.deny()
+				_refresh_shop())
+			bot_hb.add_child(b)
+			_shop_list.add_child(card)
+			continue
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 10)
 		card.add_child(row)
@@ -5405,11 +5566,11 @@ func _build_sound_panel(root: Control) -> void:
 	_sound_panel.add_theme_stylebox_override("panel", UiTheme.panel_texture())
 	root.add_child(_sound_panel)
 	var hb := HBoxContainer.new()
-	hb.add_theme_constant_override("separation", 12)
+	hb.add_theme_constant_override("separation", 14 if _p5_on else 12)
 	_sound_panel.add_child(hb)
 	var rail := VBoxContainer.new()
 	rail.add_theme_constant_override("separation", 6)
-	rail.custom_minimum_size = Vector2(118, 0)
+	rail.custom_minimum_size = Vector2(138 if _p5_on else 118, 0)
 	hb.add_child(rail)
 	if _p5_on:
 		var st_head := HBoxContainer.new()
@@ -5424,7 +5585,7 @@ func _build_sound_panel(root: Control) -> void:
 	else:
 		_mk_dlabel(rail, "设置", 24, UiTheme.SKY)
 	for tab in [["sound", "声音"], ["gfx", "图形"], ["controls", "控制"],
-			["keys", "键位"], ["hud", "界面"], ["account", "账户"]]:
+			["keys", "操作" if (_p5_on or _touch_wanted()) else "键位"], ["hud", "界面"], ["account", "账户"]]:
 		var tb := UiTheme.make_button(String(tab[1]), "ghost", "normal")
 		var tid: String = tab[0]
 		tb.pressed.connect(func() -> void:
@@ -5510,8 +5671,8 @@ func _mk_sky_banner(parent: Control, text: String, fs: int = 20, center: bool = 
 	var sb := _style(Color("3aaef2"), 18 if center else 12, Color("2085c4"), 1.5, true)
 	sb.content_margin_left = 14
 	sb.content_margin_right = 14
-	sb.content_margin_top = 4 if center else 3
-	sb.content_margin_bottom = 4 if center else 3
+	sb.content_margin_top = (1 if fs <= 16 else 4) if center else (2 if fs <= 16 else 3)
+	sb.content_margin_bottom = (1 if fs <= 16 else 4) if center else (2 if fs <= 16 else 3)
 	wrap.add_theme_stylebox_override("panel", sb)
 	wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(wrap)
@@ -5531,9 +5692,8 @@ func _st_row(parent: Container, label: String, hint: String = "") -> HBoxContain
 	var lab := _mk_label(hb, label + (" — " + hint if hint != "" else ""), 14)
 	lab.custom_minimum_size = Vector2(210, 0)
 	if _p5_on:
-		# UI-mobile P5: the label column wraps (16:9 page widths)
-		# so the slider keeps its >= 360 design length.
-		lab.custom_minimum_size = Vector2(170, 0)
+		# 全屏化后放宽左侧标签至 200px，减少设置标题折行，让滑块更长更顺手
+		lab.custom_minimum_size = Vector2(200, 0)
 		lab.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		lab.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	return hb
@@ -5574,8 +5734,8 @@ func _st_slider(parent: Container, label: String, key: String,
 ## the settings page is wide enough (20:9); on 16:9 the page
 ## width minus the label / value columns (D7 second line).
 func _p5_slider_len() -> float:
-	var w := _p5_w(_sound_panel, 900.0) - 32.0 - 118.0 - 12.0 - 14.0
-	return clampf(w - 170.0 - 64.0 - 16.0, 220.0, 360.0)
+	var w := _p5_w(_sound_panel, 1000.0) - 32.0 - 138.0 - 14.0 - 14.0
+	return clampf(w - 200.0 - 64.0 - 16.0, 240.0, 480.0)
 
 func _st_switch(parent: Container, label: String, key: String,
 		apply: Callable = Callable()) -> Button:
@@ -5640,20 +5800,71 @@ func _settings_page_controls() -> void:
 	_st_switch(_settings_page, "镜头 Y 轴反转", "invertY")
 
 func _settings_page_keys() -> void:
-	# UI-mobile P1.1 (plan §B3 G11): on touch this tab is
-	# "操作" — the touch reference first, the fixed key
-	# table below it under "外接键盘".
-	if _touch_wanted():
+	# 纯 Sol 手机版触控操作说明：手机模式/触控启用时彻底移除电脑键位与外接键盘卡片，采用左右双栏触控攻略一屏免滚全显
+	if _touch_wanted() or _p5_on:
+		if _p5_on:
+			var cols := HBoxContainer.new()
+			cols.add_theme_constant_override("separation", 12)
+			cols.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			_settings_page.add_child(cols)
+			var lcard := PanelContainer.new()
+			lcard.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			var l_sb := _style(Color(1.0, 0.99, 0.96, 0.95), 14, Color("e5cfa0"), 1.5, true)
+			l_sb.set_content_margin_all(12)
+			lcard.add_theme_stylebox_override("panel", l_sb)
+			cols.add_child(lcard)
+			var lvb := VBoxContainer.new()
+			lvb.add_theme_constant_override("separation", 8)
+			lcard.add_child(lvb)
+			_mk_sky_banner(lvb, "移动与视角", 18)
+			for row in [["移动", "左半屏拖动虚拟摇杆"],
+					["自动攻击", "进入射程后自动向最近敌人出手"],
+					["旋转视角", "右半屏空白处单指滑屏转动"],
+					["大地图", "轻触右上角小地图展开全图"],
+					["暂停 / 状态", "轻触左上角头像打开" if _new_layout() else "右下竖列暂停键"]]:
+				var thb := HBoxContainer.new()
+				thb.add_theme_constant_override("separation", 8)
+				lvb.add_child(thb)
+				var ll := _mk_label(thb, String(row[0]), 14, UiTheme.TEXT)
+				ll.custom_minimum_size = Vector2(120, 0)
+				var rl := _mk_label(thb, String(row[1]), 14, UiTheme.MUTED)
+				rl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				rl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+				rl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			var rcard := PanelContainer.new()
+			rcard.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			var r_sb := _style(Color(1.0, 0.99, 0.96, 0.95), 14, Color("e5cfa0"), 1.5, true)
+			r_sb.set_content_margin_all(12)
+			rcard.add_theme_stylebox_override("panel", r_sb)
+			cols.add_child(rcard)
+			var rvb := VBoxContainer.new()
+			rvb.add_theme_constant_override("separation", 8)
+			rcard.add_child(rvb)
+			_mk_sky_banner(rvb, "技能与交互动作", 18)
+			for row in [["互动 / 邀伴", "右下「！」主互动按键"],
+					["跳跃 / 下砸", "「↑」跳跃键（空中再按触发下砸）"],
+					["冲刺 · 滑铲", "「风」冲刺键（瞬发突进加速）"],
+					["必杀大招", "「必」大招键（可设自动释放）"],
+					["锁定目标", "暂停菜单「设置」页内切换开关"]]:
+				var khb := HBoxContainer.new()
+				khb.add_theme_constant_override("separation", 8)
+				rvb.add_child(khb)
+				var kl := _mk_label(khb, String(row[0]), 14, UiTheme.TEXT)
+				kl.custom_minimum_size = Vector2(120, 0)
+				var krl := _mk_label(khb, String(row[1]), 14, UiTheme.MUTED)
+				krl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				krl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+				krl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			return
 		_mk_sky_banner(_settings_page, "操作", 20)
-		for row in [["移动", "左半屏拖动（摇杆）"], ["互动 / 邀伴", "右下「！」互动键"],
+		for row in [["移动", "左半屏拖动虚拟摇杆"], ["互动 / 邀伴", "右下「！」互动键"],
 				["跳跃 · 下砸（空中）", "↑ 键"], ["冲刺 · 滑铲", "风 键"],
 				["大招", "「必」键"], ["锁定最近敌人", "暂停菜单「锁定目标」"],
 				["暂停", "点左上头像" if _new_layout() else "右下竖列暂停键"]]:
 			var thb := _st_row(_settings_page, String(row[0]))
 			_mk_label(thb, String(row[1]), 14, UiTheme.MUTED)
-		_mk_dlabel(_settings_page, "外接键盘", 16, UiTheme.SKY)
-	else:
-		_mk_dlabel(_settings_page, "键位", 20, UiTheme.SKY)
+		return
+	_mk_dlabel(_settings_page, "键位", 20, UiTheme.SKY)
 	_mk_label(_settings_page, "固定键位 · 本构建不支持改绑", 12, UiTheme.MUTED)
 	for row in [["移动", "W A S D"], ["互动 / 邀伴", "E"], ["下砸（空中）", "空格"],
 			["疾跑", "Shift"], ["大招", "R"], ["暂停", "Esc / P"], ["选卡", "1 – 9"]]:
@@ -5787,7 +5998,7 @@ func _build_unlock_panel(root: Control) -> void:
 		i_sb.content_margin_bottom = 4
 		info_pill.add_theme_stylebox_override("panel", i_sb)
 		vb.add_child(info_pill)
-		_unlock_info = _mk_label(info_pill, "", 13, UiTheme.TEXT)
+		_unlock_info = _mk_label(info_pill, "", 14, UiTheme.TEXT)
 		_unlock_info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	else:
 		var t := _mk_dlabel(vb, "伙伴营挑战 · 终身挑战", 20, UiTheme.TEXT)
@@ -5796,10 +6007,20 @@ func _build_unlock_panel(root: Control) -> void:
 		_unlock_info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(0, 400)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	vb.add_child(scroll)
-	_unlock_list = VBoxContainer.new()
-	_unlock_list.add_theme_constant_override("separation", 8 if _p5_on else 4)
-	_unlock_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	if _p5_on:
+		var ugrid := GridContainer.new()
+		ugrid.columns = 2
+		ugrid.add_theme_constant_override("h_separation", 12)
+		ugrid.add_theme_constant_override("v_separation", 8)
+		ugrid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_unlock_list = ugrid
+	else:
+		var uvb := VBoxContainer.new()
+		uvb.add_theme_constant_override("separation", 4)
+		uvb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_unlock_list = uvb
 	scroll.add_child(_unlock_list)
 	var xbtn := UiTheme.make_button("关闭", "green" if _p5_on else "ghost", "big" if _p5_on else "small")
 	if _p5_on:
@@ -5837,22 +6058,23 @@ func _refresh_unlock_panel() -> void:
 		var done := GameProfile.challenge_done(key)
 		var status := "已加入伙伴营 ★" if in_league else ("挑战完成 · 等待遭遇 ✓" if done else "进行中")
 		var rank_s := String(RANK_CN.get(String(cfg["rank"]), String(cfg["rank"])))
-		# 定稿 S11_v1.jpg 奶油/淡金圆角大卡片＋圆角物种头像框
+		# 定稿 S11_v1.jpg 奶油/淡金圆角大卡片＋圆角物种头像框（手机端双列等宽铺满）
 		var card := PanelContainer.new()
+		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var c_bg := Color("ffefb8") if (done or in_league) else Color(1.0, 0.99, 0.96, 0.96)
 		var c_sb := _style(c_bg, 16, Color("dfb86c") if (done or in_league) else Color("e5cfa0"), 1.5, true)
 		c_sb.content_margin_left = 12
 		c_sb.content_margin_right = 12
-		c_sb.content_margin_top = 10
-		c_sb.content_margin_bottom = 10
+		c_sb.content_margin_top = 8 if _p5_on else 10
+		c_sb.content_margin_bottom = 8 if _p5_on else 10
 		card.add_theme_stylebox_override("panel", c_sb)
 		var chb := HBoxContainer.new()
 		chb.add_theme_constant_override("separation", 12)
 		card.add_child(chb)
 		var pic_box := PanelContainer.new()
-		pic_box.custom_minimum_size = Vector2(58, 58)
+		pic_box.custom_minimum_size = Vector2(54, 54) if _p5_on else Vector2(58, 58)
 		pic_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		var p_sb := _style(Color("fff5d8"), 29, Color("e5be62"), 2.5, true)
+		var p_sb := _style(Color("fff5d8"), 27 if _p5_on else 29, Color("e5be62"), 2.5, true)
 		p_sb.set_content_margin_all(4)
 		pic_box.add_theme_stylebox_override("panel", p_sb)
 		var pt := TextureRect.new()
@@ -5876,7 +6098,9 @@ func _refresh_unlock_panel() -> void:
 			var txt := "· %s：%d / %d" % [String(pd["desc"]), int(float(pd["value"])), int(float(pd["goal"]))]
 			if bool(pd.get("unsupported", false)):
 				txt += "（系统未实装）"
-			_mk_label(cvb, txt, 13, Color("6e502f"))
+			var pl := _mk_label(cvb, txt, 14 if _p5_on else 13, Color("6e502f"))
+			if _p5_on:
+				pl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		_unlock_list.add_child(card)
 	if _p5_on and _unlock_panel != null and _unlock_panel.scale.x > 0.01:
 		_p5_fit(_unlock_panel, float(_unlock_panel.get_meta("p5_sm", _unlock_panel.scale.x)))
@@ -6016,7 +6240,7 @@ func _build_draft(root: Control) -> void:
 	_kbd_cap(_draft_rb, "R")
 	_kbd_cap(_draft_sb, "S")
 	_kbd_cap(_draft_bb, "B")
-	var team_b := UiTheme.make_button("查看我的队伍 [Tab]", "ghost", "small")
+	var team_b := UiTheme.make_button("查看我的队伍" if (_p5_on or _touch_wanted()) else "查看我的队伍 [Tab]", "ghost", "small")
 	team_b.pressed.connect(func() -> void:
 		audio.click()
 		_open_team_view())
@@ -7344,15 +7568,15 @@ func _touch_text_sync() -> void:
 		_altar_label.text = "Boss 祭坛 · " + _ik() + " 召唤守护者"
 	if _menu_hint:
 		_menu_hint.text = MENU_HINT_COMPACT if _p5_on else (MENU_HINT_TOUCH if on == 1 else MENU_HINT_KBD)
-		_menu_hint.tooltip_text = MENU_HINT_TOUCH if on == 1 else MENU_HINT_KBD
+		_menu_hint.tooltip_text = MENU_HINT_TOUCH if (on == 1 or _p5_on) else MENU_HINT_KBD
 	for k in _kbd_caps:
 		if is_instance_valid(k):
-			(k as Control).visible = on == 0
+			(k as Control).visible = on == 0 and not _p5_on
 	for b in [_draft_team_btn, _blessing_team_btn]:
 		if b != null:
-			(b as Button).text = "查看我的队伍" if on == 1 else "查看我的队伍 [Tab]"
+			(b as Button).text = "查看我的队伍" if (on == 1 or _p5_on) else "查看我的队伍 [Tab]"
 	if _settings_tabs.has("keys"):
-		(_settings_tabs["keys"] as Button).text = "操作" if on == 1 else "键位"
+		(_settings_tabs["keys"] as Button).text = "操作" if (on == 1 or _p5_on) else "键位"
 		if _sound_panel and _sound_panel.visible and _settings_tab_now == "keys":
 			_settings_show_tab("keys")
 
@@ -11891,7 +12115,7 @@ func _build_blessing(root: Control) -> void:
 	var team_row := HBoxContainer.new()
 	team_row.alignment = BoxContainer.ALIGNMENT_END if _p5_on else BoxContainer.ALIGNMENT_CENTER
 	vb.add_child(team_row)
-	var team_b := UiTheme.make_button("查看我的队伍 [Tab]", "ghost", "small")
+	var team_b := UiTheme.make_button("查看我的队伍" if (_p5_on or _touch_wanted()) else "查看我的队伍 [Tab]", "ghost", "small")
 	team_b.pressed.connect(func() -> void:
 		audio.click()
 		_open_team_view())
@@ -17810,7 +18034,7 @@ func _build_pause(root: Control) -> void:
 	_pause_panel.add_theme_stylebox_override("panel", UiTheme.panel_texture())
 	root.add_child(_pause_panel)
 	var vb := VBoxContainer.new()
-	vb.add_theme_constant_override("separation", 10)
+	vb.add_theme_constant_override("separation", 5 if _p5_on else 10)
 	_pause_panel.add_child(vb)
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", 12)
@@ -18018,77 +18242,106 @@ func _pause_fill_status() -> void:
 		(c as Node).queue_free()
 	if player == null or not is_instance_valid(player):
 		return
-	var box := _pause_moves_box
+	var box_left: Container = _pause_moves_box
+	var box_right: Container = _pause_moves_box
+	if _p5_on:
+		# 手机全屏化优化：状态页采用左(战力/招式/维生素) + 右(物品/队伍/本局) 双栏并排，几乎一屏免滚动全览全部信息
+		var cols := HBoxContainer.new()
+		cols.add_theme_constant_override("separation", 12)
+		cols.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_pause_moves_box.add_child(cols)
+		var lcard := PanelContainer.new()
+		lcard.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		lcard.size_flags_stretch_ratio = 52.0
+		var l_sb := _style(Color(1.0, 0.99, 0.96, 0.92), 14, Color("e5cfa0"), 1.5, true)
+		l_sb.set_content_margin_all(8)
+		lcard.add_theme_stylebox_override("panel", l_sb)
+		cols.add_child(lcard)
+		var lvb := VBoxContainer.new()
+		lvb.add_theme_constant_override("separation", 3)
+		lcard.add_child(lvb)
+		var rcard := PanelContainer.new()
+		rcard.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		rcard.size_flags_stretch_ratio = 48.0
+		var r_sb := _style(Color(1.0, 0.99, 0.96, 0.92), 14, Color("e5cfa0"), 1.5, true)
+		r_sb.set_content_margin_all(8)
+		rcard.add_theme_stylebox_override("panel", r_sb)
+		cols.add_child(rcard)
+		var rvb := VBoxContainer.new()
+		rvb.add_theme_constant_override("separation", 3)
+		rcard.add_child(rvb)
+		box_left = lvb
+		box_right = rvb
 	# 1. 战力
-	_mk_sky_banner(box, "战力", 16, false)
+	_mk_sky_banner(box_left, "战力", 16, false)
 	var pw := HFlowContainer.new()
 	pw.name = "PwChips"
 	pw.add_theme_constant_override("h_separation", 6)
 	pw.add_theme_constant_override("v_separation", 4)
-	box.add_child(pw)
+	box_left.add_child(pw)
 	for d in _pw_defs():
 		pw.add_child(UiTheme.chip(String(d[0]),
-			Color("f7dc94") if bool(d[1]) else Color("efe3c8"), 13, UiTheme.TEXT))
+			Color("f7dc94") if bool(d[1]) else Color("efe3c8"), 14 if _p5_on else 13, UiTheme.TEXT))
 	# 2. 招式 (the former moves page)
-	_mk_sky_banner(box, "招式", 16, false)
+	_mk_sky_banner(box_left, "招式", 16, false)
 	for m in player.moves:
 		var md: Dictionary = GameData.move(String(m["key"]))
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 8)
-		_pause_moves_box.add_child(row)
+		box_left.add_child(row)
 		var t := String(md.get("type", "normal"))
 		var ic := UiBadge.new(_move_icon(t), UiTheme.type_color(t), 22)
 		ic.custom_minimum_size = Vector2(22, 22)
 		row.add_child(ic)
 		_mk_label(row, "%s %d级" % [_move_zh(String(m["key"])), int(m["level"])], 15)
 		row.add_child(UiTheme.chip(String((TYPE_HUD.get(t, [t]) as Array)[0]),
-			Color(UiTheme.type_color(t), 0.85), 11))
+			Color(UiTheme.type_color(t), 0.85), 12 if _p5_on else 11))
 		var pwv2 = md.get("power", 0)
 		_mk_label(row, "威力 %d · %s" % [int(pwv2) if pwv2 != null else 0,
-			"物理" if String(md.get("category", "")) == "physical" else "特殊"], 12, UiTheme.MUTED)
+			"物理" if String(md.get("category", "")) == "physical" else "特殊"], 14 if _p5_on else 12, UiTheme.MUTED)
 	# The ult line (its charge lives on the gauge; the pause
 	# lists what it will do).
-	_mk_label(_pause_moves_box, "大招：%s（充能 %.0f%%）" % [
-		Ult.display_name(player.ult_name), (ult.charge * 100.0 if ult else 0.0)], 13, Color("a35e08") if _p5_on else UiTheme.GOLD)
+	_mk_label(box_left, "大招：%s（充能 %.0f%%）" % [
+		Ult.display_name(player.ult_name), (ult.charge * 100.0 if ult else 0.0)], 14 if _p5_on else 13, Color("a35e08") if _p5_on else UiTheme.GOLD)
 	# 3. 维生素 (the draft buildMini's vitamin chips)
-	_mk_sky_banner(box, "维生素", 16, false)
+	_mk_sky_banner(box_left, "维生素", 16, false)
 	if player.vit_levels.is_empty():
-		_mk_label(box, "（无）", 13, UiTheme.MUTED)
+		_mk_label(box_left, "（无）", 14 if _p5_on else 13, UiTheme.MUTED)
 	else:
 		var vf := HFlowContainer.new()
 		vf.add_theme_constant_override("h_separation", 6)
 		vf.add_theme_constant_override("v_separation", 4)
-		box.add_child(vf)
+		box_left.add_child(vf)
 		for vk in player.vit_levels.keys():
 			vf.add_child(UiTheme.chip("%s %d级" % [
 				String(GameData.VITAMINS[vk]["label"]), int(player.vit_levels[vk])],
-				Color8(106, 90, 168), 13))
+				Color8(106, 90, 168), 14 if _p5_on else 13))
 	# 4. 物品 (held items — before this page the meowth
 	# shop's sell row was the only in-run view of them)
-	_mk_sky_banner(box, "物品", 16, false)
+	_mk_sky_banner(box_right, "物品", 16, false)
 	var ikeys: Array = player.items.keys()
 	ikeys.sort()
 	if ikeys.is_empty():
-		_mk_label(box, "（无）", 13, UiTheme.MUTED)
+		_mk_label(box_right, "（无）", 14 if _p5_on else 13, UiTheme.MUTED)
 	for ik in ikeys:
 		var key := String(ik)
 		var irow := HBoxContainer.new()
 		irow.add_theme_constant_override("separation", 8)
-		box.add_child(irow)
+		box_right.add_child(irow)
 		irow.add_child(_item_icon_rect(key, 26.0))
 		_mk_label(irow, "%s ×%d" % [String(GameData.item_def(key).get("name", key)),
 			int(player.items[ik])], 15)
-		_mk_label(irow, _item_label(key), 12, UiTheme.MUTED)
+		_mk_label(irow, _item_label(key), 14 if _p5_on else 12, UiTheme.MUTED)
 	# 5. 队伍 (same source as the HUD party row)
-	_mk_sky_banner(box, "队伍", 16, false)
+	_mk_sky_banner(box_right, "队伍", 16, false)
 	var allies := get_tree().get_nodes_in_group("allies")
 	if allies.is_empty():
-		_mk_label(box, "（无）", 13, UiTheme.MUTED)
+		_mk_label(box_right, "（无）", 14 if _p5_on else 13, UiTheme.MUTED)
 	for a in allies:
 		var e := a as Enemy
 		var prow := HBoxContainer.new()
 		prow.add_theme_constant_override("separation", 8)
-		box.add_child(prow)
+		box_right.add_child(prow)
 		var tr := TextureRect.new()
 		tr.custom_minimum_size = Vector2(30, 30)
 		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -18101,27 +18354,49 @@ func _pause_fill_status() -> void:
 	# 6. 本局 (the top card's collapsible values: EN zone
 	# name, tier, stopwatch, stardust — plus gold / kills /
 	# roars)
-	_mk_sky_banner(box, "本局", 16, false)
+	_mk_sky_banner(box_right, "本局", 16, false)
 	var zrow: Dictionary = ZONES[zone - 1]
 	# UI-mobile P2: the phone hero plate keeps only the CN
 	# name (H4) and shows the evo line near evolving only
 	# (H6); the weather chip is icon + 1 char (T6) — the
 	# full values live here.
 	var hinfo: Dictionary = _hud_info_for(String(player.species_id))
-	for line in [
-			"伙伴：%s %s · %s" % [String(hinfo["name"]), String(hinfo["en"]),
-				String(hinfo["evo"]).trim_prefix("› ")],
-			_weather_explain(),
-			"区域：%s %s · 第 %d/%d 区" % [String(zrow["cn"]), String(zrow["en"]), zone, ZONES.size()],
-			"难度：普通",
-			"用时：%s" % _fmt_elapsed(elapsed),
-			"萤尘：%d" % GameProfile.stardust(),
-			"金币：%d" % int(gold),
-			"击杀：%d" % kills,
-			"咆哮 ×%d" % run_roars]:
-		_mk_label(box, String(line), 14)
 	if _p5_on:
-		_p5_wrap_page(box)
+		_mk_label(box_right, "伙伴：%s %s · %s" % [String(hinfo["name"]), String(hinfo["en"]),
+			String(hinfo["evo"]).trim_prefix("› ")], 14)
+		_mk_label(box_right, "区域：%s %s · 第 %d/%d 区" % [String(zrow["cn"]), String(zrow["en"]), zone, ZONES.size()], 14)
+		var run_grid := GridContainer.new()
+		run_grid.columns = 2
+		run_grid.add_theme_constant_override("h_separation", 10)
+		run_grid.add_theme_constant_override("v_separation", 2)
+		run_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		box_right.add_child(run_grid)
+		for line in [
+				_weather_explain(),
+				"难度：普通",
+				"用时：%s" % _fmt_elapsed(elapsed),
+				"萤尘：%d" % GameProfile.stardust(),
+				"金币：%d" % int(gold),
+				"击杀：%d · 咆哮 ×%d" % [kills, run_roars]]:
+			var rl := _mk_label(run_grid, String(line), 14)
+			rl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			rl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	else:
+		for line in [
+				"伙伴：%s %s · %s" % [String(hinfo["name"]), String(hinfo["en"]),
+					String(hinfo["evo"]).trim_prefix("› ")],
+				_weather_explain(),
+				"区域：%s %s · 第 %d/%d 区" % [String(zrow["cn"]), String(zrow["en"]), zone, ZONES.size()],
+				"难度：普通",
+				"用时：%s" % _fmt_elapsed(elapsed),
+				"萤尘：%d" % GameProfile.stardust(),
+				"金币：%d" % int(gold),
+				"击杀：%d" % kills,
+				"咆哮 ×%d" % run_roars]:
+			_mk_label(box_right, String(line), 14)
+	if _p5_on:
+		_p5_wrap_page(box_left)
+		_p5_wrap_page(box_right)
 
 ## UI-mobile P5 (plan §B3 "钱包 / Lab / 商店 / 解锁: 套 M0；关闭在
 ## 右下"): the overlay's list scroll takes the fixed panel
