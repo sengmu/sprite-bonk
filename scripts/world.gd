@@ -2846,11 +2846,28 @@ func _build_hud() -> void:
 	_cutin_panel.visible = false
 	# Cycle 17: the cut-in band gets a real glass stylebox (it
 	# shipped as a bare default-gray Panel through cycle 16).
-	_cutin_panel.add_theme_stylebox_override("panel", UiTheme.dark_glass(12, 0.88, Color(1, 1, 1, 0.25), 1, 0))
+	# 对齐定稿 S23_v1.jpg：必杀切入横幅改用深翠青发光圆角大胶囊＋对称装饰嫩叶＋居中粗白立体标题
+	_cutin_panel.add_theme_stylebox_override("panel", UiTheme.dark_glass(32, 0.92, Color("48e2c4"), 2, 0))
 	root.add_child(_cutin_panel)
-	var cutin_t := _label_in(_cutin_panel, "必杀技！", Vector2(24, 8), Vector2(200, 26), 20, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT, true)
+	var cl_l := UiTheme.art("leaf_sprig", Vector2(28, 28))
+	cl_l.position = Vector2(24, 18)
+	cl_l.flip_h = true
+	cl_l.modulate = Color("64f5cc")
+	cl_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_cutin_panel.add_child(cl_l)
+	var cl_r := UiTheme.art("leaf_sprig", Vector2(28, 28))
+	cl_r.position = Vector2(408, 18)
+	cl_r.modulate = Color("64f5cc")
+	cl_r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_cutin_panel.add_child(cl_r)
+	var cutin_t := _label_in(_cutin_panel, "必杀技！", Vector2(0, 4), Vector2(460, 28), 22, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
 	cutin_t.add_theme_font_override("font", _font_display)
-	_cutin_name = _label_in(_cutin_panel, "", Vector2(24, 36), Vector2(420, 24), 15, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT, true)
+	cutin_t.add_theme_color_override("font_shadow_color", Color(0.02, 0.16, 0.18, 0.85))
+	cutin_t.add_theme_constant_override("shadow_offset_y", 2)
+	_cutin_name = _label_in(_cutin_panel, "", Vector2(0, 32), Vector2(460, 28), 19, Color("72ffe2"), HORIZONTAL_ALIGNMENT_CENTER, true)
+	_cutin_name.add_theme_font_override("font", _font_display)
+	_cutin_name.add_theme_color_override("font_shadow_color", Color(0.02, 0.16, 0.18, 0.85))
+	_cutin_name.add_theme_constant_override("shadow_offset_y", 2)
 
 	# --- top-left: portrait medallion + glass info panel ---
 	# Cycle 17 (UI_SPEC §2.3 tl-medal): the medallion carries
@@ -9317,6 +9334,18 @@ func _choice_show(title: String, sub: String, options: Array, foot_text: String,
 			var ic := _item_icon_rect(item_key, 56.0 if _p5_on else 36.0)
 			ic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 			cvb.add_child(ic)
+		elif title == "流光队友" and (is_instance_valid(_shiny_ally) or is_instance_valid(_pending_shiny_ally)):
+			# 对齐定稿 S24_v1.jpg：左侧「留下新队友」配新流光头像，右侧「放生新队友」配当前队伍旧流光头像
+			var sp_ally := String(_pending_shiny_ally.species_id) if (i == 0 and is_instance_valid(_pending_shiny_ally)) else (String(_shiny_ally.species_id) if is_instance_valid(_shiny_ally) else "")
+			if sp_ally != "" and UiTheme.portrait(sp_ally) != null:
+				var ptr := TextureRect.new()
+				ptr.texture = UiTheme.portrait(sp_ally)
+				ptr.custom_minimum_size = Vector2(88, 88) if _p5_on else Vector2(48, 48)
+				ptr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+				ptr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+				ptr.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+				ptr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				cvb.add_child(ptr)
 		var l := Label.new()
 		l.text = opt_text
 		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -13123,10 +13152,16 @@ func ult_on_player_hurt(frac: float) -> void:
 func show_ult_cutin(ult_name_: String, color: Color) -> void:
 	if _cutin_panel == null:
 		return
-	_cutin_panel.add_theme_stylebox_override("panel",
-		_style(Color(0.08, 0.08, 0.14, 0.92), 12, color, 2, true))
+	var bg_col := color.darkened(0.68)
+	bg_col.a = 0.92
+	var rim_col := color.lightened(0.35)
+	var csb := _style(bg_col, 32, rim_col, 2.5, true)
+	csb.shadow_color = Color(color.r, color.g, color.b, 0.48)
+	csb.shadow_size = 10
+	csb.shadow_offset = Vector2(0, 3)
+	_cutin_panel.add_theme_stylebox_override("panel", csb)
 	_cutin_name.text = ult_name_
-	_cutin_name.add_theme_color_override("font_color", color)
+	_cutin_name.add_theme_color_override("font_color", color.lightened(0.45))
 	_cutin_panel.visible = true
 	_cutin_t = 1.3
 	if _p3_on == 1:

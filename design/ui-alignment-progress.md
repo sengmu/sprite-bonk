@@ -1630,7 +1630,8 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
   1. 修复长骨骼攻击片段（如 `bulbasaur_anim.glb` `001fight_b` `1.75s`）仅播 `0.30s` 刚蓄力就被强制切回移动的腰斩问题——按 `alen / 0.36` 自适应倍速播放（`1.8x–5.5x`），取消定时器竞态并在每次出招重置 `_clip_state`；
   2. 为无骨骼程序化模型将攻击突刺加大至 `0.72` 单位叠加 `0.22` 弧形腾跃与 `−0.18 / +0.36 rad` 蓄力俯冲角，并将出招挤压脉冲提升至 `0.22`；
   3. 为 `Player` 新增 `0.24s` 出招朝向锁定窗口 `_attack_face_t`，防止边移动边自动攻击时下一物理帧立刻将朝向拧回跑动方向；加粗 `spawn_strike_fx()` 挥砍光弧（宽度 `0.68`、持续 `0.24s`、爆闪 `0.85 * range`）提升辨识度。
-- **状态：已提交推送至 `origin/align-fix13`，同步打包最新 APK 覆盖安装至 Seeker 测试机，NUC 端待 Tailscale 中继恢复后同步跑齐双档 `s100` 验收与 `compare/` 重建。**
+- **S23 必杀技切入横幅＋S24 流光队友卡补齐收口（`scripts/world.gd`）**：将 `_cutin_panel` 与 `show_ult_cutin` 由左上角小黑框升级为 `S23_v1.jpg` 同款深翠青发光圆角大胶囊（`radius=32`、`2.5px` 亮发光边框、左右对称嫩叶 `leaf_sprig`、居中 `22px/19px` 立体粗投影字）；为 `S24` 流光队友替换紫卡自动挂载新/旧流光物种大肖像（`88×88`），并全部本地通过解析门与渲染 `Read` 目检。
+- **状态：已提交推送至 `origin/align-fix13`，静默覆盖安装最新终版 APK 至 Seeker 测试机；NUC 端待 Tailscale 中继恢复后同步跑齐双档 `s100` 验收与 `compare/` 重建。**
 - 本轮提交：`assets/ui/touch/btn_*.png`、`scripts/touch_controls.gd`、`scripts/ui_theme.gd`、`scripts/model_rig.gd`、`scripts/player.gd`、`scripts/world.gd`、`Test/u1_final_reaudit_run.sh`、`design/ui-alignment-progress.md`。
 
 
