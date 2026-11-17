@@ -3856,7 +3856,10 @@ func _starter_card(sp: String, unlocked: bool, w: float) -> Button:
 	b.pressed.connect(func() -> void:
 		audio.click()
 		audio.cry(sp)
-		_open_loadout(sp))
+		if _p5_on:
+			_menu_hero_show(sp)
+		else:
+			_open_loadout(sp))
 	b.mouse_entered.connect(func() -> void: _menu_hero_show(sp))
 	b.focus_entered.connect(func() -> void: _menu_hero_show(sp))
 	return b
@@ -4525,6 +4528,9 @@ func _menu_hero_show(sp: String) -> void:
 				(child.get_node("SelectedMark") as Control).visible = selected
 				if selected:
 					_menu_starters.ensure_control_visible(child)
+		var partner_hero := _menu_design.get_node_or_null("MenuPartnerHero") as TextureRect if _menu_design else null
+		if partner_hero != null:
+			partner_hero.texture = _menu_feature_portrait(sp)
 	if _menu_hero_box == null:
 		return
 	for c in _menu_hero_box.get_children():
@@ -20172,10 +20178,14 @@ func _normal_ally_count() -> int:
 
 func _menu_feature_portrait(sp: String) -> Texture2D:
 	if _p5_on:
-		var portrait := AtlasTexture.new()
-		portrait.atlas = load("res://assets/menu/u2-art-mascot.png")
-		portrait.region = Rect2(89, 91, 947, 1109)
-		return portrait
+		if sp == "bulbasaur" or sp == "":
+			var portrait := AtlasTexture.new()
+			portrait.atlas = load("res://assets/menu/u2-art-mascot.png")
+			portrait.region = Rect2(89, 91, 947, 1109)
+			return portrait
+		var pt := UiTheme.portrait(sp)
+		if pt != null:
+			return pt
 	if sp == "bulbasaur":
 		return load("res://assets/menu/fern-hero.png")
 	return _menu_card_portrait(sp)

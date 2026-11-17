@@ -1763,6 +1763,15 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 本地解析门 `PARSE_OK`，重建并 `Read` 审看 `u2_fixed.png` 与 `compare/U2_2400.png` 通过，正同步推进至 NUC 双档最终验收与 Seeker 真机更新安装实拍。
 - 本轮提交：`scripts/world.gd`、`design/ui-reference/compare/U2_2400.png`、`design/ui-alignment-progress.md`。
 
+## 主菜单初始伙伴卡片点击实时切换石台角色（2026-11-17 20:3x）
+
+- **响应真机手测反馈「选择初始角色的时候石板上的角色应该切换，不是跳到出战配置」（`scripts/world.gd` `_starter_card` / `_menu_hero_show` / `_menu_feature_portrait`）**：
+  1. **解耦点击选择与出战跳转**：手机端（`_p5_on`）点击托盘内初始伙伴卡片不再立即误跳转至 `_open_loadout(sp)`，改为仅播报音效叫声并触发 `_menu_hero_show(sp)`；右下角「开始」按钮继续作为唯一出战入口携带当前 `_menu_hero_sp` 进入 `S07` 出战配置。
+  2. **石台主角动态换装**：完善 `_menu_feature_portrait(sp)`（`bulbasaur` 沿用精绘吉祥物 `u2-art-mascot.png`，其余所有初始及解锁伙伴实时切换为对应 `UiTheme.portrait(sp)` 透明全身 3D 渲染立绘），并在 `_menu_hero_show(sp)` 同步刷新 `MenuPartnerHero.texture`。
+- 验证：Godot 解析门通过；`verify_u2_switch.gd` 实测点击第 2/3 卡均保持主菜单不跳转（`loadout_vis=false`）且石台分别切换为 `charmander` / `squirtle`，已 `Read` `u2_sw_charmander.png` 与 `u2_sw_squirtle.png` 目检踩台居中无悬空；正同步推送 NUC 与重装 Seeker 真机。
+- 本轮提交：`scripts/world.gd`、`design/ui-alignment-progress.md`。
+
+
 
 
 
