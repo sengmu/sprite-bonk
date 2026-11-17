@@ -3511,9 +3511,10 @@ func _build_hud() -> void:
 	_banner_back.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_banner_back.modulate.a = 0.0
 	root.add_child(_banner_back)
-	_banner = _mk_label(root, "", 30, UiTheme.TEXT, true)
+	_banner = _mk_label(root, "", 20, UiTheme.TEXT, true)
 	_banner.set_anchors_preset(Control.PRESET_CENTER_TOP)
 	_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_banner.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_banner.offset_top = 158
 	_banner.offset_left = -430
 	_banner.offset_right = 430
@@ -3578,7 +3579,7 @@ func _build_hud() -> void:
 	# is driven per-frame from _any_modal_open().
 	_modal_scrim = ColorRect.new()
 	_modal_scrim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_modal_scrim.color = Color(0.16, 0.20, 0.12, 0.40)
+	_modal_scrim.color = Color(0.10, 0.14, 0.08, 0.56)
 	_modal_scrim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_modal_scrim.visible = false
 	root.add_child(_modal_scrim)
@@ -5885,14 +5886,13 @@ func _draft_leaf_cluster(flip: bool) -> Control:
 	var c := Control.new()
 	c.custom_minimum_size = Vector2(48, 48)
 	c.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	c.z_index = 2
 	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var tex := load("res://assets/menu/v2-leaves.svg") as Texture2D
-	# (size, pos, rot): base at the pill side (right for the
-	# left cluster), fanning up/out and down/out.
 	var specs: Array = [
-		[Vector2(34, 23), Vector2(4, 0), -0.5],
-		[Vector2(30, 20), Vector2(10, 15), 0.12],
-		[Vector2(24, 16), Vector2(14, 30), 0.65],
+		[Vector2(34, 23), Vector2(4, 2), -0.45],
+		[Vector2(30, 20), Vector2(10, 16), 0.10],
+		[Vector2(24, 16), Vector2(14, 28), 0.58],
 	]
 	for sp in specs:
 		var leaf := TextureRect.new()
@@ -5901,13 +5901,12 @@ func _draft_leaf_cluster(flip: bool) -> Control:
 		leaf.position = sp[1]
 		leaf.pivot_offset = (sp[0] as Vector2) * 0.5
 		leaf.rotation = float(sp[2])
+		leaf.flip_h = flip
 		leaf.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		leaf.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		leaf.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		c.add_child(leaf)
 	if flip:
-		# Mirror around the cluster centre: the fan base
-		# moves to the left (pill) side.
 		for ch in c.get_children():
 			var l := ch as TextureRect
 			l.position = Vector2(48.0 - l.position.x - l.size.x, l.position.y)
@@ -6273,13 +6272,16 @@ func _draft_card(opt: Dictionary, idx: int) -> Button:
 	_draft_card_rars.append(rar)
 	var top := Panel.new()
 	top.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	top.offset_left = 2
-	top.offset_right = -2
-	top.offset_top = 2
+	top.offset_left = 13
+	top.offset_right = -13
+	top.offset_top = 14
 	top.offset_bottom = 150
 	var tc := top_c
 	tc.a = 0.85
-	top.add_theme_stylebox_override("panel", UiTheme.flat_box(tc.lightened(0.62), 28))
+	var top_sb := UiTheme.flat_box(tc.lightened(0.62), 14)
+	top_sb.corner_radius_top_left = 18
+	top_sb.corner_radius_top_right = 18
+	top.add_theme_stylebox_override("panel", top_sb)
 	top.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card.add_child(top)
 	var ic := UiBadge.new(icon, top_c, 96)
@@ -6423,6 +6425,10 @@ func _draft_card(opt: Dictionary, idx: int) -> Button:
 	# promoted state. Toggled by _paint_draft_cards
 	# (hidden while banishing).
 	if idx == _draft_options.size() / 2:
+		# 主推中卡采用纯正金色相框边框 + 内暖金辉光，彻底告别异色双边重叠
+		if rar >= 0:
+			card.add_theme_stylebox_override("normal", UiTheme.card_frame_box(4))
+			card.add_theme_stylebox_override("hover", UiTheme.card_frame_box(4, true))
 		var fx := Control.new()
 		fx.set_anchors_preset(Control.PRESET_FULL_RECT)
 		fx.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -6431,13 +6437,13 @@ func _draft_card(opt: Dictionary, idx: int) -> Button:
 		glow.texture = _gold_glow_texture()
 		glow.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		glow.stretch_mode = TextureRect.STRETCH_SCALE
-		glow.modulate = Color(1, 0.85, 0.4, 0.6)
+		glow.modulate = Color(1, 0.88, 0.45, 0.55)
 		glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		fx.add_child(glow)
 		var rim := Panel.new()
 		rim.set_anchors_preset(Control.PRESET_FULL_RECT)
 		rim.add_theme_stylebox_override("panel",
-			UiTheme.flat_box(Color(0, 0, 0, 0), 30, UiTheme.GOLD, 4))
+			UiTheme.flat_box(Color(0, 0, 0, 0), 26, Color(1.0, 0.84, 0.25, 0.85), 3))
 		rim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		fx.add_child(rim)
 		# Gold sparkles at the free corners/edges (the top
@@ -15477,9 +15483,12 @@ func _layout_hud() -> void:
 			if ct < INF and cl < INF and ct + tc_o.y < 10.0 + 68.0 * s_top + 12.0:
 				right_b = minf(right_b, cl + tc_o.x - 12.0)
 		s_card = minf(s_top, maxf(right_b - band_r, 1.0) / 560.0)
-		var pc := (band_r + right_b) * 0.5
+		# 对标 U1_final.jpg：顶栏严格对齐屏幕水平正中心 vw * 0.5（仅当安全边距不足时微幅让步），同时显式同步 size 与 pivot 防止缩放漂移
+		var pc := clampf(vw * 0.5, band_r + 280.0 * s_card, right_b - 280.0 * s_card)
 		_top_card.offset_left = pc - vw * 0.5 - 280.0
 		_top_card.offset_right = pc - vw * 0.5 + 280.0
+		_top_card.size = Vector2(560.0, 68.0)
+		_top_card.pivot_offset = Vector2(280.0, 0.0)
 		_set_scaled(_top_card, s_card)
 		_p2_fit_fonts(s_card, s_top)
 		_p2_place_wx_hit()
@@ -15552,55 +15561,40 @@ func _layout_hud() -> void:
 		var span_r := lane_l - 12.0
 		var span_w := maxf(span_r - span_l, 1.0)
 		var span_c := (span_l + span_r) * 0.5
+		# 保持顶栏、Boss条、必杀切入、头领条、大横幅全居中同一屏中轴线对齐
+		var align_c := clampf(vw * 0.5, band_r + 280.0 * s_card, span_r - 280.0 * s_card) if phone else span_c
+		var sym_w_vis := maxf(2.0 * minf(align_c - band_r, span_r - align_c), 1.0)
+		var sym_w_safe := maxf(2.0 * minf(align_c - span_l, span_r - align_c), 1.0)
 		_dbg_span = Vector2(span_l, span_r)
-		# UI-mobile P4: the BL rows (Z7) settle before the
-		# bubble (Z6) reads their drawn right edge.
 		if phone:
 			_p4_layout_bl(s, vw, vh)
-		# Flow downward from the top card's visual
-		# bottom + 8, 8 px gaps, hidden items skipped:
-		# boss card -> mini bars -> banner (audit F3).
 		var stack_y := 10.0 + (68.0 if phone else 84.0) * s_card + 8.0
 		var boss_y := stack_y
+		var bs_top := minf(s, (sym_w_vis if phone else span_w) / 642.0)
 		if _boss_card and _boss_card.visible:
-			stack_y += 46.0 * minf(s, span_w / 642.0) + 8.0
-		# UI-mobile P3 (plan C4): the ult cut-in heads the
-		# centre stack on the new layout (it shared the boss
-		# card's y band); the boss card moves down for 1.3 s.
+			stack_y += 46.0 * bs_top + 8.0
 		if phone and _cutin_panel:
-			# Capped by s_top like the bars (audit F4's rule):
-			# at the raw factor the band alone was 115 px.
-			var cs := minf(s_top, span_w / 460.0)
+			var cs := minf(s_top, sym_w_vis / 460.0)
+			_cutin_panel.offset_left = align_c - vw * 0.5 - 230.0
+			_cutin_panel.offset_right = align_c - vw * 0.5 + 230.0
+			_cutin_panel.size = Vector2(460.0, 64.0)
+			_cutin_panel.pivot_offset = Vector2(230.0, 0.0)
 			_set_scaled(_cutin_panel, cs)
-			_cutin_panel.offset_left = span_c - vw * 0.5 - 230.0
-			_cutin_panel.offset_right = span_c - vw * 0.5 + 230.0
 			if _cutin_panel.visible:
 				_cutin_panel.offset_top = stack_y
 				_cutin_panel.offset_bottom = stack_y + 64.0
 				stack_y += 64.0 * cs + 8.0
 		if _boss_card:
-			# U1 1:1 round 17 (coordinator): the fit's assumed
-			# card width follows the card's real content —
-			# 460 -> 642 since round 16 widened the track to
-			# 614; at the old divisor the widened children
-			# overflowed the 460 box and ran off-screen.
-			var bs := minf(s, span_w / 642.0)
-			_set_scaled(_boss_card, bs)
-			_boss_card.offset_left = span_c - vw * 0.5 - 321.0
-			_boss_card.offset_right = span_c - vw * 0.5 + 321.0
+			var bc_c := align_c if phone else span_c
+			_boss_card.offset_left = bc_c - vw * 0.5 - 321.0
+			_boss_card.offset_right = bc_c - vw * 0.5 + 321.0
+			_boss_card.size = Vector2(642.0, 46.0)
+			_boss_card.pivot_offset = Vector2(321.0, 0.0)
+			_set_scaled(_boss_card, bs_top)
 			if _boss_card.visible:
-				# offset_bottom moves WITH the top —
-				# these are plain Panels, so a top-only
-				# write would stretch the card (its
-				# bottom stays at the creation value).
 				_boss_card.offset_top = boss_y
 				_boss_card.offset_bottom = boss_y + 46.0
-		# Audit F4: bar scale capped by s_top (not the
-		# raw factor) and the span; bars flow under the
-		# boss card instead of the fixed 238.
-		var bar_s := minf(s_top, span_w / 300.0)
-		# Prompt before the toast (fix round 2): the toast
-		# row below reads the prompt's drawn top.
+		var bar_s := minf(s_top, (sym_w_safe if phone else span_w) / 300.0)
 		_layout_prompt(span_l, span_r, vw, vh, s)
 		var bars_top := stack_y
 		var bars_n := 0
@@ -15609,26 +15603,33 @@ func _layout_hud() -> void:
 			if (bar["panel"] as Control).visible:
 				vis_bars += 1
 		if phone and vis_bars == 2:
-			# UI-mobile P3 (plan C2): two bars sit SIDE BY SIDE
-			# (one row saved), each centred in its half span.
-			var bar_s2 := minf(s_top, (span_w * 0.5 - 8.0) / 300.0)
+			# 若双头领条已经落在头像圆底缘之下则以居中对称宽展开，否则安全退回 span_l 避让 hero_deep
+			var bar_clear := bars_top >= 12.0 + 108.0 * s_top + 2.0
+			var b_area_w := sym_w_vis if bar_clear else span_w
+			var b_area_l := (align_c - sym_w_vis * 0.5) if bar_clear else span_l
+			var bar_s2 := minf(s_top, (b_area_w * 0.5 - 8.0) / 300.0)
 			var k := 0
 			for bar in _mini_bars:
 				var mp2 := bar["panel"] as Control
-				_set_scaled(mp2, bar_s2)
-				var cx := span_l + span_w * (0.25 if k == 0 else 0.75)
+				var cx := b_area_l + b_area_w * (0.25 if k == 0 else 0.75)
 				mp2.offset_left = cx - vw * 0.5 - 150.0
 				mp2.offset_right = cx - vw * 0.5 + 150.0
 				mp2.offset_top = bars_top
 				mp2.offset_bottom = bars_top + 40.0
+				mp2.size = Vector2(300.0, 40.0)
+				mp2.pivot_offset = Vector2(150.0, 0.0)
+				_set_scaled(mp2, bar_s2)
 				k += 1
 			stack_y = bars_top + 40.0 * bar_s2 + 8.0
 		else:
 			for bar in _mini_bars:
 				var mp := bar["panel"] as Control
+				var bc_m := align_c if (phone and bars_top >= 12.0 + 108.0 * s_top + 2.0) else span_c
+				mp.offset_left = bc_m - vw * 0.5 - 150.0
+				mp.offset_right = bc_m - vw * 0.5 + 150.0
+				mp.size = Vector2(300.0, 40.0)
+				mp.pivot_offset = Vector2(150.0, 0.0)
 				_set_scaled(mp, bar_s)
-				mp.offset_left = span_c - vw * 0.5 - 150.0
-				mp.offset_right = span_c - vw * 0.5 + 150.0
 				if mp.visible:
 					mp.offset_top = bars_top + float(bars_n) * 46.0 * bar_s
 					mp.offset_bottom = mp.offset_top + 40.0
@@ -15642,25 +15643,16 @@ func _layout_hud() -> void:
 				tw = maxf(_banner.get_theme_font("font").get_string_size(
 					_banner.text, HORIZONTAL_ALIGNMENT_LEFT, -1.0,
 					_banner.get_theme_font_size("font_size")).x, 1.0)
-			var bsc := minf(s, span_w * 0.90 / tw)
-			# UI-mobile P3 (plan Z4): the centre stack ends by
-			# 0.55·vh; past it the toast drops to scale 1.0 (the
-			# cut-in + boss + side-by-side bars stack pushed the
-			# banner onto the guardian prompt, capture-caught).
+			# 判断当前 y 高度带是否仍在头像区右缘碰撞区内（未过 108*s_top 下方则按 sym_w_safe 对齐中轴线，过线则按全对称）
+			var ban_clear := stack_y >= 12.0 + 108.0 * s_top + 2.0
+			var b_l := (align_c - sym_w_vis * 0.5) if (phone and ban_clear) else span_l
+			var b_r := (align_c + sym_w_vis * 0.5) if (phone and ban_clear) else span_r
+			var b_w := maxf(b_r - b_l, 1.0)
+			var b_c := align_c if phone else span_c
+			var max_sym_w := maxf(2.0 * minf(b_c - b_l, b_r - b_c), 1.0) if phone else span_w
+			var bsc := minf(s, max_sym_w / maxf(tw + 48.0, 1.0))
 			if phone and stack_y + 56.0 * bsc > 0.55 * vh:
 				bsc = minf(bsc, 1.0)
-			# UI-mobile P3 fix round 2 (cut-in up at 2400 s1.50
-			# + 48 inset, 2340 s0.85 hud 1.30): the prompt is
-			# pinned to the BL cluster and grows UP (a 3-4 line
-			# column when the cluster clamp strangles it, or a
-			# full-span 2-liner) while the cut-in + boss + bars
-			# push the toast DOWN — Z4's 0.55·vh line does not
-			# bound the two against each other. The prompt is
-			# laid out first (it reads nothing of the stack);
-			# where the toast's x band meets it, the toast's
-			# height (bsc) ends 4 px above the prompt's top.
-			# bsc only shrinks, so the lane step below stays
-			# conservative.
 			if phone and _prompt != null and _prompt.text != "":
 				var ux := _ui_root.get_global_rect().position.x
 				var uy := _ui_root.get_global_rect().position.y
@@ -15671,44 +15663,30 @@ func _layout_hud() -> void:
 				if pr.end.x > span_l and pr.position.x < span_r \
 						and stack_y + 56.0 * bsc > pr.position.y - 4.0:
 					bsc = minf(bsc, maxf((pr.position.y - 4.0 - stack_y) / 56.0, 0.5))
-			# UI-mobile P3 (it3 corner e, 2400 s1.50 boss): with
-			# the pause / aim column gone the span's right edge
-			# falls back to the minimap, over the dash button —
-			# whose top (384 at ts 1.50) sits above the Z4 line.
-			# The banner row alone ends left of any cluster piece
-			# its band reaches; the rescale only shrinks bsc, so
-			# the band (and the piece set) can only get smaller.
-			var b_l := span_l
-			var b_r := span_r
-			var b_w := span_w
-			var b_c := span_c
 			if phone:
 				var lane := _p3_lane_above(stack_y + 56.0 * bsc + 8.0)
 				if lane < b_r:
 					b_r = maxf(lane, b_l + 1.0)
 					b_w = b_r - b_l
-					b_c = (b_l + b_r) * 0.5
-					bsc = minf(bsc, b_w * 0.90 / tw)
-			_set_scaled(_banner, bsc)
+					b_c = clampf(b_c, b_l + 1.0, b_r - 1.0)
+					max_sym_w = maxf(2.0 * minf(b_c - b_l, b_r - b_c), 1.0)
+					bsc = minf(bsc, max_sym_w / maxf(tw + 48.0, 1.0))
+			# 先设置固定尺寸与准确中心锚点后再应用缩放，消除偏移甩偏！
 			_banner.offset_left = b_c - vw * 0.5 - 430.0
 			_banner.offset_right = b_c - vw * 0.5 + 430.0
-			_banner.offset_top = stack_y + 10.0
-			_banner.offset_bottom = stack_y + 50.0
-			# The banner's width is fixed by the offsets above. Its
-			# previous measured size may be zero or from an older
-			# scale, so pin the pivot to the 860 px design center.
+			_banner.offset_top = stack_y + 8.0
+			_banner.offset_bottom = stack_y + 48.0
+			_banner.size = Vector2(860.0, 40.0)
 			_banner.pivot_offset = Vector2(430.0, 0.0)
-			# The backing is SIZED to the span (its 892
-			# design width exceeds the free span at
-			# phone widths — scaling it with the label
-			# would re-create O3/O4); only its height
-			# scales with bsc.
-			var back_w := minf(b_w / bsc, tw + 48.0)
-			_set_scaled(_banner_back, bsc)
+			_set_scaled(_banner, bsc)
+			var back_w := minf(max_sym_w / maxf(bsc, 0.01), tw + 48.0)
 			_banner_back.offset_left = b_c - vw * 0.5 - back_w * 0.5
 			_banner_back.offset_right = b_c - vw * 0.5 + back_w * 0.5
 			_banner_back.offset_top = stack_y
 			_banner_back.offset_bottom = stack_y + 56.0
+			_banner_back.size = Vector2(back_w, 56.0)
+			_banner_back.pivot_offset = Vector2(back_w * 0.5, 0.0)
+			_set_scaled(_banner_back, bsc)
 	# Cycle 21.3 (audit F1c): the right column's info
 	# stack must end above the touch ult gauge — shed
 	# pills, then goal detail, then the first pill.

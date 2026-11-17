@@ -1639,4 +1639,15 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - **状态：已提交推送至 `origin/align-fix13`，更新 `compare/U1.png`、`compare/U1_boss.png` 并打包覆盖安装终版 APK 至 Seeker 测试机；NUC 端待 Tailscale 中继恢复后同步跑齐双档 `s100` 全量验收。**
 - 本轮提交：`assets/ui/touch/btn_*.png`、`scripts/ui_medallion.gd`、`scripts/minimap.gd`、`scripts/touch_controls.gd`、`scripts/ui_theme.gd`、`scripts/model_rig.gd`、`scripts/player.gd`、`scripts/world.gd`、`Test/u1_final_reaudit_run.sh`、`design/ui-reference/compare/U1.png`、`design/ui-reference/compare/U1_boss.png`、`design/ui-alignment-progress.md`。
 
+## 战斗顶栏与横幅中轴精准居中对齐＋U3/U4/U6全套并排图验收（2026-11-17 15:3x）
+
+- **精准消除用户圈出的「顶栏与横幅上下错位偏右」根因（`scripts/world.gd` `_layout_hud`）**：
+  1. 定位到原 `_top_card` 使用 `(band_r + right_b) * 0.5` 而 `_boss_card` / `_mini_bars` / `_banner_back` 使用 `(hero_r + lane_l) * 0.5` 计算中心，且 `_set_scaled()` 在修改 `offset_left / offset_right` 之前调用导致节点 `pivot_offset` 停留在旧宽（如 `446` vs 新宽中心 `270`）被缩放甩偏 `+105` 屏 px，造成顶栏偏右且与下方横幅、守护者条严重左右错位。
+  2. 将手机端 `_top_card`、`_boss_card`、`_cutin_panel`、双 `_mini_bars` 中缝及 `_banner` / `_banner_back` 全部统一锚定至屏幕正中轴线 `align_c = clampf(vw * 0.5, ...)`，在修改 `offset` 后显式重写 `size` 与中心 `pivot_offset` 再调用 `_set_scaled()` 彻底消除缩放漂移；同时将 `_banner` 字号调至适中 `20px`（`vertical_alignment = VERTICAL_ALIGNMENT_CENTER`）确保长句横幅在对称跨度内不越过 `hero_deep` 且 100% 正中对齐顶栏 `9:59`、守护者条与角色中线。
+- **U3 升级三选一真机实拍瑕疵修复（`scripts/world.gd` `_build_draft` / `_draft_card` / `_draft_leaf_cluster` / `_modal_scrim`）**：
+  - 将卡片顶区色块内缩至 `offset_left=13, offset_right=-13, offset_top=14` 并配顶圆角 `18` 彻底消除方角压框漏边；主推中卡显式切换 `card_frame_box(4)` 纯正金相框消除青绿与金框双色重边；标题左右三叶簇设 `z_index = 2` 对称外展不遮盖；全局 `_modal_scrim` 加深为 `Color(0.10, 0.14, 0.08, 0.56)` 柔和护目遮罩提升弹窗聚焦度。
+- **本地解析门与全套并排对照图亲检**：`Test/u2_shop_reaudit_parse.sh` 全绿通过；已重建并全部 `Read` 目检确认最新并排图 **`compare/U1.png`**、**`compare/U1_boss.png`**、**`compare/U3.png`**、**`compare/U4.png`**、**`compare/U6.png`**（连同之前过门的 `U2.png` / `U2_2400.png` / `U5.png` / `U5_2400.png`）。
+- **状态：已提交推送至 `origin/align-fix13`，同步打包最新全对齐 APK 覆盖安装至 Seeker 测试机 `SM02G4061952376`。**
+- 本轮提交：`scripts/world.gd`、`design/ui-reference/compare/U1.png`、`design/ui-reference/compare/U1_boss.png`、`design/ui-reference/compare/U3.png`、`design/ui-reference/compare/U4.png`、`design/ui-reference/compare/U6.png`、`design/ui-alignment-progress.md`。
+
 
