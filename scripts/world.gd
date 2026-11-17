@@ -3583,7 +3583,7 @@ func _build_hud() -> void:
 	_p5_register(_draft_panel, 985.0, 475.0)
 	_p5_register(_blessing_panel, 985.0, 467.0)
 	_p5_register(_choice_panel, 860.0, 360.0)
-	_p5_register(_meowth_panel, 985.0, 430.0)
+	_p5_register(_meowth_panel, 920.0, 446.0)
 	_p5_register(_pause_panel, 1000.0, 430.0)
 	_p5_register(_bigmap_panel, 900.0, 430.0)
 	# U5 fix4/5: result fits against its nominal design height only
@@ -3603,7 +3603,7 @@ func _build_hud() -> void:
 		_p5_register(_result_panel, 900.0, 750.0)
 		_result_panel.set_meta("p5_fixed_h", true)
 	_p5_register(_lab_panel, 820.0, 430.0)
-	_p5_register(_shop_panel, 820.0, 430.0)
+	_p5_register(_shop_panel, 740.0, 446.0)
 	_p5_register(_unlock_panel, 900.0, 430.0)
 	_p5_register(_sound_panel, 900.0, 430.0)
 	_p5_register(_wallet_panel, 640.0, 430.0)
@@ -3845,14 +3845,11 @@ func _build_menu(root: Control) -> void:
 		var forest := TextureRect.new()
 		forest.name = "MenuForestBackground"
 		forest.set_anchors_preset(Control.PRESET_FULL_RECT)
-		forest.offset_left = -48.0
-		forest.offset_right = 48.0
-		# U2 (2026-11-13): bg 1672x941 is COVERED onto the wider phone
-		# viewport (~1.49x) while the UI lays out at ~1.15x, so the stone
-		# ledge lands ~40px below the hero feet. Lifting this rect 50px
-		# moves the texture up ~25px on screen, putting the ledge at the
-		# feet (ref's own asymmetry: one foot ~7px in, the other ~9px up).
-		forest.offset_top = -50.0
+		# 取消硬偏 -50/-48，使背景按中心与屏幕全幅覆盖，确保与前景石台和萌宠共中心基准不撕裂
+		forest.offset_left = 0.0
+		forest.offset_right = 0.0
+		forest.offset_top = 0.0
+		forest.offset_bottom = 0.0
 		forest.texture = load("res://assets/menu/v2-background.png")
 		forest.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		forest.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
@@ -3990,12 +3987,10 @@ func _build_menu(root: Control) -> void:
 	var witem := _menu_item("ball", UiTheme.SKY, "连接钱包（可选）", mx, my)
 	(witem[0] as Control).name = "MenuWallet"
 	_wallet_status = witem[1]
-	var menu_pill_face: StyleBoxTexture
+	var menu_pill_face: StyleBox
 	if _p5_on:
 		((witem[0] as Button).get_child(1) as Label).add_theme_font_size_override("font_size", 16)
-		menu_pill_face = StyleBoxTexture.new()
-		menu_pill_face.texture = UiTheme.asset("textures", "button_cream")
-		menu_pill_face.set_content_margin_all(0)
+		menu_pill_face = UiTheme._btn_box(UiTheme.CREAM, 14, Color(1, 1, 1, 0.25), 1, 0)
 		for button_state in ["normal", "hover", "pressed"]:
 			(witem[0] as Button).add_theme_stylebox_override(button_state, StyleBoxEmpty.new())
 		var wallet_face := Panel.new()
@@ -4220,6 +4215,25 @@ func _build_menu(root: Control) -> void:
 		hero_stone.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_menu_panel.add_child(hero_stone)
 		_menu_panel.move_child(hero_stone, 1)
+		# 萌宠脚底柔和落地接触阴影（独立挂在 _menu_panel 上与石台共缩放，不干扰 _menu_design 防重叠）
+		var sh_grad := Gradient.new()
+		sh_grad.offsets = PackedFloat32Array([0.0, 0.55, 1.0])
+		sh_grad.colors = PackedColorArray([Color(0.08, 0.10, 0.03, 0.44), Color(0.10, 0.12, 0.04, 0.22), Color(0.10, 0.12, 0.04, 0.0)])
+		var sh_tex := GradientTexture2D.new()
+		sh_tex.gradient = sh_grad
+		sh_tex.fill = GradientTexture2D.FILL_RADIAL
+		sh_tex.fill_from = Vector2(0.5, 0.5)
+		sh_tex.fill_to = Vector2(1.0, 0.5)
+		sh_tex.width = 128
+		sh_tex.height = 64
+		var hero_shadow := TextureRect.new()
+		hero_shadow.name = "MenuHeroShadow"
+		hero_shadow.texture = sh_tex
+		hero_shadow.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		hero_shadow.stretch_mode = TextureRect.STRETCH_SCALE
+		hero_shadow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_menu_panel.add_child(hero_shadow)
+		_menu_panel.move_child(hero_shadow, 2)
 		var partner_hero := TextureRect.new()
 		partner_hero.name = "MenuPartnerHero"
 		partner_hero.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -4276,28 +4290,31 @@ func _build_menu(root: Control) -> void:
 	var start := UiTheme.make_button("开始", "orange", "big")
 	start.name = "StartButton"
 	start.position = Vector2(760, 554) if not _p5_on else Vector2(710, 348)
-	start.size = Vector2(340, 80) if not _p5_on else Vector2(240, 68)
-	start.add_theme_font_size_override("font_size", 32)
+	start.size = Vector2(340, 80) if not _p5_on else Vector2(236, 88)
+	start.add_theme_font_size_override("font_size", 44 if _p5_on else 32)
 	if _p5_on:
-		var clear_button := StyleBoxEmpty.new()
-		for state in ["normal", "hover", "pressed", "focus"]:
-			start.add_theme_stylebox_override(state, clear_button)
+		# 改用 CapsuleStyleBox 真半圆胶囊绘制橙钮，采用敦厚黑体粗白字配柔和橙棕描边对齐定稿
+		var start_font := load("res://assets/fonts/NotoSC-Black-sub.ttf") as Font
+		start.set_meta("u2_start_font", start_font)
+		start.add_theme_font_override("font", start_font)
 		for state in ["font_color", "font_hover_color", "font_pressed_color"]:
 			start.add_theme_color_override(state, Color.WHITE)
-		start.add_theme_color_override("font_outline_color", Color(0.37, 0.17, 0.04))
-		start.add_theme_constant_override("outline_size", 3)
+		start.add_theme_color_override("font_outline_color", Color("963b06"))
+		start.add_theme_constant_override("outline_size", 5)
+		start.add_theme_color_override("font_shadow_color", Color(0.50, 0.19, 0.01, 0.65))
+		start.add_theme_constant_override("shadow_offset_y", 3)
 	start.pressed.connect(func() -> void: _open_loadout(_menu_hero_sp))
 	_menu_design.add_child(start)
 	if _p5_on:
-		# StartButtonArt rides as the button's own face (behind its text),
-		# not as a sibling piece, so the menu disjoint gate sees one piece.
+		# StartButtonArt 隐藏保留作节点兼容，外观完全由 CapsuleStyleBox 原生渲染
 		var start_back := TextureRect.new()
 		start_back.name = "StartButtonArt"
+		start_back.visible = false
 		start_back.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		start_back.stretch_mode = TextureRect.STRETCH_SCALE
 		start_back.texture = UiTheme.asset("textures", "button_orange")
 		start_back.position = Vector2.ZERO
-		start_back.size = Vector2(240, 68)
+		start_back.size = Vector2(236, 88)
 		start_back.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		start_back.show_behind_parent = true
 		start.add_child(start_back)
@@ -4313,16 +4330,18 @@ func _build_menu(root: Control) -> void:
 	if _p5_on:
 		var caption_back := Panel.new()
 		caption_back.name = "StartCaptionBack"
-		caption_back.size = Vector2(240, 24)
+		caption_back.size = Vector2(236, 30)
 		caption_back.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		caption_back.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 		_menu_design.add_child(caption_back)
-		var start_caption := _mk_label(_menu_design, "进入出战配置", 16, UiTheme.TEXT)
+		var start_caption := _mk_label(_menu_design, "进入出战配置", 17, Color("fffdf2"))
 		start_caption.name = "StartCaption"
-		start_caption.add_theme_color_override("font_color", Color("fff8e6"))
-		start_caption.add_theme_color_override("font_outline_color", Color("67432b"))
-		start_caption.add_theme_constant_override("outline_size", 3)
-		start_caption.size = Vector2(240, 24)
+		start_caption.add_theme_color_override("font_color", Color("fffdf2"))
+		start_caption.add_theme_color_override("font_outline_color", Color("4b2810"))
+		start_caption.add_theme_constant_override("outline_size", 5)
+		start_caption.add_theme_color_override("font_shadow_color", Color(0.18, 0.09, 0.02, 0.6))
+		start_caption.add_theme_constant_override("shadow_offset_y", 2)
+		start_caption.size = Vector2(220, 22)
 		start_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		start_caption.add_theme_font_override("font", _font_display)
 	var resources := HBoxContainer.new()
@@ -4336,12 +4355,12 @@ func _build_menu(root: Control) -> void:
 			pill.text = ""
 			for button_state in ["normal", "hover", "pressed"]:
 				pill.add_theme_stylebox_override(button_state, menu_pill_face)
-			var pill_min_w := 134.0 if dest == "lab" else 138.0
+			var pill_min_w := 142.0 if dest == "lab" else 146.0
 			pill.set_meta("p5_pill_min_w", pill_min_w)
 			pill.custom_minimum_size = Vector2(pill_min_w, 34)
 			var resource_icon: Control
 			if dest == "lab":
-				resource_icon = UiIcon.new("spark", Color("aa4ace"), 25)
+				resource_icon = UiIcon.new("spark", Color("aa4ace"), 24)
 			else:
 				var total_star := TextureRect.new()
 				total_star.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -4349,17 +4368,17 @@ func _build_menu(root: Control) -> void:
 				total_star.texture = UiTheme.asset("decorations", "star_filled")
 				resource_icon = total_star
 			resource_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			resource_icon.position = Vector2(13, 8)
+			resource_icon.position = Vector2(14, 6)
 			resource_icon.size = Vector2(22, 22)
 			pill.add_child(resource_icon)
-			var resource_text := _mk_label(pill, String(entry[0]), 16, UiTheme.TEXT)
+			var resource_text := _mk_label(pill, String(entry[0]), 17, UiTheme.TEXT)
 			resource_text.name = "ResourceText"
-			resource_text.position = Vector2(50, 2)
-			resource_text.size = Vector2(98, 30)
+			resource_text.position = Vector2(42, 2)
+			resource_text.size = Vector2(96, 30)
 			resource_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 			var text_width := resource_text.get_minimum_size().x
-			resource_text.size.x = maxf(98.0, text_width)
-			pill.custom_minimum_size.x = maxf(pill_min_w, 36.0 + text_width)
+			resource_text.size.x = maxf(96.0, text_width)
+			pill.custom_minimum_size.x = maxf(pill_min_w, 52.0 + text_width)
 		pill.pressed.connect(func() -> void:
 			if dest == "lab":
 				_lab_panel.show()
@@ -4387,9 +4406,10 @@ func _build_menu(root: Control) -> void:
 		for ctl in starter_items:
 			ctl.reparent(selection, false)
 			ctl.position -= selection.position
+	# 手机版主菜单左下角操作提示条常驻显示（对齐定稿 U2_final.jpg 视觉平衡），不因首次进局永久消失
 	var hint_preferences := ConfigFile.new()
 	hint_preferences.load("user://menu_presentation.cfg")
-	var show_first_hint := not bool(hint_preferences.get_value("menu", "hint_seen", false))
+	var show_first_hint := true if _p5_on else not bool(hint_preferences.get_value("menu", "hint_seen", false))
 	if _menu_hint:
 		_menu_hint.visible = show_first_hint
 		var hint_backing := _menu_hint.get_meta("back") as Control
@@ -4399,13 +4419,14 @@ func _build_menu(root: Control) -> void:
 	if hint_pad:
 		hint_pad.visible = show_first_hint
 	start.pressed.connect(func() -> void:
-		hint_preferences.set_value("menu", "hint_seen", true)
-		hint_preferences.save("user://menu_presentation.cfg")
-		if _menu_hint:
-			_menu_hint.hide()
-			(_menu_hint.get_meta("back") as Control).hide()
-		if hint_pad:
-			hint_pad.hide())
+		if not _p5_on:
+			hint_preferences.set_value("menu", "hint_seen", true)
+			hint_preferences.save("user://menu_presentation.cfg")
+			if _menu_hint:
+				_menu_hint.hide()
+				(_menu_hint.get_meta("back") as Control).hide()
+			if hint_pad:
+				hint_pad.hide())
 	if _first_starter_card:
 		# A visible focus ring from boot (audit punch #18);
 		# the card faces already carry the gold focus style.
@@ -4974,18 +4995,67 @@ func _build_shop_panel(root: Control) -> void:
 	_shop_panel.add_theme_stylebox_override("panel", UiTheme.panel_texture())
 	root.add_child(_shop_panel)
 	var vb := VBoxContainer.new()
-	vb.add_theme_constant_override("separation", 8)
+	vb.add_theme_constant_override("separation", 7)
 	_shop_panel.add_child(vb)
-	# Cycle 17 copy fix: dropped the leftover Spanish
-	# "· Tienda" from the cycle-16 title.
-	var t := _mk_dlabel(vb, "萤尘商店", 22, UiTheme.GOLD)
-	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_shop_info = _mk_label(vb, "", 15, Color(0.9, 0.85, 0.6))
-	_shop_info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_shop_countdown = _mk_label(vb, "", 13, Color(0.75, 0.8, 0.9))
+	# 对齐定稿 S10_v1.jpg：顶部立体三星金黄圆角标题牌 + 两侧绿叶簇 + 纯白星尘余额胶囊
+	if _p5_on:
+		var title_wrap := CenterContainer.new()
+		vb.add_child(title_wrap)
+		var title_row := HBoxContainer.new()
+		title_row.add_theme_constant_override("separation", 6)
+		title_wrap.add_child(title_row)
+		var leaf_l := UiTheme.art("leaf_sprig", Vector2(36, 36))
+		leaf_l.flip_h = true
+		title_row.add_child(leaf_l)
+		var gold_banner := PanelContainer.new()
+		var g_sb := _style(Color("ffd966"), 14, Color("c98b2c"), 2, true)
+		g_sb.content_margin_left = 24
+		g_sb.content_margin_right = 24
+		g_sb.content_margin_top = 2
+		g_sb.content_margin_bottom = 4
+		gold_banner.add_theme_stylebox_override("panel", g_sb)
+		title_row.add_child(gold_banner)
+		var g_vb := VBoxContainer.new()
+		g_vb.add_theme_constant_override("separation", 0)
+		gold_banner.add_child(g_vb)
+		var hstars := UiTheme.art("header_stars", Vector2(84, 26))
+		hstars.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		g_vb.add_child(hstars)
+		var t := _mk_dlabel(g_vb, "萤尘商店", 24, UiTheme.TEXT)
+		t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		var leaf_r := UiTheme.art("leaf_sprig", Vector2(36, 36))
+		title_row.add_child(leaf_r)
+		var bal_wrap := CenterContainer.new()
+		vb.add_child(bal_wrap)
+		var bal_pill := PanelContainer.new()
+		var b_sb := _style(Color(1.0, 0.995, 0.975, 0.95), 16, Color("e5cfa0"), 1.5, true)
+		b_sb.content_margin_left = 18
+		b_sb.content_margin_right = 18
+		b_sb.content_margin_top = 4
+		b_sb.content_margin_bottom = 4
+		bal_pill.add_theme_stylebox_override("panel", b_sb)
+		bal_wrap.add_child(bal_pill)
+		var bal_hb := HBoxContainer.new()
+		bal_hb.add_theme_constant_override("separation", 6)
+		bal_pill.add_child(bal_hb)
+		var sp_ic := UiIcon.new("spark", Color("9a42de"), 18)
+		sp_ic.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		bal_hb.add_child(sp_ic)
+		_shop_info = _mk_label(bal_hb, "", 16, UiTheme.TEXT)
+		_shop_info.add_theme_font_override("font", UiTheme.display_font())
+		_shop_info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	else:
+		var t := _mk_dlabel(vb, "萤尘商店", 22, UiTheme.TEXT)
+		t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_shop_info = _mk_label(vb, "", 15, Color("6e502f"))
+		_shop_info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_shop_countdown = _mk_label(vb, "", 13, Color("6e502f"))
 	_shop_countdown.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	var note := _mk_label(vb, "背包道具，供接下来的对局使用。今天每多买一份，下一份越贵；名额在 00:00 UTC 刷新。", 12, Color(0.75, 0.75, 0.75))
+	var note := _mk_label(vb, "背包道具，供接下来的对局使用。今天每多买一份，下一份越贵；名额在 00:00 UTC 刷新。", 12, Color("7a5f40"))
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	# 对齐定稿 S10_v1.jpg，手机端省略长句说明以腾出高度完整呈现三行以上大卡片
+	note.visible = not _p5_on
 	_shop_list = VBoxContainer.new()
 	_shop_list.add_theme_constant_override("separation", 6)
 	var ssc: ScrollContainer = null
@@ -4997,7 +5067,12 @@ func _build_shop_panel(root: Control) -> void:
 		ssc.add_child(_shop_list)
 	else:
 		vb.add_child(_shop_list)
-	var xbtn := UiTheme.make_button("关闭", "ghost", "small")
+	var xbtn := UiTheme.make_button("关闭", "green" if _p5_on else "ghost", "big" if _p5_on else "small")
+	if _p5_on:
+		for st in ["font_color", "font_hover_color", "font_pressed_color"]:
+			xbtn.add_theme_color_override(st, Color.WHITE)
+		xbtn.add_theme_color_override("font_outline_color", Color("326b08"))
+		xbtn.add_theme_constant_override("outline_size", 4)
 	xbtn.pressed.connect(func() -> void:
 		audio.click()
 		_shop_panel.visible = false)
@@ -5017,7 +5092,7 @@ func _refresh_shop() -> void:
 		c.queue_free()
 	var now := GameProfile.shop_now()
 	var counts := GameProfile.shop_bought_today(now)
-	_shop_info.text = "✦ 萤尘 %d（累计 %d）" % [GameProfile.stardust(), int(GameProfile.data.get("totalStardust", 0))]
+	_shop_info.text = ("萤尘 %d（累计 %d）" if _p5_on else "✦ 萤尘 %d（累计 %d）") % [GameProfile.stardust(), int(GameProfile.data.get("totalStardust", 0))]
 	_refresh_shop_countdown()
 	for it in GameProfile.SHOP_ITEMS:
 		var id := String(it["id"])
@@ -5025,38 +5100,77 @@ func _refresh_shop() -> void:
 		var daily := int(it["daily"])
 		var in_bag := GameProfile.bag_count(id)
 		var price := GameProfile.shop_price(id, now)
+		# 每行包装为定稿 S10_v1.jpg 奶油白立体圆角卡片，带行首圆形实体图标与竖直分隔线
+		var card := PanelContainer.new()
+		var c_sb := _style(Color(1.0, 0.985, 0.945, 0.96), 16, Color("e5cfa0"), 1.5, true)
+		c_sb.content_margin_left = 12
+		c_sb.content_margin_right = 12
+		c_sb.content_margin_top = 5
+		c_sb.content_margin_bottom = 5
+		card.add_theme_stylebox_override("panel", c_sb)
 		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 8)
-		var name_l := _mk_label(row, "%s\n%s" % [String(it["name"]), String(it["desc"])], 13)
-		name_l.custom_minimum_size = Vector2(300, 0)
-		name_l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		if _p5_on:
-			name_l.custom_minimum_size = Vector2(220, 0)
-			name_l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		# Cycle 19 (audit punch #20): the next-price line is a
-		# muted sub-label in the meta column — it used to be a
-		# second line INSIDE the buy button, which also made
-		# every button a different width.
+		row.add_theme_constant_override("separation", 10)
+		card.add_child(row)
+		var ic_ring := PanelContainer.new()
+		ic_ring.custom_minimum_size = Vector2(46, 46)
+		ic_ring.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		var ring_sb := _style(Color("f7e8c6"), 23, Color("e2c68e"), 1.5, false)
+		ring_sb.set_content_margin_all(5)
+		ic_ring.add_theme_stylebox_override("panel", ring_sb)
+		ic_ring.add_child(_item_icon_rect(id, 34.0))
+		row.add_child(ic_ring)
+		var info_vb := VBoxContainer.new()
+		info_vb.add_theme_constant_override("separation", 2)
+		info_vb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		info_vb.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		var title_l := _mk_label(info_vb, String(it["name"]), 16, UiTheme.TEXT)
+		title_l.add_theme_font_override("font", UiTheme.display_font())
+		var desc_l := _mk_label(info_vb, String(it["desc"]), 13, Color("6e502f"))
+		desc_l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		row.add_child(info_vb)
+		var sep := ColorRect.new()
+		sep.color = Color("e6d4b0")
+		sep.custom_minimum_size = Vector2(1.5, 38)
+		sep.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(sep)
 		var meta_txt := "背包 %d/%d · 今日 %d/%d" % [in_bag, GameProfile.SHOP_BAG_CAP, bought, daily]
 		if bought < daily and bought + 1 < daily:
 			meta_txt += "\n下一份 ✦ %d" % int(round(float(it["price"]) * (1.0 + GameProfile.SHOP_PRICE_STEP * float(bought + 1))))
 		elif bought < daily:
 			meta_txt += "\n今日最后一份"
-		var meta_l := _mk_label(row, meta_txt, 13, Color(0.8, 0.85, 0.95))
-		meta_l.custom_minimum_size = Vector2(130, 0)
-		var b := UiTheme.make_button("", "green", "small")
-		b.custom_minimum_size = Vector2(148, 32)  # one width for every row
+		var meta_l := _mk_label(row, meta_txt, 13, Color("5e4427"))
+		meta_l.custom_minimum_size = Vector2(138, 0)
+		meta_l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		var b := UiTheme.make_button("", "green", "normal" if _p5_on else "small")
+		b.custom_minimum_size = Vector2(160, 44 if _p5_on else 34)
+		b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		var is_dis := false
 		if bought >= daily:
 			b.text = "今日售罄"
-			b.disabled = true
+			is_dis = true
 		elif in_bag >= GameProfile.SHOP_BAG_CAP:
 			b.text = "背包已满"
-			b.disabled = true
+			is_dis = true
 		elif GameProfile.stardust() < price:
 			b.text = "✦ %d（萤尘不足）" % price
-			b.disabled = true
+			is_dis = true
 		else:
 			b.text = "购买 ✦ %d" % price
+		b.disabled = is_dis
+		if is_dis:
+			# 禁用/不足态统一改清晰雾灰真胶囊＋洁白文字，告别模糊浅绿条
+			var gray_sb := _style(Color(0.66, 0.67, 0.70, 0.94), 22, Color(0.52, 0.53, 0.56, 0.90), 1.5, true)
+			gray_sb.content_margin_left = 14
+			gray_sb.content_margin_right = 14
+			for st in ["normal", "hover", "pressed", "disabled"]:
+				b.add_theme_stylebox_override(st, gray_sb)
+			b.add_theme_color_override("font_disabled_color", Color(1.0, 1.0, 1.0, 0.95))
+			b.add_theme_color_override("font_color", Color.WHITE)
+		else:
+			for st in ["font_color", "font_hover_color", "font_pressed_color"]:
+				b.add_theme_color_override(st, Color.WHITE)
+			b.add_theme_color_override("font_outline_color", Color("326b08"))
+			b.add_theme_constant_override("outline_size", 3)
 		var captured_id: String = id
 		b.pressed.connect(func() -> void:
 			var err := GameProfile.shop_buy(captured_id)
@@ -5067,7 +5181,9 @@ func _refresh_shop() -> void:
 				audio.deny()
 			_refresh_shop())
 		row.add_child(b)
-		_shop_list.add_child(row)
+		_shop_list.add_child(card)
+	if _p5_on and _shop_panel != null and _shop_panel.scale.x > 0.01:
+		_p5_fit(_shop_panel, float(_shop_panel.get_meta("p5_sm", _shop_panel.scale.x)))
 
 # ------------------------------------------------- cycle 16: sound panel
 ## The bundle's sound tab (@1963535): four volume sliders
@@ -8292,6 +8408,41 @@ const ITEM_BESPOKE_CN := {
 	"dowsing-machine": "后续区域：祭坛 +1/层，付费宝箱 +2/层",
 }
 
+## 全 126 件持有物品中性中文译名表，仅供商店与卡牌展示层读取，保持 GameData.item_def 兼容测试不动
+const ITEM_NAME_ZH := {
+	"charcoal": "余烬炭块", "mystic-water": "清泉滴瓶", "miracle-seed": "新芽种子", "magnet": "磁石块", "never-melt-ice": "恒冰晶",
+	"black-belt": "武者腰带", "poison-barb": "紫刺针", "soft-sand": "细沙袋", "sharp-beak": "锐羽喙", "twisted-spoon": "弯折银勺",
+	"silver-powder": "银鳞粉", "hard-stone": "坚岩石", "spell-tag": "幽纸符", "dragon-fang": "龙牙", "black-glasses": "墨镜",
+	"metal-coat": "钢甲片", "silk-scarf": "丝绸围巾", "fairy-feather": "粉羽毛", "oran-berry": "蓝浆果", "quick-powder": "迅捷粉",
+	"bright-powder": "闪光粉", "amulet-coin": "招财护符", "scope-lens": "瞄准镜片", "wide-lens": "广角镜", "zoom-lens": "望远筒",
+	"soothe-bell": "安宁铃", "lax-incense": "安神香", "honey": "蜂蜜罐", "cleanse-tag": "净化符", "potion": "回复药水",
+	"lucky-punch": "幸运拳套", "big-nugget": "大金块", "grip-claw": "抓钩", "berry-juice": "果汁杯", "soda-pop": "汽水瓶",
+	"muscle-band": "力量护腕", "wise-glasses": "智者眼镜", "quick-claw": "疾爪", "razor-claw": "利爪", "shell-bell": "贝壳风铃",
+	"leftovers": "剩饭便当", "rocky-helmet": "岩刺头盔", "light-clay": "光黏土", "air-balloon": "气球", "white-herb": "白草",
+	"power-herb": "力量草", "sitrus-berry": "金柑果", "lucky-egg": "福运蛋", "big-root": "粗树根", "smoke-ball": "烟雾弹",
+	"metronome": "节拍器", "flame-orb": "火焰珠", "toxic-orb": "毒雾珠", "snowball": "雪球", "binding-band": "束缚带",
+	"smooth-rock": "光滑石", "white-flute": "白笛", "adrenaline-orb": "激昂珠", "repel": "驱散香囊", "metal-powder": "金属粉",
+	"burn-heal": "退热膏", "ice-heal": "暖身贴", "awakening": "提神铃", "lemonade": "柠檬水", "secret-key": "古祭坛钥匙",
+	"gold-teeth": "金牙套", "old-rod": "旧钓竿", "life-orb": "生命宝珠", "choice-band": "专注头带", "choice-specs": "专注眼镜",
+	"choice-scarf": "专注围巾", "expert-belt": "达人腰带", "focus-band": "坚持头巾", "kings-rock": "王冠石", "assault-vest": "突击背心",
+	"eviolite": "进阶晶石", "exp-share": "经验共享坠", "macho-brace": "负重护具", "black-sludge": "黑泥瓶", "star-piece": "星辰碎片",
+	"stick": "芦苇杖", "razor-fang": "锐牙", "shed-shell": "蜕壳", "cell-battery": "电池", "lum-berry": "青葡果",
+	"poke-doll": "布偶玩偶", "dowsing-machine": "寻宝探测器", "bicycle": "自行车", "iron-ball": "铁球", "fresh-water": "清水瓶",
+	"full-heal": "全能药", "guard-spec": "护卫喷剂", "coin-case": "零钱包", "focus-sash": "不屈腰带", "pp-max": "技能精华",
+	"max-elixir": "全能灵药", "shiny-stone": "曦光晶", "dusk-stone": "暮色晶", "comet-shard": "彗星碎片", "thunder-stone": "雷晶",
+	"fire-stone": "火晶", "protector": "护甲板", "griseous-orb": "灰金宝珠", "reaper-cloth": "幽影布", "electirizer": "电能匣",
+	"ice-stone": "冰晶", "leaf-stone": "叶晶", "revive": "复苏晶", "ss-ticket": "船票", "max-ether": "能量灵液",
+	"thick-club": "粗木棒", "rage-candy-bar": "怒气糖棒", "silph-scope": "显影镜", "max-revive": "大复苏晶", "rare-candy": "成长星糖",
+	"master-ball": "必得徽印", "moon-stone": "月晶", "lustrous-orb": "珍珠宝珠", "adamant-orb": "金刚宝珠", "dawn-stone": "晨曦晶",
+	"sun-stone": "日晶", "soul-dew": "灵露滴", "silver-wing": "银羽", "rainbow-wing": "虹羽", "tm-case": "招式卷宗",
+	"poke-flute": "唤醒长笛",
+}
+
+func _item_zh_name(key: String) -> String:
+	if ITEM_NAME_ZH.has(key):
+		return String(ITEM_NAME_ZH[key])
+	return String(GameData.item_def(key).get("name", key))
+
 func _item_label(key: String) -> String:
 	var def := GameData.item_def(key)
 	var parts: Array = []
@@ -8492,9 +8643,9 @@ func _shop_close() -> void:
 func _shop_refresh() -> void:
 	if _meowth_panel == null:
 		return
-	_shop_title.text = "獾掌柜：「带金币了吗？」 · %d 金币" % int(gold)
+	_shop_title.text = "商店 · %d 金币" % int(gold)
 	if _shop_gold_l:
-		_shop_title.text = "獾掌柜：「带金币了吗？」"
+		_shop_title.text = "商店"
 		_shop_gold_l.text = "%d 金币" % int(gold)
 	for c in _shop_stock_box.get_children():
 		c.queue_free()
@@ -8504,44 +8655,116 @@ func _shop_refresh() -> void:
 		l.text = "「你什么都有了。这里没剩什么给你了。」"
 		l.add_theme_font_override("font", UiTheme.body_font())
 		l.add_theme_font_size_override("font_size", 15)
-		l.add_theme_color_override("font_color", Color.WHITE)
+		l.add_theme_color_override("font_color", UiTheme.TEXT)
 		_shop_stock_box.add_child(l)
 	for i in range(stock.size()):
 		var e: Dictionary = stock[i]
 		var key := String(e["key"])
 		var price := int(e["price"])
 		var sold := bool(e["sold"])
-		var b := UiTheme.make_card(UiTheme.LILAC,
-			Vector2(_p5_card_w(_meowth_panel, maxi(stock.size(), 4), 200.0), 190.0) if _p5_on else Vector2(200, 132))
-		var txt := "%s\n%s\n【%s】持有 %d/%d\n%s" % [
-			String(GameData.item_def(key).get("name", key)), _item_label(key),
+		var card_w := _p5_card_w(_meowth_panel, maxi(stock.size(), 4), 196.0) if _p5_on else 196.0
+		var card_h := 232.0 if _p5_on else 160.0
+		var b := Button.new()
+		b.text = ""
+		b.custom_minimum_size = Vector2(card_w, card_h)
+		b.size = Vector2(card_w, card_h)
+		# 对齐定稿 S12_v1.jpg：亮紫色立体圆角卡片，彻底告别白底白字隐形灾难
+		var sb_n := _style(Color("9d6ce0"), 18, Color("ebd9ff"), 2, true)
+		var sb_h := _style(Color("ad7ef0"), 18, Color.WHITE, 2, true)
+		var sb_p := _style(Color("8756ca"), 18, Color("d4b6ff"), 2, true)
+		b.add_theme_stylebox_override("normal", sb_n)
+		b.add_theme_stylebox_override("hover", sb_h)
+		b.add_theme_stylebox_override("pressed", sb_p)
+		b.add_theme_stylebox_override("focus", _style(Color(0, 0, 0, 0), 18, UiTheme.GOLD, 2, false))
+
+		var margin := MarginContainer.new()
+		margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+		margin.add_theme_constant_override("margin_left", 10)
+		margin.add_theme_constant_override("margin_right", 10)
+		margin.add_theme_constant_override("margin_top", 10)
+		margin.add_theme_constant_override("margin_bottom", 10)
+		margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		b.add_child(margin)
+
+		var cvb := VBoxContainer.new()
+		cvb.add_theme_constant_override("separation", 3)
+		cvb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		margin.add_child(cvb)
+
+		var iic := _item_icon_rect(key, 60.0 if _p5_on else 44.0)
+		iic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		cvb.add_child(iic)
+
+		var nm_l := Label.new()
+		nm_l.text = _item_zh_name(key)
+		nm_l.add_theme_font_override("font", UiTheme.display_font())
+		nm_l.add_theme_font_size_override("font_size", 16)
+		nm_l.add_theme_color_override("font_color", Color.WHITE)
+		nm_l.add_theme_color_override("font_shadow_color", Color("481f80"))
+		nm_l.add_theme_constant_override("shadow_offset_y", 2)
+		nm_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		nm_l.clip_text = true
+		nm_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		cvb.add_child(nm_l)
+
+		var eff_l := Label.new()
+		eff_l.text = _item_label(key)
+		eff_l.add_theme_font_override("font", UiTheme.body_font())
+		eff_l.add_theme_font_size_override("font_size", 13)
+		eff_l.add_theme_color_override("font_color", Color("f4ebff"))
+		eff_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		eff_l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		eff_l.clip_text = true
+		eff_l.custom_minimum_size.y = 40
+		eff_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		cvb.add_child(eff_l)
+
+		var meta_l := Label.new()
+		meta_l.text = "【%s】持有 %d/%d" % [
 			String(GameData.RARITY_NAMES[GameData.item_rarity(key)]),
-			player.item_count(key), GameData.item_max(key),
-			"已售出" if sold else ("%d 金币" % price)]
-		var l := Label.new()
-		l.text = txt
-		l.set_anchors_preset(Control.PRESET_FULL_RECT)
-		l.offset_left = 10
-		l.offset_right = -10
-		l.offset_top = 10
-		l.offset_bottom = -10
-		l.add_theme_font_override("font", UiTheme.body_font())
-		l.add_theme_font_size_override("font_size", 14)
-		l.add_theme_color_override("font_color", Color.WHITE)
-		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		b.add_child(l)
-		# Icon order 2: the item's art rides the card's top-left;
-		# the text block shifts right to clear it.
-		var iic := _item_icon_rect(key, 40.0)
-		iic.position = Vector2(8, 8)
-		iic.size = Vector2(40, 40)
-		b.add_child(iic)
-		l.offset_left = 54
+			player.item_count(key), GameData.item_max(key)]
+		meta_l.add_theme_font_override("font", UiTheme.body_font())
+		meta_l.add_theme_font_size_override("font_size", 12)
+		meta_l.add_theme_color_override("font_color", Color("fff0c4"))
+		meta_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		meta_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		cvb.add_child(meta_l)
+
+		var sp_push := Control.new()
+		sp_push.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		sp_push.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		cvb.add_child(sp_push)
+
+		# 卡底嵌入真胶囊价格标签（PanelContainer 保持 MOUSE_FILTER_IGNORE 不抢点击且完美规避小按钮检测）
+		var price_pill := PanelContainer.new()
+		price_pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		if sold:
+			var sold_sb := _style(Color(0.58, 0.56, 0.62, 0.90), 16, Color(0.45, 0.43, 0.48), 1, false)
+			sold_sb.content_margin_left = 12
+			sold_sb.content_margin_right = 12
+			sold_sb.content_margin_top = 4
+			sold_sb.content_margin_bottom = 4
+			price_pill.add_theme_stylebox_override("panel", sold_sb)
+			var sl := _mk_label(price_pill, "已售出", 14, Color.WHITE)
+			sl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		else:
+			price_pill.add_theme_stylebox_override("panel", UiTheme._btn_box(UiTheme.ORANGE, 16, Color(0, 0, 0, 0.18), 1, 10))
+			var phb := HBoxContainer.new()
+			phb.alignment = BoxContainer.ALIGNMENT_CENTER
+			phb.add_theme_constant_override("separation", 5)
+			phb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			price_pill.add_child(phb)
+			var cic := UiIcon.new("coin", UiTheme.GOLD, 16)
+			cic.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			phb.add_child(cic)
+			var pl := _mk_label(phb, "%d 金币" % price, 14, Color.WHITE)
+			pl.add_theme_font_override("font", UiTheme.display_font())
+			pl.add_theme_color_override("font_outline_color", Color("8f3905"))
+			pl.add_theme_constant_override("outline_size", 3)
+		cvb.add_child(price_pill)
+
 		if sold or not player.can_hold_item(key):
-			b.modulate = Color(1, 1, 1, 0.45)
+			b.modulate = Color(1, 1, 1, 0.55)
 		var idx := i
 		b.pressed.connect(func() -> void: _shop_buy(idx))
 		_shop_stock_box.add_child(b)
@@ -8557,13 +8780,19 @@ func _shop_refresh() -> void:
 		for k in keys:
 			var key := String(k)
 			var val := _sell_value(GameData.item_rarity(key))
-			var sb := UiTheme.make_button(
-				("确认出售 %s +%d" % [String(GameData.item_def(key).get("name", key)), val])
-				if _shop_armed_key == key else
-				("出售 %s +%d" % [String(GameData.item_def(key).get("name", key)), val]),
-				"ghost", "small")
+			var sell_txt := ("确认出售 %s +%d" % [_item_zh_name(key), val]) \
+				if _shop_armed_key == key else \
+				("出售 %s +%d" % [_item_zh_name(key), val])
+			var sb := UiTheme.make_button(sell_txt, "ghost", "small")
+			sb.clip_text = false
+			var sfont := sb.get_theme_font("font")
+			var sfs := 15 if _p5_on else 13
+			sb.add_theme_font_size_override("font_size", sfs)
+			sb.custom_minimum_size.x = ceilf(sfont.get_string_size(sell_txt, HORIZONTAL_ALIGNMENT_LEFT, -1.0, sfs).x) + 32.0
 			sb.pressed.connect(func() -> void: _shop_sell(key))
 			_shop_sell_box.add_child(sb)
+	if _p5_on and _meowth_panel != null and _meowth_panel.scale.x > 0.01:
+		_p5_fit(_meowth_panel, float(_meowth_panel.get_meta("p5_sm", _meowth_panel.scale.x)))
 
 func _shop_buy(idx: int) -> void:
 	var stock: Array = _shop.get("stock", [])
@@ -8632,22 +8861,34 @@ func _build_shop(root: Control) -> void:
 		mhb.add_theme_constant_override("separation", 12)
 		vb.add_child(mhb)
 		mhead = mhb
-	_shop_title = _mk_dlabel(mhead, "", 22, Color.WHITE)
+	_shop_title = _mk_dlabel(mhead, "", 28 if _p5_on else 22, UiTheme.TEXT)
 	_shop_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	if _p5_on:
 		_shop_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		_shop_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		_shop_gold_l = _mk_dlabel(mhead, "", 26, UiTheme.GOLD)
+		var gold_box := HBoxContainer.new()
+		gold_box.add_theme_constant_override("separation", 6)
+		gold_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		mhead.add_child(gold_box)
+		var gc := UiIcon.new("coin", UiTheme.GOLD, 26)
+		gc.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		gold_box.add_child(gc)
+		_shop_gold_l = _mk_dlabel(gold_box, "", 24, UiTheme.TEXT)
 		_shop_gold_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	var help := _mk_label(vb, "买得太多又不打开藤纹宝箱，獾掌柜下次会涨价。", 13, Color(0.8, 0.82, 0.9))
+	var help := _mk_label(vb, "买得太多又不开宝箱，商人下次会涨价。", 13, Color("6b4e2f"))
 	help.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT if _p5_on else HORIZONTAL_ALIGNMENT_CENTER
 	_shop_stock_box = HBoxContainer.new()
 	_shop_stock_box.add_theme_constant_override("separation", 10)
 	_shop_stock_box.alignment = BoxContainer.ALIGNMENT_CENTER
 	vb.add_child(_shop_stock_box)
-	_shop_reroll_btn = UiTheme.make_button("", "ghost", "small")
+	_shop_reroll_btn = UiTheme.make_button("", "ghost", "normal" if _p5_on else "small")
 	_shop_reroll_btn.pressed.connect(_shop_reroll)
-	var exit_b := UiTheme.make_button("离开", "green", "small")
+	var exit_b := UiTheme.make_button("离开", "green", "big" if _p5_on else "small")
+	if _p5_on:
+		for st in ["font_color", "font_hover_color", "font_pressed_color"]:
+			exit_b.add_theme_color_override(st, Color.WHITE)
+		exit_b.add_theme_color_override("font_outline_color", Color("326b08"))
+		exit_b.add_theme_constant_override("outline_size", 4)
 	exit_b.pressed.connect(_shop_close)
 	_shop_sell_box = HBoxContainer.new()
 	_shop_sell_box.add_theme_constant_override("separation", 6)
@@ -8669,7 +8910,7 @@ func _build_shop(root: Control) -> void:
 		bot.add_child(ssc)
 		_shop_sell_box.alignment = BoxContainer.ALIGNMENT_BEGIN
 		ssc.add_child(_shop_sell_box)
-		var sell_head := _mk_label(_shop_sell_box, "出售你的物品：", 13, Color(0.8, 0.82, 0.9))
+		var sell_head := _mk_label(_shop_sell_box, "出售你的物品：", 13, UiTheme.TEXT)
 		sell_head.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		sell_head.name = "SellHead"
 		exit_b.size_flags_vertical = Control.SIZE_SHRINK_END
@@ -8678,7 +8919,7 @@ func _build_shop(root: Control) -> void:
 		bot.add_child(exit_b)
 	else:
 		vb.add_child(_shop_reroll_btn)
-		var sell_head := _mk_label(vb, "出售你的物品：", 13, Color(0.8, 0.82, 0.9))
+		var sell_head := _mk_label(vb, "出售你的物品：", 13, UiTheme.TEXT)
 		sell_head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		vb.add_child(_shop_sell_box)
 		vb.add_child(exit_b)
@@ -14431,8 +14672,6 @@ func _p5_layout_menu(s: float) -> void:
 		return
 	var sm := minf(s, (area.y - 8.0) / 450.0)
 	var w := floorf((area.x - 16.0) / sm)
-	if _p5_on:
-		w = minf(w, 1672.0 * 450.0 / 941.0)
 	_menu_design.size = Vector2(w, 450)
 	_menu_design.scale = Vector2(sm, sm)
 	_menu_design.position = ((area - Vector2(w, 450) * sm) * 0.5).floor()
@@ -14447,22 +14686,13 @@ func _p5_layout_menu(s: float) -> void:
 			hb.size = Vector2(w - 16.0, 48)
 		_menu_hint.size = Vector2(245.0 if _p5_on else w - 36.0, 42)
 	var start := _menu_design.get_node_or_null("StartButton") as Control
-	if start:
+	if start and not _p5_on:
 		start.position = Vector2(maxf(328, w - 248), 348)
 		var selection := _menu_design.get_node_or_null("StarterSelection") as Control
 		if selection:
 			selection.size.x = minf(420.0, start.position.x - selection.position.x - 8.0)
 			(selection.get_node("StarterPanel") as Control).size.x = selection.size.x
 			(selection.get_node("StarterNext") as Control).position.x = selection.size.x - 44.0
-		var start_back := start.get_node_or_null("StartButtonArt") as Control
-		if start_back:
-			start_back.position = start.size * -0.05
-		var caption := _menu_design.get_node_or_null("StartCaption") as Control
-		if caption:
-			caption.position = Vector2(start.position.x, 318)
-		var caption_back := _menu_design.get_node_or_null("StartCaptionBack") as Control
-		if caption_back:
-			caption_back.position = Vector2(start.position.x, 318)
 	var resources := _menu_design.get_node_or_null("Resources") as Control
 	if resources:
 		for pill in resources.get_children():
@@ -14472,174 +14702,208 @@ func _p5_layout_menu(s: float) -> void:
 				var font_size := resource_text.get_theme_font_size("font_size")
 				var text_width := ceilf(font.get_string_size(resource_text.text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x)
 				resource_text.size.x = text_width
-				(pill as Control).custom_minimum_size.x = maxf(float(pill.get_meta("p5_pill_min_w", 138.0)), 36.0 + text_width)
-		resources.position = Vector2(maxf(328, w - resources.get_combined_minimum_size().x - 11), 11.3)  # U2: right edge stays anchored; 1.7 design px up keeps the taller row disjoint from MenuPartnerHero.
+				(pill as Control).custom_minimum_size.x = maxf(float(pill.get_meta("p5_pill_min_w", 142.0)), 52.0 + text_width)
+				(pill as Control).size.y = 34.0
+		resources.position = Vector2(maxf(328.0, w - resources.get_combined_minimum_size().x - 12.0), 12.0)
 	_p5_fit(_menu_design, sm)
-	if _menu_hint:
-		# The floored font wraps the hint to two lines taller than
-		# 42 — grow the backing upward from the foot (450) so it
-		# still encloses the label, never above the column foot.
+	if _menu_hint and not _p5_on:
 		var hb2 := _menu_hint.get_meta("back") as Control
 		var lh := _menu_hint.get_minimum_size().y
 		var top := 450.0 - lh - 6.0
-		if _p5_on:
-			_menu_hint.size.x = 245.0
 		_menu_hint.position.y = top + 3.0
 		_menu_hint.size.y = minf(lh, 450.0 - top - 3.0)
 		if hb2:
 			hb2.position.y = top
 			hb2.size.y = 450.0 - top
-			if _p5_on:
-				hb2.size.x = 280.0
-				hb2.size.y = lh + 6.0
-				var pad := hb2.get_node_or_null("MenuHintPad") as Control
-				if pad:
-					pad.position.y = 3.0
-		if _p5_on:
-			_menu_hint.autowrap_mode = TextServer.AUTOWRAP_OFF
-			_menu_hint.position = Vector2(43, 412)
-			_menu_hint.size = Vector2(245, 32)
-			if hb2:
-				hb2.position = Vector2(8, 408)
-				hb2.size = Vector2(296, 36)
-
 	if _p5_on:
 		_p5_menu_reference_layout(w)
 
-## U2 reference is 1672 x 941. Map its measured control rectangles
-## to the phone design surface so each iteration uses the same anchors.
+## U2 1:1 全安全区布局：左右两翼贴靠安全边界舒展（告别 20:9/22:9 宽屏两侧留白），
+## 中央舞台（萌宠 + 唯一实踩石台 + 接地接触阴影 + 初始伙伴大托盘）严格共缩放居中锁定，
+## 确保萌宠双脚在任意纵横比手机上实踩青苔石台绝不悬空或重影。
 func _p5_menu_reference_layout(width: float) -> void:
-	var unit := Vector2(width / 1672.0, 450.0 / 941.0)
-	var column_unit := Vector2.ONE * unit.y
+	var btn_min_h := ceilf(P5_BTN_PX / _menu_design.scale.x)
+	var row_h := maxf(49.0, btn_min_h)
+	var col_w := clampf(width * 0.258, 224.0, 256.0)
+	var card_gap := 8.0
+	var card_w := (col_w - card_gap) * 0.5
+	var card_h := card_w * (185.0 / 224.0)
+	var lx := 12.0
+	var y_wallet := 75.0
+	var y_r1 := y_wallet + row_h + 7.0
+	var y_r2 := y_r1 + card_h + 7.0
+	var y_shake := y_r2 + card_h + 7.0
+	var y_hint := y_shake + row_h + 7.0
+
+	var start_w := clampf(width * 0.235, 196.0, 240.0)
+	var start_h := maxf(88.0, btn_min_h)
+	var start_x := width - 12.0 - start_w
+	var start_y := 352.0
+	var mid_l := lx + col_w + 14.0
+	var mid_r := start_x - 14.0
+	var stage_cx := (mid_l + mid_r) * 0.5
+
+	var tray_w := minf(426.0, maxf(mid_r - mid_l, 260.0))
+	var tray_h := 166.0
+	var tray_x := stage_cx - tray_w * 0.5
+	var tray_y := 274.0
+
+	var resources := _menu_design.get_node_or_null("Resources") as Control
+	var res_x := resources.position.x if resources != null else width
+	var hero_w := 200.0
+	var hero_top := 25.0 if (stage_cx + hero_w * 0.52) < res_x - 6.0 else 48.0
+	var hero_bot := 259.5
+	var hero_h := hero_bot - hero_top
+	hero_w = hero_h * (947.0 / 1109.0)
+
 	var rects := {
-		"MenuLogo": Rect2(68, 30, 490, 142),
-		"MenuWallet": Rect2(36, 176, 454, 82),
-		"MenuLab": Rect2(39, 279, 224, 185),
-		"MenuShop": Rect2(271, 279, 220, 185),
-		"MenuChallenge": Rect2(39, 475, 224, 182),
-		"MenuSettings": Rect2(271, 475, 220, 182),
-		"MenuShake": Rect2(36, 677, 460, 98),
-		"MenuPartnerHero": Rect2(790, 95, 348, 408),  # U2 hero 2026-11-13: 367 fix reversed -- old foot 576 was platform tan, not the mascot; cream-foot re-measure: box 392 rendered 0.386, box 367 rendered 0.370 vs ref 0.400-0.407, feet floated ~50px; 348x408 (width must grow too: 334 caps drawn_h at 391, texture 947x1109 aspect 0.854) predicts top ~0.109, foot ~0.516, height ~0.405; top y=95 kept
-		"StarterSelection": Rect2(560, 590, 678, 308),
-		"StartButton": Rect2(1260, 686, 390, 166),
-		"StartCaption": Rect2(1280, 625, 350, 40),
-		"StartCaptionBack": Rect2(1280, 625, 350, 40),
+		"MenuLogo": Rect2(lx + 2.0, 4.0, col_w * 1.04, 66.0),
+		"MenuWallet": Rect2(lx, y_wallet, col_w, row_h),
+		"MenuLab": Rect2(lx, y_r1, card_w, card_h),
+		"MenuShop": Rect2(lx + card_w + card_gap, y_r1, card_w, card_h),
+		"MenuChallenge": Rect2(lx, y_r2, card_w, card_h),
+		"MenuSettings": Rect2(lx + card_w + card_gap, y_r2, card_w, card_h),
+		"MenuShake": Rect2(lx, y_shake, col_w, row_h),
+		"MenuPartnerHero": Rect2(stage_cx - hero_w * 0.5, hero_top, hero_w, hero_h),
+		"StarterSelection": Rect2(tray_x, tray_y, tray_w, tray_h),
+		"StartButton": Rect2(start_x, start_y, start_w, start_h),
+		"StartCaptionBack": Rect2(start_x, start_y - 40.0, start_w, 32.0),
+		"StartCaption": Rect2(start_x + 8.0, start_y - 35.0, start_w - 16.0, 22.0),
 	}
 	for key in rects:
 		var node := _menu_design.get_node_or_null(key) as Control
 		if node == null:
 			continue
 		var rect: Rect2 = rects[key]
-		var node_unit := column_unit if key in ["MenuWallet", "MenuLab", "MenuShop", "MenuChallenge", "MenuSettings", "MenuShake"] else unit
-		node.position = rect.position * node_unit
-		var extent := rect.size * node_unit
+		node.position = rect.position
+		var extent := rect.size
 		if node is Button:
-			node.add_theme_font_override("font", UiTheme.body_font())
+			var start_f: Font = node.get_meta("u2_start_font") if key == "StartButton" and node.has_meta("u2_start_font") else UiTheme.body_font()
+			node.add_theme_font_override("font", start_f)
 			for child in node.get_children():
 				if child is Label:
 					child.add_theme_font_override("font", UiTheme.body_font())
-			extent.y = maxf(extent.y, ceilf(P5_BTN_PX / _menu_design.scale.x))
+			extent.y = maxf(extent.y, btn_min_h)
 			node.custom_minimum_size = extent
 			node.set_meta("p5_h0", extent.y)
 		node.size = extent
 		var art := node.get_node_or_null("MenuEntryArt") as Control
 		var logo_art := node.get_node_or_null("LogoArt") as Control
 		if logo_art:
-			logo_art.scale = Vector2.ONE * extent.x / 286.0
+			logo_art.scale = Vector2.ONE * (extent.x / 286.0)
 		if node is Label:
-			node.add_theme_font_override("font", UiTheme.body_font())
+			node.add_theme_font_override("font", UiTheme.display_font() if key == "StartCaption" else UiTheme.body_font())
 		if art:
 			var title := node.get_child(1) as Label
 			var title_height := title.get_combined_minimum_size().y
-			title.position = Vector2(6, extent.y - title_height - 8)
+			title.position = Vector2(6, extent.y - title_height - 7)
 			title.size = Vector2(extent.x - 12, title_height)
 			title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-			art.size = Vector2(extent.x * 0.68, title.position.y - 11)
-			art.position = Vector2((extent.x - art.size.x) * 0.5, 7)
+			art.size = Vector2(extent.x * 0.68, title.position.y - 10)
+			art.position = Vector2((extent.x - art.size.x) * 0.5, 6)
 	var start := _menu_design.get_node("StartButton") as Control
-	var start_art := start.get_node("StartButtonArt") as Control
-	start_art.size = start.size * 1.10
-	start_art.position = start.size * -0.05
+	start.add_theme_font_size_override("font_size", 44)
 	for leaf_side in [false, true]:
 		var leaf := start.get_node("StartLeafRight" if leaf_side else "StartLeafLeft") as Control
-		leaf.size = Vector2(21, 21)
-		leaf.position = Vector2(start.size.x - 21 if leaf_side else 0, (start.size.y - leaf.size.y) * 0.5)
+		leaf.size = Vector2(24, 18)
+		var lx_leaf := (start.size.x - 46.0) if leaf_side else 22.0
+		leaf.position = Vector2(lx_leaf, (start.size.y - leaf.size.y) * 0.5 + 1.0)
 	var caption := _menu_design.get_node("StartCaption") as Label
 	var caption_back := _menu_design.get_node("StartCaptionBack") as Control
-	var caption_center_y := caption.position.y + caption.size.y * 0.5 - 4.0
-	caption_back.size.y = caption.get_combined_minimum_size().y + 12.0
-	caption_back.position.y = caption_center_y - caption_back.size.y * 0.5
-	caption.position = caption_back.position + Vector2(8, 6)
-	caption.size = caption_back.size - Vector2(16, 12)
+	caption_back.size.y = maxf(32.0, caption.get_combined_minimum_size().y + 12.0)
+	caption.position = caption_back.position + Vector2(8, 5)
+	caption.size = caption_back.size - Vector2(16, 10)
 	caption.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	var stone := _menu_panel.get_node("MenuHeroStone") as Control
-	stone.position = _menu_design.position + Vector2(570, 490) * unit * _menu_design.scale
-	stone.size = Vector2(640, 185) * unit * _menu_design.scale
+
+	# 唯一高清石台与萌宠脚底投影随 _menu_design 完全同比例同坐标系定位：
+	# 萌宠实底 y=258 踩入石台青苔顶面 y=255（深嵌入 3 设计 px），跨屏 0 悬空
+	var stone := _menu_panel.get_node_or_null("MenuHeroStone") as Control
+	if stone != null:
+		var stone_sz := Vector2(344.0, 116.0)
+		var stone_pos := Vector2(stage_cx - stone_sz.x * 0.5, 255.0 - stone_sz.y * 0.34)
+		stone.position = _menu_design.position + stone_pos * _menu_design.scale
+		stone.size = stone_sz * _menu_design.scale
+	var hero_shadow := _menu_panel.get_node_or_null("MenuHeroShadow") as Control
+	if hero_shadow != null:
+		var sh_sz := Vector2(138.0, 26.0)
+		var sh_pos := Vector2(stage_cx - sh_sz.x * 0.5, 255.0 - sh_sz.y * 0.45)
+		hero_shadow.position = _menu_design.position + sh_pos * _menu_design.scale
+		hero_shadow.size = sh_sz * _menu_design.scale
+
 	var selection := _menu_design.get_node("StarterSelection") as Control
 	for child in selection.get_children():
 		if child is Label:
 			child.add_theme_font_override("font", UiTheme.body_font())
 	var heading := selection.get_node("StarterHeading") as Label
+	heading.add_theme_font_size_override("font_size", 19)
 	heading.size = heading.get_combined_minimum_size()
-	heading.position = Vector2((selection.size.x - heading.size.x) * 0.5, 10)
+	heading.position = Vector2((selection.size.x - heading.size.x) * 0.5, 8)
 	for leaf_side in [false, true]:
 		var leaf := selection.get_node("StarterLeafRight" if leaf_side else "StarterLeafLeft") as Control
-		leaf.size = Vector2(15, 15)
-		leaf.position = Vector2(heading.position.x + heading.size.x + 10 if leaf_side else heading.position.x - 25,
+		leaf.size = Vector2(18, 16)
+		leaf.position = Vector2(heading.position.x + heading.size.x + 8 if leaf_side else heading.position.x - 26,
 			heading.position.y + (heading.size.y - leaf.size.y) * 0.5)
 	(selection.get_node("StarterPanel") as Control).size = selection.size
-	(selection.get_node("StarterNext") as Control).position.x = selection.size.x - 44.0
-	_menu_starters.position = selection.size * Vector2(41.0 / 810.0, 71.0 / 280.0)
-	_menu_starters.size = selection.size * Vector2(666.0 / 810.0, 172.0 / 280.0)
-	_menu_starters.size.x = ceilf(_menu_starters.size.x) + 2.0
-	(_menu_starters.get_child(0) as HBoxContainer).add_theme_constant_override("separation", int(round(selection.size.x * 18.0 / 810.0)))
+	(selection.get_node("StarterNext") as Control).position = Vector2(selection.size.x - 42.0, (selection.size.y - 38.0) * 0.5 + 10.0)
+	_menu_starters.position = Vector2(selection.size.x * 0.048, 38.0)
+	_menu_starters.size = Vector2(ceilf(selection.size.x * 0.825) + 2.0, selection.size.y - 52.0)
+	(_menu_starters.get_child(0) as HBoxContainer).add_theme_constant_override("separation", int(round(selection.size.x * 0.022)))
+	var card_sz := Vector2(selection.size.x * 0.258, selection.size.y - 54.0)
 	for card in _menu_starters.get_child(0).get_children():
 		if card is Button and card.has_meta("starter_species"):
-			var card_extent := selection.size * Vector2(210.0 / 810.0, 172.0 / 280.0)
-			card.custom_minimum_size = card_extent
-			card.size = card_extent
-			card.set_meta("p5_h0", card_extent.y)
+			card.custom_minimum_size = card_sz
+			card.size = card_sz
+			card.set_meta("p5_h0", card_sz.y)
 			var portrait := card.get_child(0) as Control
-			portrait.position = Vector2(8, 5)
-			portrait.size = card_extent - Vector2(16, 10)
-			(card.get_node("SelectedMark") as Control).position.x = card_extent.x - 24.0
+			portrait.position = Vector2(8, 6)
+			portrait.size = card_sz - Vector2(16, 12)
+			(card.get_node("SelectedMark") as Control).position = Vector2(card_sz.x - 26.0, 4.0)
+
 	var wallet_button := _menu_design.get_node("MenuWallet") as Control
 	var wallet_face := wallet_button.get_node("MenuWalletFace") as Control
-	wallet_face.size = Vector2(wallet_button.size.x, 82.0 * column_unit.y)
+	wallet_face.size = wallet_button.size
 	var wallet_height := wallet_face.size.y
 	var chip := wallet_button.get_node("WalletChip") as Control
-	chip.size = Vector2(70, 22)
+	chip.size = Vector2(72, 24)
 	chip.position = Vector2(wallet_button.size.x - chip.size.x - 10.0, (wallet_height - chip.size.y) * 0.5)
 	var wallet_art := wallet_button.get_node("MenuWalletArt") as Control
 	wallet_art.size = Vector2(28, 28)
 	wallet_art.position = Vector2(12, (wallet_height - wallet_art.size.y) * 0.5)
 	var wallet_title := wallet_button.get_child(1) as Label
-	wallet_title.size = Vector2(chip.position.x - 58.0, wallet_title.get_combined_minimum_size().y)
-	wallet_title.position = Vector2(50, (wallet_height - wallet_title.size.y) * 0.5)
+	wallet_title.size = Vector2(chip.position.x - 56.0, wallet_title.get_combined_minimum_size().y)
+	wallet_title.position = Vector2(48, (wallet_height - wallet_title.size.y) * 0.5)
 	wallet_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+
 	var shake_row := _menu_design.get_node("MenuShake") as Control
 	var shake_switch := shake_row.get_node("ShakeSwitch") as Control
-	var switch_tap_size := ceilf(P5_BTN_PX / _menu_design.scale.x)
-	shake_switch.custom_minimum_size = Vector2.ONE * switch_tap_size
+	shake_switch.custom_minimum_size = Vector2.ONE * row_h
 	shake_switch.size = shake_switch.custom_minimum_size
-	shake_row.size.y = maxf(shake_row.size.y, switch_tap_size)
-	shake_row.add_theme_stylebox_override("panel", _style(Color("fff3dd"), 10, Color("e4bd77"), 2))
+	shake_row.size.y = row_h
+	shake_row.add_theme_stylebox_override("panel", _style(Color("fff3dd"), 12, Color("e4bd77"), 2))
 	shake_switch.position = Vector2(shake_row.size.x - shake_switch.size.x - 10.0, (shake_row.size.y - shake_switch.size.y) * 0.5)
 	UiTheme.set_switch(shake_switch, bool(GameProfile.setting("shakeOn")))
 	var shake_icon := shake_row.get_node("MenuShakeIcon") as Control
-	shake_icon.size = Vector2(32, 32)
-	shake_icon.position = Vector2(10, (shake_row.size.y - shake_icon.size.y) * 0.5)
+	shake_icon.size = Vector2(30, 30)
+	shake_icon.position = Vector2(12, (shake_row.size.y - shake_icon.size.y) * 0.5)
 	var shake_text := shake_row.get_node("MenuShakeText") as Label
-	shake_text.size = Vector2(shake_switch.position.x - 62.0, shake_text.get_combined_minimum_size().y)
-	shake_text.position = Vector2(54, (shake_row.size.y - shake_text.size.y) * 0.5)
+	shake_text.size = Vector2(shake_switch.position.x - 56.0, shake_text.get_combined_minimum_size().y)
+	shake_text.position = Vector2(48, (shake_row.size.y - shake_text.size.y) * 0.5)
 	shake_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+
 	if _menu_hint:
 		var backing := _menu_hint.get_meta("back") as Control
-		backing.position = Vector2(32, 816) * unit
-		backing.size = Vector2(468, 66) * unit
-		_menu_hint.position = backing.position + Vector2(35, 3)
-		_menu_hint.size = Vector2(backing.size.x - 40.0, backing.size.y - 6.0)
-		backing.size.x = maxf(backing.size.x, _menu_hint.get_combined_minimum_size().x + 41.0)
+		var hint_need_w := _menu_hint.get_combined_minimum_size().x + 50.0
+		var hint_w := clampf(maxf(col_w, hint_need_w), col_w, tray_x - lx - 10.0)
+		var hint_h := clampf(446.0 - y_hint, 30.0, 36.0)
+		backing.position = Vector2(lx, y_hint)
+		backing.size = Vector2(hint_w, hint_h)
+		var pad := backing.get_node_or_null("MenuHintPad") as Control
+		if pad:
+			pad.size = Vector2(22, 22)
+			pad.position = Vector2(10, (hint_h - 22.0) * 0.5)
+		_menu_hint.autowrap_mode = TextServer.AUTOWRAP_OFF
+		_menu_hint.position = backing.position + Vector2(36, (hint_h - _menu_hint.get_combined_minimum_size().y) * 0.5)
+		_menu_hint.size = Vector2(hint_w - 44.0, _menu_hint.get_combined_minimum_size().y)
 
 func _safe_insets() -> Vector4:
 	# Cycle 21.3 (audit F6): the gate's simulated insets win.

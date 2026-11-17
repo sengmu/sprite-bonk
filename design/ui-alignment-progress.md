@@ -1576,3 +1576,18 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - **状态：U5 第 9 轮全部指标零偏差通过并达成关闭门，正式签核结项；队列正式转入 U2 主菜单与商店界面（S10/S12）对齐实施。**
 - 本轮提交：`scripts/world.gd`、`Test/u5_reaudit_c9_parse.sh`、`Test/u5_reaudit_c9_run.sh`、`design/ui-reference/compare/U5.png`、`design/ui-reference/compare/U5_2400.png`、`design/ui-alignment-progress.md`。
 
+## U2 主菜单复审第 1 轮＋商店界面（S10／S12）1:1 对齐（2026-11-17 12:0x–12:1x，已本地全检＋真机安装＋入 NUC 官批）
+
+- **U2 开始界面 6 项全区对齐（`scripts/world.gd` `_build_menu` / `_p5_layout_menu` / `_p5_menu_reference_layout`）**：
+  1. **彻底治好「角色悬空」与双重石台重影**：移除 `MenuForestBackground` 失真硬偏 `-50/-48` 并回归居中全屏铺满；将唯一高清青苔大石台 `MenuHeroStone` 与新增萌宠脚底径向柔和接触阴影 `MenuHeroShadow` 严格绑定到 `_menu_design` 同缩放坐标矩阵（萌宠实底 `y=259.5` 深踩进石台青苔面 `y=255.0` 内 `4.5` 设计 px），实测在 `1920×1080`、`2340×1080`、`2400×1080` 与 `2670×1200` Seeker 真机下 `fails=0` 零悬空零重影。
+  2. **释放 20:9/22:9 宽屏两侧留白**：解除 `w` 硬截断上限，左翼贴左安全缘舒展（保留 `MenuLab` 严格 `224:185` 比例）、右翼资源胶囊与「开始」按钮贴右缘展开、中央舞台随安全中区自动拓宽至 `426` 托盘（三区底缘齐平）。
+  3. **开始按钮与引导字优化**：改用 `CapsuleStyleBox` 真半圆渲染橙胶囊，文字切换为敦厚黑体 `44px` 纯白字配柔和深橙棕描边（`#963b06`）＋下投影，两片对称绿叶收至文字两侧；「进入出战配置」加白亮清晰描边并上移 `2px` 留白。
+  4. **操作提示胶囊常驻**：手机端左下角「拖动移动·自动攻击·点击互动」深绿底胶囊改常驻显示并加宽右内边距避免贴边，维持左栏视觉压舱石。
+- **商店界面 S10（萤尘商店）与 S12（局内商店）1:1 对齐（`scripts/world.gd` `_build_shop_panel` / `_refresh_shop` / `_build_shop` / `_shop_refresh` / `ITEM_NAME_ZH`）**：
+  1. **主菜单萤尘商店（S10）**：顶部新增 `header_stars`＋两侧 `leaf_sprig` 立体金色圆角标题牌与高亮纯白星尘余额胶囊；隐藏冗长占位提示行以完整呈现三行以上商品卡；每行升级为奶油白圆角大卡（含圆形淡金托底＋实体道具图＋粗体标题＋竖分割线）；购买可买态真绿胶囊、不足态改清晰雾灰胶囊，右下关闭钮升级为绿色大胶囊；本地实测 `scale=1.601`, `inside_ui=true`, `min_btn_h=76.8`, `min_txt=22.4`。
+  2. **局内商店（S12）**：彻底修复原版「白底白字」隐形缺陷——按定稿重构 4 张亮紫渐层立体圆角卡（居中 60px 实体图标＋纯白粗字＋效果＋稀有度持仓＋底嵌鲜橙双金币真胶囊价签 / 灰已售出胶囊）；从 `INVENTORY.md` 接入全部 126 件物品中性中文译名映射 `ITEM_NAME_ZH` / `_item_zh_name()`（保持 `GameData.item_def` 原值不动，兼顾暂停页校验兼容）；修复底部「出售」小胶囊窄框截断末位数字（`+10` 完整展示）；本地实测 `scale=1.601`, `inside_ui=true`, `min_btn_h=76.8`, `min_txt=22.4`。
+- 本地验证与真机实装：本地 `Test/u2_shop_reaudit_parse.sh` 零错通过；`1920/2340/2670` U2 校验与 `2400` S10/S12 校验全绿 0 失败并已逐张 `Read` 亲审；全合一包 `SpriteBonk-u2shop-align.apk` 已编译签名覆盖安装至 Seeker 手机（`SM02G4061952376`）并冷启动拉起。
+- **状态：已提交推送并提交 NUC 官方双档 `s100` 全量验收批（`Test/u2_shop_reaudit_c1_run.sh`），待 NUC 双档跑完后即拉回重建 `compare/U2.png` / `U2_2400.png` 与收口推进 U3 升级三选一。**
+- 本轮提交：`scripts/world.gd`、`Test/u2_shop_reaudit_parse.sh`、`Test/u2_shop_reaudit_c1_run.sh`、`design/ui-alignment-progress.md`。
+
+
