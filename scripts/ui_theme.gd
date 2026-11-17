@@ -49,9 +49,9 @@ const RARITY: Array[Color] = [
 ## peligroso, Brutal, Letal, Imposible], localized.
 const DANGER_THRESHOLDS: Array[float] = [0.0, 1.0, 2.0, 3.0, 4.0, 5.5, 7.0]
 const DANGER_COLORS: Array[Color] = [
-	Color8(54, 201, 106), Color8(155, 210, 58), Color8(255, 194, 26),
-	Color8(255, 138, 42), Color8(255, 74, 74), Color8(208, 32, 106),
-	Color8(106, 26, 168),
+	Color8(78, 224, 118), Color8(168, 226, 72), Color8(255, 206, 58),
+	Color8(255, 148, 56), Color8(255, 92, 92), Color8(255, 92, 148),
+	Color8(226, 128, 255),
 ]
 const DANGER_NAMES: Array[String] = ["平静", "温和", "危险", "极危险", "残暴", "致命", "不可能"]
 

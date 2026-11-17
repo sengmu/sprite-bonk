@@ -1625,7 +1625,8 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
   5. **右上 `KillsPill` 紧凑居中（`scripts/world.gd`）**：放大骷髅图标至 `18×18` 居中微调，视觉更凝练平衡。
   6. **右下 4 枚触屏大圆钮 4× 超采样重绘（`assets/ui/touch/btn_*.png`、`scripts/touch_controls.gd`）**：重绘并本地校验 `--import` 一致（`btn_ult` `7708bea675b4ca32ce9e556601c3edcf`、`btn_ult_charging` `bff4f0f5f76a2ae2fc659187ec8e0f44`、`btn_dash` `83c1143dfc0a84d52e7976af2ed5be33`、`btn_jump` `61a2c6d56bd136b0c95ceba7b4f0335a`、`btn_interact` `a6b8be4444eee84f81c5ef8e07192e9c`）——大招外环 12 段弧加粗加亮并附带柔紫发光外晕，冲刺风纹「3」粗壮饱满并对齐双速度线，所有按钮加厚立体纯白金属圈；闲置互动按钮透度微调为 `0.86` 保持鲜橙清透（`sb.bg_color.a` 维持 `0.06` 通过 `idle <= 0.10` 门）。
 - 本地渲染验证：`Test/u2_shop_reaudit_parse.sh` 通过（`U2_SHOP PARSE GATE OK`）；`.tmp/verify_u1_now.gd` 导出开局带横幅、Boss＋双头领带横幅、宝箱就绪三态实拍并全部 `Read` 目检通过。
-- **状态：正在提交推送并触发 NUC 双档 `s100` 全量终审（`Test/u1_final_reaudit_run.sh`），同时同步最新资产打包覆装 Seeker 真机。**
-- 本轮提交：`assets/ui/touch/btn_*.png`、`scripts/touch_controls.gd`、`scripts/world.gd`、`Test/u1_final_reaudit_run.sh`、`design/ui-alignment-progress.md`。
+- 真机实战精修补完（Seeker `2670×1200` 实拍反馈）：发现「不可能」暗紫威胁色与左下角普通系浅米圆槽内白星在强光真机环境下对比度偏低，同步提亮 `UiTheme.DANGER_COLORS` 高阶威胁色至高亮霓虹玫红/紫粉并加 `1px` 深影，为左下技能槽图标统一补加 `4px` 下偏深色浮雕阴影。
+- **状态：已提交推送至 `origin/align-fix13`，待与 NUC 同步后跑完最终双档 `s100` 全量验收并打包终版 APK 安装 Seeker 真机。**
+- 本轮提交：`assets/ui/touch/btn_*.png`、`scripts/touch_controls.gd`、`scripts/ui_theme.gd`、`scripts/world.gd`、`Test/u1_final_reaudit_run.sh`、`design/ui-alignment-progress.md`。
 
 

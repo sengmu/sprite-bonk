@@ -3032,6 +3032,8 @@ func _build_hud() -> void:
 	# the weather chip (246..310 x 57..79) into illegibility.
 	_danger_name = _label_in(card, "平静", Vector2(250, 45), Vector2(180, 13), 12, UiTheme.DANGER_COLORS[0], HORIZONTAL_ALIGNMENT_CENTER, true)
 	_danger_name.add_theme_font_override("font", _font_display)
+	_danger_name.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.55))
+	_danger_name.add_theme_constant_override("shadow_offset_y", 1)
 	for i in range(7):
 		var seg := Panel.new()
 		seg.position = Vector2(320 + i * 15, 59)
@@ -16554,9 +16556,15 @@ func _p4_refresh_slots(relayout: bool) -> void:
 		pnl.size = Vector2(P4_SLOT, P4_SLOT)
 		pnl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		# 对齐定稿 U1_final.jpg：已学槽配 6px 厚实暖金立体外环；下方「1级」为立体奶油圆角小牌
+		var tc := UiTheme.type_color(t)
 		pnl.add_theme_stylebox_override("panel",
-			_style(UiTheme.type_color(t), 65, Color("efc038"), 6, true))
+			_style(tc, 65, Color("efc038"), 6, true))
 		_bl_rows.add_child(pnl)
+		# 先绘一层偏深色立体浮雕阴影，保证高亮度浅底属性（如普通系白星）在真机强光下依然立体锐利
+		var ic_sh := UiIcon.new(_type_icon(t), tc.darkened(0.45), 64)
+		ic_sh.position = Vector2(33, 37)
+		ic_sh.size = Vector2(64, 64)
+		pnl.add_child(ic_sh)
 		var ic := UiIcon.new(_type_icon(t), Color(1, 1, 1, 0.98), 64)
 		ic.position = Vector2(33, 33)
 		ic.size = Vector2(64, 64)
