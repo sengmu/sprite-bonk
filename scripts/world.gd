@@ -46,7 +46,7 @@ const ALTAR_CFG := [
 	{"color": Color8(255, 210, 58), "unown": 5, "charge": 35.0, "r": 4.5, "drain": 3.0, "min": 3, "offers": 4, "picks": 2, "wave": 6, "floor": 5.0, "seal": 90.0},
 	{"color": Color8(74, 168, 255), "unown": 0, "charge": 10.0, "r": 6.5, "drain": 3.0, "min": 1, "offers": 3, "picks": 1, "wave": 2, "floor": 0.0, "seal": 0.0},
 ]
-const ALTAR_NAMES := ["未知祭坛", "稀有未知祭坛", "史诗未知祭坛", "黄金未知祭坛", "彗星祭坛"]
+const ALTAR_NAMES := ["古石祭坛", "稀有古石祭坛", "史诗古石祭坛", "黄金古石祭坛", "彗星祭坛"]
 # Cycle 14: the 12 blessing generators (Xx @1075554) — label
 # numbers round like the bundle's; the MODS use the exact power.
 # mode mul -> mod {mul: 1 + per*e}; mode add -> {add: per*e};
@@ -3605,6 +3605,7 @@ func _build_hud() -> void:
 	# _process. Lives on the OUTER root (see _ui_root note).
 	touch_controls = TouchControls.new()
 	outer_root.add_child(touch_controls)
+	touch_controls.set_layout_classic(not _new_layout())
 	touch_controls.ult_pressed.connect(_on_ult_button)
 	cam_dist = float(GameProfile.setting("camDist"))
 	touch_controls.apply_scale(float(GameProfile.setting("touchScale")))
@@ -4916,7 +4917,7 @@ func _refresh_lab() -> void:
 		else:
 			audio.deny())
 	_lab_detail.add_child(buy)
-	if _p5_on and _lab_panel != null:
+	if _p5_on and _lab_panel != null and _lab_panel.visible:
 		_apply_ui_scale()
 
 ## Icon order 2 — lab mapping table (a required deliverable of
@@ -8674,7 +8675,7 @@ const ITEM_STAT_CN := {
 	"difficulty": "难度", "enemyAmount": "敌人数量",
 }
 const ITEM_BESPOKE_CN := {
-	"secret-key": "未知祭坛充能 +30%/层，离开时流失减半",
+	"secret-key": "古石祭坛充能 +30%/层，离开时流失减半",
 	"ice-heal": "击碎冻结：伤害 +60%（每多一层 +30%），碎冰溅射冻结周围",
 	"rare-candy": "立即 +2 级，伤害 +5%",
 	"max-revive": "复活一次（60% 生命）",
@@ -8745,8 +8746,7 @@ func _item_label(key: String) -> String:
 	return " · ".join(parts)
 
 func _item_card_text(key: String) -> String:
-	var def := GameData.item_def(key)
-	var nm := String(def.get("name", key))
+	var nm := _item_zh_name(key)
 	return "%s\n%s\n【%s】 持有 %d/%d" % [nm, _item_label(key),
 		String(GameData.RARITY_NAMES[GameData.item_rarity(key)]),
 		player.item_count(key) if player else 0, GameData.item_max(key)]
@@ -9225,15 +9225,22 @@ func _build_choice(root: Control) -> void:
 	_choice_panel.add_child(vb)
 	var chead: Container = vb
 	if _p5_on:
-		# UI-mobile P5 (plan §B3 M3): title + subtitle on one row.
+		# 对齐定稿 S13/S22：标题两侧配金色月桂枝，副标题同行
 		var chb := HBoxContainer.new()
-		chb.add_theme_constant_override("separation", 14)
+		chb.add_theme_constant_override("separation", 10)
 		chb.alignment = BoxContainer.ALIGNMENT_CENTER
 		vb.add_child(chb)
-		chead = chb
-	_choice_title = _mk_dlabel(chead, "", 26 if _p5_on else 24, UiTheme.TEXT)
+		var ll := UiTheme.art("laurel_gold", Vector2(22, 26))
+		ll.flip_h = true
+		chb.add_child(ll)
+		_choice_title = _mk_dlabel(chb, "", 26, UiTheme.TEXT)
+		var lr := UiTheme.art("laurel_gold", Vector2(22, 26))
+		chb.add_child(lr)
+		_choice_sub = _mk_label(chb, "", 15, Color("6e502f"))
+	else:
+		_choice_title = _mk_dlabel(chead, "", 24, UiTheme.TEXT)
+		_choice_sub = _mk_label(chead, "", 15, Color("6e502f"))
 	_choice_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_choice_sub = _mk_label(chead, "", 15, Color("6e502f"))
 	_choice_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	if _p5_on:
 		_choice_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -9251,6 +9258,20 @@ func _build_choice(root: Control) -> void:
 		_choice_foot.custom_minimum_size.x = 200
 		_choice_foot.set_meta("p5_primary", true)
 
+var _choice_name_to_key: Dictionary = {}
+
+## 根据选项文本首行名称反查物品键名，用于 S13 宝箱与 S22 拟态团在紫卡内自动挂载实体道具图标
+func _choice_item_key_for_option(text: String) -> String:
+	if _choice_name_to_key.is_empty():
+		for k in GameData.item_keys():
+			var ks := String(k)
+			_choice_name_to_key[_item_zh_name(ks)] = ks
+			var raw_nm := String(GameData.item_def(ks).get("name", ""))
+			if raw_nm != "":
+				_choice_name_to_key[raw_nm] = ks
+	var first_line := text.split("\n", true, 1)[0].strip_edges()
+	return String(_choice_name_to_key.get(first_line, ""))
+
 func _choice_show(title: String, sub: String, options: Array, foot_text: String, on_pick: Callable, on_close: Callable) -> void:
 	_choice_return = state
 	_choice_on_pick = on_pick
@@ -9263,26 +9284,41 @@ func _choice_show(title: String, sub: String, options: Array, foot_text: String,
 	for c in _choice_opts_box.get_children():
 		c.queue_free()
 	for i in range(options.size()):
-		# 对齐定稿 S13/S21/S22：亮紫渐层圆角立体卡片＋深紫白字阴影，彻底消灭白底白字隐形
+		# 对齐定稿 S13/S21/S22：亮紫渐层圆角立体卡片＋物品大图＋深紫白字阴影，彻底消灭白底白字隐形
+		var opt_text := String(options[i])
+		var item_key := _choice_item_key_for_option(opt_text)
 		var b := Button.new()
 		b.text = ""
 		var cw := _p5_card_w(_choice_panel, options.size(), 240.0) if _p5_on else 200.0
-		var ch := 210.0 if _p5_on else 120.0
+		var ch := 214.0 if _p5_on else 120.0
 		b.custom_minimum_size = Vector2(cw, ch)
 		b.size = Vector2(cw, ch)
 		b.add_theme_stylebox_override("normal", _style(Color("9d6ce0"), 18, Color("ebd9ff"), 2, true))
 		b.add_theme_stylebox_override("hover", _style(Color("ad7ef0"), 18, Color.WHITE, 2, true))
 		b.add_theme_stylebox_override("pressed", _style(Color("8756ca"), 18, Color("d4b6ff"), 2, true))
 		b.add_theme_stylebox_override("focus", _style(Color(0, 0, 0, 0), 18, UiTheme.GOLD, 2, false))
+		var margin := MarginContainer.new()
+		margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+		margin.add_theme_constant_override("margin_left", 10)
+		margin.add_theme_constant_override("margin_right", 10)
+		margin.add_theme_constant_override("margin_top", 10)
+		margin.add_theme_constant_override("margin_bottom", 10)
+		margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		b.add_child(margin)
+		var cvb := VBoxContainer.new()
+		cvb.alignment = BoxContainer.ALIGNMENT_CENTER
+		cvb.add_theme_constant_override("separation", 6)
+		cvb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		margin.add_child(cvb)
+		if item_key != "":
+			var ic := _item_icon_rect(item_key, 56.0 if _p5_on else 36.0)
+			ic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+			cvb.add_child(ic)
 		var l := Label.new()
-		l.text = String(options[i])
-		l.set_anchors_preset(Control.PRESET_FULL_RECT)
-		l.offset_left = 12
-		l.offset_right = -12
-		l.offset_top = 12
-		l.offset_bottom = -12
+		l.text = opt_text
+		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		l.add_theme_font_override("font", UiTheme.body_font())
-		l.add_theme_font_size_override("font_size", 16 if _p5_on else 15)
+		l.add_theme_font_size_override("font_size", 15 if _p5_on else 14)
 		l.add_theme_color_override("font_color", Color.WHITE)
 		l.add_theme_color_override("font_shadow_color", Color("481f80"))
 		l.add_theme_constant_override("shadow_offset_y", 2)
@@ -9290,7 +9326,7 @@ func _choice_show(title: String, sub: String, options: Array, foot_text: String,
 		l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		b.add_child(l)
+		cvb.add_child(l)
 		var idx := i
 		b.pressed.connect(func() -> void: _choice_pick(idx))
 		_choice_opts_box.add_child(b)
@@ -11088,9 +11124,7 @@ func _prop_label_kbd(p: Dictionary) -> String:
 		"meowth":
 			return "獾掌柜铺 · 按 E 逛逛：买入物品，或按市价出售"
 		"ditto":
-			# Bundle prompt (unused): "Ditto: clona uno de
-			# tus objetos".
-			return "百变怪 · 按 E 让它复制你持有的一件物品"
+			return "拟态团 · 按 E 让它复制你持有的一件物品"
 	return kind
 
 ## ------------------------------------------------ cycle 15 prop effects
@@ -11110,7 +11144,7 @@ func _interact_prop(p: Dictionary) -> void:
 			# empty inventory: toast, prop NOT consumed;
 			# otherwise the clone picker opens.
 			if player.items.is_empty():
-				spawn_floater(pp + Vector3(0, 2.6, 0), "百变怪没有可复制的东西…", Color(0.85, 0.75, 1.0))
+				spawn_floater(pp + Vector3(0, 2.6, 0), "拟态团没有可复制的东西…", Color(0.85, 0.75, 1.0))
 				return
 			_open_ditto(p)
 		"magnet":
@@ -11224,10 +11258,10 @@ func _open_ditto(p: Dictionary, with_cry := true) -> void:
 			t += "\n【已满】"
 			maxed.append(String(GameData.item_def(String(k)).get("name", String(k))))
 		opts.append(t)
-	var sub := "选择一件物品，百变怪会变成它"
+	var sub := "选择一件物品，拟态团会变成它"
 	if not maxed.is_empty():
 		sub += "（已满：%s）" % "、".join(maxed)
-	_choice_show("百变怪：复制哪件物品？", sub, opts, "现在不要",
+	_choice_show("拟态团：复制哪件物品？", sub, opts, "现在不要",
 		func(idx: int) -> void:
 			var key := String(keys[idx])
 			if not player.can_hold_item(key):
@@ -11238,7 +11272,7 @@ func _open_ditto(p: Dictionary, with_cry := true) -> void:
 			player.add_item(key)
 			_prop_set_used(p)
 			audio.cry("ditto")
-			show_banner("百变怪变成了%s！" % String(GameData.item_def(key).get("name", key)), 2.5),
+			show_banner("拟态团变成了%s！" % _item_zh_name(key), 2.5),
 		func() -> void: pass)
 
 ## Paid chest (openChest @1253770): pay, chestsBought += 1,
