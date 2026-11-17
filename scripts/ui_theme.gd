@@ -323,6 +323,8 @@ static func _btn_box(bg: Color, radius: int, border: Color, bw: int, pad: int) -
 		key = "button_green"
 	elif bg.r > bg.g * 1.3 and bg.b < bg.g * 0.8:
 		key = "button_orange"
+	elif bg.b > bg.r * 1.25 and bg.b >= bg.g:
+		key = "button_blue"
 	s.texture = asset("textures", key)
 	s.modulate_color = Color(1, 1, 1, bg.a)
 	s.content_margin_left = pad
@@ -332,14 +334,12 @@ static func _btn_box(bg: Color, radius: int, border: Color, bw: int, pad: int) -
 	return s
 
 ## U3 draft: a semantic button face from the cream 9-patch,
-## tinted to an exact target color by modulate (there is no
-## blue button texture — the _btn_box heuristic falls through
-## to cream for blue, which is why the draft reroll rendered
-## cream). The tint is solved against the face pixel of the
-## cream texture (248,230,199) so the face lands on `bg`;
-## the baked shading survives because only the tint changes.
+## tinted to an exact target color by modulate when no dedicated
+## texture exists. Dedicated green/orange/blue textures keep pure white tint.
 static func tinted_btn_box(bg: Color, radius: int, border: Color, bw: int, pad: int) -> StyleBox:
 	var s := _btn_box(bg, radius, border, bw, pad)
+	if (s as CapsuleStyleBox).texture != asset("textures", "button_cream"):
+		return s
 	var face := Color8(248, 230, 199)
 	(s as CapsuleStyleBox).modulate_color = Color(
 		clampf(bg.r / face.r, 0.0, 1.0),
@@ -598,14 +598,14 @@ static func outline(l: Label, size: int = 3) -> void:
 
 ## Style an HSlider as an st-range: ink track, accent-filled
 ## portion before the grabber (the --p segment), round knob.
-static func style_slider(s: HSlider, accent: Color = GOLD) -> void:
-	var track := flat_box(Color(INK_DEEP.r, INK_DEEP.g, INK_DEEP.b, 0.9), 5,
-		Color(1, 1, 1, 0.14), 1)
-	track.content_margin_top = 3
-	track.content_margin_bottom = 3
-	var fill := flat_box(accent, 5)
-	fill.content_margin_top = 3
-	fill.content_margin_bottom = 3
+## 将滑块样式统一为圆润奶棕凹槽 + 鲜亮翠绿填充条（对齐定稿 S09/S20）
+static func style_slider(s: HSlider, accent: Color = Color("6ec928")) -> void:
+	var track := flat_box(Color("e0cfb0"), 6, Color("cbb58b"), 1)
+	track.content_margin_top = 4
+	track.content_margin_bottom = 4
+	var fill := flat_box(accent, 6)
+	fill.content_margin_top = 4
+	fill.content_margin_bottom = 4
 	s.add_theme_stylebox_override("slider", track)
 	s.add_theme_stylebox_override("grabber_area", fill)
 	s.add_theme_stylebox_override("grabber_area_highlight", fill)
@@ -657,8 +657,8 @@ static func set_switch(b: Button, on: bool) -> void:
 	var visual_k := k * visual_scale
 	var inset := Vector2.ZERO
 	var rk := int(round(14.0 * visual_k))
-	var track := flat_box(GREEN_DEEP if on else Color(INK_DEEP.r, INK_DEEP.g, INK_DEEP.b, 0.9), rk,
-		Color(1, 1, 1, 0.2), 1)
+	var track := flat_box(GREEN_DEEP if on else Color("afa391"), rk,
+		Color(1, 1, 1, 0.25), 1)
 	if visual_scale < 1.0:
 		var painted := b.get_node_or_null("SwitchTrack") as Panel
 		if painted == null:
@@ -716,8 +716,8 @@ static func make_segmented(options: Array, current: int) -> HBoxContainer:
 static func set_segmented(hb: HBoxContainer, current: int) -> void:
 	for b in hb.get_children():
 		var on := int(b.get_meta("seg_i", -1)) == current
-		var box := flat_box(Color(GREEN_DEEP.r, GREEN_DEEP.g, GREEN_DEEP.b, 0.95) if on else Color(INK_DEEP.r, INK_DEEP.g, INK_DEEP.b, 0.75), 10,
-			Color(1, 1, 1, 0.25 if on else 0.12), 1)
+		var box := flat_box(GREEN_DEEP if on else Color("efe3c7"), 12,
+			Color("4e9916") if on else Color("d8c296"), 1)
 		box.content_margin_left = 10
 		box.content_margin_right = 10
 		box.content_margin_top = 3
@@ -725,8 +725,8 @@ static func set_segmented(hb: HBoxContainer, current: int) -> void:
 		(b as Button).add_theme_stylebox_override("normal", box)
 		(b as Button).add_theme_stylebox_override("hover", box)
 		(b as Button).add_theme_stylebox_override("pressed", box)
-		(b as Button).add_theme_stylebox_override("focus", flat_box(Color(0, 0, 0, 0), 10, GOLD, 2))
-		(b as Button).add_theme_color_override("font_color", WHITE if on else MUTED)
+		(b as Button).add_theme_stylebox_override("focus", flat_box(Color(0, 0, 0, 0), 12, GOLD, 2))
+		(b as Button).add_theme_color_override("font_color", WHITE if on else TEXT)
 		(b as Button).add_theme_color_override("font_hover_color", WHITE)
 
 static func text_color(color: Color) -> Color:

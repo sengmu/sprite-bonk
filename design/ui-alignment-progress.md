@@ -1587,7 +1587,30 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
   1. **主菜单萤尘商店（S10）**：顶部新增 `header_stars`＋两侧 `leaf_sprig` 立体金色圆角标题牌与高亮纯白星尘余额胶囊；隐藏冗长占位提示行以完整呈现三行以上商品卡；每行升级为奶油白圆角大卡（含圆形淡金托底＋实体道具图＋粗体标题＋竖分割线）；购买可买态真绿胶囊、不足态改清晰雾灰胶囊，右下关闭钮升级为绿色大胶囊；本地实测 `scale=1.601`, `inside_ui=true`, `min_btn_h=76.8`, `min_txt=22.4`。
   2. **局内商店（S12）**：彻底修复原版「白底白字」隐形缺陷——按定稿重构 4 张亮紫渐层立体圆角卡（居中 60px 实体图标＋纯白粗字＋效果＋稀有度持仓＋底嵌鲜橙双金币真胶囊价签 / 灰已售出胶囊）；从 `INVENTORY.md` 接入全部 126 件物品中性中文译名映射 `ITEM_NAME_ZH` / `_item_zh_name()`（保持 `GameData.item_def` 原值不动，兼顾暂停页校验兼容）；修复底部「出售」小胶囊窄框截断末位数字（`+10` 完整展示）；本地实测 `scale=1.601`, `inside_ui=true`, `min_btn_h=76.8`, `min_txt=22.4`。
 - 本地验证与真机实装：本地 `Test/u2_shop_reaudit_parse.sh` 零错通过；`1920/2340/2670` U2 校验与 `2400` S10/S12 校验全绿 0 失败并已逐张 `Read` 亲审；全合一包 `SpriteBonk-u2shop-align.apk` 已编译签名覆盖安装至 Seeker 手机（`SM02G4061952376`）并冷启动拉起。
-- **状态：已提交推送并提交 NUC 官方双档 `s100` 全量验收批（`Test/u2_shop_reaudit_c1_run.sh`），待 NUC 双档跑完后即拉回重建 `compare/U2.png` / `U2_2400.png` 与收口推进 U3 升级三选一。**
+- **状态：`b5c6a52` NUC 官方双档 `s100` 全量验收批（`Test/out/u2_shop_reaudit_c1.done`，`ALLDONE 2026-11-17T12:42:41+08:00`）已双绿过门：`2400×1080` `checks=1549 fails=0`、`2340×1080` `checks=1549 fails=0`；已重建并拉回 `design/ui-reference/compare/U2.png`（MD5 `504fa1e85cbe5b46c16b0ab3b55f369e`）与 `compare/U2_2400.png`（MD5 `f85013fc70803785979a83aaf623e783`）亲审通过（主菜单双足落石台居中、零悬空重影、两翼贴安全缘、三区齐平）。**
 - 本轮提交：`scripts/world.gd`、`Test/u2_shop_reaudit_parse.sh`、`Test/u2_shop_reaudit_c1_run.sh`、`design/ui-alignment-progress.md`。
+
+## 全界面 1:1 对齐扩展轮：亮天蓝真胶囊＋U4 实验室＋U6 钱包＋U3 升级三选一＋S07–S23 弹窗（2026-11-17 12:2x–13:2x，本地全项验收并推 NUC 双档官批）
+
+- **全局亮天蓝真胶囊贴图与滑动条组件统一（`assets/ui/textures/button_blue.png`、`scripts/ui_theme.gd`）**：
+  - 4× 超采样生成 `1024×320` 亮天蓝真胶囊纹理 `assets/ui/textures/button_blue.png`（横向 `x=224..800` 纯平过渡带零起伏 `mid_x_max_std=0.0`，MD5 `f2cb25d4310549a45309a9826498db6f`），走通 Godot `--import` 校验 `source_md5` 一致；`UiTheme._btn_box()` 识别蓝色调用 `button_blue`，`tinted_btn_box()` 跳过二次调暗，全线保留纯正渐变糖果质感。
+  - `UiTheme.style_slider()` 改为奶棕凹槽（`#e0cfb0`）＋鲜嫩翠绿填充条（`#6ec928`），`UiTheme.set_switch()` 改用柔暖灰轨（`#afa391`），`UiTheme.set_segmented()` 改用奶油浅棕未选＋翠绿白字选中，统一全游戏暖木草原视觉系。
+- **U2 菜单背景超宽封缝 & S12 商店补完（`scripts/world.gd`）**：
+  - `MenuForestBackground` 设 `offset_left = -80.0` / `offset_right = 80.0`（垂直保持 `0.0`），彻底封死 Seeker 超宽屏最左侧露出的 20px 3D 草地细缝且不干扰石台高度。
+  - 扫描 `assets/data/items.json` 全 31 个 `stat` 键，补全 `ITEM_STAT_CN` 缺失的 8 个属性中文映射（`bounces`、`flinch`、`jumpHeight`、`pickupRange`、`projectiles`、`statusDamage`、`superEffective`、`thorns`）；修复 `_item_label()` 在 `mul < 1.0` / `add < 0` 时出现 `+-8%` 的符号拼接异常；精简 `big-nugget` 特效词并上调卡高至 `238px`、`eff_l` 至 `52px` 防截字；本地 `ITEM_LABEL_SCAN` 全 `126` 件物品 `bad=0`。
+- **U4 实验室 1:1 重塑（`scripts/world.gd` `_build_lab_panel` / `_refresh_lab` / `_lab_set_mode` / `_refresh_lab_items` / `LAB_ICON`）**：
+  - 去除手机端整页套娃 `ScrollContainer`，让左能力树与右详单完整同屏；顶部新增金色月桂枝立体标题、纯白星尘胶囊与「升级 / 物品档案」双分页签（初建即高亮暖金/纯白对比）；圆盘节点消除椭圆奶油底壳，改用透明背景＋居中亮金选中光环＋独立 `54×24`「0级/已满」圆角牌＋精准连线，并将首屏 24 节点 `LAB_ICON` 全部亮出各自彩底圆徽消除一盘灰大锁；右区天蓝发光图标卡＋分割线详单配纯白描边大橙「升级」按钮；「物品档案」空态加柔框承托。
+- **U6 钱包 1:1 对齐（`scripts/world.gd` `_build_wallet_panel`）**：
+  - 顶部加对称绿叶 `leaf_sprig` 标题，地址行左挂亮蓝圆盘钱包徽标配大白圆角输入框，余额居中醒目，绿「连接」/ 蓝「复制地址」/ 橙「关闭」三颗真胶囊配纯白描边粗字，底部说明文本居中对齐。
+- **U3 升级三选一视觉收口（`scripts/world.gd` `_build_draft` / `_draft_card` / `_draft_tint_reroll`）**：
+  - 手机模式下隐藏大底板改为轻盈悬浮三卡；隐藏冗余 `_draft_mini` 豆行并去掉维生素英文括注；「重抽」钮改用真实 `button_blue.png` 糖果蓝胶囊配白粗描边字。
+- **S07–S23 弹窗与设置全区对齐（`scripts/world.gd`）**：
+  - `S09/S20` 设置页：左栏麦穗标题＋纯白字蓝胶囊选态，右栏新建 `_mk_sky_banner()`（`body_font` 实心纯白粗字＋柔和深蓝投影，消除细字外描边内吞），滑动条右侧对齐百分比数字，手机端开关采用 `visual_scale = 0.62` 兼顾触控热区与精致轨道，绿「关闭」钮加白字描边。
+  - `S08` 暂停页：选中页签蓝胶囊白字，右栏小标题统一为 `_mk_sky_banner` 蓝横幅，`PwChips` 改暖浅金/奶油底黑字。
+  - `S07` 出战选角：右格调整为 `102×100` 让两整行完整露出不截半行名字；未解锁物种头像内挂 `UiBadge("lab_locked")`（保持单 `TextureRect` 校验）；左栏克制/弱点字色针对奶油底加深提对比，子标题套用天蓝横幅。
+  - `S11` 伙伴营挑战（月桂枝蓝字标题＋奶白卡配圆角物种头像与中文稀有度）、`S14` 古石祭坛（月桂枝标题＋色区上收内嵌 `offset=14/15` 圆角贴合相框内沿＋效果文本居中）、`S15` 大地图（`402` 方图＋天蓝「大地图」与浅金「已探索」胶囊）、`S13/S21/S22` 通用选择卡（亮紫渐层立体卡配白粗投影字消灭白底白字）及 `S23` 交互气泡（暖奶油气泡底配深棕字）。
+- 本地全量检验：`Test/u2_shop_reaudit_parse.sh` 全绿通过；`verify_polish_all.gd` 输出并逐张 `Read` 审阅全部实拍图：`U4_lab`、`U6_wallet`、`S09_settings`、`S07_loadout`、`S08_pause`、`S20_pause_settings`、`S14_blessing`、`S12_shop_fix` 全项 `inside=true`, `min_b >= 76.4`, `min_t >= 21.4`（标签芯片 `>= 17.8`）。
+- **状态：已提交推送并同步至 NUC 执行 `--import` 核验后起跑双档 `s100` 全量验收批（`Test/u4_u6_full_reaudit_run.sh`）。**
+- 本轮提交：`assets/ui/textures/button_blue.png(.import)`、`scripts/ui_theme.gd`、`scripts/world.gd`、`Test/u2_shop_reaudit_parse.sh`、`Test/u4_u6_full_reaudit_run.sh`、`design/ui-reference/compare/U2.png`、`design/ui-reference/compare/U2_2400.png`、`design/ui-alignment-progress.md`。
 
 
