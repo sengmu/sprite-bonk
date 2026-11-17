@@ -13489,12 +13489,12 @@ func spawn_strike_fx(from: Vector3, target_pos: Vector3, dir: Vector3, range_: f
 			center.z + sin(fk) * l - dir.z * l * 0.5))
 	var widths: Array = []
 	for k in range(1, 8):
-		widths.append(0.45 * (1.0 - absf(float(k) / 7.0 - 0.5)))
-	_spawn_beam_fx(pts, widths, color, 0.16)
+		widths.append(0.68 * (1.0 - absf(float(k) / 7.0 - 0.5)))
+	_spawn_beam_fx(pts, widths, color, 0.24)
 	for k in range(0, 8, 2):
 		var fk2 := base_ang + sweep * (-1.1 + float(k) / 7.0 * 2.2)
-		_spawn_particle(pts[k], Vector3(cos(fk2), 0.35, sin(fk2)) * 3.0, 0.25, 0.5, 0.0, color, _tex_disc)
-	_spawn_flash(center, range_ * 0.6, color)
+		_spawn_particle(pts[k], Vector3(cos(fk2), 0.35, sin(fk2)) * 3.4, 0.30, 0.62, 0.0, color, _tex_disc)
+	_spawn_flash(center, range_ * 0.85, color)
 
 func _spawn_vines(from: Vector3, target_pos: Vector3, dir: Vector3, range_: float) -> void:
 	# Vine Whip's custom strike (@413916): two vm() vine chains

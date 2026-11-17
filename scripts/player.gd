@@ -37,6 +37,7 @@ const TYPE_COLORS := {
 
 var species_id := "bulbasaur"
 var base_species := "bulbasaur"  # the starter chosen (kit/family anchor)
+var _attack_face_t := 0.0  # 出招朝向短暂保持窗口，防止移动拉扯下一帧就把角色扭回跑动方向
 # Cycle 22: runtime type override (the imposter passive's
 # 30 s type copy, bundle @711560: t.types = nearest enemy's
 # types). Empty = the species' own types. Every consumer
@@ -863,7 +864,9 @@ func _physics_process(delta: float) -> void:
 		_apex_y = ground_y
 	if rig:
 		rig.set_move_speed(_speed_now)
-		if _speed_now > 0.5:
+		if _attack_face_t > 0.0:
+			_attack_face_t -= delta
+		elif _speed_now > 0.5:
 			rig.set_facing(Vector3(_vel.x, 0, _vel.z) / _speed_now)
 	# --- regen ---
 	if hp < max_hp:
@@ -938,6 +941,7 @@ func _try_fire(mv: Dictionary) -> bool:
 			to.y = 0.0
 			rig.set_facing(to.normalized())
 			rig.play_lunge()
+			_attack_face_t = 0.24
 			if GameAudio.instance:
 				GameAudio.instance.slash()  # cycle 16: melee cast
 			var dealt_total := 0.0
@@ -961,6 +965,7 @@ func _try_fire(mv: Dictionary) -> bool:
 				return false
 			rig.set_facing((target.global_position - global_position).normalized())
 			rig.play_lunge()
+			_attack_face_t = 0.24
 			if GameAudio.instance:
 				GameAudio.instance.shot(mtype)  # cycle 16: typed cast
 			world.spawn_projectile(global_position + Vector3(0, 1.0, 0), target, _roll_damage(mv), col, mtype, ailment, achance, key)
@@ -989,6 +994,7 @@ func _try_fire(mv: Dictionary) -> bool:
 			dir = dir.normalized()
 			rig.set_facing(dir)
 			rig.play_lunge()
+			_attack_face_t = 0.24
 			if GameAudio.instance:
 				GameAudio.instance.beam(mtype)  # cycle 16
 			var dealt_total := 0.0

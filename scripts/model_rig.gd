@@ -615,12 +615,11 @@ func set_move_speed(s: float) -> void:
 	_move_speed = s
 
 func play_lunge() -> void:
-	_lunge_t = 0.30  # Segment Z curve length (anticipation + thrust)
-	_cast_t = 0.30  # bundle attackAnim(): attackT = .3 on every cast
+	_lunge_t = 0.38  # 延长至 0.38 s 完整挥击表现窗口（含蓄力、前扑与收招）
+	_cast_t = 0.38
 	if anim_player:
+		_clip_state = ""  # 每次出招均强制从头重播，确保连击时动作不漏播
 		_play_clip("fight")
-		await get_tree().create_timer(0.35).timeout
-		_clip_state = ""  # force re-eval
 
 ## Cycle 13: the ult pose — fire() sets ultPoseT = .6 and the
 ## renderer holds the species' "attack" pose for the window
@@ -629,14 +628,12 @@ func play_lunge() -> void:
 ## (attackT .3) rides along like every other cast.
 func play_ult_pose() -> void:
 	_ult_pose_t = 0.6
-	_cast_t = 0.30
+	_cast_t = 0.38
 	if anim_player:
+		_clip_state = ""
 		_play_clip("fight")
 	else:
-		# Procedural rigs: the lunge motion is the pose floor
-		# (attack hotfix idiom) — the squash pulse above still
-		# reads as the cast beat.
-		_lunge_t = 0.30
+		_lunge_t = 0.38
 
 func ult_pose_value() -> float:
 	return _ult_pose_t
@@ -873,6 +870,13 @@ func _play_clip(kind: String) -> void:
 			pick = n
 			break
 	if pick != "":
+		# 针对长骨骼攻击剪辑（如妙蛙种子 1.75 s）按窗口自适应倍速播放，避免前摇没结束就被切回走路
+		if kind == "fight":
+			var alen := anim_player.get_animation(pick).length
+			var target_dur := 0.55 if _ult_pose_t > 0.0 else 0.36
+			anim_player.speed_scale = clampf(alen / target_dur, 1.8, 5.5)
+		else:
+			anim_player.speed_scale = 1.0
 		anim_player.play(pick)
 		anim_player.seek(0.0)
 		_clip_state = kind
@@ -983,45 +987,41 @@ func _process(delta: float) -> void:
 	# attacker visibly recoiled / showed no attack motion at all.
 	# Forward is +Z in rig space; off is rig-local, so the local
 	# basis is the right one (parents are unrotated).
+	var lunge_rot := 0.0
 	if _cast_t > 0.0:
 		_cast_t -= delta
 	if _ult_pose_t > 0.0:
 		_ult_pose_t -= delta
 		if _ult_pose_t <= 0.0:
-			_clip_state = ""  # pose window over: force clip re-eval
+			_clip_state = ""  # 必杀演出结束：强制回归待机/移动动画
 	if _lunge_t > 0.0:
 		_lunge_t -= delta
-		var e: float = 1.0 - maxf(_lunge_t, 0.0) / 0.30
+		if _lunge_t <= 0.0 and _ult_pose_t <= 0.0 and _clip_state == "fight":
+			_clip_state = ""  # 攻击窗口结束：自动恢复待机/移动动画并还原播放速度
+		var e: float = 1.0 - maxf(_lunge_t, 0.0) / 0.38
 		var lo := 0.0
-		if e < 0.27:
-			lo = -0.10 * (e / 0.27)
+		if e < 0.25:
+			var bk: float = e / 0.25
+			lo = -0.14 * bk
+			lunge_rot = -0.18 * bk
 		else:
-			var pp: float = (e - 0.27) / 0.73
-			lo = 0.42 * pow(sin(pp * PI), 0.7)
+			var pp: float = (e - 0.25) / 0.75
+			var arc := sin(pp * PI)
+			lo = 0.72 * pow(arc, 0.72)
+			lunge_rot = 0.36 * arc
+			off.y += arc * 0.22
 		var fwd := transform.basis.z
-		off += Vector3(fwd.x, 0, fwd.z) * lo
-	# Player faint collapse: tip the model over backward (procedural
-	# species; clip species play their authored ko clip instead).
-	# Enemies do NOT tip — they fade (fade_k above).
+		off += Vector3(fwd.x, 0, fwd.z) * (lo * (0.55 if anim_player != null else 1.0))
 	if _faint_t >= 0.0 and is_player and not _faint_clip:
 		model.rotation.x = -1.25 * (1.0 - (1.0 - faint_k) * (1.0 - faint_k))
 	elif anim_player == null:
-		# Compose on any authored lay-flat rot_x (cfg).
-		model.rotation.x = float(SPECIES.get(species_id, {}).get("rot_x", 0.0)) + rot_x
+		model.rotation.x = float(SPECIES.get(species_id, {}).get("rot_x", 0.0)) + rot_x + lunge_rot
 	model.position = base_pos + off
 	if _base_scale != Vector3.ZERO:
-		# Squash channels (hurt + step, volume-preserving) + idle
-		# breathing + the player's collapse shrink; enemies keep
-		# their scale and simply fade.
 		var shrink := 1.0 - (0.06 * faint_k if is_player else 0.0)
-		# Bundle cast feedback (player render push): the squash
-		# argument is squash + c + a, where c is the cast pulse
-		# sin((1 - attackT/.3) * PI) * .12 over the 0.3 s attackT
-		# window set by attackAnim() on every cast. Our channels
-		# max-compose; the pulse ADDS on top, like the bundle's.
 		var cast_pulse := 0.0
 		if _cast_t > 0.0:
-			cast_pulse = sin(PI * (1.0 - clampf(_cast_t, 0.0, 0.30) / 0.30)) * 0.12
+			cast_pulse = sin(PI * (1.0 - clampf(_cast_t, 0.0, 0.38) / 0.38)) * 0.22
 		var sq := maxf(_squash, _step_squash) + cast_pulse
 		var breath := 1.0 + sin(_breath_t * 1.7) * 0.012
 		var sv := Vector3(1.0 + 0.35 * sq, (1.0 - 0.45 * sq) * (1.0 - (0.10 * faint_k if is_player else 0.0)), 1.0 + 0.35 * sq)
