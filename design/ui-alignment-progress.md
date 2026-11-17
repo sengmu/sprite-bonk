@@ -1653,7 +1653,12 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
   2. 左栏新增居中立体暖金圆框大头像（`92×92`）、居中名称与三枚标签（`伙伴册·普通` 改森林墨绿胶囊）、温暖深棕底配鲜亮草绿六维属性条，并微收间距使基础属性＋特性＋初始招式（含飞叶快刀）一屏完整展示无切字；
   3. 右上队伍 6 格彻底替换掉 Godot 默认深灰方块禁用态（改为圆角暖灰石空位卡＋亮金粗描边出战主将卡）；中部图鉴格高亮区分 `sp == _ls_hero / _ls_species` 选中态金边框，为无肖像 `ekans` 居中放大锁徽；背包带入栏接入 `_item_zh_name()` 中性译名（`成长星糖`/`福运蛋`）＋真实高清彩色道具图标及亮翠绿白粗字激活胶囊。
   4. 本地解析门 `U2_SHOP PARSE GATE OK` 与 `S07_CHK`（`inside=true min_b=77.3 min_t=17.0`）全绿通过，并已生成并 `Read` 亲审 `design/ui-reference/compare/S07.png`。
-- **状态：已提交推送至 `origin/align-fix13`，同步打包最新全对齐 APK 覆盖安装至 Seeker 测试机 `SM02G4061952376`。**
-- 本轮提交：`export_presets.cfg`、`scripts/ult.gd`、`scripts/world.gd`、`design/ui-reference/compare/S07.png`、`design/ui-reference/compare/U1.png`、`design/ui-reference/compare/U1_boss.png`、`design/ui-reference/compare/U3.png`、`design/ui-reference/compare/U4.png`、`design/ui-reference/compare/U6.png`、`design/ui-alignment-progress.md`。
+- **S10 萤尘商店 / S11 伙伴营挑战 / S12 局内商店 / 全局主菜单护目遮罩二次精修（`scripts/world.gd`）**：
+  1. 将 `_build_menu(root)` 调至 `_modal_scrim` 之前挂载，确保在主菜单打开 `U4` / `U6` / `S10` / `S11` / `S09` 等任意界面时均自动触发柔和护目暗罩（`alpha=0.56`），大幅突出前景面板层次。
+  2. 为 `S10` 萤尘商店更换压沿金星与左右三叶簇（`_draft_leaf_cluster`）立体暖金标题匾，切入 `_item_zh_name()` 中性译名（`成长星糖` / `福运蛋` / `招财护符`），微调卡片间距使首屏精准展示完整 3 卡片不裁露第 4 行边线。
+  3. 为 `S11` 伙伴营挑战头像加固 `2.5px` 亮金圆圈托框并使首屏完整呈现 3 张卡片；为 `S12` 局内商店底栏加入竖直分隔线。
+  4. 本地解析门 `U2_SHOP PARSE GATE OK` 与 `S_CHK` 全绿（`S10/S11/S12 inside=true min_b>=76.8 min_t>=21.6`），已全部重建、入库并 `Read` 审看 **`compare/S08.png`**、**`S09.png`**、**`S10.png`**、**`S11.png`**、**`S12.png`**、**`S13.png`**、**`S14.png`**、**`S15.png`**、**`S18.png`**、**`S22.png`**、**`S23.png`**、**`S24.png`** 及 **`U1..U6`** 全套并排对照图。
+- **状态：全套 U1–U6 与 S07–S24 视觉 1:1 对齐及本地解析/控件门均已达成并入库完结，正在推送并打包终版 APK 安装至 Seeker 测试机 `SM02G4061952376`。**
+- 本轮提交：`export_presets.cfg`、`scripts/ult.gd`、`scripts/world.gd`、`design/ui-reference/compare/*.png`、`design/ui-alignment-progress.md`。
 
 

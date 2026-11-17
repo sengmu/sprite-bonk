@@ -3577,6 +3577,9 @@ func _build_hud() -> void:
 	# menu behind it, and the banner (inside the HUD root)
 	# stops ghosting through translucent panels. Visibility
 	# is driven per-frame from _any_modal_open().
+	# 先建主菜单再挂载 _modal_scrim，确保从主菜单开启 U4/U6/S10/S11/S09 时柔和暗罩能覆盖底层菜单提升前景弹窗聚焦度
+	_build_menu(root)
+
 	_modal_scrim = ColorRect.new()
 	_modal_scrim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_modal_scrim.color = Color(0.10, 0.14, 0.08, 0.56)
@@ -3584,7 +3587,6 @@ func _build_hud() -> void:
 	_modal_scrim.visible = false
 	root.add_child(_modal_scrim)
 
-	_build_menu(root)
 	_build_wallet_panel(root)
 	_refresh_wallet_ui()
 	if wallet.is_wallet_connected():
@@ -5187,36 +5189,38 @@ func _build_shop_panel(root: Control) -> void:
 	_shop_panel.add_theme_stylebox_override("panel", UiTheme.panel_texture())
 	root.add_child(_shop_panel)
 	var vb := VBoxContainer.new()
-	vb.add_theme_constant_override("separation", 7)
+	vb.add_theme_constant_override("separation", 5 if _p5_on else 7)
 	_shop_panel.add_child(vb)
-	# 对齐定稿 S10_v1.jpg：顶部立体三星金黄圆角标题牌 + 两侧绿叶簇 + 纯白星尘余额胶囊
+	# 对齐定稿 S10_v1.jpg：顶部压沿金星＋立体暖金圆角标题牌＋左右三叶绿簇＋纯白星尘胶囊
 	if _p5_on:
 		var title_wrap := CenterContainer.new()
 		vb.add_child(title_wrap)
 		var title_row := HBoxContainer.new()
-		title_row.add_theme_constant_override("separation", 6)
+		title_row.add_theme_constant_override("separation", 0)
 		title_wrap.add_child(title_row)
-		var leaf_l := UiTheme.art("leaf_sprig", Vector2(36, 36))
-		leaf_l.flip_h = true
-		title_row.add_child(leaf_l)
+		title_row.add_child(_draft_leaf_cluster(false))
 		var gold_banner := PanelContainer.new()
-		var g_sb := _style(Color("ffd966"), 14, Color("c98b2c"), 2, true)
-		g_sb.content_margin_left = 24
-		g_sb.content_margin_right = 24
-		g_sb.content_margin_top = 2
+		var g_sb := _style(Color("ffd966"), 16, Color("c98b2c"), 2, true)
+		g_sb.content_margin_left = 34
+		g_sb.content_margin_right = 34
+		g_sb.content_margin_top = -8
 		g_sb.content_margin_bottom = 4
 		gold_banner.add_theme_stylebox_override("panel", g_sb)
 		title_row.add_child(gold_banner)
 		var g_vb := VBoxContainer.new()
-		g_vb.add_theme_constant_override("separation", 0)
+		g_vb.add_theme_constant_override("separation", 1)
 		gold_banner.add_child(g_vb)
-		var hstars := UiTheme.art("header_stars", Vector2(84, 26))
-		hstars.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		g_vb.add_child(hstars)
+		var st_wrap := CenterContainer.new()
+		g_vb.add_child(st_wrap)
+		var hstar := TextureRect.new()
+		hstar.texture = load("res://assets/ui/decorations/star_filled.png") as Texture2D
+		hstar.custom_minimum_size = Vector2(28, 28)
+		hstar.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		hstar.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		st_wrap.add_child(hstar)
 		var t := _mk_dlabel(g_vb, "萤尘商店", 24, UiTheme.TEXT)
 		t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		var leaf_r := UiTheme.art("leaf_sprig", Vector2(36, 36))
-		title_row.add_child(leaf_r)
+		title_row.add_child(_draft_leaf_cluster(true))
 		var bal_wrap := CenterContainer.new()
 		vb.add_child(bal_wrap)
 		var bal_pill := PanelContainer.new()
@@ -5249,7 +5253,7 @@ func _build_shop_panel(root: Control) -> void:
 	# 对齐定稿 S10_v1.jpg，手机端省略长句说明以腾出高度完整呈现三行以上大卡片
 	note.visible = not _p5_on
 	_shop_list = VBoxContainer.new()
-	_shop_list.add_theme_constant_override("separation", 6)
+	_shop_list.add_theme_constant_override("separation", 10 if _p5_on else 6)
 	var ssc: ScrollContainer = null
 	if _p5_on:
 		ssc = ScrollContainer.new()
@@ -5297,16 +5301,16 @@ func _refresh_shop() -> void:
 		var c_sb := _style(Color(1.0, 0.985, 0.945, 0.96), 16, Color("e5cfa0"), 1.5, true)
 		c_sb.content_margin_left = 12
 		c_sb.content_margin_right = 12
-		c_sb.content_margin_top = 5
-		c_sb.content_margin_bottom = 5
+		c_sb.content_margin_top = 11
+		c_sb.content_margin_bottom = 11
 		card.add_theme_stylebox_override("panel", c_sb)
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 10)
 		card.add_child(row)
 		var ic_ring := PanelContainer.new()
-		ic_ring.custom_minimum_size = Vector2(46, 46)
+		ic_ring.custom_minimum_size = Vector2(48, 48)
 		ic_ring.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		var ring_sb := _style(Color("f7e8c6"), 23, Color("e2c68e"), 1.5, false)
+		var ring_sb := _style(Color("f7e8c6"), 24, Color("e2c68e"), 1.5, false)
 		ring_sb.set_content_margin_all(5)
 		ic_ring.add_theme_stylebox_override("panel", ring_sb)
 		ic_ring.add_child(_item_icon_rect(id, 34.0))
@@ -5315,7 +5319,7 @@ func _refresh_shop() -> void:
 		info_vb.add_theme_constant_override("separation", 2)
 		info_vb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		info_vb.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		var title_l := _mk_label(info_vb, String(it["name"]), 16, UiTheme.TEXT)
+		var title_l := _mk_label(info_vb, _item_zh_name(id) if _p5_on else String(it["name"]), 16, UiTheme.TEXT)
 		title_l.add_theme_font_override("font", UiTheme.display_font())
 		var desc_l := _mk_label(info_vb, String(it["desc"]), 13, Color("6e502f"))
 		desc_l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -5839,16 +5843,16 @@ func _refresh_unlock_panel() -> void:
 		var c_sb := _style(c_bg, 16, Color("dfb86c") if (done or in_league) else Color("e5cfa0"), 1.5, true)
 		c_sb.content_margin_left = 12
 		c_sb.content_margin_right = 12
-		c_sb.content_margin_top = 8
-		c_sb.content_margin_bottom = 8
+		c_sb.content_margin_top = 10
+		c_sb.content_margin_bottom = 10
 		card.add_theme_stylebox_override("panel", c_sb)
 		var chb := HBoxContainer.new()
 		chb.add_theme_constant_override("separation", 12)
 		card.add_child(chb)
 		var pic_box := PanelContainer.new()
-		pic_box.custom_minimum_size = Vector2(56, 56)
+		pic_box.custom_minimum_size = Vector2(58, 58)
 		pic_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		var p_sb := _style(Color("fff8ea"), 28, Color("d8bc86"), 1.5, false)
+		var p_sb := _style(Color("fff5d8"), 29, Color("e5be62"), 2.5, true)
 		p_sb.set_content_margin_all(4)
 		pic_box.add_theme_stylebox_override("panel", p_sb)
 		var pt := TextureRect.new()
@@ -9224,6 +9228,11 @@ func _build_shop(root: Control) -> void:
 		vb.add_child(bot)
 		_shop_reroll_btn.size_flags_vertical = Control.SIZE_SHRINK_END
 		bot.add_child(_shop_reroll_btn)
+		var msep := ColorRect.new()
+		msep.color = Color("e0c694")
+		msep.custom_minimum_size = Vector2(1.5, 36)
+		msep.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		bot.add_child(msep)
 		var ssc := ScrollContainer.new()
 		ssc.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 		ssc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
