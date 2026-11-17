@@ -95,7 +95,7 @@ func request_authorize() -> String:
 func connect_with_address(addr: String) -> bool:
 	var a := addr.strip_edges()
 	if not is_valid_address(a):
-		auth_failed.emit("invalid Solana address")
+		auth_failed.emit("Solana 钱包地址格式无效")
 		return false
 	address = a
 	_save()

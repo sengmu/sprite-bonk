@@ -26,7 +26,7 @@ enabled=PackedStringArray("res://addons/SolanaSDK/plugin.cfg")
 
 window/size/viewport_width=1280
 window/size/viewport_height=720
-window/handheld/orientation="landscape"
+window/handheld/orientation="sensor_landscape"
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 

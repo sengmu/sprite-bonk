@@ -1055,7 +1055,7 @@ func _p1_phone_block(vp: Vector2) -> void:
 		var pwb := status.find_child("PwChips", true, false)
 		if pwb != null:
 			chips = pwb.get_child_count()
-	var iname := String(GameData.item_def(ikey).get("name", ikey))
+	var iname := String(_world.call("_item_zh_name", ikey))
 	_check("P1: pause tabs", first == "状态" and status != null and status.visible
 		and chips >= 6 and _p1_find_label(status, iname),
 		"first=" + first + " chips=" + str(chips) + " item=" + iname

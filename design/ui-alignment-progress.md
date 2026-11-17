@@ -1676,5 +1676,21 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 本地双分辨率校验与对照图入库：`Godot --check-only` 解析门 `scripts/world.gd` 与 `Test/phonehud.gd` 双绿；`verify_fullscreen.gd` 在 `2400×1080` 与 `1280×720` 双档实测 22 个状态全部 **`inside=true`, `prim_ok=true`, `min_b >= 76.1`, `min_t >= 21.1`（芯片 `18.6 >= 17.0`）, `sl >= 71.4`**，`20:9` 下 `U4_up` / `S10` / `S09_sound` / `S09_keys` / `S08_t0` / `S08_t1` / `S12` 全部零滚动条。已更新并 `Read` 审看 `compare/{U4,S08,S09,S10,S11,S12}.png`。
 - 本轮提交：`scripts/world.gd`、`Test/phonehud.gd`、`design/ui-reference/compare/{U4,S08,S09,S10,S11,S12}.png`、`design/ui-alignment-progress.md`。
 
+## 发行上线级全维度质量加固＋瘦身包体＋安卓手势与语言纯化（2026-11-17 17:5x）
+
+- **安卓发版与硬件兼容加固（`export_presets.cfg`、`project.godot`、`scripts/world.gd`、`scripts/wallet.gd`）**：
+  1. **包体剔除 15.21 MB 开发测试废图**：审计旧包发现 182 张 `design/` 参考与比对 `.ctex`（`15.21 MB`）泄漏打入正式 APK，在 `export_presets.cfg` 双预设 `exclude_filter` 新增 `design/*, .tmp/*` 实现包体纯净化瘦身。
+  2. **双向自由横屏适配**：`project.godot` 将 `window/handheld/orientation` 升格为 `"sensor_landscape"`，支持真机左右倒转横屏握持。
+  3. **安卓侧滑／物理返回键统一路由**：在 `_notification` 接入 `NOTIFICATION_WM_GO_BACK_REQUEST` 与 `_handle_android_back()`，按弹窗层级安全依次收起「钱包 → 挑战 → 设置 → 商店 → 实验室 → 出战配置 → 大地图 → 局内商店 → 暂停」，战斗无遮挡时唤起暂停，杜绝误退或无响应。
+  4. **全界面纯中文最后清零**：汉化 `wallet.gd` `"Solana 钱包地址格式无效"`、修正 `world.gd` 横幅「终极兽潮来袭！」「实验室「队伍上限」」「成长阶段突破！」及开宝箱 `_item_zh_name(key)`；将 **`S08 暂停页` 持有物品名**切为纯中文 `_item_zh_name(key)`（并同步升级 `Test/phonehud.gd:1058` 断言校验中文名）。
+- **余下 13 屏实拍精检与末梢打磨（`scripts/world.gd`、`Test/phonehud.gd`）**：
+  1. **`S19` 暂停快捷设置**：保持 `QuickRow` 直接子节点结构兼容 P1/P3 断言下，将 4 枚开关升级为 **`GridContainer(columns = 2)` 2×2 卡片网格**配底部全宽滑块与居中适宽 `260px` 蓝色「全部设置」按钮，彻底消除 `5px` 滚动条实现一屏全显。
+  2. **`S15` 大地图**：为探索区加装圆角金棕相框消除纯黑边刺眼感，右侧统计区收进立体奶白圆角卡片。
+  3. **`S07` 出战配置**：头像微调 `84×84` 并将左下「初始招式」升级为 **2 列网格展示**，4 招完整露出不再被裁半行。
+  4. **`U5` 汇总条右护栏**：在 `prow` 末补 `14px` 右护栏 `pad_r` 确保高位数字不越过浅金胶囊弧缘（保持既定像素位置不变）。
+- 本地全部 7 核心脚本解析门全绿通过；13 屏余下界面全真机分辨截图已逐张 `Read` 审看无误并更新 `compare/{S07,S08,S15}.png`；NUC 上 `85848c6` 已过 `2400×1080`（`1564/0`）且 `2340×1080` 已行至 `1490/0`。
+- 本轮提交：`export_presets.cfg`、`project.godot`、`scripts/wallet.gd`、`scripts/world.gd`、`Test/phonehud.gd`、`design/ui-reference/compare/{S07,S08,S15}.png`、`design/ui-alignment-progress.md`。
+
+
 
 

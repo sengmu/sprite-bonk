@@ -5209,6 +5209,55 @@ func _notification(what: int) -> void:
 	elif what == NOTIFICATION_WM_WINDOW_FOCUS_IN:
 		_window_focused = true
 		_update_hidden_mute()
+	elif what == NOTIFICATION_WM_GO_BACK_REQUEST:
+		_handle_android_back()
+
+## 安卓系统返回手势／物理返回键统一路由：优先关闭最顶层弹窗，局内无弹窗时唤起暂停
+func _handle_android_back() -> void:
+	if _wallet_panel and _wallet_panel.visible:
+		if audio:
+			audio.click()
+		_wallet_panel.visible = false
+	elif _unlock_panel and _unlock_panel.visible:
+		if audio:
+			audio.click()
+		_unlock_panel.visible = false
+		if _unlock_from_pause:
+			_unlock_from_pause = false
+			if state == "pause" and _pause_panel:
+				_pause_panel.visible = true
+	elif _sound_panel and _sound_panel.visible:
+		if audio:
+			audio.click()
+		_close_settings()
+	elif _shop_panel and _shop_panel.visible:
+		if audio:
+			audio.click()
+		_shop_panel.visible = false
+	elif _lab_panel and _lab_panel.visible:
+		if audio:
+			audio.click()
+		_lab_panel.visible = false
+	elif _loadout_panel and _loadout_panel.visible:
+		if audio:
+			audio.click()
+		_loadout_panel.visible = false
+	elif _bigmap_panel and _bigmap_panel.visible:
+		if audio:
+			audio.click()
+		_close_big_map()
+	elif _shop_open and _meowth_panel and _meowth_panel.visible:
+		if audio:
+			audio.click()
+		_shop_close()
+	elif state == "pause" and _pause_panel and _pause_panel.visible:
+		if audio:
+			audio.click()
+		_close_pause()
+	elif state in ["playing", "guardian", "portal"] and not _any_modal_open():
+		if audio:
+			audio.click()
+		_open_pause()
 
 ## The music director: the bundle re-asserts
 ## playTrack(musicFor()) twice a second — boss track while the
@@ -6362,7 +6411,7 @@ func _step_level_up() -> void:
 		return
 	if lv in [24, 44] and player.planned_evo_level() == -1:
 		player.apply_growth()
-		show_banner("成长阶段！伤害与体魄提升（o +0.12）", 3.0)
+		show_banner("成长阶段突破！伤害与体魄全面提升", 3.0)
 		_refresh_hud()
 		return
 	_open_draft()
@@ -9044,7 +9093,7 @@ func _roll_chest_item(floor_tier: int, count: int = 1) -> void:
 			"出售 +%d 金币" % sell,
 			func(_idx: int) -> void:
 				if player.add_item(key):
-					show_banner("获得物品：%s" % String(GameData.item_def(key).get("name", key)), 2.5)
+					show_banner("获得物品：%s" % _item_zh_name(key), 2.5)
 				else:
 					gold += float(sell)
 					show_banner("物品已满，自动出售：+%d 金币" % sell, 2.5),
@@ -14514,7 +14563,7 @@ func _process(delta: float) -> void:
 		pickup_manager().tick(delta)
 		if elapsed >= ZONE_TIME and not _swarm:
 			_swarm = true
-			show_banner("Final Swarm！野怪暴走了，坚持住！", 4.0)
+			show_banner("终极兽潮来袭！野怪暴走了，坚持住！", 4.0)
 	# Level-up sequence: evolution/growth consume no draft (§1.2);
 	# other levels open the draft (world clock paused meanwhile).
 	if player and is_instance_valid(player) and player.pending_levels > 0 and state in ["playing", "guardian", "portal"]:
@@ -14859,7 +14908,7 @@ func _throw_ball(e: Enemy) -> void:
 	var is_league := e.mode == Enemy.MODE_LEAGUE
 	# Team cap first (§5.3): don't burn a throw on a full party.
 	if not is_league and _normal_ally_count() >= _team_cap():
-		show_banner("队伍已满（%d 只）！研究室 party 可扩到 3 只" % _team_cap(), 3.0)
+		show_banner("队伍已满（%d 只）！实验室「队伍上限」可扩至 3 只" % _team_cap(), 3.0)
 		return
 	# Cycle 16: throw + open sounds; our capture resolves
 	# instantly (the bundle animates shakes over seconds and
@@ -17869,6 +17918,9 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 				sep_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 				sep_wrap.add_child(sep_bar)
 				prow.add_child(sep_wrap)
+		var pad_r := Control.new()
+		pad_r.custom_minimum_size.x = 14
+		prow.add_child(pad_r)
 	else:
 		prow.add_child(UiIcon.new("spark", Color(0.62, 0.35, 0.95), 24))
 		_mk_label(prow, "星尘 +%d" % dust, 32 if _p5_on else 18, UiTheme.TEXT)
@@ -18100,12 +18152,37 @@ func _build_pause(root: Control) -> void:
 	# UI-mobile P1.5: the quick-toggle row (filled on show
 	# so it mirrors Profile) — the aim toggle's future home
 	# (plan D2) — above the full settings entry.
-	var quick := VBoxContainer.new()
+	var quick: Container = GridContainer.new() if _p5_on else VBoxContainer.new()
 	quick.name = "QuickRow"
-	quick.add_theme_constant_override("separation", 6)
-	set_box.add_child(quick)
+	if _p5_on:
+		(quick as GridContainer).columns = 2
+		quick.add_theme_constant_override("h_separation", 24)
+		quick.add_theme_constant_override("v_separation", 8)
+		quick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var qcard := PanelContainer.new()
+		qcard.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var q_sb := _style(Color(1.0, 0.99, 0.96, 0.94), 14, Color("e5cfa0"), 1.5, true)
+		q_sb.set_content_margin_all(12)
+		qcard.add_theme_stylebox_override("panel", q_sb)
+		var qvb := VBoxContainer.new()
+		qvb.add_theme_constant_override("separation", 10)
+		qcard.add_child(qvb)
+		qvb.add_child(quick)
+		var qsep := ColorRect.new()
+		qsep.color = Color("ead8b5")
+		qsep.custom_minimum_size.y = 1.5
+		qvb.add_child(qsep)
+		var qsl := VBoxContainer.new()
+		qsl.name = "QuickSlider"
+		qvb.add_child(qsl)
+		set_box.add_child(qcard)
+	else:
+		quick.add_theme_constant_override("separation", 6)
+		set_box.add_child(quick)
 	var openb := UiTheme.make_button("全部设置", "blue", "normal")
 	if _p5_on:
+		openb.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		openb.custom_minimum_size = Vector2(260, 44)
 		for st in ["font_color", "font_hover_color", "font_pressed_color"]:
 			openb.add_theme_color_override(st, Color.WHITE)
 		openb.add_theme_color_override("font_outline_color", Color("13548c"))
@@ -18197,7 +18274,7 @@ func _pause_show_tab(i: int) -> void:
 ## UI-mobile P1.5: the quick toggles (rebuilt on show so a
 ## change made in the full settings is reflected).
 func _pause_fill_quick() -> void:
-	var quick := (_pause_pages["settings"] as Control).find_child("QuickRow", false, false) as VBoxContainer
+	var quick := (_pause_pages["settings"] as Control).find_child("QuickRow", true, false) as Container
 	if quick == null:
 		return
 	for c in quick.get_children():
@@ -18226,7 +18303,17 @@ func _pause_fill_quick() -> void:
 			if touch_controls:
 				touch_controls.fixed_stick = bool(GameProfile.setting("fixedStick")))
 	_st_switch(quick, "大招自动释放", "autoUlt")
-	_st_slider(quick, "触控按钮大小", "touchScale", 0.7, 1.5, 0.05, "%.2f",
+	if _p5_on:
+		for c in quick.get_children():
+			if c is Control:
+				(c as Control).size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var qsl := (_pause_pages["settings"] as Control).find_child("QuickSlider", true, false) as Container
+	var sl_parent: Container = qsl if qsl != null else quick
+	if qsl != null:
+		for c in qsl.get_children():
+			qsl.remove_child(c)
+			c.queue_free()
+	_st_slider(sl_parent, "触控按钮大小", "touchScale", 0.7, 1.5, 0.05, "%.2f",
 		func() -> void:
 			if touch_controls:
 				touch_controls.apply_scale(float(GameProfile.setting("touchScale"))))
@@ -18329,7 +18416,7 @@ func _pause_fill_status() -> void:
 		irow.add_theme_constant_override("separation", 8)
 		box_right.add_child(irow)
 		irow.add_child(_item_icon_rect(key, 26.0))
-		_mk_label(irow, "%s ×%d" % [String(GameData.item_def(key).get("name", key)),
+		_mk_label(irow, "%s ×%d" % [_item_zh_name(key),
 			int(player.items[ik])], 15)
 		_mk_label(irow, _item_label(key), 14 if _p5_on else 12, UiTheme.MUTED)
 	# 5. 队伍 (same source as the HUD party row)
@@ -18585,13 +18672,20 @@ func _build_bigmap(root: Control) -> void:
 	# column takes the flowing width, 关闭 bottom-right.
 	# 对齐定稿 S15_v1.jpg：宽阔大地图＋亮天蓝胶囊「大地图」标题＋浅金「已探索 %」胶囊＋亮绿白字关闭钮
 	if _p5_on:
-		side = 402.0
+		side = 396.0
 	_bigmap = BigMap.new()
 	_bigmap.world = self
 	_bigmap.custom_minimum_size = Vector2(side, side)
-	hb.add_child(_bigmap)
 	if _p5_on:
-		_bigmap.custom_minimum_size = Vector2(side, side)
+		var map_frame := PanelContainer.new()
+		var mf_sb := _style(Color("0e111a"), 4, Color("d8b878"), 2.5, true)
+		mf_sb.set_content_margin_all(3)
+		map_frame.add_theme_stylebox_override("panel", mf_sb)
+		map_frame.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		map_frame.add_child(_bigmap)
+		hb.add_child(map_frame)
+	else:
+		hb.add_child(_bigmap)
 	var side_box := VBoxContainer.new()
 	side_box.add_theme_constant_override("separation", 10)
 	side_box.custom_minimum_size = Vector2(210 if _p5_on else 178, 0)
@@ -18611,7 +18705,15 @@ func _build_bigmap(root: Control) -> void:
 	var mhint := _mk_label(side_box, "点击地图放置标记（最多 3 个）；点已有标记可删除。", 14 if _p5_on else 11, Color("6e502f"))
 	_bigmap_list = VBoxContainer.new()
 	_bigmap_list.add_theme_constant_override("separation", 6)
-	side_box.add_child(_bigmap_list)
+	if _p5_on:
+		var lcard := PanelContainer.new()
+		var l_sb := _style(Color(1.0, 0.99, 0.96, 0.94), 14, Color("e5cfa0"), 1.5, true)
+		l_sb.set_content_margin_all(12)
+		lcard.add_theme_stylebox_override("panel", l_sb)
+		lcard.add_child(_bigmap_list)
+		side_box.add_child(lcard)
+	else:
+		side_box.add_child(_bigmap_list)
 	var closeb := UiTheme.make_button("关闭", "green", "big" if _p5_on else "normal")
 	if _p5_on:
 		for st in ["font_color", "font_hover_color", "font_pressed_color"]:
@@ -19236,12 +19338,12 @@ func _loadout_fill_detail() -> void:
 		# 对齐定稿 S07_v1.jpg：居中立体暖金圆头像框＋居中名称与标签＋温暖棕草绿属性条
 		var avatar_ring := PanelContainer.new()
 		avatar_ring.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		var av_sb := _style(Color("dff2ff"), 52, Color("e6b650"), 3, true)
+		var av_sb := _style(Color("dff2ff"), 48, Color("e6b650"), 3, true)
 		av_sb.set_content_margin_all(4)
 		avatar_ring.add_theme_stylebox_override("panel", av_sb)
 		_ls_detail.add_child(avatar_ring)
 		var tr := TextureRect.new()
-		tr.custom_minimum_size = Vector2(92, 92)
+		tr.custom_minimum_size = Vector2(84, 84)
 		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tr.texture = UiTheme.portrait(sp)
@@ -19334,15 +19436,29 @@ func _loadout_fill_detail() -> void:
 		if not hooks.is_empty():
 			parts.append("触发效果 ×%d" % hooks.size())
 		_mk_label(_ls_detail, "特性：%s" % (" · ".join(parts) if not parts.is_empty() else "触发型"), 13, Color("a35e08") if _p5_on else UiTheme.GOLD)
-	# Kit moves.
+	# Kit moves（手机端双列网格呈现，首屏四招完整显示不再截半行）
 	_mk_sky_banner(_ls_detail, "初始招式", 15, false)
+	var kit_parent: Container = _ls_detail
+	if _p5_on:
+		var kgrid := GridContainer.new()
+		kgrid.columns = 2
+		kgrid.add_theme_constant_override("h_separation", 8)
+		kgrid.add_theme_constant_override("v_separation", 2)
+		kgrid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_ls_detail.add_child(kgrid)
+		kit_parent = kgrid
 	for mk in GameData.kit(sp):
 		var md: Dictionary = GameData.move(String(mk))
 		var pwv = md.get("power", 0)
-		_mk_label(_ls_detail, "%s · %s · 威力 %d" % [
+		var ml := _mk_label(kit_parent, "%s·%s·%d" % [
 			_move_zh(String(mk)),
 			String((TYPE_HUD.get(String(md.get("type", "")), [String(md.get("type", ""))]) as Array)[0]),
-			int(pwv) if pwv != null else 0], 12)
+			int(pwv) if pwv != null else 0] if _p5_on else "%s · %s · 威力 %d" % [
+			_move_zh(String(mk)),
+			String((TYPE_HUD.get(String(md.get("type", "")), [String(md.get("type", ""))]) as Array)[0]),
+			int(pwv) if pwv != null else 0], 13 if _p5_on else 12)
+		if _p5_on:
+			ml.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	# Matchups.
 	_mk_sky_banner(_ls_detail, "相性", 15, false)
 	var weak: Array = []
