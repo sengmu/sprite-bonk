@@ -3586,7 +3586,9 @@ func _build_hud() -> void:
 	_modal_scrim = ColorRect.new()
 	_modal_scrim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_modal_scrim.color = Color(0.10, 0.14, 0.08, 0.56)
-	_modal_scrim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# 拦截弹窗外点击防止点穿到底层主菜单；轻点信息类弹窗外空白区可快捷关闭
+	_modal_scrim.mouse_filter = Control.MOUSE_FILTER_STOP
+	_modal_scrim.gui_input.connect(_on_modal_scrim_input)
 	_modal_scrim.visible = false
 	root.add_child(_modal_scrim)
 	_modal_fullscreen_bg = PanelContainer.new()
@@ -5346,12 +5348,62 @@ func _notification(what: int) -> void:
 	elif what == NOTIFICATION_WM_GO_BACK_REQUEST:
 		_handle_android_back()
 
+func _on_modal_scrim_input(ev: InputEvent) -> void:
+	var pressed := false
+	if ev is InputEventMouseButton and (ev as InputEventMouseButton).pressed and (ev as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
+		pressed = true
+	elif ev is InputEventScreenTouch and (ev as InputEventScreenTouch).pressed:
+		pressed = true
+	if not pressed:
+		return
+	if _wallet_panel and _wallet_panel.visible:
+		if audio:
+			audio.click()
+		_wallet_panel.visible = false
+		if _wallet_note:
+			_wallet_note.text = WALLET_DEFAULT_NOTE
+			_wallet_note.add_theme_color_override("font_color", UiTheme.MUTED)
+		if _wallet_note:
+			_wallet_note.text = WALLET_DEFAULT_NOTE
+			_wallet_note.add_theme_color_override("font_color", UiTheme.MUTED)
+	elif _bigmap_panel and _bigmap_panel.visible:
+		if audio:
+			audio.click()
+		_close_big_map()
+	elif _loadout_panel and _loadout_panel.visible:
+		if audio:
+			audio.click()
+		_loadout_panel.visible = false
+	elif _unlock_panel and _unlock_panel.visible:
+		if audio:
+			audio.click()
+		_unlock_panel.visible = false
+		if _unlock_from_pause:
+			_unlock_from_pause = false
+			if state == "pause" and _pause_panel:
+				_pause_panel.visible = true
+	elif _sound_panel and _sound_panel.visible:
+		if audio:
+			audio.click()
+		_close_settings()
+	elif _shop_panel and _shop_panel.visible:
+		if audio:
+			audio.click()
+		_shop_panel.visible = false
+	elif _lab_panel and _lab_panel.visible:
+		if audio:
+			audio.click()
+		_lab_panel.visible = false
+
 ## 安卓系统返回手势／物理返回键统一路由：优先关闭最顶层弹窗，局内无弹窗时唤起暂停
 func _handle_android_back() -> void:
 	if _wallet_panel and _wallet_panel.visible:
 		if audio:
 			audio.click()
 		_wallet_panel.visible = false
+		if _wallet_note:
+			_wallet_note.text = WALLET_DEFAULT_NOTE
+			_wallet_note.add_theme_color_override("font_color", UiTheme.MUTED)
 	elif _unlock_panel and _unlock_panel.visible:
 		if audio:
 			audio.click()

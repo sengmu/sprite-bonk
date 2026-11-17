@@ -1821,6 +1821,14 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 验证：模拟极端窄矮瞬态帧压缩 (`sc=0.326`) 后恢复至 Seeker 视口，立即回弹为精准 `wp.size=(610, 412), sc=1.349, ratio=1.48`；`verify_fullscreen`（22态）、`verify_rest_screens`（11态）、`verify_u6_redesign`（正常+失败态）及 `verify_seeker_notch` 全部通过。
 - 本轮提交：`scripts/world.gd`、`design/ui-alignment-progress.md`。
 
+## 弹窗暗遮罩防穿透拦截与轻触空白安全关闭（2026-11-17 22:3x）
+
+- **优化移动端弹窗手势防误触闭环（`scripts/world.gd`）**：
+  - 将 `_modal_scrim.mouse_filter` 从 `MOUSE_FILTER_IGNORE` 切换为 `MOUSE_FILTER_STOP` 彻底阻止点击钱包/设置/出战配置周围半透明暗区时点穿透至底层主菜单引发界面叠加死锁；
+  - 新增 `_on_modal_scrim_input()` 支持轻点暗色空白处优雅关闭信息类弹窗（钱包/大地图/出战配置/图鉴/设置/商店/实验室）并自动重置钱包状态提示，同时对战斗关键抉择（三选一升级/祝福/商贩/结算）保持强制选择拦截防误触关闭。
+- 验证：`SCRIM_TEST` 验证 `mouse_filter=0 (STOP)`、轻点遮罩外部安全收起钱包且底层实验室不被穿透开启；`verify_fullscreen`（22态）、`verify_rest_screens`（11态）、`verify_u6_redesign`（正常+失败态）及 `verify_gameplay_smoke` 全绿通过。
+- 本轮提交：`scripts/world.gd`、`design/ui-alignment-progress.md`。
+
 
 
 
