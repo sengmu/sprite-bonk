@@ -17602,8 +17602,11 @@ func _p3_tap_input(event: InputEvent, hit: Control, fx: Control, action: Callabl
 		_p3_press_fx(_obj_pill, false)
 		_p3_press_fx(_kills_pill_node(), false)
 		var now := Time.get_ticks_msec()
-		if now - _p3_tap_ms < 300:
+		# 按点击区域各自独立防抖（隔离触屏与模拟鼠标双触发，同时防止跨按钮快速切换操作被全局拦截）
+		var last_ms := int(hit.get_meta("p3_tap_ms", -100000))
+		if now - last_ms < 300:
 			return
+		hit.set_meta("p3_tap_ms", now)
 		_p3_tap_ms = now
 		action.call()
 
@@ -18730,7 +18733,7 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 				var coins := UiIcon.new("result_coins", UiTheme.GOLD, 48)
 				coins.custom_minimum_size = Vector2(46, 61)
 				segment.add_child(coins)
-			var text: String = ["星尘 +%d" % dust, "金币 %d" % int(gold), "得分 %s" % str(score)][part]
+			var text: String = ["萤尘 +%d" % dust, "金币 %d" % int(gold), "得分 %s" % str(score)][part]
 			var caption := _mk_label(segment, text, 32, UiTheme.TEXT)
 			caption.add_theme_font_override("font", payout_bold)
 			if part < 2:
@@ -18749,7 +18752,7 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 		prow.add_child(pad_r)
 	else:
 		prow.add_child(UiIcon.new("spark", Color(0.62, 0.35, 0.95), 24))
-		_mk_label(prow, "星尘 +%d" % dust, 32 if _p5_on else 18, UiTheme.TEXT)
+		_mk_label(prow, "萤尘 +%d" % dust, 32 if _p5_on else 18, UiTheme.TEXT)
 		_mk_label(prow, "|", 32 if _p5_on else 18, UiTheme.MUTED)
 		prow.add_child(UiBadge.new("tile_coin", UiTheme.GOLD, 24))
 		_mk_label(prow, "金币 %d" % int(gold), 32 if _p5_on else 18, UiTheme.TEXT)

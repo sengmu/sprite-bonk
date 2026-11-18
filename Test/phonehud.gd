@@ -182,6 +182,9 @@ func _prompt_rect() -> Rect2:
 	return r
 
 func _disjoint(a: Rect2, b: Rect2) -> bool:
+	# 隐藏或零尺寸控件（如手机端隐藏的 _pw_row）直接判定不相交，避免 grow(-1) 出现负尺寸触发引擎告警
+	if a.size.x <= 2.0 or a.size.y <= 2.0 or b.size.x <= 2.0 or b.size.y <= 2.0:
+		return true
 	return not a.grow(-1.0).intersects(b.grow(-1.0))
 
 func _inside(r: Rect2, outer: Rect2) -> bool:

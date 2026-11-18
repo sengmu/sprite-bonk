@@ -47,6 +47,7 @@ var _music_fade := [0.0, 0.0]        # per player: 0 silent .. 1 full
 var _music_fade_target := [0.0, 0.0]
 var _music_active := 0
 var _hidden_mute := false
+var _mute_gain := 1.0      # 失焦静音独立斜坡增益（与滑块即时调节解耦）
 var _master_eff := 0.8
 var _duck_t := 0.0
 var _duck_ratio := 1.0
@@ -141,10 +142,12 @@ func _lin_db(x: float) -> float:
 	return linear_to_db(maxf(x, 0.0001))
 
 func _apply_volumes() -> void:
+	_master_eff = float(vol["master"]) * _mute_gain
+	AudioServer.set_bus_volume_db(0, _lin_db(_master_eff))
+	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Music"),
+		_lin_db(float(vol["music"]) * 0.32 * _duck_level))
 	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("SFX"), _lin_db(float(vol["sfx"]) * 0.55))
 	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Cries"), _lin_db(float(vol["cries"]) * 0.45))
-	# Master and Music are (re)driven per frame in _process:
-	# master rides the hidden-mute ramp, music rides duck().
 
 ## setHiddenMute (@78395): ramp master to 0 / back over .15 s
 ## (the ramp runs in _process).
@@ -152,10 +155,10 @@ func set_hidden_mute(on: bool) -> void:
 	_hidden_mute = on
 
 func _process(delta: float) -> void:
-	# Hidden-mute ramp (.15 s in the bundle).
-	var mtarget := 0.0 if _hidden_mute else float(vol["master"])
-	var step := delta / 0.15 * maxf(float(vol["master"]), 0.01)
-	_master_eff = move_toward(_master_eff, mtarget, step)
+	# 失焦静音独立斜坡（0.15s 平滑淡出/恢复，拖动音量滑块时则零延迟即时生效）
+	var mute_target := 0.0 if _hidden_mute else 1.0
+	_mute_gain = move_toward(_mute_gain, mute_target, delta / 0.15)
+	_master_eff = float(vol["master"]) * _mute_gain
 	AudioServer.set_bus_volume_db(0, _lin_db(_master_eff))
 	# duck(): music gain toward the duck level (down fast,
 	# restore slow — the bundle ramps .3 s down / .8 s up).
@@ -165,7 +168,7 @@ func _process(delta: float) -> void:
 	else:
 		_duck_level = move_toward(_duck_level, 1.0, delta / 0.8)
 	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Music"),
-		_lin_db(float(vol["music"]) * 0.25 * _duck_level))
+		_lin_db(float(vol["music"]) * 0.32 * _duck_level))
 	# Music crossfades (.8 s in / .6 s out — playTrack @91356).
 	for i in range(2):
 		var rate := delta / (0.8 if _music_fade_target[i] > _music_fade[i] else 0.6)
