@@ -74,9 +74,9 @@ Initial release: 3 elemental starters, 4 biomes, guardian bosses, and native Sol
 
 首发版本：3 大元素伙伴、4 大生态地带、守护者试炼与 Solana MWA 原生钱包支持。
 
-## 5. Testing instructions（搬运自 config.yaml `solana_mobile_dapp_publisher_portal`，逐字未改）
+## 5. Testing instructions（与 `store/config.yaml` 同步）
 
-Guest play needs no account or wallet: launch the app, pick any starter, play. Wallet connect (optional, read-only) is on the main menu — use 'Connect Wallet', paste any Solana address, and the menu shows the address and its SOL balance. No transactions are possible in this build.
+Guest play needs no account or wallet: launch the app, tap any starter, tap Start, and play with on-screen touch controls. Wallet connect (optional, read-only) is on the main menu — tap Wallet then Connect to authorize via Solana Mobile Wallet Adapter (MWA) and view your read-only short address and SOL balance, or tap Copy Address to copy it. No transactions or signing fees are possible in this build.
 
 （此段无第三方 IP 名词，无需标注。）
 

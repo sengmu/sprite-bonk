@@ -1898,6 +1898,18 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 验证：实战特效抓拍 `vfx_showcase3.png` 亲检确认弯刀剑气连续犀利、双层光束精准贯穿目标、暴击 `64!` 与克制 `128` 清晰醒目；`player.gd`/`enemy.gd`/`world.gd` 解析全绿，`verify_gameplay_smoke` 及 `c23`/`c24` 全部 356 项单元单测 0 失败通过。
 - 本轮提交：`scripts/world.gd`、`scripts/player.gd`、`scripts/enemy.gd`、`design/ui-alignment-progress.md`。
 
+## Boss 预警阵与双核弹幕重铸、升级宝箱爆发特效及前臂格斗屈肘精修（2026-11-18）
+
+- **响应「继续优化」深化 Boss 战视觉辨识度、核心事件反馈与角色姿态精致度（`scripts/world.gd`、`scripts/player.gd`、`scripts/model_rig.gd`、`store/portal-prep/listing-fields.md`）**：
+  1. **Boss 战双核发光弹幕与半透斜纹聚能预警体系（`scripts/world.gd`）**：
+     - 升级 `_boss_shot` 复用 `_make_proj_node(col, 1.12)` 打造白热核心＋元素辉光外层的高能 Boss 弹幕，在 `_hostiles` 补齐飞行火花尾迹及撞击点炽白星闪与四溅火星粒子，彻底告别纯色单球呆板感。
+     - 废除原 0.35s 早逝单环预警，新增全段倒计时持续驻留的地面聚能收缩圆阵 `_spawn_telegraph_disc`（外环脉动亮边 + 程序化径向半透渐变圆盘 `_tele_disc_tex` 随倒计时扩张充能）与矩形线性冲锋警示走廊带 `_spawn_telegraph_strip`（程序化双侧亮边配半透斜纹斑马底纹 `_tele_strip_tex` 清晰标出地面范围不糊草地），并在落地/冲锋瞬间引爆 `spawn_beam` 贯穿激光柱、炫光爆星与轻震屏。
+  2. **升级/开箱高光瞬间与玩家受击反馈（`scripts/world.gd`、`scripts/player.gd`）**：`_step_level_up()` 与 `_open_chest()` 注入耀眼金色/金紫光环 `spawn_nova` 与 8 颗升腾闪烁金星粒子；`player.gd` `take_damage()` 补全受击瞬间的元素冲击受击爆闪点（`spawn_hit_fx`）。
+  3. **格斗型无剪辑模型前臂屈肘备战姿态（`scripts/model_rig.gd`）**：于 `_auto_relax_tpose_arms` 中针对带 `LForeArm`/`RForeArm` 的无剪辑模型（如小拳石、隆隆石、尼多王等）在放下上臂同时通过局部正交转换令前臂朝前下方自然弯肘收拳，并同步刷新新姿态局部正交三轴缓存；彻底消除小拳石远观长臂外甩直棍感。
+  4. **上架文档同期对齐（`store/portal-prep/listing-fields.md`）**：更新第 5 节 Testing instructions，同步 `store/config.yaml` 去掉过时手动输地址表述。
+- 验证：实景抓拍 `vfx_boss_level_showcase.png` 亲检确认半透斜纹冲锋警告带清晰透底、聚能圆阵轮廓锐利、Boss 三连双核弹幕饱满、小拳石屈肘挥拳威武生动；`c23`/`c24` 全部 356/0、`verify_gameplay_smoke` 三主角跨 4 区通关、`verify_rest_screens` 11 屏 100% `inside=true`、`Test/check_legal.py` 4/4 exact 全部绿灯通过。
+- 本轮提交：`scripts/world.gd`、`scripts/player.gd`、`scripts/model_rig.gd`、`store/portal-prep/listing-fields.md`、`design/ui-alignment-progress.md`。
+
 
 
 

@@ -6828,6 +6828,15 @@ func _step_level_up() -> void:
 	var lv := player.level - player.pending_levels + 1
 	player.pending_levels -= 1
 	count_max_level()  # roster 'maxLevel' counter (Abra/Bellsprout gates)
+	if player and is_instance_valid(player):
+		_fx_textures()
+		var ppos := player.global_position
+		spawn_nova(ppos + Vector3(0, 0.25, 0), 3.4, Color(1.0, 0.86, 0.25))
+		for k in range(8):
+			var a := TAU * float(k) / 8.0
+			_spawn_particle(ppos + Vector3(cos(a) * 0.9, 0.5, sin(a) * 0.9),
+				Vector3(cos(a) * 1.4, randf_range(2.8, 4.5), sin(a) * 1.4),
+				0.55, 0.52, 0.08, Color(1.0, 0.92, 0.35, 0.95), _tex_star)
 	if player.planned_evo_level() == lv:
 		player.evolve()
 		_refresh_hud()
@@ -10332,40 +10341,115 @@ func _boss_low(limit := 1.8) -> bool:
 		return false
 	return player.global_position.y - height_at(player.global_position.x, player.global_position.z) < limit
 
+var _tele_strip_tex_cache: Texture2D = null
+var _tele_disc_tex_cache: Texture2D = null
+
+func _tele_strip_tex() -> Texture2D:
+	if _tele_strip_tex_cache != null:
+		return _tele_strip_tex_cache
+	var w := 64
+	var h := 64
+	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
+	for y in range(h):
+		var v := float(y) / float(h - 1)
+		var end_fade := smoothstep(0.0, 0.08, v) * (1.0 - smoothstep(0.92, 1.0, v))
+		for x in range(w):
+			var u := float(x) / float(w - 1)
+			var edge_l := exp(-pow((u - 0.06) / 0.045, 2.0))
+			var edge_r := exp(-pow((u - 0.94) / 0.045, 2.0))
+			var inner_border := clampf(edge_l + edge_r, 0.0, 1.0)
+			# 细腻半透斜纹警示条，看清下方草地细节又不失警觉度
+			var stripe := 0.5 + 0.5 * sin((u * 3.0 + v * 6.0) * TAU)
+			var fill_a := (0.14 + 0.14 * stripe) * smoothstep(0.02, 0.12, u) * (1.0 - smoothstep(0.88, 0.98, u))
+			var end_bar := exp(-pow((v - 0.94) / 0.035, 2.0)) * 0.75 * smoothstep(0.04, 0.10, u) * (1.0 - smoothstep(0.90, 0.96, u))
+			var a := clampf((inner_border * 0.92 + fill_a + end_bar) * end_fade, 0.0, 0.95)
+			var lum := clampf(1.0 + inner_border * 0.4, 1.0, 1.4)
+			img.set_pixel(x, y, Color(lum, lum * 0.92, lum * 0.85, a))
+	_tele_strip_tex_cache = ImageTexture.create_from_image(img)
+	return _tele_strip_tex_cache
+
+func _tele_disc_tex() -> Texture2D:
+	if _tele_disc_tex_cache != null:
+		return _tele_disc_tex_cache
+	var n := 96
+	var img := Image.create(n, n, false, Image.FORMAT_RGBA8)
+	var half := (float(n) - 1.0) * 0.5
+	for y in range(n):
+		for x in range(n):
+			var dx := (float(x) - half) / half
+			var dy := (float(y) - half) / half
+			var r := sqrt(dx * dx + dy * dy)
+			if r >= 1.0:
+				img.set_pixel(x, y, Color(1, 1, 1, 0))
+				continue
+			var rim := exp(-pow((r - 0.91) / 0.055, 2.0))
+			var fill := (0.12 + 0.24 * r * r) * (1.0 - smoothstep(0.92, 1.0, r))
+			var a := clampf(rim * 0.85 + fill, 0.0, 0.92)
+			var lum := clampf(1.0 + rim * 0.35, 1.0, 1.35)
+			img.set_pixel(x, y, Color(lum, lum * 0.92, lum * 0.85, a))
+	_tele_disc_tex_cache = ImageTexture.create_from_image(img)
+	return _tele_disc_tex_cache
+
 func _boss_shot(angle: float, speed: float, dmg_mul: float, life := 3.0, col := Color(1, 0.6, 0.4)) -> void:
 	if guardian == null or not is_instance_valid(guardian):
 		return
-	if _hostile_mesh == null:
-		_hostile_mesh = SphereMesh.new()
-		_hostile_mesh.radius = 0.3
-		_hostile_mesh.height = 0.6
-		_hostile_mesh.radial_segments = 10
-		_hostile_mesh.rings = 6
-	var key := str(col.to_rgba32())
-	if not _hostile_mats.has(key):
-		var m := StandardMaterial3D.new()
-		m.albedo_color = col
-		m.emission_enabled = true
-		m.emission = col
-		m.emission_energy_multiplier = 1.6
-		_hostile_mats[key] = m
-	var mi := MeshInstance3D.new()
-	mi.mesh = _hostile_mesh
-	mi.material_override = _hostile_mats[key]
-	add_child(mi)
+	var pn := _make_proj_node(col, 1.12)
+	add_child(pn)
 	var from: Vector3 = guardian.global_position + Vector3(0, 1.2, 0)
-	mi.global_position = from
-	_hostiles.append({"node": mi, "vel": Vector3(cos(angle), 0, sin(angle)) * speed,
-		"dmg": guardian.dmg * dmg_mul, "life": life, "capped": true,
+	pn.global_position = from
+	_hostiles.append({"node": pn, "vel": Vector3(cos(angle), 0, sin(angle)) * speed,
+		"dmg": guardian.dmg * dmg_mul, "life": life, "capped": true, "col": col, "trail_t": 0.0,
 		"alpha": false, "radius": 0.6, "attacker": guardian, "type": String(guardian.types[0]) if not guardian.types.is_empty() else ""})
 
+func _spawn_telegraph_disc(pos: Vector3, radius: float, delay: float, col: Color) -> void:
+	var outer_mat := StandardMaterial3D.new()
+	outer_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	outer_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	outer_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	outer_mat.albedo_color = Color(col.r, col.g, col.b, 0.82)
+	if _ring_mesh == null:
+		var tm := TorusMesh.new()
+		tm.inner_radius = 0.88; tm.outer_radius = 1.0; tm.rings = 48; tm.ring_segments = 16
+		_ring_mesh = tm
+	var outer := MeshInstance3D.new()
+	outer.mesh = _ring_mesh
+	outer.material_override = outer_mat
+	outer.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(outer)
+	outer.global_position = Vector3(pos.x, height_at(pos.x, pos.z) + 0.15, pos.z)
+	outer.scale = Vector3(radius, 1.0, radius)
+	_effects.append({"node": outer, "mat": outer_mat, "t": 0.0, "life": delay, "kind": "tele_outer"})
+	var fill_mat := StandardMaterial3D.new()
+	fill_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	fill_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	fill_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	fill_mat.albedo_texture = _tele_disc_tex()
+	fill_mat.albedo_color = Color(col.r, col.g, col.b, 0.72)
+	var fill := MeshInstance3D.new()
+	var pm := PlaneMesh.new()
+	pm.size = Vector2(2.0, 2.0)
+	fill.mesh = pm
+	fill.material_override = fill_mat
+	fill.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(fill)
+	fill.global_position = Vector3(pos.x, height_at(pos.x, pos.z) + 0.13, pos.z)
+	fill.scale = Vector3(0.15, 1.0, 0.15)
+	_effects.append({"node": fill, "mat": fill_mat, "t": 0.0, "life": delay, "kind": "tele_fill", "r": radius})
+
 func _boss_telegraph_strike(pos: Vector3, radius: float, delay: float, dmg_mul: float, col: Color) -> void:
-	spawn_nova(Vector3(pos.x, height_at(pos.x, pos.z) + 0.4, pos.z), radius, col)
+	_spawn_telegraph_disc(pos, radius, delay, col)
 	var g := guardian
 	_later(delay, func() -> void:
 		if g == null or not is_instance_valid(g) or g.hp <= 0.0 or player == null or not is_instance_valid(player):
 			return
-		spawn_nova(Vector3(pos.x, height_at(pos.x, pos.z) + 0.4, pos.z), radius * 0.7, col)
+		var hy := height_at(pos.x, pos.z)
+		var bpos := Vector3(pos.x, hy + 0.4, pos.z)
+		spawn_nova(bpos, radius * 0.95, col.lightened(0.25))
+		_fx_textures()
+		for k in range(6):
+			var a := TAU * float(k) / 6.0
+			_spawn_particle(bpos, Vector3(cos(a) * 3.5, randf_range(2.2, 4.2), sin(a) * 3.5), 0.32, 0.6, 0.1, Color(col.r, col.g, col.b, 0.95), _tex_star)
+		add_trauma(0.12, bpos)
 		audio.boom()
 		var d := Vector2(player.global_position.x - pos.x, player.global_position.z - pos.z)
 		if d.length() < radius and _boss_low(2.0):
@@ -10400,19 +10484,42 @@ func _seg_dist(px: float, pz: float, ax: float, az: float, bx: float, bz: float)
 ## at intervals, the same primitive _boss_telegraph_strike
 ## uses for spots).
 func _telegraph_line(a: Vector2, b: Vector2, col: Color) -> void:
-	var len := a.distance_to(b)
-	var steps := maxi(1, int(len / 2.4))
-	for i in range(steps + 1):
-		var p := a.lerp(b, float(i) / float(steps))
-		spawn_nova(Vector3(p.x, height_at(p.x, p.y) + 0.25, p.y), 1.15, col)
+	_spawn_telegraph_strip(a, b, 1.15, 0.75, col)
+
+func _spawn_telegraph_strip(a: Vector2, b: Vector2, half_w: float, delay: float, col: Color) -> void:
+	var ab := b - a
+	var length := maxf(0.5, ab.length())
+	var mid := (a + b) * 0.5
+	var hy := maxf(height_at(mid.x, mid.y), maxf(height_at(a.x, a.y), height_at(b.x, b.y)) * 0.5 + height_at(mid.x, mid.y) * 0.5) + 0.18
+	var yaw := atan2(ab.x, ab.y)
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mat.albedo_texture = _tele_strip_tex()
+	mat.albedo_color = Color(col.r, col.g, col.b, 0.88)
+	var pm := PlaneMesh.new()
+	pm.size = Vector2(maxf(0.6, half_w * 2.0), length)
+	var mi := MeshInstance3D.new()
+	mi.mesh = pm
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(mi)
+	mi.global_position = Vector3(mid.x, hy, mid.y)
+	mi.rotation = Vector3(0.0, yaw, 0.0)
+	_effects.append({"node": mi, "mat": mat, "t": 0.0, "life": delay, "kind": "tele_strip"})
 
 func _boss_line_strike(a: Vector2, b: Vector2, width: float, delay: float, dmg_mul: float, col: Color) -> void:
-	var mid := (a + b) * 0.5
-	spawn_nova(Vector3(mid.x, height_at(mid.x, mid.y) + 0.4, mid.y), (b - a).length() * 0.5, col)
+	_spawn_telegraph_strip(a, b, width, delay, col)
 	var g := guardian
 	_later(delay, func() -> void:
 		if g == null or not is_instance_valid(g) or g.hp <= 0.0 or player == null or not is_instance_valid(player):
 			return
+		var fa := Vector3(a.x, height_at(a.x, a.y) + 0.65, a.y)
+		var fb := Vector3(b.x, height_at(b.x, b.y) + 0.65, b.y)
+		spawn_beam(fa, fb, maxf(0.35, width * 0.55), col.lightened(0.25))
+		audio.boom()
+		add_trauma(0.14, (fa + fb) * 0.5)
 		var ab := b - a
 		var len2 := ab.length_squared()
 		var tt := 0.0
@@ -11033,12 +11140,25 @@ func _boss_tick(delta: float) -> void:
 			_hostiles.remove_at(i)
 			continue
 		node.global_position += (h["vel"] as Vector3) * delta
+		h["trail_t"] = float(h.get("trail_t", 0.0)) + delta
+		if float(h["trail_t"]) >= 0.04 and _particles.size() < 95:
+			h["trail_t"] = 0.0
+			_fx_textures()
+			var hc: Color = h.get("col", Color(1, 0.5, 0.3))
+			_spawn_particle(node.global_position, Vector3(0, 0.3, 0), 0.16, 0.48, 0.05, Color(hc.r, hc.g, hc.b, 0.75), _tex_disc)
 		# Qm checks terrain before a player overlap. There is no sanctuary cover system here.
 		if height_at(node.global_position.x, node.global_position.z) > node.global_position.y + 0.4:
 			node.queue_free()
 			_hostiles.remove_at(i)
 			continue
 		if hostile_reaches(node.global_position, float(h.get("radius", 0.6))):
+			var hc2: Color = h.get("col", Color(1, 0.5, 0.3))
+			_fx_textures()
+			_spawn_particle(node.global_position, Vector3.ZERO, 0.15, 0.6, 1.5, Color(1, 1, 1, 0.95), _tex_star)
+			if _particles.size() < 95:
+				for k in range(3):
+					var a := randf() * TAU
+					_spawn_particle(node.global_position, Vector3(cos(a) * 3.0, randf_range(1.2, 2.8), sin(a) * 3.0), 0.24, 0.42, 0.0, Color(hc2.r, hc2.g, hc2.b, 0.95), _tex_disc, true, 6.0, 2.0)
 			if hostile_hurt(float(h["dmg"]), bool(h.get("capped", false)), bool(h.get("alpha", false)), String(h.get("type", "")), h.get("attacker") if is_instance_valid(h.get("attacker")) else null):
 				var shove: Vector3 = (h["vel"] as Vector3).normalized() * 3.5
 				player.set("_vel", (player.get("_vel") as Vector3) + shove)
@@ -12868,6 +12988,14 @@ func _open_chest(c: Dictionary) -> void:
 	audio.chest()  # cycle 16
 	var n = c["node"]
 	if is_instance_valid(n):
+		var cpos: Vector3 = (n as Node3D).global_position
+		_fx_textures()
+		spawn_nova(cpos + Vector3(0, 0.2, 0), 2.8, Color(1.0, 0.85, 0.25))
+		for k in range(8):
+			var a := TAU * float(k) / 8.0
+			_spawn_particle(cpos + Vector3(0, 0.6, 0),
+				Vector3(cos(a) * 2.2, randf_range(3.0, 5.2), sin(a) * 2.2),
+				0.48, 0.56, 0.08, Color(1.0, 0.88, 0.30, 0.95), _tex_star, true, 6.0, 1.5)
 		n.queue_free()
 	# Cycle 21: the guardian chest rolls a real item
 	# (rollChestItem floor 0, count 1 — the item roll
@@ -15135,6 +15263,17 @@ func _process(delta: float) -> void:
 			node.scale = Vector3(rr, 1.0, rr)
 			var rm := fx["mat"] as StandardMaterial3D
 			rm.albedo_color.a = 0.55 * (1.0 - k)
+		elif kind == "tele_outer":
+			var om := fx["mat"] as StandardMaterial3D
+			om.albedo_color.a = 0.65 + 0.30 * absf(sin(k * PI * 4.0))
+		elif kind == "tele_strip":
+			var stm := fx["mat"] as StandardMaterial3D
+			stm.albedo_color.a = 0.72 + 0.25 * absf(sin(k * PI * 4.0))
+		elif kind == "tele_fill":
+			var tr := maxf(0.15, float(fx["r"]) * clampf(k, 0.15, 1.0))
+			node.scale = Vector3(tr, 1.0, tr)
+			var fm := fx["mat"] as StandardMaterial3D
+			fm.albedo_color.a = 0.42 + 0.48 * k
 		elif kind == "beam_cyl":
 			var rad_s := (1.25 - 1.05 * k)
 			node.scale = Vector3(rad_s, rad_s, 1.0)

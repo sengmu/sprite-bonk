@@ -449,6 +449,27 @@ func _auto_relax_tpose_arms(deg_down: float = 52.0) -> void:
 		var target_local_q := (par_b.inverse() * target_global_b).get_rotation_quaternion()
 		_gait_rest[arm_suf] = target_local_q
 		_skel.set_bone_pose_rotation(ai, target_local_q)
+		var arm_bw := (sk_b * target_global_b).orthonormalized()
+		var inv_arm_bw := arm_bw.inverse()
+		_axis_pitch[arm_suf] = (inv_arm_bw * Vector3(1, 0, 0)).normalized()
+		_axis_yaw[arm_suf] = (inv_arm_bw * Vector3(0, 1, 0)).normalized()
+		_axis_roll[arm_suf] = (inv_arm_bw * Vector3(0, 0, 1)).normalized()
+		# 同时令前臂沿肘关节自然向前微曲收拢，形成富有战斗生气的拳姿而不再笔直下垂
+		if _skel.get_bone_parent(fi) == ai:
+			var fore_target_w := Vector3(sx * 0.24, -0.45, 0.86).normalized()
+			var fq_model := Quaternion(target_w, fore_target_w)
+			var fq_sk := (sk_b.inverse() * Basis(fq_model) * sk_b).get_rotation_quaternion()
+			var f_rest_g := _skel.get_bone_global_rest(fi).basis.orthonormalized()
+			var gp_o := gp.basis.orthonormalized()
+			var fore_after_sk := Basis(fq_sk) * (Basis(q_sk) * f_rest_g)
+			var f_local_q := (gp_o.inverse() * Basis(q_sk).inverse() * fore_after_sk).get_rotation_quaternion()
+			_gait_rest[fore_suf] = f_local_q
+			_skel.set_bone_pose_rotation(fi, f_local_q)
+			var f_bw := (sk_b * fore_after_sk).orthonormalized()
+			var inv_f_bw := f_bw.inverse()
+			_axis_pitch[fore_suf] = (inv_f_bw * Vector3(1, 0, 0)).normalized()
+			_axis_yaw[fore_suf] = (inv_f_bw * Vector3(0, 1, 0)).normalized()
+			_axis_roll[fore_suf] = (inv_f_bw * Vector3(0, 0, 1)).normalized()
 
 func _collect_gait_bones() -> void:
 	_skel = _find_skeleton(model)
