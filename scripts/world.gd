@@ -18943,9 +18943,9 @@ func _pause_fill_status() -> void:
 	# full values live here.
 	var hinfo: Dictionary = _hud_info_for(String(player.species_id))
 	if _p5_on:
-		_mk_label(box_right, "伙伴：%s · %s" % [String(hinfo["name"]),
+		_mk_label(box_right, "伙伴：%s %s · %s" % [String(hinfo["name"]), String(hinfo["en"]),
 			String(hinfo["evo"]).trim_prefix("› ")], 14)
-		_mk_label(box_right, "区域：%s · 第 %d/%d 区" % [String(zrow["cn"]), zone, ZONES.size()], 14)
+		_mk_label(box_right, "区域：%s %s · 第 %d/%d 区" % [String(zrow["cn"]), String(zrow["en"]), zone, ZONES.size()], 14)
 		var run_grid := GridContainer.new()
 		run_grid.columns = 2
 		run_grid.add_theme_constant_override("h_separation", 10)

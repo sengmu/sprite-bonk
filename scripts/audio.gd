@@ -299,6 +299,13 @@ func _noise_hit(mix: PackedFloat32Array, at: float, dur: float, v: float,
 		mix[idx] += y * v * env
 
 func _to_stream(mix: PackedFloat32Array, sr: int, loop := false) -> AudioStreamWAV:
+	if loop and mix.size() > 256:
+		# 循环曲目首尾 128 采样点柔顺过零交叉淡变，避免循环接缝处出现耳机爆音
+		var fade_n := 128
+		for i in range(fade_n):
+			var k := float(i) / float(fade_n)
+			mix[i] *= k
+			mix[mix.size() - 1 - i] *= k
 	var peak := 0.001
 	for x in mix:
 		peak = maxf(peak, absf(x))

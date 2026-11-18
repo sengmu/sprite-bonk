@@ -1843,6 +1843,16 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 验证：全脚本解析门、法律合规 `check_legal.py`（4/4）、Seeker 挖孔适配、`verify_fullscreen`（22态）、`verify_rest_screens`（11态，`S07_loadout sc=1.552 inside=true`）、`verify_gameplay_smoke` 及 `c23`/`c24` 全部 356 项核心单测 0 失败通过；待同步 NUC 复验 `u1_final_reaudit_run.sh` 终收口。
 - 本轮提交：`scripts/model_rig.gd`、`scripts/ult.gd`、`scripts/world.gd`、`design/ui-alignment-progress.md`。
 
+## 2D 头像立绘重烘、BGM 循环无缝防爆音与 P2 暂停档案还原（2026-11-18）
+
+- **全量同步修复 10 张 T-Pose 与断腕脱臼精灵 2D 透明头像（`assets/portraits/*.png`）**：
+  - 使用已修复自然垂臂骨骼的 `ModelRig` 重渲染并按非透明像素真实边界居中重排 `charmander`、`charmeleon`、`squirtle`、`wartortle`、`geodude`、`graveler`、`scyther`、`pinsir`、`nidoking`、`machop` 共 10 只精灵头像（`224×224` 透明底 PNG 并重新通过 Godot `--import` 校验），彻底消除图鉴、选人网格及左上角头像中悬空断镰的飞天螳螂与大字 T-Pose 小火龙。
+- **BGM 循环无缝接缝防爆音（`scripts/audio.gd`）**：
+  - 在 `_to_stream(..., loop=true)` 中增加首尾 `128` 采样点柔顺过零淡入/淡出交叉处理，杜绝手机耳机收听循环背景音乐时出现周期性接缝喀哒杂音。
+- **遵循 P2 信息可达规范还原暂停页档案检索（`scripts/world.gd`）**：
+  - 经 NUC `u1_final_2400.log` 校验捕获（`hidden items reachable / parity zone_en / parity species_en` 3 项红），依 `UI-mobile P2` 原始设计保持战斗主画面极简纯中文、仅在暂停「状态/本局」详情页保留物种与地区英文对照档案索引，确保 `phonehud` 双档 `1564/0` 满绿通过。
+- 本轮提交：`assets/portraits/*.png`、`scripts/audio.gd`、`scripts/world.gd`、`design/ui-alignment-progress.md`。
+
 
 
 
