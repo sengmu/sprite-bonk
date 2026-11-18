@@ -61,9 +61,9 @@ func _draw() -> void:
 	if tex != null:
 		draw_texture_rect(tex, Rect2(Vector2.ZERO, size), false)
 	else:
-		draw_rect(Rect2(Vector2.ZERO, size), Color(0.10, 0.08, 0.16))
-	# fog: unvisited cells dark (objectives drawn AFTER fog,
-	# so they stay visible like the bundle's map)
+		# 兜底使用深羊皮/暗苔蓝底色，避免大片死黑块
+		draw_rect(Rect2(Vector2.ZERO, size), Color("192233"))
+	# 柔和暗苔蓝未探索迷雾（保留探索神秘感与柔和坐标格，不再大面积纯黑沉闷）
 	var fog: PackedByteArray = world.get("_fog")
 	if fog.size() == 48 * 48:
 		var cw := size.x / 48.0
@@ -72,26 +72,33 @@ func _draw() -> void:
 			for gx in range(48):
 				if fog[gy * 48 + gx] == 0:
 					draw_rect(Rect2(gx * cw, gy * ch, cw + 1.0, ch + 1.0),
-						Color(0.05, 0.04, 0.10, 0.78))
+						Color(0.10, 0.13, 0.21, 0.72))
+	# 淡雅 8×8 战术坐标网格线，提升全图定位感
+	var gline_col := Color(1.0, 1.0, 1.0, 0.055)
+	for gi in range(1, 8):
+		var p_off := float(gi) / 8.0
+		draw_line(Vector2(p_off * size.x, 0.0), Vector2(p_off * size.x, size.y), gline_col, 1.0)
+		draw_line(Vector2(0.0, p_off * size.y), Vector2(size.x, p_off * size.y), gline_col, 1.0)
 	var ap = world.get("altar_pos")
 	if ap != null:
-		_mark(TEX_STAR, _w2m(ap), 19.0)
-		draw_arc(_w2m(ap), 9, 0, TAU, 24, Color.WHITE, 1.5)
+		var ap2 := _w2m(ap)
+		draw_circle(ap2, 11.0, Color(0.10, 0.08, 0.18, 0.65))
+		_mark(TEX_STAR, ap2, 18.0)
+		draw_arc(ap2, 10.0, 0, TAU, 24, Color("ffe169"), 1.5)
 	var pn = world.get("portal_node")
 	if pn != null and is_instance_valid(pn):
 		var pp := _w2m((pn as Node3D).global_position)
+		draw_circle(pp, 10.0, Color(0.15, 0.08, 0.28, 0.65))
 		_mark(TEX_DOT_PURPLE, pp, 14.0)
-		draw_arc(pp, 9, 0, TAU, 24, Color.WHITE, 1.5)
+		draw_arc(pp, 9.5, 0, TAU, 24, Color.WHITE, 1.5)
 	for c in world.call("chests_positions"):
 		_mark(TEX_CHEST, _w2m(c), 14.0)
 	var g: Node = world.get("guardian")
 	if g != null and is_instance_valid(g) and float(g.get("hp")) > 0.0:
 		var gp := _w2m(g.global_position)
-		_mark(TEX_EVENT_RED, gp, 17.0)
-		draw_arc(gp, 10, 0, TAU, 24, Color(1, 0.2, 0.3), 2.0)
-	var pl: Node = world.get("player")
-	if pl != null and is_instance_valid(pl):
-		_pin(_w2m(pl.global_position), 22.0)
+		draw_circle(gp, 11.5, Color(0.25, 0.04, 0.08, 0.72))
+		_mark(TEX_EVENT_RED, gp, 16.0)
+		draw_arc(gp, 11.0, 0, TAU, 24, Color(1, 0.28, 0.35), 2.0)
 	for pin in world.get("_map_pins"):
 		_pin(_w2m(pin), 18.0, Color(1, 0.82, 0.23))
 	# Cycle 22: the golden meowth's treasure marker
@@ -103,3 +110,9 @@ func _draw() -> void:
 			var tm2 := _w2m(tp)
 			_mark(TEX_CHEST, tm2, 15.0)
 			draw_arc(tm2, 9.5, 0, TAU, 24, Color.WHITE, 2.0)
+	# 将玩家航标压在最顶层绘制并配底光晕，防止被中心Boss/祭坛完全掩盖
+	var pl: Node = world.get("player")
+	if pl != null and is_instance_valid(pl):
+		var pl2 := _w2m(pl.global_position)
+		draw_circle(pl2 - Vector2(0, 6), 11.0, Color(1.0, 0.92, 0.45, 0.28))
+		_pin(pl2, 21.0)

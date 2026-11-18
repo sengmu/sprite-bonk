@@ -5080,10 +5080,32 @@ func _refresh_lab() -> void:
 		lv_pill.position = Vector2((bw - 52.0) * 0.5, 42 if _p5_on else 48)
 		lv_pill.size = Vector2(52, 21) if _p5_on else Vector2(54, 24)
 		lv_pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		lv_pill.add_theme_stylebox_override("panel", _style(Color("fff6df") if is_sel else (Color("e8f6da") if lv > 0 else Color(1.0, 0.99, 0.96, 0.94)), 11, Color("c98b2c") if is_sel else (Color("8ec24f") if lv > 0 else Color("d8c094")), 1.5, false))
+		var is_max_node := GameProfile.lab_cost(id) < 0
+		var pill_bg := Color("4eb024") if is_max_node else (Color("fff6df") if is_sel else (Color("e8f6da") if lv > 0 else Color(1.0, 0.99, 0.96, 0.94)))
+		var pill_bd := Color("2e7d12") if is_max_node else (Color("c98b2c") if is_sel else (Color("8ec24f") if lv > 0 else Color("d8c094")))
+		lv_pill.add_theme_stylebox_override("panel", _style(pill_bg, 11, pill_bd, 1.5, false))
 		b.add_child(lv_pill)
-		var lvl_l := _label_in(lv_pill, "已满" if GameProfile.lab_cost(id) < 0 else "%d级" % lv, Vector2.ZERO, lv_pill.size, 14, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER)
+		var lvl_l := _label_in(lv_pill, "已满" if is_max_node else "%d级" % lv, Vector2.ZERO, lv_pill.size, 14, Color.WHITE if is_max_node else UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER)
+		if is_max_node:
+			lvl_l.add_theme_color_override("font_outline_color", Color("1e5408"))
+			lvl_l.add_theme_constant_override("outline_size", 2)
 		lvl_l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		if _p5_on and lv > 0 and not is_max_node:
+			# 为已升但未满节点添加精致 3px 成长微进度条，直观展现当前强化完成度
+			var max_lv := maxi(int((GameProfile.LAB.get(id, {}) as Dictionary).get("max", 1)), 1)
+			var bar_w := 38.0
+			var mtrack := Panel.new()
+			mtrack.position = Vector2((bw - bar_w) * 0.5, 61)
+			mtrack.size = Vector2(bar_w, 3)
+			mtrack.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			mtrack.add_theme_stylebox_override("panel", UiTheme.flat_box(Color("cbb58b", 0.75), 1))
+			b.add_child(mtrack)
+			var mfill := Panel.new()
+			mfill.position = Vector2.ZERO
+			mfill.size = Vector2(maxf(bar_w * clampf(float(lv) / float(max_lv), 0.1, 1.0), 4.0), 3)
+			mfill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			mfill.add_theme_stylebox_override("panel", UiTheme.flat_box(Color("58b824"), 1))
+			mtrack.add_child(mfill)
 		var selected: String = id
 		b.pressed.connect(func() -> void:
 			_lab_selected = selected
@@ -5326,15 +5348,31 @@ func _refresh_lab_items() -> void:
 			if missed > 0:
 				show_banner("预设应用完成，%d 件未能归档（档案已满）" % missed, 2.5)
 			_refresh_lab_items())
-		prow.add_child(ab)
-		var db := UiTheme.make_button("删", "ghost", "small")
+		var grp_box: Container = prow
 		if _p5_on:
-			db.custom_minimum_size.x = 58
+			var pgrp := PanelContainer.new()
+			var pg_sb := _style(Color(1.0, 0.99, 0.96, 0.85), 14, Color("dfd0ae"), 1.0, false)
+			pg_sb.content_margin_left = 4
+			pg_sb.content_margin_right = 4
+			pg_sb.content_margin_top = 3
+			pg_sb.content_margin_bottom = 3
+			pgrp.add_theme_stylebox_override("panel", pg_sb)
+			prow.add_child(pgrp)
+			var phb := HBoxContainer.new()
+			phb.add_theme_constant_override("separation", 4)
+			pgrp.add_child(phb)
+			grp_box = phb
+		grp_box.add_child(ab)
+		var db := UiTheme.make_button("×" if _p5_on else "删", "ghost", "small")
+		if _p5_on:
+			db.custom_minimum_size.x = 46
+			db.add_theme_color_override("font_color", Color("b8382c"))
+			db.add_theme_color_override("font_hover_color", Color("d8281c"))
 		db.pressed.connect(func() -> void:
 			GameProfile.archive_preset_delete(idx)
 			audio.click()
 			_refresh_lab_items())
-		prow.add_child(db)
+		grp_box.add_child(db)
 	var sb := UiTheme.make_button("存为预设", "ghost", "small")
 	sb.disabled = presets.size() >= GameProfile.ARCHIVE_PRESET_MAX
 	sb.pressed.connect(func() -> void:
@@ -6507,15 +6545,36 @@ func _settings_page_legal(doc: String = "privacy", lang: String = "zh") -> void:
 		var tcard := PanelContainer.new()
 		tcard.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var t_sb := _style(Color(1.0, 0.995, 0.975, 0.96), 14, Color("e5cfa0"), 1.5, true)
-		t_sb.set_content_margin_all(14)
+		t_sb.content_margin_left = 18
+		t_sb.content_margin_right = 18
+		t_sb.content_margin_top = 14
+		t_sb.content_margin_bottom = 22
 		tcard.add_theme_stylebox_override("panel", t_sb)
 		_settings_page.add_child(tcard)
-		txt_parent = tcard
+		var tvb := VBoxContainer.new()
+		tvb.add_theme_constant_override("separation", 8)
+		tcard.add_child(tvb)
+		var doc_head := _mk_label(tvb, ("Privacy Policy" if doc == "privacy" else "Terms of Service") if english else ("隐私政策" if doc == "privacy" else "服务条款"), 18, UiTheme.TEXT)
+		doc_head.add_theme_font_override("font", UiTheme.body_font())
+		var tsep := ColorRect.new()
+		tsep.color = Color("ead8b5")
+		tsep.custom_minimum_size.y = 1.5
+		tvb.add_child(tsep)
+		txt_parent = tvb
 	var body := _mk_label(txt_parent, "", 15 if _p5_on else 16, UiTheme.TEXT)
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body.add_theme_constant_override("line_spacing", 5)
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.custom_minimum_size.x = 300
-	body.text = str(load("res://assets/legal/%s_%s.tres" % [doc, lang]).get("text"))
+	var raw_legal := str(load("res://assets/legal/%s_%s.tres" % [doc, lang]).get("text"))
+	if _p5_on:
+		var lines_l := raw_legal.split("\n")
+		if lines_l.size() >= 2 and lines_l[0].strip_edges() in ["隐私政策", "服务条款", "Privacy Policy", "Terms of Service"]:
+			lines_l.remove_at(0)
+			if not lines_l.is_empty() and lines_l[0].strip_edges() == "":
+				lines_l.remove_at(0)
+			raw_legal = "\n".join(lines_l)
+	body.text = raw_legal
 	var online := UiTheme.make_button("Online version" if english else "在线版", "ghost", "small")
 	if _p5_on:
 		online.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
@@ -10342,9 +10401,24 @@ func _choice_show(title: String, sub: String, options: Array, foot_text: String,
 		var ch := (254.0 if options.size() == 1 else 234.0) if _p5_on else 120.0
 		b.custom_minimum_size = Vector2(cw, ch)
 		b.size = Vector2(cw, ch)
-		b.add_theme_stylebox_override("normal", _style(Color("9363d6") if _p5_on else Color("9d6ce0"), 18, Color("ebd9ff"), 2, true))
-		b.add_theme_stylebox_override("hover", _style(Color("a373e6") if _p5_on else Color("ad7ef0"), 18, Color.WHITE, 2, true))
-		b.add_theme_stylebox_override("pressed", _style(Color("7d4ec0") if _p5_on else Color("8756ca"), 18, Color("d4b6ff"), 2, true))
+		# 道具卡按各自稀有度动态着色外框与顶区（普通蓝/优秀青/稀有绿/史诗紫/传说金），重编译与未知卡保持紫调
+		var card_bg := Color("9363d6")
+		var card_bd := Color("ebd9ff")
+		if _p5_on and item_key != "":
+			var rar_c_idx := GameData.item_rarity(item_key)
+			var rar_pal := [
+				[Color("587ec9"), Color("c4d8ff")],
+				[Color("2da3ba"), Color("bdf3ff")],
+				[Color("38aa5c"), Color("bff5cf")],
+				[Color("9363d6"), Color("ebd9ff")],
+				[Color("dfa124"), Color("fff3b0")]
+			]
+			var pal: Array = rar_pal[clampi(rar_c_idx, 0, rar_pal.size() - 1)]
+			card_bg = pal[0]
+			card_bd = pal[1]
+		b.add_theme_stylebox_override("normal", _style(card_bg if _p5_on else Color("9d6ce0"), 18, card_bd, 2, true))
+		b.add_theme_stylebox_override("hover", _style(card_bg.lightened(0.08) if _p5_on else Color("ad7ef0"), 18, Color.WHITE, 2, true))
+		b.add_theme_stylebox_override("pressed", _style(card_bg.darkened(0.12) if _p5_on else Color("8756ca"), 18, card_bd, 2, true))
 		b.add_theme_stylebox_override("focus", _style(Color(0, 0, 0, 0), 18, UiTheme.GOLD, 2, false))
 		var margin := MarginContainer.new()
 		margin.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -10375,6 +10449,20 @@ func _choice_show(title: String, sub: String, options: Array, foot_text: String,
 				var ic := _item_icon_rect(item_key, 36.0)
 				ic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 				cvb.add_child(ic)
+		elif _p5_on and title == "多边兽 · 重编译":
+			# 为重编译科技卡顶部补充柔和发光徽标，消除大面积空白
+			var p_glyph := "bolt" if "攻速" in opt_text else ("crit" if "暴击" in opt_text else ("sword" if "伤害" in opt_text else ("shield" if "护甲" in opt_text else ("wind" if "移速" in opt_text else "spark"))))
+			var ic_glow := PanelContainer.new()
+			ic_glow.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+			var ig_sb := _style(Color(1.0, 1.0, 1.0, 0.22), 20, Color(1.0, 1.0, 1.0, 0.56), 1.5, true)
+			ig_sb.set_content_margin_all(10)
+			ic_glow.add_theme_stylebox_override("panel", ig_sb)
+			ic_glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			var uic_p := UiIcon.new(p_glyph, Color.WHITE, 42)
+			uic_p.custom_minimum_size = Vector2(42, 42)
+			uic_p.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			ic_glow.add_child(uic_p)
+			cvb.add_child(ic_glow)
 		elif title == "流光队友" and (is_instance_valid(_shiny_ally) or is_instance_valid(_pending_shiny_ally)):
 			var sp_ally := String(_pending_shiny_ally.species_id) if (i == 0 and is_instance_valid(_pending_shiny_ally)) else (String(_shiny_ally.species_id) if is_instance_valid(_shiny_ally) else "")
 			if sp_ally != "" and UiTheme.portrait(sp_ally) != null:
@@ -10476,10 +10564,29 @@ func _choice_show(title: String, sub: String, options: Array, foot_text: String,
 							tag_hb.add_child(UiTheme.chip(hold_nm, Color("efe2c4"), 11, UiTheme.TEXT))
 						body_vb.add_child(tag_hb)
 					else:
-						var col := Color("9a3d30") if (is_last and p_txt.begins_with("代价")) else Color("6e502f")
-						var l_sub := _mk_label(body_vb, p_txt, 14 if is_last else 15, col)
-						l_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-						l_sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+						var is_pory_cost := title == "多边兽 · 重编译" and p_txt.begins_with("代价")
+						var is_pory_gain := title == "多边兽 · 重编译" and not is_pory_cost
+						if is_pory_gain or is_pory_cost:
+							var pchip := PanelContainer.new()
+							pchip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+							pchip.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+							var pc_bg := Color("fde9e6") if is_pory_cost else Color("e4f7da")
+							var pc_bd := Color("e59d94") if is_pory_cost else Color("7cc854")
+							var pc_sb := _style(pc_bg, 10, pc_bd, 1.2, false)
+							pc_sb.content_margin_left = 10
+							pc_sb.content_margin_right = 10
+							pc_sb.content_margin_top = 3
+							pc_sb.content_margin_bottom = 3
+							pchip.add_theme_stylebox_override("panel", pc_sb)
+							var pl_col := Color("a62c20") if is_pory_cost else Color("236312")
+							var pl_sub := _mk_label(pchip, p_txt, 14 if is_pory_cost else 15, pl_col)
+							pl_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+							body_vb.add_child(pchip)
+						else:
+							var col := Color("9a3d30") if (is_last and p_txt.begins_with("代价")) else Color("6e502f")
+							var l_sub := _mk_label(body_vb, p_txt, 14 if is_last else 15, col)
+							l_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+							l_sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 				if options.size() == 1 and item_key != "":
 					var take_pill := PanelContainer.new()
 					take_pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -17135,7 +17242,7 @@ func _layout_hud() -> void:
 			if _cutin_panel.visible:
 				_cutin_panel.offset_top = stack_y
 				_cutin_panel.offset_bottom = stack_y + 64.0
-				stack_y += 64.0 * cs + 8.0
+				stack_y += 64.0 * cs + 11.0
 		if _boss_card:
 			var bc_c := align_c if phone else span_c
 			_boss_card.offset_left = bc_c - vw * 0.5 - 321.0
@@ -17171,7 +17278,7 @@ func _layout_hud() -> void:
 				mp2.pivot_offset = Vector2(150.0, 0.0)
 				_set_scaled(mp2, bar_s2)
 				k += 1
-			stack_y = bars_top + 40.0 * bar_s2 + 8.0
+			stack_y = bars_top + 40.0 * bar_s2 + 10.0
 		else:
 			for bar in _mini_bars:
 				var mp := bar["panel"] as Control
@@ -17187,7 +17294,7 @@ func _layout_hud() -> void:
 					bars_n += 1
 			if bars_n > 0:
 				stack_y = bars_top + float(bars_n - 1) * 46.0 * bar_s \
-					+ 40.0 * bar_s + 8.0
+					+ 40.0 * bar_s + 10.0
 		if _banner_back and _banner:
 			var tw := 860.0
 			if _banner.text != "":
@@ -18990,7 +19097,7 @@ func _p5_gold_pill(height: int = 60) -> StyleBoxTexture:
 	return box
 
 func _fill_result(victory: bool, score: float, dust: int) -> void:
-	_result_title.text = "★ 全区通关！★" if victory else "你倒下了…"
+	_result_title.text = "全区通关！" if victory else "你倒下了…"
 	_result_body.text = "到达第 %d 关 · %s · 击杀 %d · 用时 %s · 总伤害 %d" % [
 		zone, String(ZONES[zone - 1]["cn"]), kills, _fmt_time(run_time), int(damage_dealt)]
 	for c in _result_box.get_children():
@@ -20063,17 +20170,47 @@ func _bigmap_refresh_list() -> void:
 		if v > 0:
 			visited += 1
 	var pct := int(round(100.0 * float(visited) / float(maxi(_fog.size(), 1))))
-	var exp_pill := PanelContainer.new()
-	var e_sb := _style(Color("f7dc92"), 14, Color("dfb458"), 1.5, false)
-	e_sb.content_margin_left = 12
-	e_sb.content_margin_right = 12
-	e_sb.content_margin_top = 4
-	e_sb.content_margin_bottom = 4
-	exp_pill.add_theme_stylebox_override("panel", e_sb)
-	var exp_l := _mk_label(exp_pill, "已探索 %d%%" % pct, 18 if _p5_on else 15, UiTheme.TEXT)
-	exp_l.add_theme_font_override("font", UiTheme.display_font())
-	exp_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_bigmap_list.add_child(exp_pill)
+	if _p5_on:
+		# 大地图探索度升级为深棕槽＋亮绿填充真进度条胶囊
+		var exp_wrap := Panel.new()
+		exp_wrap.custom_minimum_size = Vector2(0, 34)
+		exp_wrap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		exp_wrap.add_theme_stylebox_override("panel", _style(Color("4e3c24"), 15, Color("dfb458"), 1.5, true))
+		_bigmap_list.add_child(exp_wrap)
+		var exp_fill := Panel.new()
+		exp_fill.anchor_left = 0.0
+		exp_fill.anchor_top = 0.0
+		exp_fill.anchor_bottom = 1.0
+		exp_fill.anchor_right = clampf(float(pct) / 100.0, 0.06, 1.0)
+		exp_fill.offset_left = 3
+		exp_fill.offset_top = 3
+		exp_fill.offset_right = -3
+		exp_fill.offset_bottom = -3
+		exp_fill.add_theme_stylebox_override("panel", _style(Color("66c724"), 12, Color("b4f576"), 1.0, false))
+		exp_wrap.add_child(exp_fill)
+		var exp_l := Label.new()
+		exp_l.text = "已探索 %d%%" % pct
+		exp_l.set_anchors_preset(Control.PRESET_FULL_RECT)
+		exp_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		exp_l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		exp_l.add_theme_font_override("font", UiTheme.display_font())
+		exp_l.add_theme_font_size_override("font_size", 17)
+		exp_l.add_theme_color_override("font_color", Color.WHITE)
+		exp_l.add_theme_color_override("font_outline_color", Color("261a0a"))
+		exp_l.add_theme_constant_override("outline_size", 4)
+		exp_wrap.add_child(exp_l)
+	else:
+		var exp_pill := PanelContainer.new()
+		var e_sb := _style(Color("f7dc92"), 14, Color("dfb458"), 1.5, false)
+		e_sb.content_margin_left = 12
+		e_sb.content_margin_right = 12
+		e_sb.content_margin_top = 4
+		e_sb.content_margin_bottom = 4
+		exp_pill.add_theme_stylebox_override("panel", e_sb)
+		var exp_l := _mk_label(exp_pill, "已探索 %d%%" % pct, 15, UiTheme.TEXT)
+		exp_l.add_theme_font_override("font", UiTheme.display_font())
+		exp_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_bigmap_list.add_child(exp_pill)
 	var ist: Dictionary = _inter_state.get(zone, {})
 	var rows := [["祭坛", (ist.get("altars", []) as Array).size(), "map_star"],
 		["宝箱", chests_positions().size(), "map_chest"],
