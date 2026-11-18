@@ -1153,6 +1153,8 @@ func take_damage(dmg: float, opts: Dictionary = {}) -> bool:
 			world.camera_kick(0.006)
 		if world.has_method("damage_flash"):
 			world.damage_flash()
+		if world.has_method("vibrate"):
+			world.vibrate(30)
 		if reduced > 0.0 and world.has_method("spawn_hit_fx"):
 			world.spawn_hit_fx(global_position + Vector3(0, 1.0, 0), String(opts.get("type", "fire")), reduced, 1.0, false)
 	if hp <= 0.0:

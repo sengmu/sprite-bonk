@@ -6930,6 +6930,7 @@ func _step_level_up() -> void:
 			_spawn_particle(ppos + Vector3(cos(a) * 0.9, 0.5, sin(a) * 0.9),
 				Vector3(cos(a) * 1.4, randf_range(2.8, 4.5), sin(a) * 1.4),
 				0.55, 0.52, 0.08, Color(1.0, 0.92, 0.35, 0.95), _tex_star)
+	vibrate(35)
 	if player.planned_evo_level() == lv:
 		player.evolve()
 		_refresh_hud()
@@ -8460,6 +8461,7 @@ func _on_guardian_killed(e: Enemy) -> void:
 	add_trauma(0.8)  # bundle: boss killed -> shake(0.8) (@1460549)
 	hitstop(0.5)     # bundle: boss killed -> hitstop(.5) (@1460549)
 	audio.boom(1.0)  # cycle 16: boss-kill boom + the coin reward below
+	vibrate(160)
 	# --- Guardian reward (bundle onBossKilled @1462726, cycle 9) ---
 	# 20 coin pickups of wB = ceil(5 * stage * gold) each
 	# (wB @1555023). Cycle 20 (DIFF §7 correction): there is
@@ -13203,6 +13205,23 @@ func _spawn_chest(pos: Vector3) -> void:
 	btn.material_override = wh
 	btn.position = Vector3(0, 0.32, 0.40)
 	n.add_child(btn)
+	# 为补给球添加地面脉冲金辉定位圆环，百怪混战时远距离一眼锁定位置
+	_fx_textures()
+	var halo_ring := MeshInstance3D.new()
+	var hm := PlaneMesh.new()
+	hm.size = Vector2(1.85, 1.85)
+	halo_ring.mesh = hm
+	halo_ring.position = Vector3(0, 0.06, 0)
+	var hmat := StandardMaterial3D.new()
+	hmat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	hmat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	hmat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	hmat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	hmat.albedo_texture = _tele_disc_tex()
+	hmat.albedo_color = Color(1.0, 0.85, 0.28, 0.65)
+	halo_ring.material_override = hmat
+	halo_ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	n.add_child(halo_ring)
 	add_child(n)
 	n.global_position = pos
 	_chests.append({"node": n, "opened": false})
@@ -13210,6 +13229,7 @@ func _spawn_chest(pos: Vector3) -> void:
 func _open_chest(c: Dictionary) -> void:
 	c["opened"] = true
 	audio.chest()  # cycle 16
+	vibrate(45)
 	var n = c["node"]
 	if is_instance_valid(n):
 		var cpos: Vector3 = (n as Node3D).global_position
@@ -13897,6 +13917,19 @@ func camera_kick(e: float) -> void:
 func damage_flash() -> void:
 	_dmg_flash = 1.0
 
+var _last_vib_ms := -1000
+
+## 手机端分级触觉震动反馈（受设置「屏幕震动」总开关控制，内置 85ms 间隔节流防高频连震）
+func vibrate(ms: int) -> void:
+	if not bool(GameProfile.setting("shakeOn")):
+		return
+	var now := Time.get_ticks_msec()
+	if now - _last_vib_ms < 85:
+		return
+	_last_vib_ms = now
+	if OS.get_name() == "Android" or DisplayServer.is_touchscreen_available():
+		Input.vibrate_handheld(ms)
+
 ## Floating combat text (bundle vfx.text): a rising, fading
 ## Label3D. Used for the dodge "-" and reward notices.
 func _ensure_enemy_grid() -> void:
@@ -14492,6 +14525,7 @@ func player_slam(pos: Vector3, fall_h: float, can_slam: bool) -> void:
 	spawn_nova(pos + Vector3(0, 0.35, 0), radius * 0.55, Color.WHITE)
 	add_trauma(0.14 + 0.26 * o, pos)
 	camera_kick(0.008 + 0.012 * o)
+	vibrate(int(round(35.0 + 35.0 * o)))
 	if hits > 0:
 		hitstop(0.04 + 0.05 * o)
 	player._invuln_t = maxf(player._invuln_t, 0.3)  # original: iframes = max(iframes, 0.3)
