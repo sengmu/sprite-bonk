@@ -1829,6 +1829,20 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 验证：`SCRIM_TEST` 验证 `mouse_filter=0 (STOP)`、轻点遮罩外部安全收起钱包且底层实验室不被穿透开启；`verify_fullscreen`（22态）、`verify_rest_screens`（11态）、`verify_u6_redesign`（正常+失败态）及 `verify_gameplay_smoke` 全绿通过。
 - 本轮提交：`scripts/world.gd`、`design/ui-alignment-progress.md`。
 
+## 全流程视觉品质冲刺：修复 3D 断臂脱臼与 T-Pose、升级大招光环法阵及 S07 全面屏纯中文化（2026-11-18）
+
+- **全链路 11 屏高清实拍审视后根除三大深层视觉瑕疵（`scripts/model_rig.gd`、`scripts/ult.gd`、`scripts/world.gd`）**：
+  1. **根治 5 大怪兽跨关节手臂脱臼与全系无剪辑角色 T-Pose 僵硬（`scripts/model_rig.gd`）**：
+     - 定位实战截图 `07_combat_action.png` 与 `geodude_clean_cmp.png` 重大模型瑕疵：旧 `_pose_arms_down()` 对 `LArm` 与 `LForeArm` 各自独立写死 `set_bone_global_pose_override`，造成 `geodude`/`graveler`/`scyther`/`pinsir`/`nidoking` 手肘在空间中撕裂脱臼漂浮、手臂插地；同时 `charmander`/`squirtle`/`charmeleon`/`wartortle`/`machop` 等无内置动画角色呆立在水平大字 T-Pose。
+     - 废除旧 `_pose_arms_down`，升级为仅基于模型正交空间向心矢量旋转顶层肩臂局部姿态四元数的 `_auto_relax_tpose_arms()` 并注入 `_gait_rest` 基准，使前臂手爪随父骨完整贴合自然下垂，并在 `_update_gait()` 补充待机呼吸微摆与出招挥击动作。
+  2. **升级大招地面法阵为双环符文发光光环（`scripts/ult.gd`）**：
+     - 将原半透明硬边塑料圆柱替换为程序化缓存 128×128 双环符文发光贴图配合加法发光平面网格（`_zone_ring_tex()`），消除硬边圆盘重影交叉线条，增加缓慢旋转、贴合地形真实 `height_at(x, z)` 高度防斜坡截断与结束平滑淡出。
+  3. **S07 出战配置全面屏统一与暂停页彻底去英文（`scripts/world.gd`）**：
+     - 将 `_loadout_panel` 升格为 `(1200, 460)` 无边框直角全面屏纳入 `_modal_fullscreen_bg`，彻底消除四角露边与左上角露半截字符，添加图鉴区与背包带入区 1.5px 暖金分隔线并将队伍空槽美化为柔和 `"空"`。
+     - 消除暂停页 `本局` 右栏残余英文后缀（`Charmander`/`Viridian Forest`），实现游戏内全菜单与暂停状态 100% 纯正规范中文。
+- 验证：全脚本解析门、法律合规 `check_legal.py`（4/4）、Seeker 挖孔适配、`verify_fullscreen`（22态）、`verify_rest_screens`（11态，`S07_loadout sc=1.552 inside=true`）、`verify_gameplay_smoke` 及 `c23`/`c24` 全部 356 项核心单测 0 失败通过；待同步 NUC 复验 `u1_final_reaudit_run.sh` 终收口。
+- 本轮提交：`scripts/model_rig.gd`、`scripts/ult.gd`、`scripts/world.gd`、`design/ui-alignment-progress.md`。
+
 
 
 

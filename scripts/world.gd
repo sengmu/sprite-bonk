@@ -3652,7 +3652,7 @@ func _build_hud() -> void:
 		_wallet_panel.set_meta("p5_fixed_h", true)
 	for c in _loadout_panel.get_children():
 		if c is PanelContainer:
-			_p5_register(c, 960.0, 462.0)
+			_p5_register(c, 1200.0, 460.0)
 	# Touch controls (Android): joystick + action cluster, on
 	# top of the HUD layer; visibility is managed per-frame in
 	# _process. Lives on the OUTER root (see _ui_root note).
@@ -14949,7 +14949,8 @@ func _process(delta: float) -> void:
 			or (_unlock_panel != null and _unlock_panel.visible)
 			or (_sound_panel != null and _sound_panel.visible)
 			or (_pause_panel != null and _pause_panel.visible)
-			or (_meowth_panel != null and _meowth_panel.visible))
+			or (_meowth_panel != null and _meowth_panel.visible)
+			or (_loadout_panel != null and _loadout_panel.visible))
 		if _modal_fullscreen_bg.visible != fs_open:
 			_modal_fullscreen_bg.visible = fs_open
 	if _p5_on:
@@ -18942,9 +18943,9 @@ func _pause_fill_status() -> void:
 	# full values live here.
 	var hinfo: Dictionary = _hud_info_for(String(player.species_id))
 	if _p5_on:
-		_mk_label(box_right, "伙伴：%s %s · %s" % [String(hinfo["name"]), String(hinfo["en"]),
+		_mk_label(box_right, "伙伴：%s · %s" % [String(hinfo["name"]),
 			String(hinfo["evo"]).trim_prefix("› ")], 14)
-		_mk_label(box_right, "区域：%s %s · 第 %d/%d 区" % [String(zrow["cn"]), String(zrow["en"]), zone, ZONES.size()], 14)
+		_mk_label(box_right, "区域：%s · 第 %d/%d 区" % [String(zrow["cn"]), zone, ZONES.size()], 14)
 		var run_grid := GridContainer.new()
 		run_grid.columns = 2
 		run_grid.add_theme_constant_override("h_separation", 10)
@@ -19682,6 +19683,7 @@ func _build_loadout(root: Control) -> void:
 	var dim := ColorRect.new()
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	dim.color = Color(0.10, 0.14, 0.08, 0.56)
+	dim.visible = not _p5_on
 	_loadout_panel.add_child(dim)
 	var panel := PanelContainer.new()
 	panel.set_anchors_preset(Control.PRESET_CENTER)
@@ -19689,7 +19691,7 @@ func _build_loadout(root: Control) -> void:
 	panel.offset_right = 545
 	panel.offset_top = -318
 	panel.offset_bottom = 318
-	panel.add_theme_stylebox_override("panel", UiTheme.panel_texture())
+	panel.add_theme_stylebox_override("panel", _p5_fullscreen_panel_style())
 	_loadout_panel.add_child(panel)
 	var hb := HBoxContainer.new()
 	hb.add_theme_constant_override("separation", 12)
@@ -19733,6 +19735,11 @@ func _build_loadout(root: Control) -> void:
 	_ls_grid.add_theme_constant_override("v_separation", 6)
 	_ls_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	gscroll.add_child(_ls_grid)
+	if _p5_on:
+		var gsep := ColorRect.new()
+		gsep.color = Color("e5cfa0")
+		gsep.custom_minimum_size = Vector2(0, 1.5)
+		right.add_child(gsep)
 	_ls_bagrow = HBoxContainer.new()
 	_ls_bagrow.add_theme_constant_override("separation", 6)
 	if _p5_on:
@@ -20106,7 +20113,7 @@ func _loadout_fill_team() -> void:
 			else:
 				slot.add_theme_stylebox_override("normal", UiTheme.card_box(UiTheme.GOLD if i == 0 else Color(1, 1, 1, 0.25), false))
 		else:
-			slot.text = "·"
+			slot.text = "空" if _p5_on else "·"
 			slot.disabled = true
 			if _p5_on:
 				var empty_sb := _style(Color("dad2c2"), 14, Color("c4bba8"), 1.5, false)

@@ -524,35 +524,75 @@ func _tick_wave(wv: Dictionary, dt: float) -> bool:
 ## delay; a tick hits every enemy inside with the stored damage
 ## (slot 8, knock .2, 50% silent). Visual = a flat tinted disc.
 
+static var _zone_tex_cache: Texture2D = null
+
+static func _zone_ring_tex() -> Texture2D:
+	if _zone_tex_cache != null:
+		return _zone_tex_cache
+	var n := 128
+	var img := Image.create(n, n, false, Image.FORMAT_RGBA8)
+	var half := (float(n) - 1.0) * 0.5
+	for y in range(n):
+		for x in range(n):
+			var dx := (float(x) - half) / half
+			var dy := (float(y) - half) / half
+			var r := sqrt(dx * dx + dy * dy)
+			if r >= 1.0:
+				img.set_pixel(x, y, Color(1, 1, 1, 0))
+				continue
+			# 中心轻盈通透，主光圈外环锐利发光后柔顺羽化淡出，零硬边重影
+			var ang := atan2(dy, dx)
+			var rune_wave := 0.85 + 0.15 * sin(ang * 8.0)
+			var outer_ring := exp(-pow((r - 0.86) / 0.085, 2.0)) * rune_wave
+			var inner_ring := exp(-pow((r - 0.54) / 0.055, 2.0)) * 0.60
+			var fill := (1.0 - smoothstep(0.0, 0.92, r)) * 0.24
+			var edge_fade := 1.0 - smoothstep(0.88, 1.0, r)
+			var a := clampf((fill + outer_ring * 0.88 + inner_ring) * edge_fade, 0.0, 0.95)
+			var lum := clampf(1.0 + outer_ring * 0.35, 1.0, 1.35)
+			img.set_pixel(x, y, Color(lum, lum, lum, a))
+	_zone_tex_cache = ImageTexture.create_from_image(img)
+	return _zone_tex_cache
+
 func _add_zone(ctx: Dictionary, x: float, z: float, o: Dictionary) -> void:
-	var mesh := CylinderMesh.new()
-	mesh.top_radius = float(o["r"])
-	mesh.bottom_radius = float(o["r"])
-	mesh.height = 0.12
-	mesh.radial_segments = 24
+	var rad := float(o["r"])
+	var mesh := PlaneMesh.new()
+	mesh.size = Vector2(rad * 2.1, rad * 2.1)
 	var mat := StandardMaterial3D.new()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	var c := tint_color()
-	mat.albedo_color = Color(c.r, c.g, c.b, 0.35)
+	mat.albedo_texture = _zone_ring_tex()
+	mat.albedo_color = Color(c.r, c.g, c.b, 0.88)
 	mat.emission_enabled = true
 	mat.emission = c
-	mat.emission_energy_multiplier = 0.8
+	mat.emission_energy_multiplier = 1.15
 	var mi := MeshInstance3D.new()
 	mi.mesh = mesh
 	mi.material_override = mat
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	world.add_child(mi)
-	mi.global_position = Vector3(x, float(ctx["y"]) + 0.1, z)
-	_zones.append({"ctx": ctx, "x": x, "z": z, "r": float(o["r"]),
-		"life": float(o.get("life", 4.0)), "tick": float(o.get("tick0", ZONE_TICK)),
-		"dmg": float(o["dmg"]), "o": o.get("o", {}), "node": mi})
+	var hy: float = float(world.call("height_at", x, z)) if world.has_method("height_at") else float(ctx["y"])
+	mi.global_position = Vector3(x, hy + 0.16, z)
+	_zones.append({"ctx": ctx, "x": x, "z": z, "r": rad,
+		"life": float(o.get("life", 4.0)), "max_life": float(o.get("life", 4.0)),
+		"tick": float(o.get("tick0", ZONE_TICK)),
+		"dmg": float(o["dmg"]), "o": o.get("o", {}), "node": mi, "mat": mat, "base_c": c})
 	zones_spawned += 1
 
 func _tick_zone(z: Dictionary, dt: float) -> bool:
 	z["life"] = float(z["life"]) - dt
-	if float(z["life"]) <= 0.0:
+	var life := float(z["life"])
+	if life <= 0.0:
 		return true
+	var mi: MeshInstance3D = z.get("node") as MeshInstance3D
+	if mi and is_instance_valid(mi):
+		mi.rotation.y += dt * 0.75
+		var mat: StandardMaterial3D = z.get("mat") as StandardMaterial3D
+		if mat and life < 0.6:
+			var bc: Color = z.get("base_c", Color.WHITE)
+			mat.albedo_color = Color(bc.r, bc.g, bc.b, 0.88 * clampf(life / 0.6, 0.0, 1.0))
 	z["tick"] = float(z["tick"]) - dt
 	if float(z["tick"]) > 0.0:
 		return false

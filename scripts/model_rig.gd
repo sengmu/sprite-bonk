@@ -183,8 +183,6 @@ func setup(p_species: String, scale_mult: float = 1.0) -> void:
 	_calibrate_materials(model, cfg)
 	anim_player = model.find_child("AnimationPlayer", true, false) as AnimationPlayer
 	_play_clip("idle")
-	if cfg.has("pose_arms_down"):
-		_pose_arms_down(float(cfg["pose_arms_down"]))
 	if anim_player == null:
 		_collect_gait_bones()
 	# Cycle 15: rigs built into a parked (out-of-tree) holder —
@@ -198,6 +196,8 @@ func setup(p_species: String, scale_mult: float = 1.0) -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	_fit(cfg, scale_mult)
+	if anim_player == null:
+		_auto_relax_tpose_arms(float(cfg.get("pose_arms_down", 52.0)))
 	_add_outlines()
 
 ## Character material calibration (cycle 5): multiplies every surface
@@ -353,30 +353,9 @@ func _find_skeleton(n: Node) -> Skeleton3D:
 			return s
 	return null
 
-## Static bind-pose repair for models whose source pose is a wide T-pose
-## (Geodude: arms stretched horizontally). Rotates the arm bones' global rest
-## pose downward around the model's forward (Z) axis so the arms hang
-## diagonally, like the species' natural stance.
-func _pose_arms_down(deg: float) -> void:
-	var skel := _find_skeleton(model)
-	if skel == null:
-		return
-	for i in range(skel.get_bone_count()):
-		var bname := skel.get_bone_name(i)
-		var is_arm := bname.ends_with("LArm") or bname.ends_with("RArm")
-		var is_fore := bname.ends_with("LForeArm") or bname.ends_with("RForeArm")
-		if not is_arm and not is_fore:
-			continue
-		var rest := skel.get_bone_global_rest(i)
-		var side := 1.0 if rest.origin.x >= 0.0 else -1.0
-		var ang := deg if is_arm else deg * 0.35
-		var rot := Basis(Vector3(0, 0, 1), deg_to_rad(-side * ang))
-		var posed := Transform3D(rot * rest.basis, rest.origin)
-		skel.set_bone_global_pose_override(i, posed, 1.0, true)
-		_stance_bones.append(i)
-
 const GAIT_SUFFIXES := ["LThigh", "RThigh", "LLeg", "RLeg", "LFoot", "RFoot",
-	"LForeArm", "RForeArm", "LArm", "RArm", "Tail1", "Tail2", "Tail3", "Tail4"]
+	"LForeArm", "RForeArm", "LArm", "RArm", "LArm2", "RArm2", "LForeArm2", "RForeArm2",
+	"Tail1", "Tail2", "Tail3", "Tail4"]
 const LIFE_SUFFIXES := ["Head", "Neck"]
 ## Gait archetypes for the species whose SPECIES entry predates the
 ## cfg "gait" key (Segment Z). Body-plan calls: quadruped walkers,
@@ -407,6 +386,40 @@ func _resolve_gait_kind() -> String:
 	else:
 		_gait_kind = String(GAIT_BY_SPECIES.get(species_id, "biped"))
 	return _gait_kind
+
+## 无剪辑骨骼 3D 模型（小火龙、杰尼龟、小拳石、隆隆石、飞天螳螂、凯罗斯、尼多王等）自适应破除水平 T-Pose：
+## 仅旋转顶层肩臂骨骼局部姿态，使前臂与手爪随父骨自然垂放贴合身侧，彻底消除跨关节世界坐标覆盖导致的断肢脱臼现象。
+func _auto_relax_tpose_arms(deg_down: float = 52.0) -> void:
+	if _skel == null:
+		return
+	var sk_b := (model.global_transform.basis.inverse() * _skel.global_transform.basis).orthonormalized()
+	var sin_y := sin(deg_to_rad(deg_down))
+	var cos_x := cos(deg_to_rad(deg_down))
+	for pair in [["LArm", "LForeArm"], ["RArm", "RForeArm"], ["LArm2", "LForeArm2"], ["RArm2", "RForeArm2"]]:
+		var arm_suf: String = pair[0]
+		var fore_suf: String = pair[1]
+		if not _gait_bones.has(arm_suf) or not _gait_bones.has(fore_suf):
+			continue
+		var ai: int = _gait_bones[arm_suf]
+		var fi: int = _gait_bones[fore_suf]
+		var gp := _skel.get_bone_global_rest(ai)
+		var gf := _skel.get_bone_global_rest(fi)
+		var v := sk_b * (gf.origin - gp.origin)
+		if v.length() < 0.02:
+			continue
+		var dir_w := v.normalized()
+		if absf(dir_w.x) <= 0.45 or dir_w.y < -0.55:
+			continue
+		var sx := 1.0 if dir_w.x >= 0.0 else -1.0
+		var target_w := Vector3(sx * cos_x, -sin_y, 0.28).normalized()
+		var q_model := Quaternion(dir_w, target_w)
+		var q_sk := (sk_b.inverse() * Basis(q_model) * sk_b).get_rotation_quaternion()
+		var par := _skel.get_bone_parent(ai)
+		var par_b := _skel.get_bone_global_rest(par).basis.orthonormalized() if par >= 0 else Basis.IDENTITY
+		var target_global_b := Basis(q_sk) * gp.basis.orthonormalized()
+		var target_local_q := (par_b.inverse() * target_global_b).get_rotation_quaternion()
+		_gait_rest[arm_suf] = target_local_q
+		_skel.set_bone_pose_rotation(ai, target_local_q)
 
 func _collect_gait_bones() -> void:
 	_skel = _find_skeleton(model)
@@ -485,9 +498,11 @@ func _update_gait(delta: float) -> void:
 			_gait_rot("RLeg", Vector3(1, 0, 0), -(0.5 + 0.5 * sin(_gait_phase + PI - 1.1)) * 0.6 * amp)
 			_gait_rot("LFoot", Vector3(1, 0, 0), -s * 0.28 * amp)
 			_gait_rot("RFoot", Vector3(1, 0, 0), s * 0.28 * amp)
-			# Arms swing opposite to the same-side leg.
-			_gait_rot("LArm", Vector3(1, 0, 0), -s * 0.42 * amp)
-			_gait_rot("RArm", Vector3(1, 0, 0), s * 0.42 * amp)
+			# Arms swing opposite to the same-side leg, with gentle idle breathing.
+			var idle_sw := sin(_breath_t * 2.1) * 0.045 * (1.0 - amp)
+			var cast_sw := -0.45 * sin(clampf(_lunge_t / 0.38, 0.0, 1.0) * PI) if _lunge_t > 0.0 else 0.0
+			_gait_rot("LArm", Vector3(1, 0, 0), -s * 0.42 * amp + idle_sw + cast_sw)
+			_gait_rot("RArm", Vector3(1, 0, 0), s * 0.42 * amp - idle_sw + cast_sw)
 			_gait_rot("LForeArm", Vector3(1, 0, 0), (-s * 0.2 - 0.18) * amp)
 			_gait_rot("RForeArm", Vector3(1, 0, 0), (s * 0.2 - 0.18) * amp)
 			_hop_y = 0.0
