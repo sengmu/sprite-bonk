@@ -2741,6 +2741,22 @@ func _open_portal() -> void:
 	core.material_override = cmat
 	core.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	portal_node.add_child(core)
+	# 传送门正下方地面贴地紫辉法阵，与悬空光环上下呼应消除石柱硬插地面感
+	var base_ring := MeshInstance3D.new()
+	var bm := PlaneMesh.new()
+	bm.size = Vector2(4.5, 4.5)
+	base_ring.mesh = bm
+	base_ring.position = Vector3(0, -2.07, 0)
+	var bmat := StandardMaterial3D.new()
+	bmat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	bmat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	bmat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	bmat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	bmat.albedo_texture = _tele_disc_tex()
+	bmat.albedo_color = Color(0.68, 0.36, 1.0, 0.72)
+	base_ring.material_override = bmat
+	base_ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	portal_node.add_child(base_ring)
 	var light := OmniLight3D.new()
 	light.light_color = Color(0.7, 0.4, 1.0)
 	light.light_energy = 1.8
@@ -5257,22 +5273,30 @@ func _refresh_lab_items() -> void:
 	# (deleting a preset never changes the Archive itself).
 	var presets := GameProfile.archive_presets()
 	var prow := HBoxContainer.new()
-	prow.add_theme_constant_override("separation", 10 if _p5_on else 6)
+	prow.add_theme_constant_override("separation", 8 if _p5_on else 6)
 	prow.alignment = BoxContainer.ALIGNMENT_CENTER
 	_lab_items_list.add_child(prow)
 	var pl := _mk_label(prow, "档案预设", 15 if _p5_on else 14, UiTheme.TEXT)
 	for i in range(presets.size()):
 		var pd: Dictionary = presets[i]
 		var idx := i
+		var is_act_p := GameProfile.archive_preset_active() == i
 		var ab := UiTheme.make_button(
-			String(pd.get("name", "预设")) + ("（使用中）" if GameProfile.archive_preset_active() == i else ""),
+			String(pd.get("name", "预设")) + (" · 使用中" if is_act_p else ""),
 			"green", "small")
 		if _p5_on:
+			# 直接重新构建带 16px 内边距的完整九宫格贴图框，保留绿胶囊纹理与立体白字描边
+			var base_col := UiTheme.SKY if is_act_p else UiTheme.GREEN
+			var bd := Color(0, 0, 0, 0.18)
+			ab.add_theme_stylebox_override("normal", UiTheme._btn_box(base_col, 10, bd, 2, 16))
+			ab.add_theme_stylebox_override("hover", UiTheme._btn_box(base_col.lightened(0.12), 10, bd, 2, 16))
+			ab.add_theme_stylebox_override("pressed", UiTheme._btn_box(base_col.darkened(0.14), 10, bd, 2, 16))
+			ab.add_theme_stylebox_override("disabled", UiTheme._btn_box(base_col, 10, bd, 2, 16))
 			for st in ["font_color", "font_hover_color", "font_pressed_color", "font_disabled_color"]:
 				ab.add_theme_color_override(st, Color.WHITE)
-			ab.add_theme_color_override("font_outline_color", Color("326b08"))
+			ab.add_theme_color_override("font_outline_color", Color("13548c") if is_act_p else Color("326b08"))
 			ab.add_theme_constant_override("outline_size", 3)
-		ab.disabled = GameProfile.archive_preset_active() == i
+		ab.disabled = is_act_p
 		ab.pressed.connect(func() -> void:
 			var missed := GameProfile.archive_preset_apply(idx)
 			audio.click()
@@ -5314,29 +5338,60 @@ func _refresh_lab_items() -> void:
 		items_container = igrid
 	for key in item_keys:
 		var k := String(key)
-		var idef := GameData.item_def(k)
 		var is_arch := arch.has(k)
+		var rar_i := GameData.item_rarity(k)
 		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 8)
-		row.add_child(_item_icon_rect(k, 28.0))
-		var name_l := _mk_label(row, "%s【%s】" % [_item_zh_name(k),
-			String(GameData.RARITY_NAMES[GameData.item_rarity(k)])], 15, UiTheme.TEXT)
+		row.add_theme_constant_override("separation", 10 if _p5_on else 8)
 		if _p5_on:
-			name_l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			name_l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			var ic_ring := PanelContainer.new()
+			ic_ring.custom_minimum_size = Vector2(40, 40)
+			ic_ring.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			var r_sb := _style(Color("f7e8c6"), 14, Color("e2c68e"), 1.5, false)
+			r_sb.set_content_margin_all(4)
+			ic_ring.add_theme_stylebox_override("panel", r_sb)
+			ic_ring.add_child(_item_icon_rect(k, 30.0))
+			row.add_child(ic_ring)
+			var info_vb := VBoxContainer.new()
+			info_vb.add_theme_constant_override("separation", 2)
+			info_vb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			info_vb.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			var top_hb := HBoxContainer.new()
+			top_hb.add_theme_constant_override("separation", 6)
+			var nm_l := _mk_label(top_hb, _item_zh_name(k), 15, UiTheme.TEXT)
+			nm_l.add_theme_font_override("font", UiTheme.display_font())
+			var rc_col := UiTheme.rarity_color(rar_i)
+			var r_chip := UiTheme.chip(String(GameData.RARITY_NAMES[rar_i]), rc_col.darkened(0.08), 11, Color.WHITE)
+			if UiTheme.luminance(rc_col) >= 0.75:
+				(r_chip.get_child(0) as Label).add_theme_color_override("font_color", UiTheme.TEXT)
+			r_chip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			top_hb.add_child(r_chip)
+			if is_arch:
+				var st_c := UiTheme.chip("已归档", Color(UiTheme.INK_DEEP, 0.92), 11, UiTheme.GOLD)
+				st_c.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+				top_hb.add_child(st_c)
+			info_vb.add_child(top_hb)
+			var eff_l := _mk_label(info_vb, _item_label(k), 13, Color("6e502f"))
+			eff_l.clip_text = true
+			row.add_child(info_vb)
 		else:
+			row.add_child(_item_icon_rect(k, 28.0))
+			var name_l := _mk_label(row, "%s【%s】" % [_item_zh_name(k),
+				String(GameData.RARITY_NAMES[rar_i])], 15, UiTheme.TEXT)
 			name_l.custom_minimum_size = Vector2(300, 0)
-		if is_arch:
-			var st := UiTheme.chip("已归档", Color(UiTheme.INK_DEEP, 0.92), 12, UiTheme.GOLD)
-			st.custom_minimum_size = Vector2(64, 28)
-			row.add_child(st)
+			if is_arch:
+				var st := UiTheme.chip("已归档", Color(UiTheme.INK_DEEP, 0.92), 12, UiTheme.GOLD)
+				st.custom_minimum_size = Vector2(64, 28)
+				row.add_child(st)
 		var b := UiTheme.make_button("取回" if is_arch else "归档",
 			"ghost" if is_arch else "green", "small")
 		if _p5_on:
-			b.custom_minimum_size.x = 92
+			b.custom_minimum_size.x = 88
+			b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 			if not is_arch:
 				for st in ["font_color", "font_hover_color", "font_pressed_color"]:
 					b.add_theme_color_override(st, Color.WHITE)
+				b.add_theme_color_override("font_outline_color", Color("326b08"))
+				b.add_theme_constant_override("outline_size", 3)
 		b.disabled = (not is_arch) and full
 		var captured: String = k
 		var captured_arch: bool = is_arch
@@ -6100,17 +6155,17 @@ func _settings_page_controls() -> void:
 		var c_sb := _style(Color(1.0, 0.99, 0.96, 0.95), 14, Color("e5cfa0"), 1.5, true)
 		c_sb.content_margin_left = 14
 		c_sb.content_margin_right = 14
-		c_sb.content_margin_top = 6
-		c_sb.content_margin_bottom = 6
+		c_sb.content_margin_top = 4
+		c_sb.content_margin_bottom = 4
 		card.add_theme_stylebox_override("panel", c_sb)
 		_settings_page.add_child(card)
 		var cvb := VBoxContainer.new()
-		cvb.add_theme_constant_override("separation", 3)
+		cvb.add_theme_constant_override("separation", 1)
 		card.add_child(cvb)
 		var sw_grid := GridContainer.new()
 		sw_grid.columns = 2
 		sw_grid.add_theme_constant_override("h_separation", 24)
-		sw_grid.add_theme_constant_override("v_separation", 2)
+		sw_grid.add_theme_constant_override("v_separation", 0)
 		sw_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		cvb.add_child(sw_grid)
 		_st_switch(sw_grid, "大招自动释放", "autoUlt")
@@ -6530,18 +6585,22 @@ func _refresh_unlock_panel() -> void:
 		int(GameProfile.counter_value("alphas")), int(GameProfile.counter_value("bosses")),
 		int(GameProfile.counter_value("captures"))]
 	const RANK_CN := {"common": "普通", "uncommon": "优秀", "rare": "稀有", "epic": "史诗", "legendary": "传说"}
+	const RANK_IDX := {"common": 0, "uncommon": 1, "rare": 2, "epic": 3, "legendary": 4}
 	for key in GameProfile.challenge_order():
 		var cfg: Dictionary = GameProfile.challenges()[key]
 		var sd: Dictionary = GameData.species(key)
 		var in_league := GameProfile.in_league(int(sd.get("family", 0)))
 		var done := GameProfile.challenge_done(key)
 		var status := "已加入伙伴营 ★" if in_league else ("挑战完成 · 等待遭遇 ✓" if done else "进行中")
-		var rank_s := String(RANK_CN.get(String(cfg["rank"]), String(cfg["rank"])))
-		# 定稿 S11_v1.jpg 奶油/淡金圆角大卡片＋圆角物种头像框（手机端双列等宽铺满）
+		var rank_k := String(cfg["rank"])
+		var rank_s := String(RANK_CN.get(rank_k, rank_k))
+		var rank_i := int(RANK_IDX.get(rank_k, 0))
+		# 定稿 S11_v1.jpg 奶油/淡金圆角大卡片（手机端按已入营/可遭遇/进行中三态配色＋品阶彩丸，清晰一眼辨别）
 		var card := PanelContainer.new()
 		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		var c_bg := Color("ffefb8") if (done or in_league) else Color(1.0, 0.99, 0.96, 0.96)
-		var c_sb := _style(c_bg, 16, Color("dfb86c") if (done or in_league) else Color("e5cfa0"), 1.5, true)
+		var c_bg := Color("edf8e8") if (_p5_on and in_league) else (Color("fff2c6") if (_p5_on and done) else (Color("ffefb8") if (done or in_league) else Color(1.0, 0.99, 0.96, 0.96)))
+		var c_bd := Color("7fc45a") if (_p5_on and in_league) else (Color("e5b842") if (_p5_on and done) else (Color("dfb86c") if (done or in_league) else Color("e5cfa0")))
+		var c_sb := _style(c_bg, 16, c_bd, 1.5, true)
 		c_sb.content_margin_left = 12
 		c_sb.content_margin_right = 12
 		c_sb.content_margin_top = 8 if _p5_on else 10
@@ -6553,7 +6612,7 @@ func _refresh_unlock_panel() -> void:
 		var pic_box := PanelContainer.new()
 		pic_box.custom_minimum_size = Vector2(54, 54) if _p5_on else Vector2(58, 58)
 		pic_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		var p_sb := _style(Color("fff5d8"), 27 if _p5_on else 29, Color("e5be62"), 2.5, true)
+		var p_sb := _style(Color("fff5d8"), 20 if _p5_on else 22, Color("6cb848") if (_p5_on and in_league) else Color("e5be62"), 2.5, true)
 		p_sb.set_content_margin_all(4)
 		pic_box.add_theme_stylebox_override("panel", p_sb)
 		var pt := TextureRect.new()
@@ -6566,12 +6625,29 @@ func _refresh_unlock_panel() -> void:
 		cvb.add_theme_constant_override("separation", 3)
 		cvb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		chb.add_child(cvb)
-		var head := _mk_label(cvb, "%s（%s）· %s" % [
-			String(ModelRig.SPECIES[key]["label"]), rank_s, status],
-			16, UiTheme.TEXT)
-		head.add_theme_font_override("font", UiTheme.display_font())
 		if _p5_on:
-			head.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			var head_hb := HBoxContainer.new()
+			head_hb.add_theme_constant_override("separation", 6)
+			var sp_lbl := _mk_label(head_hb, String(ModelRig.SPECIES[key]["label"]), 16, UiTheme.TEXT)
+			sp_lbl.add_theme_font_override("font", UiTheme.display_font())
+			var rc_col := UiTheme.rarity_color(rank_i)
+			var r_chip := UiTheme.chip(rank_s, rc_col.darkened(0.08), 11, Color.WHITE)
+			if UiTheme.luminance(rc_col) >= 0.75:
+				(r_chip.get_child(0) as Label).add_theme_color_override("font_color", UiTheme.TEXT)
+			r_chip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			head_hb.add_child(r_chip)
+			var st_col := Color("4ca62a") if in_league else (Color("e88a18") if done else Color("d8ccb2"))
+			var st_fg := Color.WHITE if (in_league or done) else Color("5e4b36")
+			var st_txt := "已入营 ★" if in_league else ("可遭遇 ✓" if done else "进行中")
+			var st_chip := UiTheme.chip(st_txt, st_col, 11, st_fg)
+			st_chip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			head_hb.add_child(st_chip)
+			cvb.add_child(head_hb)
+		else:
+			var head := _mk_label(cvb, "%s（%s）· %s" % [
+				String(ModelRig.SPECIES[key]["label"]), rank_s, status],
+				16, UiTheme.TEXT)
+			head.add_theme_font_override("font", UiTheme.display_font())
 		for p in GameProfile.challenge_parts(key):
 			var pd := p as Dictionary
 			var v_num := float(pd["value"])
@@ -9453,6 +9529,35 @@ const ITEM_BESPOKE_CN := {
 	"gold-teeth": "獾掌柜铺与老虎机价格 -8%/层（至 -24%）",
 	"big-nugget": "付费宝箱价格 -8%/层（至 -40%）",
 	"dowsing-machine": "后续区域：祭坛 +1/层，付费宝箱 +2/层",
+	"adrenaline-orb": "受击后 3 秒内：移速 +20%，攻速 +12%",
+	"awakening": "攻击 2.5% 概率催眠目标，受击不唤醒",
+	"berry-juice": "击败敌人时 5% 概率回复 2% 最大生命",
+	"binding-band": "对受控目标（晕/根/麻/冻/眠）伤害 +20%",
+	"cell-battery": "每 10 连杀提供 +1.5% 攻速（上限 +25%）",
+	"electirizer": "每 2.5 秒向 3 名近敌降雷并概率麻痹",
+	"fire-stone": "灼烧状态敌人死亡时发生爆炸",
+	"focus-band": "15% 概率保留 1 点生命抵挡致命伤害（冷却 20s）",
+	"focus-sash": "每区域可抵挡 1 次致命伤害并存活",
+	"full-heal": "目标每带有 1 种异常状态伤害 +6%（上限 +30%）",
+	"grip-claw": "攻击 4% 概率缠绕定身目标",
+	"griseous-orb": "击杀 12% 概率留暗影爆破并诅咒周围敌人",
+	"guard-spec": "每 14 秒提供一次完全抵挡受击护盾",
+	"leaf-stone": "击杀 10% 概率卷起叶刃旋风伤敌并回血 1%",
+	"lemonade": "助战同伴伤害 +25%，攻速 +15%",
+	"metal-powder": "静止站立时护甲 +30%，攻速 +8%",
+	"metronome": "未受击期间持续叠加伤害（上限 +40%）",
+	"old-rod": "每 9 秒唤出水中游鱼跃击沾湿敌人，偶现巨兽",
+	"poke-doll": "助战同伴的被动加成效果提升 50%",
+	"poke-flute": "必杀充能 +25%；施放后刷新招式并 6 秒攻速 +30%",
+	"razor-fang": "直接斩杀生命低于 8% 的普通敌人（叠加 +4%）",
+	"reaper-cloth": "本局每累计 100 击杀获得 +1% 伤害（上限 +30%）",
+	"revive": "阵亡时消耗触发 1 次复苏（回复 35% 生命）",
+	"shed-shell": "冲刺初段无敌且冷却缩短 10%",
+	"shell-bell": "按造成伤害的 0.8% 回复自身生命",
+	"silph-scope": "每 6 秒标记最近强敌使其承伤 +40%",
+	"soda-pop": "冲刺时激起水泡冲击波造成伤害与潮湿",
+	"stick": "攻击 3% 概率触发 ×8 倍暴击重击",
+	"thick-club": "每 2 点护甲提升 1% 物理伤害（上限 +50%）",
 }
 
 ## 全 126 件持有物品中性中文译名表，仅供商店与卡牌展示层读取，保持 GameData.item_def 兼容测试不动
@@ -19792,6 +19897,16 @@ func _bigmap_refresh_list() -> void:
 		_bigmap_legend_row("event_dot_red", "守护者 · 存活", Color("c4421a"))
 	if _shiny_e != null and is_instance_valid(_shiny_e):
 		_bigmap_legend_row("event_dot_blue", "流光遭遇 · 出现中", Color("1e6ca8"))
+	if _p5_on:
+		var sep_z := ColorRect.new()
+		sep_z.color = Color("ead8b5")
+		sep_z.custom_minimum_size.y = 1.0
+		_bigmap_list.add_child(sep_z)
+		var z_row: Dictionary = ZONES[clampi(zone - 1, 0, ZONES.size() - 1)]
+		var zn := _mk_label(_bigmap_list, "当前：第 %d/%d 区 · %s" % [zone, ZONES.size(), String(z_row["cn"])], 14, UiTheme.TEXT)
+		zn.add_theme_font_override("font", UiTheme.display_font())
+		var zw := _mk_label(_bigmap_list, _weather_explain(), 13, Color("6e502f"))
+		zw.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	if _p5_on and _bigmap_panel != null and _bigmap_panel.scale.x > 0.01:
 		_p5_fit(_bigmap_panel, float(_bigmap_panel.get_meta("p5_sm", _bigmap_panel.scale.x)))
 
