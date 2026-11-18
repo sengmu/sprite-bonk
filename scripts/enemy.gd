@@ -80,6 +80,7 @@ var root_t := 0.0
 var pickup_stun_t := 0.0
 var _counted: Dictionary = {}  # countOnce channels (confused)
 var _wet_vis := false
+var _status_vis := ""
 # Cycle 14 guardian damage cap + exhaust (Eb @995459, boss.exhaust):
 var cap_rate := 0.0  # <= 0 -> uncapped (every non-guardian)
 var fight_secs := 50.0
@@ -428,6 +429,10 @@ func _physics_process(delta: float) -> void:
 	if rig and (wet_t > 0.0) != _wet_vis:
 		_wet_vis = wet_t > 0.0
 		rig.set_wet(_wet_vis)
+	var want_st := status_kind if status_t > 0.0 else ("root" if root_t > 0.0 else "")
+	if rig and want_st != _status_vis:
+		_status_vis = want_st
+		rig.set_status(_status_vis)
 	# --- cycle 15: parallel reaction timers decay ---
 	if confuse_t > 0.0:
 		confuse_t = maxf(0.0, confuse_t - delta)

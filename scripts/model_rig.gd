@@ -853,9 +853,20 @@ func revive_reset() -> void:
 ## target's render colour by ~(0.90, 0.95, 1.08) (@339641).
 ## Composes UNDER the hit flash (flash wins while active).
 var _wet := false
+var _status_kind := ""
 
 func set_wet(on: bool) -> void:
+	if on == _wet:
+		return
 	_wet = on
+	_apply_flash_fade(clampf(_faint_t / 0.35, 0.0, 1.0) if _faint_t >= 0.0 else 0.0)
+
+## 异常状态 3D 视觉染色通道（灼烧橙红/冰冻冰蓝/中毒紫/麻痹电黄/睡眠柔蓝/缠绕草绿），仅在状态切换帧刷新
+func set_status(kind: String) -> void:
+	if kind == _status_kind:
+		return
+	_status_kind = kind
+	_apply_flash_fade(clampf(_faint_t / 0.35, 0.0, 1.0) if _faint_t >= 0.0 else 0.0)
 
 ## Cycle 20 (DIFF §7 correction): the shiny visual variant.
 ## The bundle does NOT swap normal shinies to an alternate
@@ -982,6 +993,20 @@ func _apply_flash_fade(fade_k: float) -> void:
 		var base: Color = rec["base"]
 		if _wet and _flash <= 0.0:
 			base = Color(base.r * 0.90, base.g * 0.95, base.b * 1.08, base.a)
+		if _status_kind != "" and _flash <= 0.0:
+			match _status_kind:
+				"burn":
+					base = Color(base.r * 1.24, base.g * 0.68, base.b * 0.48, base.a)
+				"freeze":
+					base = Color(base.r * 0.56, base.g * 0.96, base.b * 1.38, base.a)
+				"poison":
+					base = Color(base.r * 0.95, base.g * 0.58, base.b * 1.24, base.a)
+				"paralyze", "paralysis":
+					base = Color(base.r * 1.18, base.g * 1.14, base.b * 0.54, base.a)
+				"sleep":
+					base = Color(base.r * 0.72, base.g * 0.78, base.b * 0.96, base.a)
+				"root":
+					base = Color(base.r * 0.75, base.g * 1.14, base.b * 0.65, base.a)
 		var c: Color = base.lerp(FLASH_TINT, clampf(_flash, 0.0, 1.0)) if _flash > 0.0 else base
 		c.a = base.a * a
 		m.albedo_color = c
@@ -1074,9 +1099,14 @@ func _process(delta: float) -> void:
 	# Cycle 13: the ult pose holds the fight clip for ultPoseT —
 	# the locomotion selector must not stomp it mid-window.
 	if anim_player:
-		if _lunge_t <= 0.0 and _ult_pose_t <= 0.0 and _faint_t < 0.0:
-			_play_clip("walk" if _move_speed > 0.3 else "idle")
-	elif _faint_t < 0.0:
+		if _status_kind in ["freeze", "sleep"] and _faint_t < 0.0:
+			anim_player.speed_scale = 0.0
+		else:
+			if anim_player.speed_scale == 0.0:
+				anim_player.speed_scale = 1.0
+			if _lunge_t <= 0.0 and _ult_pose_t <= 0.0 and _faint_t < 0.0:
+				_play_clip("walk" if _move_speed > 0.3 else "idle")
+	elif _faint_t < 0.0 and not (_status_kind in ["freeze", "sleep"]):
 		_gait_accum += delta
 		if lod_step <= 1 or (_lod_tick % lod_step) == 0:
 			_update_gait(_gait_accum)

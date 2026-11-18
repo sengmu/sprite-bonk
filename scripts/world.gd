@@ -2702,7 +2702,7 @@ func _build_altar() -> void:
 	_altar_label.font_size = 72
 	_altar_label.modulate = Color(1.0, 0.85, 0.4)
 	_altar_label.outline_size = 10
-	_altar_label.outline_modulate = Color(UiTheme.INK_DEEP.r, UiTheme.INK_DEEP.g, UiTheme.INK_DEEP.b, 0.95)
+	_altar_label.outline_modulate = Color("#1a1030", 0.96)
 	_altar_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_altar_label.position = altar_pos + Vector3(0, 5.0, 0)
 	add_child(_altar_label)
@@ -3402,7 +3402,7 @@ func _build_hud() -> void:
 	# edge (the device clip). 144+28 = 172 <= 176.
 	gtrack.custom_minimum_size = Vector2(144, 9)
 	gtrack.add_theme_stylebox_override("panel",
-		UiTheme.flat_box(Color(UiTheme.INK_DEEP.r, UiTheme.INK_DEEP.g, UiTheme.INK_DEEP.b, 0.85), 4))
+		UiTheme.flat_box(Color("#1a1030", 0.88), 4))
 	gvb.add_child(gtrack)
 	_goal_bar_fill = Panel.new()
 	_goal_bar_fill.position = Vector2(1, 1)
@@ -4960,7 +4960,11 @@ func _build_lab_panel(root: Control) -> void:
 		archive_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		archive_scroll.visible = false
 		vb.add_child(archive_scroll)
-		archive_scroll.add_child(_lab_items_list)
+		var arch_pad := MarginContainer.new()
+		arch_pad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		arch_pad.add_theme_constant_override("margin_right", 10)
+		arch_pad.add_child(_lab_items_list)
+		archive_scroll.add_child(arch_pad)
 	else:
 		scroll = ScrollContainer.new()
 		scroll.custom_minimum_size = Vector2(0, 400)
@@ -5366,12 +5370,13 @@ func _refresh_lab_items() -> void:
 			r_chip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 			top_hb.add_child(r_chip)
 			if is_arch:
-				var st_c := UiTheme.chip("已归档", Color(UiTheme.INK_DEEP, 0.92), 11, UiTheme.GOLD)
+				var st_c := UiTheme.chip("已归档", Color("#2a1f47", 0.94), 11, UiTheme.GOLD)
 				st_c.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 				top_hb.add_child(st_c)
 			info_vb.add_child(top_hb)
 			var eff_l := _mk_label(info_vb, _item_label(k), 13, Color("6e502f"))
-			eff_l.clip_text = true
+			eff_l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			eff_l.custom_minimum_size = Vector2(180, 0)
 			row.add_child(info_vb)
 		else:
 			row.add_child(_item_icon_rect(k, 28.0))
@@ -5379,7 +5384,7 @@ func _refresh_lab_items() -> void:
 				String(GameData.RARITY_NAMES[rar_i])], 15, UiTheme.TEXT)
 			name_l.custom_minimum_size = Vector2(300, 0)
 			if is_arch:
-				var st := UiTheme.chip("已归档", Color(UiTheme.INK_DEEP, 0.92), 12, UiTheme.GOLD)
+				var st := UiTheme.chip("已归档", Color("#2a1f47", 0.94), 12, UiTheme.GOLD)
 				st.custom_minimum_size = Vector2(64, 28)
 				row.add_child(st)
 		var b := UiTheme.make_button("取回" if is_arch else "归档",
@@ -5405,6 +5410,7 @@ func _refresh_lab_items() -> void:
 		if _p5_on:
 			var icard := PanelContainer.new()
 			icard.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			icard.size_flags_vertical = Control.SIZE_EXPAND_FILL
 			var i_sb := _style(Color("fff8e2") if is_arch else Color(1.0, 0.99, 0.96, 0.95), 12, Color("dfb86c") if is_arch else Color("e5cfa0"), 1.5, true)
 			i_sb.content_margin_left = 10
 			i_sb.content_margin_right = 10
@@ -13981,7 +13987,7 @@ func spawn_floater(pos: Vector3, text: String, color: Color, scale_mult: float =
 	l.pixel_size = 0.0075
 	l.modulate = color
 	l.outline_size = 16
-	l.outline_modulate = Color(UiTheme.INK_DEEP.r, UiTheme.INK_DEEP.g, UiTheme.INK_DEEP.b, 0.96)
+	l.outline_modulate = Color("#1a1030", 0.96)
 	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	l.no_depth_test = true
 	add_child(l)
@@ -17742,7 +17748,7 @@ func _p3_fill_drawer() -> void:
 		var track := Panel.new()
 		track.custom_minimum_size = Vector2(0, 9)
 		track.add_theme_stylebox_override("panel",
-			UiTheme.flat_box(Color(UiTheme.INK_DEEP.r, UiTheme.INK_DEEP.g, UiTheme.INK_DEEP.b, 0.85), 4))
+			UiTheme.flat_box(Color("#1a1030", 0.88), 4))
 		_obj_drawer_box.add_child(track)
 		var fill := Panel.new()
 		fill.position = Vector2(1, 1)

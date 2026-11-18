@@ -945,10 +945,13 @@ func _c22_phase() -> void:
 		_c9_check("c22 dewgong: the trail spans the slide (length > 5)",
 			ta.distance_to(tb) > 5.0, "len=" + str(ta.distance_to(tb)))
 		var mid := ta.lerp(tb, 0.5)
-		p.global_position = Vector3(mid.x, p.global_position.y, mid.y)
+		var mid_y: float = w.height_at(mid.x, mid.y)
+		p.global_position = Vector3(mid.x, mid_y, mid.y)
 		var slip_seen := false
 		var frozen_seen := false
 		for i in range(20):
+			p.global_position = Vector3(mid.x, mid_y, mid.y)
+			p.set("_vel", Vector3.ZERO)
 			await _c211_wait_disarmed(w, p, 0.2)
 			if p.arena_slip > 0.5:
 				slip_seen = true
