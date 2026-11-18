@@ -7082,15 +7082,17 @@ func _draft_card(opt: Dictionary, idx: int) -> Button:
 	var tl := Label.new()
 	tl.text = title
 	tl.add_theme_font_override("font", UiTheme.display_font())
-	tl.add_theme_font_size_override("font_size", 20)
+	tl.add_theme_font_size_override("font_size", 17 if (_p5_on and title.length() > 6) else 20)
 	tl.add_theme_color_override("font_color", UiTheme.TEXT)
 	tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	tl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	tl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var title_pill := PanelContainer.new()
 	var title_style := UiTheme.flat_box(Color("fff6df"), 18)
-	for side in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
-		title_style.set_content_margin(side, 2.0)
+	title_style.set_content_margin(SIDE_LEFT, 12.0 if _p5_on else 6.0)
+	title_style.set_content_margin(SIDE_RIGHT, 12.0 if _p5_on else 6.0)
+	title_style.set_content_margin(SIDE_TOP, 3.0)
+	title_style.set_content_margin(SIDE_BOTTOM, 3.0)
 	title_pill.add_theme_stylebox_override("panel", title_style)
 	title_pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	flow.add_child(title_pill)
@@ -7158,20 +7160,19 @@ func _draft_card(opt: Dictionary, idx: int) -> Button:
 		var fx := Control.new()
 		fx.set_anchors_preset(Control.PRESET_FULL_RECT)
 		fx.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		# 使用与法式凹角完全贴合的纯透明金光叠加框 card_selected.png 替代直角矩形贴图，彻底消除四角方形黄框穿帮
 		var glow := TextureRect.new()
 		glow.set_anchors_preset(Control.PRESET_FULL_RECT)
-		glow.texture = _gold_glow_texture()
+		glow.offset_left = -8
+		glow.offset_right = 8
+		glow.offset_top = -10
+		glow.offset_bottom = 10
+		glow.texture = load("res://assets/ui/frames/card_selected.png")
 		glow.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		glow.stretch_mode = TextureRect.STRETCH_SCALE
-		glow.modulate = Color(1, 0.88, 0.45, 0.55)
 		glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		fx.add_child(glow)
-		var rim := Panel.new()
-		rim.set_anchors_preset(Control.PRESET_FULL_RECT)
-		rim.add_theme_stylebox_override("panel",
-			UiTheme.flat_box(Color(0, 0, 0, 0), 26, Color(1.0, 0.84, 0.25, 0.85), 3))
-		rim.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		fx.add_child(rim)
+		# 推荐主卡已采用法式圆角金相框贴图，取消硬圆角矩形 rim 描边以免四角相切穿帮
 		# Gold sparkles at the free corners/edges (the top
 		# corners carry the kind/rarity chips). U3 fix2:
 		# anchor/offset geometry only — the free position/
@@ -9738,14 +9739,28 @@ func _shop_refresh() -> void:
 		cvb.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		margin.add_child(cvb)
 
-		var iic := _item_icon_rect(key, 60.0 if _p5_on else 44.0)
-		iic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		cvb.add_child(iic)
+		# 商店紫卡顶 icon 加透白发光圆环托底，与宝箱界面形成统一立体卡片质感
+		if _p5_on:
+			var ic_glow := PanelContainer.new()
+			ic_glow.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+			# corner_radius 略小于半宽(32 < 68/2)且关掉边线抗锯齿，防止 Godot 4 高圆角十字白线接缝
+			var ig_sb := _style(Color(1.0, 1.0, 1.0, 0.22), 24, Color(1.0, 1.0, 1.0, 0.50), 1.5, true)
+			ig_sb.set_content_margin_all(6)
+			ic_glow.add_theme_stylebox_override("panel", ig_sb)
+			ic_glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			var iic := _item_icon_rect(key, 54.0)
+			iic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			ic_glow.add_child(iic)
+			cvb.add_child(ic_glow)
+		else:
+			var iic := _item_icon_rect(key, 44.0)
+			iic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+			cvb.add_child(iic)
 
 		var nm_l := Label.new()
 		nm_l.text = _item_zh_name(key)
 		nm_l.add_theme_font_override("font", UiTheme.display_font())
-		nm_l.add_theme_font_size_override("font_size", 16)
+		nm_l.add_theme_font_size_override("font_size", 17 if _p5_on else 16)
 		nm_l.add_theme_color_override("font_color", Color.WHITE)
 		nm_l.add_theme_color_override("font_shadow_color", Color("481f80"))
 		nm_l.add_theme_constant_override("shadow_offset_y", 2)
@@ -9754,28 +9769,54 @@ func _shop_refresh() -> void:
 		nm_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		cvb.add_child(nm_l)
 
+		if _p5_on:
+			var msep_wrap := CenterContainer.new()
+			msep_wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			var msep := ColorRect.new()
+			msep.custom_minimum_size = Vector2(96, 1.5)
+			msep.color = Color(1.0, 1.0, 1.0, 0.24)
+			msep.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			msep_wrap.add_child(msep)
+			cvb.add_child(msep_wrap)
+
 		var eff_l := Label.new()
 		eff_l.text = _item_label(key)
 		eff_l.add_theme_font_override("font", UiTheme.body_font())
-		eff_l.add_theme_font_size_override("font_size", 13)
-		eff_l.add_theme_color_override("font_color", Color("f4ebff"))
+		eff_l.add_theme_font_size_override("font_size", 14 if _p5_on else 13)
+		eff_l.add_theme_color_override("font_color", Color("fff2a6") if _p5_on else Color("f4ebff"))
 		eff_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		eff_l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		eff_l.clip_text = false
-		eff_l.custom_minimum_size.y = 52
+		eff_l.custom_minimum_size.y = 42 if _p5_on else 52
 		eff_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		cvb.add_child(eff_l)
 
-		var meta_l := Label.new()
-		meta_l.text = "【%s】持有 %d/%d" % [
-			String(GameData.RARITY_NAMES[GameData.item_rarity(key)]),
-			player.item_count(key), GameData.item_max(key)]
-		meta_l.add_theme_font_override("font", UiTheme.body_font())
-		meta_l.add_theme_font_size_override("font_size", 12)
-		meta_l.add_theme_color_override("font_color", Color("fff0c4"))
-		meta_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		meta_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		cvb.add_child(meta_l)
+		var rar_i := GameData.item_rarity(key)
+		if _p5_on:
+			var meta_hb := HBoxContainer.new()
+			meta_hb.alignment = BoxContainer.ALIGNMENT_CENTER
+			meta_hb.add_theme_constant_override("separation", 6)
+			meta_hb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			var rc_col := UiTheme.rarity_color(rar_i)
+			var rchip := UiTheme.chip(String(GameData.RARITY_NAMES[rar_i]), rc_col.darkened(0.08), 11, Color.WHITE)
+			if UiTheme.luminance(rc_col) >= 0.75:
+				(rchip.get_child(0) as Label).add_theme_color_override("font_color", UiTheme.TEXT)
+			meta_hb.add_child(rchip)
+			var cnt_chip := UiTheme.chip("持有 %d/%d" % [player.item_count(key), GameData.item_max(key)],
+				Color(0.24, 0.12, 0.44, 0.65), 11, Color("fff0c4"))
+			meta_hb.add_child(cnt_chip)
+			cvb.add_child(meta_hb)
+		else:
+			var meta_l := Label.new()
+			meta_l.text = "【%s】持有 %d/%d" % [
+				String(GameData.RARITY_NAMES[rar_i]),
+				player.item_count(key), GameData.item_max(key)]
+			meta_l.add_theme_font_override("font", UiTheme.body_font())
+			meta_l.add_theme_font_size_override("font_size", 12)
+			meta_l.add_theme_color_override("font_color", Color("fff0c4"))
+			meta_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			meta_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			cvb.add_child(meta_l)
 
 		var sp_push := Control.new()
 		sp_push.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -10084,18 +10125,19 @@ func _choice_show(title: String, sub: String, options: Array, foot_text: String,
 		b.add_child(margin)
 		var cvb := VBoxContainer.new()
 		cvb.alignment = BoxContainer.ALIGNMENT_CENTER
-		cvb.add_theme_constant_override("separation", 6)
+		cvb.add_theme_constant_override("separation", 5 if _p5_on else 6)
 		cvb.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		margin.add_child(cvb)
 		if item_key != "":
 			if _p5_on:
 				var ic_glow := PanelContainer.new()
 				ic_glow.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-				var ig_sb := _style(Color(1.0, 1.0, 1.0, 0.22), 31, Color(1.0, 1.0, 1.0, 0.45), 1.5, true)
-				ig_sb.set_content_margin_all(6)
+				# 圆角半径 24 (< 74/2) 保持柔润亮环托底且杜绝 Godot StyleBoxFlat 十字接缝
+				var ig_sb := _style(Color(1.0, 1.0, 1.0, 0.24), 24, Color(1.0, 1.0, 1.0, 0.55), 2.0, true)
+				ig_sb.set_content_margin_all(7)
 				ic_glow.add_theme_stylebox_override("panel", ig_sb)
 				ic_glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
-				var ic := _item_icon_rect(item_key, 56.0)
+				var ic := _item_icon_rect(item_key, 60.0)
 				ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
 				ic_glow.add_child(ic)
 				cvb.add_child(ic_glow)
@@ -10155,20 +10197,50 @@ func _choice_show(title: String, sub: String, options: Array, foot_text: String,
 		else:
 			var parts := opt_text.split("\n", false)
 			if _p5_on and parts.size() >= 2:
-				var l_title := _mk_label(cvb, parts[0], 17, Color.WHITE, true)
+				var l_title := _mk_label(cvb, parts[0], 18, Color.WHITE, true)
 				l_title.add_theme_font_override("font", UiTheme.display_font())
 				l_title.add_theme_color_override("font_shadow_color", Color("481f80"))
 				l_title.add_theme_constant_override("shadow_offset_y", 2)
 				l_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 				l_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+				# 加入半透柔白细分割线使主名称、属性数值与底层稀有度胶囊分区明朗
+				var csep_wrap := CenterContainer.new()
+				csep_wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				var csep := ColorRect.new()
+				csep.custom_minimum_size = Vector2(96, 1.5)
+				csep.color = Color(1.0, 1.0, 1.0, 0.26)
+				csep.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				csep_wrap.add_child(csep)
+				cvb.add_child(csep_wrap)
 				for pi in range(1, parts.size()):
+					var p_txt := String(parts[pi])
 					var is_last := pi == parts.size() - 1
-					var col := Color("ebd9ff") if is_last else Color("fff2a6")
-					var l_sub := _mk_label(cvb, parts[pi], 14 if is_last else 15, col, true)
-					l_sub.add_theme_color_override("font_shadow_color", Color("3e1770"))
-					l_sub.add_theme_constant_override("shadow_offset_y", 1)
-					l_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-					l_sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+					if is_last and p_txt.begins_with("【") and "】" in p_txt and item_key != "":
+						var end_b := p_txt.find("】")
+						var r_nm := p_txt.substr(1, end_b - 1)
+						var hold_nm := p_txt.substr(end_b + 1).strip_edges()
+						var r_idx := GameData.item_rarity(item_key)
+						var r_col := UiTheme.rarity_color(r_idx)
+						var tag_hb := HBoxContainer.new()
+						tag_hb.alignment = BoxContainer.ALIGNMENT_CENTER
+						tag_hb.add_theme_constant_override("separation", 6)
+						tag_hb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+						var rc_chip := UiTheme.chip(r_nm, r_col.darkened(0.08), 11, Color.WHITE)
+						if UiTheme.luminance(r_col) >= 0.75:
+							(rc_chip.get_child(0) as Label).add_theme_color_override("font_color", UiTheme.TEXT)
+						tag_hb.add_child(rc_chip)
+						if hold_nm != "":
+							tag_hb.add_child(UiTheme.chip(hold_nm, Color(0.24, 0.12, 0.44, 0.65), 11, Color("fff0c4")))
+						cvb.add_child(tag_hb)
+					else:
+						var col := Color("ebd9ff") if is_last else Color("fff2a6")
+						var l_sub := _mk_label(cvb, p_txt, 14 if is_last else 16, col, true)
+						if not is_last:
+							l_sub.add_theme_font_override("font", UiTheme.display_font())
+						l_sub.add_theme_color_override("font_shadow_color", Color("3e1770"))
+						l_sub.add_theme_constant_override("shadow_offset_y", 1)
+						l_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+						l_sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			else:
 				var l := Label.new()
 				l.text = opt_text
@@ -12817,14 +12889,36 @@ func _render_blessing() -> void:
 		top.add_theme_stylebox_override("panel", top_sb)
 		top.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		card.add_child(top)
-		var ic := TextureRect.new()
-		ic.texture = load("res://assets/ui/glyphs/glyph_blessing.png")
-		ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		ic.size = Vector2(76, 76)
-		ic.position = Vector2((bsz.x - 76.0) * 0.5, 42)
-		ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		card.add_child(ic)
+		# 根据祝福对应属性绘制差异化矢量图标＋半透圆盘光托，告别三张相同小白星
+		var stat_k := String(offer.get("stat", ""))
+		var icon_map := {
+			"damage": "sword", "attackSpeed": "bolt", "maxHp": "heart",
+			"moveSpeed": "wind", "critChance": "crit", "area": "area",
+			"xpGain": "spark", "regen": "drop", "armor": "shield",
+			"luck": "luck", "duration": "hourglass", "statusChance": "flame"
+		}
+		var glyph_k := String(icon_map.get(stat_k, ""))
+		if _p5_on and glyph_k != "":
+			var halo := Panel.new()
+			halo.size = Vector2(88, 88)
+			halo.position = Vector2((bsz.x - 88.0) * 0.5, 38)
+			halo.add_theme_stylebox_override("panel", _style(Color(1.0, 1.0, 1.0, 0.24), 28, Color(1.0, 1.0, 1.0, 0.55), 2.0, false))
+			halo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			card.add_child(halo)
+			var uic := UiIcon.new(glyph_k, Color.WHITE, 52)
+			uic.position = Vector2(18, 18)
+			uic.size = Vector2(52, 52)
+			uic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			halo.add_child(uic)
+		else:
+			var ic := TextureRect.new()
+			ic.texture = load("res://assets/ui/glyphs/glyph_blessing.png")
+			ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			ic.size = Vector2(76, 76)
+			ic.position = Vector2((bsz.x - 76.0) * 0.5, 42)
+			ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			card.add_child(ic)
 		var rchip := UiTheme.chip(String(GameData.RARITY_NAMES[rar]), rar_c.darkened(0.15), 14)
 		var rlab := rchip.get_child(0) as Label
 		if UiTheme.luminance(rar_c) < 0.75:
@@ -12835,26 +12929,34 @@ func _render_blessing() -> void:
 		rchip.offset_top = 10
 		rchip.offset_bottom = 38
 		card.add_child(rchip)
-		# 定稿 S14_v1.jpg：效果数字居中于下方奶油区，深棕粗体醒目清晰不压边界
+		# 定稿 S14_v1.jpg：效果数字居中于下方奶油区，增加暖金细分割线与说明标签提升质感
 		var flow := VBoxContainer.new()
 		flow.set_anchors_preset(Control.PRESET_FULL_RECT)
 		flow.offset_left = 12
 		flow.offset_right = -12
-		flow.offset_top = 166
+		flow.offset_top = 162 if _p5_on else 166
 		flow.offset_bottom = -10
-		flow.add_theme_constant_override("separation", 4)
+		flow.add_theme_constant_override("separation", 6 if _p5_on else 4)
 		flow.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		card.add_child(flow)
 		var tl := Label.new()
 		tl.text = String(offer["label"])
 		tl.add_theme_font_override("font", UiTheme.display_font())
-		tl.add_theme_font_size_override("font_size", 19)
+		tl.add_theme_font_size_override("font_size", 21 if _p5_on else 19)
 		tl.add_theme_color_override("font_color", UiTheme.TEXT)
 		tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		tl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		tl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		flow.add_child(tl)
 		if _p5_on:
+			var bsep_wrap := CenterContainer.new()
+			bsep_wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			var bsep := ColorRect.new()
+			bsep.custom_minimum_size = Vector2(76, 2)
+			bsep.color = Color("e5cfa0")
+			bsep.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			bsep_wrap.add_child(bsep)
+			flow.add_child(bsep_wrap)
 			var bl_sub := _mk_label(flow, "本局全队实时生效", 14, Color("8a6e4c"))
 			bl_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			bl_sub.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -14677,12 +14779,17 @@ func _update_hud_bars(delta: float) -> void:
 			if _ult_name_label:
 				_ult_name_label.visible = _ult_circle.visible
 	_p4_tick_sweeps()
+	# 仅在无全屏/选择弹窗遮挡时展示必杀技切入横幅，避免在升级三选一等界面背景透出穿帮
 	if _cutin_t > 0.0:
 		_cutin_t -= delta
+		if _cutin_panel:
+			_cutin_panel.visible = not _any_modal_open() and _cutin_t > 0.0
 		if _cutin_t <= 0.0 and _cutin_panel:
 			_cutin_panel.visible = false
 			if _p3_on == 1:
 				_layout_hud()
+	elif _cutin_panel and _cutin_panel.visible:
+		_cutin_panel.visible = false
 	if _ult_look_t > 0.0:
 		_ult_look_t -= delta
 		if _ult_look_rect:
@@ -16900,15 +17007,16 @@ func _apply_top_card_phone(on: bool) -> void:
 		[_wx_chip, Rect2(150, 21, 48, 26)],
 		[_wx_icon, Rect2(5, 6, 14, 14)],
 		[_wx_label, Rect2(21, 0, 25, 26)],
-		[_timer_label, Rect2(200, -1, 146, 32)],
-		[_danger_name, Rect2(200, 31, 146, 17)],
-		[_wallet_pill, Rect2(344, 16, 210, 36)],
-		[_dust_icon, Rect2(0, 5, 26, 26)],
-		[_dust_label, Rect2(28, 0, 38, 36)],
-		[_coin_icon, Rect2(68, 5, 26, 26)],
-		[_gold_label, Rect2(96, 0, 40, 36)],
-		[_ball_icon, Rect2(138, 5, 26, 26)],
-		[_ball_price_label, Rect2(166, 0, 46, 36)],
+		[_timer_label, Rect2(200, -2, 134, 31)],
+		[_danger_name, Rect2(200, 31, 134, 17)],
+		# 略展钱包胶囊并调小三枚图标为 22x22，给足 4-5 位数萤尘 52px 宽度并留出与金币图标的呼吸间距
+		[_wallet_pill, Rect2(336, 16, 218, 36)],
+		[_dust_icon, Rect2(0, 7, 22, 22)],
+		[_dust_label, Rect2(24, 0, 52, 36)],
+		[_coin_icon, Rect2(79, 7, 22, 22)],
+		[_gold_label, Rect2(103, 0, 46, 36)],
+		[_ball_icon, Rect2(151, 7, 22, 22)],
+		[_ball_price_label, Rect2(175, 0, 44, 36)],
 		# 手机模式下 _hero_info 虽然隐藏，但 phonehud.gd 仍校验其矩形与顶栏不相交；同步缩至修长灰蓝背板范围（桌面自动恢复）
 		[_hero_info, Rect2(56, 22, 182, 62)],
 		# 英雄血条加长至 140、数字区域从 x=22 开始以避开左侧圆形奖章遮挡，使数字视觉严格居中在可见绿条中线
@@ -16922,7 +17030,7 @@ func _apply_top_card_phone(on: bool) -> void:
 	for i in range(_pips.size()):
 		lay.append([_pips[i], Rect2(18 + i * 17, 64, 11, 11)])
 	for i in range(_danger_segs.size()):
-		lay.append([_danger_segs[i], Rect2(215 + i * 17, 50, 13, 14)])
+		lay.append([_danger_segs[i], Rect2(211 + i * 17, 50, 13, 14)])
 	for e in lay:
 		var c := e[0] as Control
 		if c == null:
@@ -19161,7 +19269,7 @@ func _pause_fill_status() -> void:
 	var box_left: Container = _pause_moves_box
 	var box_right: Container = _pause_moves_box
 	if _p5_on:
-		# 手机全屏化优化：状态页采用左(战力/招式/维生素) + 右(物品/队伍/本局) 双栏并排，几乎一屏免滚动全览全部信息
+		# 手机全屏化优化：状态页采用左(战力/招式/维生素) + 右(物品/队伍/本局) 双栏并排，一屏零滚动条全览全部信息
 		var cols := HBoxContainer.new()
 		cols.add_theme_constant_override("separation", 12)
 		cols.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -19170,21 +19278,23 @@ func _pause_fill_status() -> void:
 		lcard.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		lcard.size_flags_stretch_ratio = 52.0
 		var l_sb := _style(Color(1.0, 0.99, 0.96, 0.92), 14, Color("e5cfa0"), 1.5, true)
-		l_sb.set_content_margin_all(6)
+		l_sb.content_margin_left = 8; l_sb.content_margin_right = 8
+		l_sb.content_margin_top = 3; l_sb.content_margin_bottom = 3
 		lcard.add_theme_stylebox_override("panel", l_sb)
 		cols.add_child(lcard)
 		var lvb := VBoxContainer.new()
-		lvb.add_theme_constant_override("separation", 3)
+		lvb.add_theme_constant_override("separation", 1)
 		lcard.add_child(lvb)
 		var rcard := PanelContainer.new()
 		rcard.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		rcard.size_flags_stretch_ratio = 48.0
 		var r_sb := _style(Color(1.0, 0.99, 0.96, 0.92), 14, Color("e5cfa0"), 1.5, true)
-		r_sb.set_content_margin_all(6)
+		r_sb.content_margin_left = 8; r_sb.content_margin_right = 8
+		r_sb.content_margin_top = 3; r_sb.content_margin_bottom = 3
 		rcard.add_theme_stylebox_override("panel", r_sb)
 		cols.add_child(rcard)
 		var rvb := VBoxContainer.new()
-		rvb.add_theme_constant_override("separation", 3)
+		rvb.add_theme_constant_override("separation", 1)
 		rcard.add_child(rvb)
 		box_left = lvb
 		box_right = rvb
@@ -19244,7 +19354,7 @@ func _pause_fill_status() -> void:
 		var irow := HBoxContainer.new()
 		irow.add_theme_constant_override("separation", 8)
 		box_right.add_child(irow)
-		irow.add_child(_item_icon_rect(key, 26.0))
+		irow.add_child(_item_icon_rect(key, 22.0 if _p5_on else 26.0))
 		_mk_label(irow, "%s ×%d" % [_item_zh_name(key),
 			int(player.items[ik])], 15)
 		_mk_label(irow, _item_label(key), 14 if _p5_on else 12, UiTheme.MUTED)
@@ -19351,21 +19461,30 @@ func _p5_wrap_page(box: Control, rows: bool = true) -> void:
 				(last as Label).size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 func _pause_fill_legend(box: VBoxContainer) -> void:
-	var rows := [["守护者", Color("ff2a4a")], ["头领", Color("ff8a2a")],
-		["可结伴目标", Color("5af0ff")], ["宝藏", Color("ffc83a")],
-		["祭坛 / 图腾", Color("c25aff")], ["队友", Color("3ac85a")],
-		["玩家标记（大地图）", UiTheme.PIN]]
+	var rows := [["守护者", Color("ff2a4a"), "区域终极 Boss，击破后开启传送门"],
+		["头领", Color("ff8a2a"), "精英强敌，击败必掉宝箱与结伴机会"],
+		["可结伴目标", Color("5af0ff"), "野生遭遇 / 弱化后靠近按互动键投球"],
+		["宝藏", Color("ffc83a"), "探索开启补给宝箱获取金币与道具"],
+		["祭坛 / 图腾", Color("c25aff"), "交互获取古石祝福、商店交易或挑战"],
+		["队友", Color("3ac85a"), "已结伴伙伴自动随队协同攻击"],
+		["玩家标记（大地图）", UiTheme.PIN, "大地图点击放置或清除自定义航标"]]
 	if _p5_on:
-		# 对齐定稿 S18_v1.jpg：手机端采用左右双栏并排（左图例、右稀有度），一屏全显不截字不滚动
+		# 手机全屏化卡片布局：左右双卡并排，补齐图例说明、五级稀有度阶梯与实战要点，消灭大面积空洞
 		var cols := HBoxContainer.new()
-		cols.add_theme_constant_override("separation", 18)
+		cols.add_theme_constant_override("separation", 12)
 		cols.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		box.add_child(cols)
+		var lcard := PanelContainer.new()
+		lcard.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		lcard.size_flags_stretch_ratio = 55.0
+		var l_sb := _style(Color(1.0, 0.99, 0.96, 0.92), 14, Color("e5cfa0"), 1.5, true)
+		l_sb.content_margin_left = 10; l_sb.content_margin_right = 10
+		l_sb.content_margin_top = 5; l_sb.content_margin_bottom = 5
+		lcard.add_theme_stylebox_override("panel", l_sb)
+		cols.add_child(lcard)
 		var lcol := VBoxContainer.new()
-		lcol.add_theme_constant_override("separation", 3)
-		lcol.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		lcol.size_flags_stretch_ratio = 55.0
-		cols.add_child(lcol)
+		lcol.add_theme_constant_override("separation", 4)
+		lcard.add_child(lcol)
 		_mk_sky_banner(lcol, "地图图例", 16, false)
 		for r in rows:
 			var hb := HBoxContainer.new()
@@ -19374,23 +19493,63 @@ func _pause_fill_legend(box: VBoxContainer) -> void:
 			var dot := Panel.new()
 			dot.custom_minimum_size = Vector2(14, 14)
 			dot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-			dot.add_theme_stylebox_override("panel", UiTheme.flat_box(r[1], 7))
+			# 半径 5 并略微内嵌微边框，避免 14x14 在 R=7 时出现 Godot StyleBox 十字缝
+			var dsb := UiTheme.flat_box(r[1], 5)
+			dot.add_theme_stylebox_override("panel", dsb)
 			hb.add_child(dot)
-			_mk_label(hb, String(r[0]), 14)
+			var nl := _mk_label(hb, String(r[0]), 14, UiTheme.TEXT)
+			nl.add_theme_font_override("font", UiTheme.display_font())
+			var dl := _mk_label(hb, String(r[2]), 13, Color("7d6448"))
+			dl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			dl.clip_text = true
 		var rcol := VBoxContainer.new()
-		rcol.add_theme_constant_override("separation", 8)
+		rcol.add_theme_constant_override("separation", 6)
 		rcol.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		rcol.size_flags_stretch_ratio = 45.0
 		cols.add_child(rcol)
-		_mk_sky_banner(rcol, "稀有度", 16, false)
-		var rb := HFlowContainer.new()
-		rb.add_theme_constant_override("h_separation", 8)
-		rb.add_theme_constant_override("v_separation", 8)
-		rcol.add_child(rb)
-		var rar_cols := [Color("3b93e6"), Color("54bd38"), Color("9d56e6"), Color("f0ae24")]
-		for i in range(4):
-			var chip := UiTheme.chip(["普通", "稀有", "史诗", "传说"][i], rar_cols[i], 14, Color.WHITE)
-			rb.add_child(chip)
+		var rcard1 := PanelContainer.new()
+		rcard1.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var r1_sb := _style(Color(1.0, 0.99, 0.96, 0.92), 14, Color("e5cfa0"), 1.5, true)
+		r1_sb.content_margin_left = 10; r1_sb.content_margin_right = 10
+		r1_sb.content_margin_top = 5; r1_sb.content_margin_bottom = 5
+		rcard1.add_theme_stylebox_override("panel", r1_sb)
+		rcol.add_child(rcard1)
+		var r1vb := VBoxContainer.new()
+		r1vb.add_theme_constant_override("separation", 3)
+		rcard1.add_child(r1vb)
+		_mk_sky_banner(r1vb, "稀有度", 16, false)
+		var rar_specs := [
+			["普通", UiTheme.rarity_color(0), "基础属性 · 稳定成型"],
+			["优秀", UiTheme.rarity_color(1), "进阶强化 · 实用增益"],
+			["稀有", UiTheme.rarity_color(2), "核心构筑 · 强力效果"],
+			["史诗", UiTheme.rarity_color(3), "高阶质变 · 大幅跃升"],
+			["传说", UiTheme.rarity_color(4), "终极神器 · 稀世词条"]
+		]
+		for rs in rar_specs:
+			var rhb := HBoxContainer.new()
+			rhb.add_theme_constant_override("separation", 8)
+			r1vb.add_child(rhb)
+			var rc_c: Color = rs[1]
+			var rchip := UiTheme.chip(String(rs[0]), rc_c.darkened(0.08), 13, Color.WHITE)
+			if UiTheme.luminance(rc_c) >= 0.75:
+				(rchip.get_child(0) as Label).add_theme_color_override("font_color", UiTheme.TEXT)
+			rhb.add_child(rchip)
+			_mk_label(rhb, String(rs[2]), 13, Color("6e553b"))
+		var rcard2 := PanelContainer.new()
+		rcard2.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		rcard2.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		var r2_sb := _style(Color(1.0, 0.99, 0.96, 0.92), 14, Color("e5cfa0"), 1.5, true)
+		r2_sb.content_margin_left = 10; r2_sb.content_margin_right = 10
+		r2_sb.content_margin_top = 5; r2_sb.content_margin_bottom = 5
+		rcard2.add_theme_stylebox_override("panel", r2_sb)
+		rcol.add_child(rcard2)
+		var r2vb := VBoxContainer.new()
+		r2vb.add_theme_constant_override("separation", 2)
+		rcard2.add_child(r2vb)
+		_mk_sky_banner(r2vb, "战斗提示", 16, false)
+		for tip in ["• 克制属性触发高额增伤与弱点爆发", "• 连续击杀达 25 次自动全图吸取经验", "• 倒计时归零触发致命兽潮，尽快迎战守护者"]:
+			var tl := _mk_label(r2vb, tip, 13, Color("6e553b"))
+			tl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		return
 	_mk_sky_banner(box, "地图图例", 16, false)
 	for r in rows:
