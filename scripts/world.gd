@@ -3204,8 +3204,8 @@ func _build_hud() -> void:
 	# goes 470 -> 614 and the card +-250 -> +-321.
 	_boss_card.offset_left = -321
 	_boss_card.offset_right = 321
-	_boss_card.offset_top = 102
-	_boss_card.offset_bottom = 148
+	_boss_card.offset_top = 107
+	_boss_card.offset_bottom = 153
 	_boss_card.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	_boss_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_boss_card.visible = false
@@ -3258,9 +3258,9 @@ func _build_hud() -> void:
 		var tick := _panel(_boss_card, Vector2(14 + 614.0 * frac - 1, 10), Vector2(2, 26), Color(1, 1, 1, 0.45), 0)
 		tick.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_boss_ticks.append(tick)  # cycle 21: shown only for kit bosses
-	# 右端「守护者」标签牌收窄贴合、改柔暖白磨砂胶囊
-	_boss_tag_chip = _panel(_boss_card, Vector2(504, 8), Vector2(124, 28), Color(0.95, 0.95, 0.94, 0.96), 14, Color(1, 1, 1, 0.85), 1, true)
-	_boss_tag_label = _label_in(_boss_card, "守护者", Vector2(504, 8), Vector2(124, 28), 14, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, true)
+	# 右端「守护者」标签牌适度放宽以完整容纳具体 Boss 物种名称，保持柔暖白磨砂胶囊
+	_boss_tag_chip = _panel(_boss_card, Vector2(480, 8), Vector2(148, 28), Color(0.95, 0.95, 0.94, 0.96), 14, Color(1, 1, 1, 0.85), 1, true)
+	_boss_tag_label = _label_in(_boss_card, "守护者", Vector2(480, 8), Vector2(148, 28), 14, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, true)
 
 	# Cycle 18: the two .bossbar.mini bars (constructor
 	# @2020582 — the cycle-10 ledger correction). Feed:
@@ -4452,7 +4452,13 @@ func _build_menu(root: Control) -> void:
 		caption_back.name = "StartCaptionBack"
 		caption_back.size = Vector2(236, 30)
 		caption_back.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		caption_back.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+		# 增加柔和半透明深林绿磨砂胶囊衬底，确保上方“进入出战配置”在复杂草地花丛背景上清晰锐利
+		var scb_sb := StyleBoxFlat.new()
+		scb_sb.bg_color = Color(0.08, 0.16, 0.05, 0.62)
+		scb_sb.set_corner_radius_all(12)
+		scb_sb.set_border_width_all(1)
+		scb_sb.border_color = Color(0.75, 0.92, 0.55, 0.36)
+		caption_back.add_theme_stylebox_override("panel", scb_sb)
 		_menu_design.add_child(caption_back)
 		var start_caption := _mk_label(_menu_design, "进入出战配置", 17, Color("fffdf2"))
 		start_caption.name = "StartCaption"
@@ -4680,7 +4686,7 @@ func _build_wallet_panel(root: Control) -> void:
 		w_badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		header.add_child(w_badge)
 	_wallet_edit = LineEdit.new()
-	_wallet_edit.placeholder_text = "尚未连接 Solana 钱包"
+	_wallet_edit.placeholder_text = "Solana 移动钱包 · 访客模式"
 	_wallet_edit.editable = false
 	_wallet_edit.selecting_enabled = false
 	_wallet_edit.focus_mode = Control.FOCUS_NONE
@@ -4711,13 +4717,25 @@ func _build_wallet_panel(root: Control) -> void:
 	_wallet_balance.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_wallet_balance.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_wallet_balance.autowrap_mode = TextServer.AUTOWRAP_OFF if _p5_on else TextServer.AUTOWRAP_WORD_SMART
-	_wallet_balance.custom_minimum_size.y = 74 if _p5_on else 76
+	_wallet_balance.custom_minimum_size.y = 60 if _p5_on else 76
 	_wallet_balance.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_wallet_retry = UiTheme.make_button("重试读取余额", "ghost", "small")
 	_wallet_retry.visible = false
 	_wallet_retry.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_wallet_retry.pressed.connect(func() -> void: wallet.fetch_balance())
 	bal_row.add_child(_wallet_retry)
+	if _p5_on:
+		var w_info := PanelContainer.new()
+		w_info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var wi_sb := _style(Color(1.0, 0.99, 0.96, 0.92), 14, Color("e5cfa0"), 1.5, false)
+		wi_sb.content_margin_left = 14
+		wi_sb.content_margin_right = 14
+		wi_sb.content_margin_top = 7
+		wi_sb.content_margin_bottom = 7
+		w_info.add_theme_stylebox_override("panel", wi_sb)
+		var wi_lbl := _mk_label(w_info, "支持 Seed Vault / Mobile Wallet Adapter 授权 · 仅读取公开余额", 14, Color("6e502f"))
+		wi_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		vb.add_child(w_info)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 14 if _p5_on else 12)
 	vb.add_child(row)
@@ -6154,6 +6172,13 @@ func _settings_page_gfx() -> void:
 			Engine.max_fps = int(vals[i])
 			UiTheme.set_segmented(seg, i))
 	hb.add_child(seg)
+	if _p5_on:
+		var gsep := ColorRect.new()
+		gsep.color = Color("ead8b5")
+		gsep.custom_minimum_size.y = 1.5
+		host.add_child(gsep)
+		var gtip := _mk_label(host, "提示：设备支持高刷新率时可开启 90/120 帧；60 帧可兼顾丝滑操控与长效续航。", 13, Color("876b48"))
+		gtip.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
 func _settings_page_controls() -> void:
 	_mk_sky_banner(_settings_page, "控制", 20)
@@ -6343,7 +6368,7 @@ func _settings_page_account() -> void:
 		wstat.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		_refresh_account_label(wstat)
 		var wb := UiTheme.make_button("钱包面板", "blue", "normal")
-		wb.custom_minimum_size = Vector2(210, 44)
+		wb.custom_minimum_size = Vector2(236, 44)
 		for st in ["font_color", "font_hover_color", "font_pressed_color"]:
 			wb.add_theme_color_override(st, Color.WHITE)
 		wb.add_theme_color_override("font_outline_color", Color("13548c"))
@@ -6364,7 +6389,7 @@ func _settings_page_account() -> void:
 		linfo.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		linfo.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		var legal_button := UiTheme.make_button("隐私政策与服务条款", "ghost")
-		legal_button.custom_minimum_size = Vector2(240, 44)
+		legal_button.custom_minimum_size = Vector2(236, 44)
 		legal_button.pressed.connect(func() -> void:
 			audio.click()
 			_settings_show_tab("legal"))
@@ -6385,7 +6410,7 @@ func _settings_page_account() -> void:
 		_mk_label(dvb, "危险操作 · 重置本地存档", 15, Color("b82d20"))
 		_mk_label(dvb, "将清除全部游戏进度、图鉴与萤尘（需连续点击两次确认）", 14, Color("7d4c46"))
 		var resetb := UiTheme.make_button("重置存档", "red", "normal")
-		resetb.custom_minimum_size = Vector2(210, 44)
+		resetb.custom_minimum_size = Vector2(236, 44)
 		var red_sb := _style(Color("e0473b"), 24, Color("9e2118"), 2, true)
 		red_sb.content_margin_left = 18
 		red_sb.content_margin_right = 18
@@ -6556,7 +6581,7 @@ func _build_unlock_panel(root: Control) -> void:
 		var ugrid := GridContainer.new()
 		ugrid.columns = 2
 		ugrid.add_theme_constant_override("h_separation", 12)
-		ugrid.add_theme_constant_override("v_separation", 8)
+		ugrid.add_theme_constant_override("v_separation", 6)
 		ugrid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		_unlock_list = ugrid
 	else:
@@ -6565,6 +6590,11 @@ func _build_unlock_panel(root: Control) -> void:
 		uvb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		_unlock_list = uvb
 	scroll.add_child(_unlock_list)
+	if _p5_on:
+		var usep := ColorRect.new()
+		usep.color = Color("e5cfa0")
+		usep.custom_minimum_size.y = 1.5
+		vb.add_child(usep)
 	var xbtn := UiTheme.make_button("关闭", "green" if _p5_on else "ghost", "big" if _p5_on else "small")
 	if _p5_on:
 		for st in ["font_color", "font_hover_color", "font_pressed_color"]:
@@ -6612,8 +6642,8 @@ func _refresh_unlock_panel() -> void:
 		var c_sb := _style(c_bg, 16, c_bd, 1.5, true)
 		c_sb.content_margin_left = 12
 		c_sb.content_margin_right = 12
-		c_sb.content_margin_top = 8 if _p5_on else 10
-		c_sb.content_margin_bottom = 8 if _p5_on else 10
+		c_sb.content_margin_top = 6 if _p5_on else 10
+		c_sb.content_margin_bottom = 6 if _p5_on else 10
 		card.add_theme_stylebox_override("panel", c_sb)
 		var chb := HBoxContainer.new()
 		chb.add_theme_constant_override("separation", 12)
@@ -9823,15 +9853,15 @@ func _shop_refresh() -> void:
 		var price := int(e["price"])
 		var sold := bool(e["sold"])
 		var card_w := _p5_card_w(_meowth_panel, maxi(stock.size(), 4), 196.0) if _p5_on else 196.0
-		var card_h := 238.0 if _p5_on else 160.0
+		var card_h := 248.0 if _p5_on else 160.0
 		var b := Button.new()
 		b.text = ""
 		b.custom_minimum_size = Vector2(card_w, card_h)
 		b.size = Vector2(card_w, card_h)
-		# 对齐定稿 S12_v1.jpg：亮紫色立体圆角卡片，彻底告别白底白字隐形灾难
-		var sb_n := _style(Color("9d6ce0"), 18, Color("ebd9ff"), 2, true)
-		var sb_h := _style(Color("ad7ef0"), 18, Color.WHITE, 2, true)
-		var sb_p := _style(Color("8756ca"), 18, Color("d4b6ff"), 2, true)
+		# 统一采用上柔紫图标托区 + 下奶油白底卡片结构，彻底告别整卡高饱和亮紫贴白字割裂感
+		var sb_n := _style(Color("9363d6") if _p5_on else Color("9d6ce0"), 18, Color("ebd9ff"), 2, true)
+		var sb_h := _style(Color("a373e6") if _p5_on else Color("ad7ef0"), 18, Color.WHITE, 2, true)
+		var sb_p := _style(Color("7d4ec0") if _p5_on else Color("8756ca"), 18, Color("d4b6ff"), 2, true)
 		b.add_theme_stylebox_override("normal", sb_n)
 		b.add_theme_stylebox_override("hover", sb_h)
 		b.add_theme_stylebox_override("pressed", sb_p)
@@ -9839,72 +9869,78 @@ func _shop_refresh() -> void:
 
 		var margin := MarginContainer.new()
 		margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-		margin.add_theme_constant_override("margin_left", 10)
-		margin.add_theme_constant_override("margin_right", 10)
-		margin.add_theme_constant_override("margin_top", 10)
-		margin.add_theme_constant_override("margin_bottom", 10)
+		margin.add_theme_constant_override("margin_left", 8 if _p5_on else 10)
+		margin.add_theme_constant_override("margin_right", 8 if _p5_on else 10)
+		margin.add_theme_constant_override("margin_top", 8 if _p5_on else 10)
+		margin.add_theme_constant_override("margin_bottom", 8 if _p5_on else 10)
 		margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		b.add_child(margin)
 
 		var cvb := VBoxContainer.new()
-		cvb.add_theme_constant_override("separation", 3)
+		cvb.add_theme_constant_override("separation", 6 if _p5_on else 3)
 		cvb.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		margin.add_child(cvb)
 
-		# 商店紫卡顶 icon 加透白发光圆环托底，与宝箱界面形成统一立体卡片质感
 		if _p5_on:
 			var ic_glow := PanelContainer.new()
 			ic_glow.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-			# corner_radius 略小于半宽(32 < 68/2)且关掉边线抗锯齿，防止 Godot 4 高圆角十字白线接缝
-			var ig_sb := _style(Color(1.0, 1.0, 1.0, 0.22), 24, Color(1.0, 1.0, 1.0, 0.50), 1.5, true)
-			ig_sb.set_content_margin_all(6)
+			var ig_sb := _style(Color(1.0, 1.0, 1.0, 0.24), 22, Color(1.0, 1.0, 1.0, 0.56), 1.5, true)
+			ig_sb.set_content_margin_all(5)
 			ic_glow.add_theme_stylebox_override("panel", ig_sb)
 			ic_glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			var iic := _item_icon_rect(key, 54.0)
+			var iic := _item_icon_rect(key, 50.0)
 			iic.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			ic_glow.add_child(iic)
 			cvb.add_child(ic_glow)
-		else:
-			var iic := _item_icon_rect(key, 44.0)
-			iic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-			cvb.add_child(iic)
 
-		var nm_l := Label.new()
-		nm_l.text = _item_zh_name(key)
-		nm_l.add_theme_font_override("font", UiTheme.display_font())
-		nm_l.add_theme_font_size_override("font_size", 17 if _p5_on else 16)
-		nm_l.add_theme_color_override("font_color", Color.WHITE)
-		nm_l.add_theme_color_override("font_shadow_color", Color("481f80"))
-		nm_l.add_theme_constant_override("shadow_offset_y", 2)
-		nm_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		nm_l.clip_text = true
-		nm_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		cvb.add_child(nm_l)
+			var cream_panel := PanelContainer.new()
+			cream_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+			cream_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			cream_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			var cp_sb := _style(Color(1.0, 0.99, 0.955, 0.98), 12, Color("e6d0a4"), 1, true)
+			cp_sb.content_margin_left = 8
+			cp_sb.content_margin_right = 8
+			cp_sb.content_margin_top = 6
+			cp_sb.content_margin_bottom = 6
+			cream_panel.add_theme_stylebox_override("panel", cp_sb)
+			cvb.add_child(cream_panel)
 
-		if _p5_on:
+			var body_vb := VBoxContainer.new()
+			body_vb.add_theme_constant_override("separation", 3)
+			body_vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			cream_panel.add_child(body_vb)
+
+			var nm_l := Label.new()
+			nm_l.text = _item_zh_name(key)
+			nm_l.add_theme_font_override("font", UiTheme.body_font())
+			nm_l.add_theme_font_size_override("font_size", 16)
+			nm_l.add_theme_color_override("font_color", UiTheme.TEXT)
+			nm_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			nm_l.clip_text = true
+			nm_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			body_vb.add_child(nm_l)
+
 			var msep_wrap := CenterContainer.new()
 			msep_wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			var msep := ColorRect.new()
-			msep.custom_minimum_size = Vector2(96, 1.5)
-			msep.color = Color(1.0, 1.0, 1.0, 0.24)
+			msep.custom_minimum_size = Vector2(92, 1.5)
+			msep.color = Color("ead8b5")
 			msep.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			msep_wrap.add_child(msep)
-			cvb.add_child(msep_wrap)
+			body_vb.add_child(msep_wrap)
 
-		var eff_l := Label.new()
-		eff_l.text = _item_label(key)
-		eff_l.add_theme_font_override("font", UiTheme.body_font())
-		eff_l.add_theme_font_size_override("font_size", 14 if _p5_on else 13)
-		eff_l.add_theme_color_override("font_color", Color("fff2a6") if _p5_on else Color("f4ebff"))
-		eff_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		eff_l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		eff_l.clip_text = false
-		eff_l.custom_minimum_size.y = 42 if _p5_on else 52
-		eff_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		cvb.add_child(eff_l)
+			var eff_l := Label.new()
+			eff_l.text = _item_label(key)
+			eff_l.add_theme_font_override("font", UiTheme.body_font())
+			eff_l.add_theme_font_size_override("font_size", 14)
+			eff_l.add_theme_color_override("font_color", Color("6e502f"))
+			eff_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			eff_l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			eff_l.custom_minimum_size.y = 36
+			eff_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			body_vb.add_child(eff_l)
 
-		var rar_i := GameData.item_rarity(key)
-		if _p5_on:
+			var rar_i := GameData.item_rarity(key)
 			var meta_hb := HBoxContainer.new()
 			meta_hb.alignment = BoxContainer.ALIGNMENT_CENTER
 			meta_hb.add_theme_constant_override("separation", 6)
@@ -9915,27 +9951,110 @@ func _shop_refresh() -> void:
 				(rchip.get_child(0) as Label).add_theme_color_override("font_color", UiTheme.TEXT)
 			meta_hb.add_child(rchip)
 			var cnt_chip := UiTheme.chip("持有 %d/%d" % [player.item_count(key), GameData.item_max(key)],
-				Color(0.24, 0.12, 0.44, 0.65), 11, Color("fff0c4"))
+				Color("efe2c4"), 11, UiTheme.TEXT)
 			meta_hb.add_child(cnt_chip)
-			cvb.add_child(meta_hb)
-		else:
-			var meta_l := Label.new()
-			meta_l.text = "【%s】持有 %d/%d" % [
-				String(GameData.RARITY_NAMES[rar_i]),
-				player.item_count(key), GameData.item_max(key)]
-			meta_l.add_theme_font_override("font", UiTheme.body_font())
-			meta_l.add_theme_font_size_override("font_size", 12)
-			meta_l.add_theme_color_override("font_color", Color("fff0c4"))
-			meta_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			meta_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			cvb.add_child(meta_l)
+			body_vb.add_child(meta_hb)
+
+			var sp_push := Control.new()
+			sp_push.size_flags_vertical = Control.SIZE_EXPAND_FILL
+			sp_push.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			body_vb.add_child(sp_push)
+
+			# 卡底嵌入真胶囊价格标签（移至奶油区底端，继续保持 MOUSE_FILTER_IGNORE 不抢点击）
+			var price_pill := PanelContainer.new()
+			price_pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			if sold:
+				var sold_sb := _style(Color(0.58, 0.56, 0.62, 0.90), 16, Color(0.45, 0.43, 0.48), 1, false)
+				sold_sb.content_margin_left = 12
+				sold_sb.content_margin_right = 12
+				sold_sb.content_margin_top = 4
+				sold_sb.content_margin_bottom = 4
+				price_pill.add_theme_stylebox_override("panel", sold_sb)
+				var sl := _mk_label(price_pill, "已售", 14, Color.WHITE, true)
+				sl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			elif gold >= float(price):
+				var ok_sb := _style(Color("f59516"), 16, Color("fff0a8"), 1.5, true)
+				ok_sb.content_margin_left = 10
+				ok_sb.content_margin_right = 10
+				ok_sb.content_margin_top = 4
+				ok_sb.content_margin_bottom = 4
+				price_pill.add_theme_stylebox_override("panel", ok_sb)
+				var phb := HBoxContainer.new()
+				phb.alignment = BoxContainer.ALIGNMENT_CENTER
+				phb.add_theme_constant_override("separation", 5)
+				phb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				phb.add_child(UiIcon.new("coin", UiTheme.GOLD, 16))
+				var pl := _mk_label(phb, "%d 金币" % price, 14, Color.WHITE, true)
+				pl.add_theme_color_override("font_shadow_color", Color("8a3e00"))
+				pl.add_theme_constant_override("shadow_offset_y", 2)
+				price_pill.add_child(phb)
+			else:
+				var no_sb := _style(Color("d65b5b"), 16, Color("ffbcbc"), 1, false)
+				no_sb.content_margin_left = 10
+				no_sb.content_margin_right = 10
+				no_sb.content_margin_top = 4
+				no_sb.content_margin_bottom = 4
+				price_pill.add_theme_stylebox_override("panel", no_sb)
+				var phb2 := HBoxContainer.new()
+				phb2.alignment = BoxContainer.ALIGNMENT_CENTER
+				phb2.add_theme_constant_override("separation", 5)
+				phb2.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				phb2.add_child(UiIcon.new("coin", UiTheme.GOLD, 16))
+				var pl2 := _mk_label(phb2, "%d 金币（不足）" % price, 13, Color.WHITE, true)
+				pl2.add_theme_color_override("font_shadow_color", Color("7a1818"))
+				pl2.add_theme_constant_override("shadow_offset_y", 1)
+				price_pill.add_child(phb2)
+			body_vb.add_child(price_pill)
+			b.disabled = sold
+			var idx := i
+			b.pressed.connect(func() -> void: _shop_buy(idx))
+			_shop_stock_box.add_child(b)
+			continue
+		var iic := _item_icon_rect(key, 44.0)
+		iic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		cvb.add_child(iic)
+
+		var nm_l := Label.new()
+		nm_l.text = _item_zh_name(key)
+		nm_l.add_theme_font_override("font", UiTheme.display_font())
+		nm_l.add_theme_font_size_override("font_size", 16)
+		nm_l.add_theme_color_override("font_color", Color.WHITE)
+		nm_l.add_theme_color_override("font_shadow_color", Color("481f80"))
+		nm_l.add_theme_constant_override("shadow_offset_y", 2)
+		nm_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		nm_l.clip_text = true
+		nm_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		cvb.add_child(nm_l)
+
+		var eff_l := Label.new()
+		eff_l.text = _item_label(key)
+		eff_l.add_theme_font_override("font", UiTheme.body_font())
+		eff_l.add_theme_font_size_override("font_size", 13)
+		eff_l.add_theme_color_override("font_color", Color("f4ebff"))
+		eff_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		eff_l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		eff_l.clip_text = false
+		eff_l.custom_minimum_size.y = 52
+		eff_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		cvb.add_child(eff_l)
+
+		var rar_i := GameData.item_rarity(key)
+		var meta_l := Label.new()
+		meta_l.text = "【%s】持有 %d/%d" % [
+			String(GameData.RARITY_NAMES[rar_i]),
+			player.item_count(key), GameData.item_max(key)]
+		meta_l.add_theme_font_override("font", UiTheme.body_font())
+		meta_l.add_theme_font_size_override("font_size", 12)
+		meta_l.add_theme_color_override("font_color", Color("fff0c4"))
+		meta_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		meta_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		cvb.add_child(meta_l)
 
 		var sp_push := Control.new()
 		sp_push.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		sp_push.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		cvb.add_child(sp_push)
 
-		# 卡底嵌入真胶囊价格标签（PanelContainer 保持 MOUSE_FILTER_IGNORE 不抢点击且完美规避小按钮检测）
 		var price_pill := PanelContainer.new()
 		price_pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		if sold:
@@ -10111,8 +10230,8 @@ func _build_shop(root: Control) -> void:
 		bot.add_child(_shop_reroll_btn)
 		var msep := ColorRect.new()
 		msep.color = Color("e0c694")
-		msep.custom_minimum_size = Vector2(1.5, 36)
-		msep.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		msep.custom_minimum_size = Vector2(1.5, 32)
+		msep.size_flags_vertical = Control.SIZE_SHRINK_END
 		bot.add_child(msep)
 		var ssc := ScrollContainer.new()
 		ssc.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -10155,7 +10274,7 @@ func _build_choice(root: Control) -> void:
 	_choice_panel.add_child(vb)
 	var chead: Container = vb
 	if _p5_on:
-		# 对齐定稿 S13/S22：标题两侧配金色月桂枝，副标题同行
+		# 标题两侧配金色月桂枝居中，副标题独立成行于正下方避免与麦穗挤在一起
 		var chb := HBoxContainer.new()
 		chb.add_theme_constant_override("separation", 10)
 		chb.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -10166,7 +10285,7 @@ func _build_choice(root: Control) -> void:
 		_choice_title = _mk_dlabel(chb, "", 26, UiTheme.TEXT)
 		var lr := UiTheme.art("laurel_gold", Vector2(22, 26))
 		chb.add_child(lr)
-		_choice_sub = _mk_label(chb, "", 15, Color("6e502f"))
+		_choice_sub = _mk_label(vb, "", 15, Color("6e502f"))
 	else:
 		_choice_title = _mk_dlabel(chead, "", 24, UiTheme.TEXT)
 		_choice_sub = _mk_label(chead, "", 15, Color("6e502f"))
@@ -10219,37 +10338,36 @@ func _choice_show(title: String, sub: String, options: Array, foot_text: String,
 		var item_key := _choice_item_key_for_option(opt_text)
 		var b := Button.new()
 		b.text = ""
-		var cw := _p5_card_w(_choice_panel, options.size(), 240.0) if _p5_on else 200.0
-		var ch := 214.0 if _p5_on else 120.0
+		var cw := (296.0 if options.size() == 1 else _p5_card_w(_choice_panel, options.size(), 240.0)) if _p5_on else 200.0
+		var ch := (254.0 if options.size() == 1 else 234.0) if _p5_on else 120.0
 		b.custom_minimum_size = Vector2(cw, ch)
 		b.size = Vector2(cw, ch)
-		b.add_theme_stylebox_override("normal", _style(Color("9d6ce0"), 18, Color("ebd9ff"), 2, true))
-		b.add_theme_stylebox_override("hover", _style(Color("ad7ef0"), 18, Color.WHITE, 2, true))
-		b.add_theme_stylebox_override("pressed", _style(Color("8756ca"), 18, Color("d4b6ff"), 2, true))
+		b.add_theme_stylebox_override("normal", _style(Color("9363d6") if _p5_on else Color("9d6ce0"), 18, Color("ebd9ff"), 2, true))
+		b.add_theme_stylebox_override("hover", _style(Color("a373e6") if _p5_on else Color("ad7ef0"), 18, Color.WHITE, 2, true))
+		b.add_theme_stylebox_override("pressed", _style(Color("7d4ec0") if _p5_on else Color("8756ca"), 18, Color("d4b6ff"), 2, true))
 		b.add_theme_stylebox_override("focus", _style(Color(0, 0, 0, 0), 18, UiTheme.GOLD, 2, false))
 		var margin := MarginContainer.new()
 		margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-		margin.add_theme_constant_override("margin_left", 10)
-		margin.add_theme_constant_override("margin_right", 10)
-		margin.add_theme_constant_override("margin_top", 10)
-		margin.add_theme_constant_override("margin_bottom", 10)
+		margin.add_theme_constant_override("margin_left", 9 if _p5_on else 10)
+		margin.add_theme_constant_override("margin_right", 9 if _p5_on else 10)
+		margin.add_theme_constant_override("margin_top", 9 if _p5_on else 10)
+		margin.add_theme_constant_override("margin_bottom", 9 if _p5_on else 10)
 		margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		b.add_child(margin)
 		var cvb := VBoxContainer.new()
 		cvb.alignment = BoxContainer.ALIGNMENT_CENTER
-		cvb.add_theme_constant_override("separation", 5 if _p5_on else 6)
+		cvb.add_theme_constant_override("separation", 6 if _p5_on else 6)
 		cvb.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		margin.add_child(cvb)
 		if item_key != "":
 			if _p5_on:
 				var ic_glow := PanelContainer.new()
 				ic_glow.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-				# 圆角半径 24 (< 74/2) 保持柔润亮环托底且杜绝 Godot StyleBoxFlat 十字接缝
-				var ig_sb := _style(Color(1.0, 1.0, 1.0, 0.24), 24, Color(1.0, 1.0, 1.0, 0.55), 2.0, true)
-				ig_sb.set_content_margin_all(7)
+				var ig_sb := _style(Color(1.0, 1.0, 1.0, 0.24), 22, Color(1.0, 1.0, 1.0, 0.56), 2.0, true)
+				ig_sb.set_content_margin_all(6)
 				ic_glow.add_theme_stylebox_override("panel", ig_sb)
 				ic_glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
-				var ic := _item_icon_rect(item_key, 60.0)
+				var ic := _item_icon_rect(item_key, 56.0)
 				ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
 				ic_glow.add_child(ic)
 				cvb.add_child(ic_glow)
@@ -10258,7 +10376,6 @@ func _choice_show(title: String, sub: String, options: Array, foot_text: String,
 				ic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 				cvb.add_child(ic)
 		elif title == "流光队友" and (is_instance_valid(_shiny_ally) or is_instance_valid(_pending_shiny_ally)):
-			# 对齐定稿 S24_v1.jpg：左侧「留下新队友」配新流光头像，右侧「放生新队友」配当前队伍旧流光头像
 			var sp_ally := String(_pending_shiny_ally.species_id) if (i == 0 and is_instance_valid(_pending_shiny_ally)) else (String(_shiny_ally.species_id) if is_instance_valid(_shiny_ally) else "")
 			if sp_ally != "" and UiTheme.portrait(sp_ally) != null:
 				var ptr := TextureRect.new()
@@ -10270,7 +10387,6 @@ func _choice_show(title: String, sub: String, options: Array, foot_text: String,
 				ptr.mouse_filter = Control.MOUSE_FILTER_IGNORE
 				cvb.add_child(ptr)
 		if _p5_on and title == "流光队友":
-			# 对齐定稿 S24_v1.jpg：流光卡底部内嵌天蓝/亮紫动作大胶囊，新队友卡角用 anchor/offset 定尺挂载小金星防止缩放膨胀
 			if i == 0:
 				var st_l := TextureRect.new()
 				st_l.texture = load("res://assets/ui/decorations/star_filled.png") as Texture2D
@@ -10309,21 +10425,36 @@ func _choice_show(title: String, sub: String, options: Array, foot_text: String,
 		else:
 			var parts := opt_text.split("\n", false)
 			if _p5_on and parts.size() >= 2:
-				var l_title := _mk_label(cvb, parts[0], 18, Color.WHITE, true)
-				l_title.add_theme_font_override("font", UiTheme.display_font())
-				l_title.add_theme_color_override("font_shadow_color", Color("481f80"))
-				l_title.add_theme_constant_override("shadow_offset_y", 2)
+				# 物品类宝箱与重编译卡统一使用柔和奶油白下半区＋深墨棕文字，避免全紫卡片单调刺眼
+				var cream_card := PanelContainer.new()
+				cream_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
+				cream_card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				cream_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				var cc_sb := _style(Color(1.0, 0.99, 0.955, 0.98), 12, Color("e6d0a4"), 1, true)
+				cc_sb.content_margin_left = 10
+				cc_sb.content_margin_right = 10
+				cc_sb.content_margin_top = 7
+				cc_sb.content_margin_bottom = 7
+				cream_card.add_theme_stylebox_override("panel", cc_sb)
+				cvb.add_child(cream_card)
+				var body_vb := VBoxContainer.new()
+				body_vb.alignment = BoxContainer.ALIGNMENT_CENTER
+				body_vb.add_theme_constant_override("separation", 4)
+				body_vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				cream_card.add_child(body_vb)
+
+				var l_title := _mk_label(body_vb, parts[0], 17, UiTheme.TEXT)
+				l_title.add_theme_font_override("font", UiTheme.body_font())
 				l_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 				l_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-				# 加入半透柔白细分割线使主名称、属性数值与底层稀有度胶囊分区明朗
 				var csep_wrap := CenterContainer.new()
 				csep_wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
 				var csep := ColorRect.new()
 				csep.custom_minimum_size = Vector2(96, 1.5)
-				csep.color = Color(1.0, 1.0, 1.0, 0.26)
+				csep.color = Color("ead8b5")
 				csep.mouse_filter = Control.MOUSE_FILTER_IGNORE
 				csep_wrap.add_child(csep)
-				cvb.add_child(csep_wrap)
+				body_vb.add_child(csep_wrap)
 				for pi in range(1, parts.size()):
 					var p_txt := String(parts[pi])
 					var is_last := pi == parts.size() - 1
@@ -10342,17 +10473,27 @@ func _choice_show(title: String, sub: String, options: Array, foot_text: String,
 							(rc_chip.get_child(0) as Label).add_theme_color_override("font_color", UiTheme.TEXT)
 						tag_hb.add_child(rc_chip)
 						if hold_nm != "":
-							tag_hb.add_child(UiTheme.chip(hold_nm, Color(0.24, 0.12, 0.44, 0.65), 11, Color("fff0c4")))
-						cvb.add_child(tag_hb)
+							tag_hb.add_child(UiTheme.chip(hold_nm, Color("efe2c4"), 11, UiTheme.TEXT))
+						body_vb.add_child(tag_hb)
 					else:
-						var col := Color("ebd9ff") if is_last else Color("fff2a6")
-						var l_sub := _mk_label(cvb, p_txt, 14 if is_last else 16, col, true)
-						if not is_last:
-							l_sub.add_theme_font_override("font", UiTheme.display_font())
-						l_sub.add_theme_color_override("font_shadow_color", Color("3e1770"))
-						l_sub.add_theme_constant_override("shadow_offset_y", 1)
+						var col := Color("9a3d30") if (is_last and p_txt.begins_with("代价")) else Color("6e502f")
+						var l_sub := _mk_label(body_vb, p_txt, 14 if is_last else 15, col)
 						l_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 						l_sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+				if options.size() == 1 and item_key != "":
+					var take_pill := PanelContainer.new()
+					take_pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+					take_pill.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+					var tp_sb := _style(Color("6ec428"), 15, Color("d8f7b0"), 1.5, true)
+					tp_sb.content_margin_left = 18
+					tp_sb.content_margin_right = 18
+					tp_sb.content_margin_top = 4
+					tp_sb.content_margin_bottom = 4
+					take_pill.add_theme_stylebox_override("panel", tp_sb)
+					var tp_l := _mk_label(take_pill, "点击带走", 14, Color.WHITE, true)
+					tp_l.add_theme_color_override("font_outline_color", Color("2d6606"))
+					tp_l.add_theme_constant_override("outline_size", 2)
+					body_vb.add_child(take_pill)
 			else:
 				var l := Label.new()
 				l.text = opt_text
@@ -15049,7 +15190,13 @@ func _update_hud_bars(delta: float) -> void:
 func _refresh_boss_tag() -> void:
 	if _boss_tag_label:
 		# Keep the compact right-hand tag readable even during a move announcement.
-		_boss_tag_label.text = "狂怒！" if _boss_enraged else ("传说守护者" if zone == 4 else "守护者")
+		var gname := ""
+		if guardian != null and is_instance_valid(guardian):
+			gname = String(ModelRig.SPECIES.get(guardian.species_id, {}).get("label", ""))
+		var base_tag := "传说守护者" if zone == 4 else "守护者"
+		if gname != "":
+			base_tag = "%s · 守护者" % gname
+		_boss_tag_label.text = "狂怒！" if _boss_enraged else base_tag
 		# U1 1:1 round 4: the tag sits on a cream chip —
 		# dark ink normally, red while enraged.
 		_boss_tag_label.add_theme_color_override("font_color",
@@ -16664,18 +16811,18 @@ func _p5_menu_reference_layout(width: float) -> void:
 
 	if _menu_hint:
 		var backing := _menu_hint.get_meta("back") as Control
-		var hint_need_w := _menu_hint.get_combined_minimum_size().x + 50.0
-		var hint_w := clampf(maxf(col_w, hint_need_w), col_w, tray_x - lx - 10.0)
+		var hint_need_w := _menu_hint.get_combined_minimum_size().x + 54.0
+		var hint_w := clampf(maxf(col_w, hint_need_w), col_w, tray_x - lx - 4.0)
 		var hint_h := clampf(446.0 - y_hint, 30.0, 36.0)
 		backing.position = Vector2(lx, y_hint)
 		backing.size = Vector2(hint_w, hint_h)
 		var pad := backing.get_node_or_null("MenuHintPad") as Control
 		if pad:
-			pad.size = Vector2(22, 22)
-			pad.position = Vector2(10, (hint_h - 22.0) * 0.5)
+			pad.size = Vector2(20, 20)
+			pad.position = Vector2(9, (hint_h - 20.0) * 0.5)
 		_menu_hint.autowrap_mode = TextServer.AUTOWRAP_OFF
-		_menu_hint.position = backing.position + Vector2(36, (hint_h - _menu_hint.get_combined_minimum_size().y) * 0.5)
-		_menu_hint.size = Vector2(hint_w - 44.0, _menu_hint.get_combined_minimum_size().y)
+		_menu_hint.position = backing.position + Vector2(33, (hint_h - _menu_hint.get_combined_minimum_size().y) * 0.5)
+		_menu_hint.size = Vector2(hint_w - 42.0, _menu_hint.get_combined_minimum_size().y)
 
 func _p5_fullscreen_panel_style() -> StyleBox:
 	if _p5_on:
@@ -18040,18 +18187,19 @@ func _p4_refresh_slots(relayout: bool) -> void:
 		pv.position = Vector2(P4_STRIP_PAD + j * P4_VIT_STEP, P4_SLOT + P4_ROW_GAP)
 		pv.size = Vector2(P4_VIT_SLOT, P4_VIT_SLOT)
 		pv.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		pv.add_theme_stylebox_override("panel", _style(UiTheme.GREEN_DEEP, 17,
-			Color(1, 1, 1, 0.25), 1))
+		# 圆角 12 避免 r >= w/2 产生的接缝锯齿，深林绿底配合亮金边框与加粗白描边数字确保在草地上清晰辨识
+		pv.add_theme_stylebox_override("panel", _style(Color("1e5b2e"), 12,
+			Color("ffdc62"), 2, true))
 		_bl_rows.add_child(pv)
 		var vic := UiIcon.new(String(P4_VIT_ICON.get(String(vd.get("acc", "")), "flask")),
-			Color(1, 1, 1, 0.98), 16)
-		vic.position = Vector2(9, 1)
-		vic.size = Vector2(16, 16)
+			Color(1, 1, 1, 0.99), 18)
+		vic.position = Vector2(8, 2)
+		vic.size = Vector2(18, 18)
 		pv.add_child(vic)
-		var vl := _label_in(pv, str(int(player.vit_levels[vk])), Vector2(0, 14), Vector2(34, 20),
-			14, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
-		vl.add_theme_color_override("font_outline_color", Color("1c470b"))
-		vl.add_theme_constant_override("outline_size", 2)
+		var vl := _label_in(pv, str(int(player.vit_levels[vk])), Vector2(0, 15), Vector2(34, 19),
+			15, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, true)
+		vl.add_theme_color_override("font_outline_color", Color("0c2411"))
+		vl.add_theme_constant_override("outline_size", 3)
 		_bl_vit_slots.append({"panel": pv, "lv": vl, "key": String(vk)})
 		j += 1
 	_bl_font_sig = ""
@@ -19619,9 +19767,11 @@ func _pause_fill_legend(box: VBoxContainer) -> void:
 		var cols := HBoxContainer.new()
 		cols.add_theme_constant_override("separation", 12)
 		cols.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		cols.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		box.add_child(cols)
 		var lcard := PanelContainer.new()
 		lcard.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		lcard.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		lcard.size_flags_stretch_ratio = 55.0
 		var l_sb := _style(Color(1.0, 0.99, 0.96, 0.92), 14, Color("e5cfa0"), 1.5, true)
 		l_sb.content_margin_left = 10; l_sb.content_margin_right = 10
@@ -19651,6 +19801,7 @@ func _pause_fill_legend(box: VBoxContainer) -> void:
 		var rcol := VBoxContainer.new()
 		rcol.add_theme_constant_override("separation", 6)
 		rcol.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		rcol.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		rcol.size_flags_stretch_ratio = 45.0
 		cols.add_child(rcol)
 		var rcard1 := PanelContainer.new()
