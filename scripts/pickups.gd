@@ -18,12 +18,69 @@ var harvest_t := 0.0
 var supply_at := 0.0
 var mesh: SphereMesh
 var materials: Array = []
+var _mmis: Array = []
+var _kind_counts := PackedInt32Array([0,0,0,0,0,0,0,0,0,0,0,0,0])
+func _ensure_render_pools() -> void:
+	if mesh != null:
+		return
+	mesh = SphereMesh.new()
+	mesh.radius = 0.18
+	mesh.height = 0.36
+	mesh.radial_segments = 8
+	mesh.rings = 4
+	var cols := [Color(0.35,0.9,1),Color(1,0.8,0.1),Color(1,0.25,0.4),Color(0.6,0.5,1),Color(1,0.35,0.1),Color(0.2,1,0.7),Color(1,0.55,0.9),Color(1,1,0.5),Color(1,0.4,0.3),Color(0.9,0.4,1),Color(0.7,0.8,0.9),Color(1,1,0.2),Color(1,0.8,0.3)]
+	for i in range(13):
+		var mat := StandardMaterial3D.new()
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mat.albedo_color = cols[i]
+		materials.append(mat)
+		var mmi := MultiMeshInstance3D.new()
+		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		var mm := MultiMesh.new()
+		mm.transform_format = MultiMesh.TRANSFORM_3D
+		mm.mesh = mesh
+		mm.instance_count = 64 if i <= 1 else 16
+		mm.visible_instance_count = 0
+		mmi.multimesh = mm
+		mmi.material_override = mat
+		add_child(mmi)
+		_mmis.append(mmi)
+func _sync_multimeshes() -> void:
+	if _mmis.is_empty():
+		return
+	var cursors := PackedInt32Array()
+	cursors.resize(13)
+	for i in range(13):
+		var need := int(_kind_counts[i])
+		var mm: MultiMesh = (_mmis[i] as MultiMeshInstance3D).multimesh
+		if need > mm.instance_count:
+			mm.instance_count = maxi(need, mm.instance_count * 2)
+		cursors[i] = 0
+	for e in entries:
+		var k := int(e.kind)
+		var nd: Node3D = e.node
+		if not nd.visible:
+			continue
+		var idx := int(cursors[k])
+		var mm: MultiMesh = (_mmis[k] as MultiMeshInstance3D).multimesh
+		if idx >= mm.instance_count:
+			mm.instance_count = maxi(idx + 1, mm.instance_count * 2)
+		mm.set_instance_transform(idx, Transform3D(Basis.IDENTITY, nd.position))
+		cursors[k] = idx + 1
+	for i in range(13):
+		var mmi := _mmis[i] as MultiMeshInstance3D
+		mmi.multimesh.visible_instance_count = int(cursors[i])
+		mmi.visible = int(cursors[i]) > 0
 func lifetime(kind: int) -> float:
 	return 60.0 if kind == 2 else (120.0 if kind in [3,4,5] else INF)
 func clear() -> void:
 	for e in entries:
 		e.node.queue_free()
 	entries.clear()
+	_kind_counts.fill(0)
+	for mmi in _mmis:
+		(mmi as MultiMeshInstance3D).multimesh.visible_instance_count = 0
+		(mmi as MultiMeshInstance3D).visible = false
 	magnet_all = 0.0
 	keys = 0
 	gold_frac = 0.0
@@ -38,9 +95,7 @@ func clear() -> void:
 func spawn(kind: int, pos: Vector3, value := 1.0) -> int:
 	if kind < 0 or kind >= KINDS.size():
 		return -1
-	var same_count := 0
-	for e in entries:
-		if int(e.kind)==kind: same_count += 1
+	var same_count := int(_kind_counts[kind])
 	if kind <= 1 and same_count > (500 if kind == 0 else 200):
 		var nearest := -1
 		var best := 16.0
@@ -74,28 +129,19 @@ func spawn(kind: int, pos: Vector3, value := 1.0) -> int:
 			recycled.floor = (world.height_at(pos.x,pos.z) if world else pos.y)+0.6
 			recycled.rest = false
 			recycled.attracted = false
+			_sync_multimeshes()
 			return farthest
 	if entries.size() >= CAPACITY:
 		return -1
-	if mesh == null:
-		mesh = SphereMesh.new()
-		mesh.radius = 0.18
-		mesh.height = 0.36
-		mesh.radial_segments = 8
-		mesh.rings = 4
-		for i in range(13):
-			var mat := StandardMaterial3D.new()
-			mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-			mat.albedo_color = [Color(0.35,0.9,1),Color(1,0.8,0.1),Color(1,0.25,0.4),Color(0.6,0.5,1),Color(1,0.35,0.1),Color(0.2,1,0.7),Color(1,0.55,0.9),Color(1,1,0.5),Color(1,0.4,0.3),Color(0.9,0.4,1),Color(0.7,0.8,0.9),Color(1,1,0.2),Color(1,0.8,0.3)][i]
-			materials.append(mat)
-	var node := MeshInstance3D.new()
-	node.mesh = mesh
-	node.material_override = materials[kind]
+	_ensure_render_pools()
+	var node := Node3D.new()
 	add_child(node)
 	node.position = pos+Vector3(0,0.6,0)
 	var a := randf() * TAU
 	var speed := randf_range(1.0, 3.5)
 	entries.append({"kind":kind,"value":value,"node":node,"vel":Vector3(cos(a)*speed,randf_range(4.0,7.0),sin(a)*speed),"floor":(world.height_at(pos.x,pos.z) if world else pos.y)+0.6,"age":0.0,"attracted":false,"rest":false})
+	_kind_counts[kind] = int(_kind_counts[kind]) + 1
+	_sync_multimeshes()
 	return entries.size()-1
 func tick(dt: float) -> void:
 	if world == null or world.player == null:
@@ -153,7 +199,11 @@ func tick(dt: float) -> void:
 	if consolidate_t>=1.2:
 		consolidate_t = 0.0
 		consolidate()
+	_sync_multimeshes()
 func _remove(i: int) -> void:
+	var k := int(entries[i].kind)
+	if k >= 0 and k < _kind_counts.size():
+		_kind_counts[k] = maxi(0, int(_kind_counts[k]) - 1)
 	entries[i].node.queue_free()
 	entries.remove_at(i)
 func consolidate() -> void:

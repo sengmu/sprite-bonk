@@ -172,6 +172,10 @@ func setup(p_species: String, p_target: Node3D, p_world: Node, hp_mult: float = 
 	rig = ModelRig.new()
 	add_child(rig)
 	rig.setup(p_species, scale_mult)
+	if not guardian and scale_mult <= 1.2:
+		rig.set_shadow_casting(false)
+		rig.lod_enabled = true
+		rig.lod_target = target
 	# Cycle 10: NO world-space HP bar — the original's sprite shader
 	# (Rl @113906) has no bar branch and its instanced attributes
 	# carry no HP channel; enemy HP reads via damage numbers + hit
@@ -188,6 +192,9 @@ func setup(p_species: String, p_target: Node3D, p_world: Node, hp_mult: float = 
 ## and the cooldown reads the player's CURRENT attack speed.
 func make_ally() -> void:
 	mode = MODE_ALLY
+	if rig:
+		rig.set_shadow_casting(true)
+		rig.lod_enabled = false
 	var st: Dictionary = GameData.species(species_id).get("stats", {})
 	ally_physical = float(st.get("atk", 0)) >= float(st.get("spa", 0))
 	ally_kills = 0
@@ -510,14 +517,16 @@ func _move_toward(dir: Vector3, spd: float, delta: float, separation: bool) -> v
 	var vel := dir * spd
 	if separation:
 		var sep := Vector3.ZERO
-		for e in get_tree().get_nodes_in_group("enemies"):
+		var candidates: Array = world.nearby_enemies_sep(global_position) if (world != null and world.has_method("nearby_enemies_sep")) else get_tree().get_nodes_in_group("enemies")
+		for e in candidates:
 			if e == self or not is_instance_valid(e):
 				continue
-			var d: Vector3 = global_position - e.global_position
+			var d: Vector3 = global_position - (e as Node3D).global_position
 			d.y = 0.0
-			var l := d.length()
-			if l > 0.01 and l < 1.6:
-				sep += d.normalized() * (1.6 - l)
+			var l2 := d.length_squared()
+			if l2 > 0.0001 and l2 < 2.56:
+				var l := sqrt(l2)
+				sep += (d / l) * (1.6 - l)
 		vel = (dir + sep * 0.7).normalized() * spd if dir.length() > 0.01 else sep * 2.0
 	var next := global_position + vel * delta
 	if world and world.has_method("collide_circle"):

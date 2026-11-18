@@ -118,8 +118,16 @@ var _faint_t := -1.0
 var _faint_clip := false
 var _base_scale := Vector3.ZERO
 var is_player := false
+var lod_enabled := false
+var lod_target: Node3D = null
+var _lod_tick := 0
+var _gait_accum := 0.0
+var _hulls_vis := true
 var _flash_mats: Array = []  # [{mat, base: Color}] calibrated overrides
 var _hull_mats: Array = []   # outline materials (fade with the corpse)
+var _body_meshes: Array = []
+var _hull_nodes: Array = []
+static var _shared_hull_mat: StandardMaterial3D = null
 const FLASH_TINT := Color(1.2, 0.36, 0.30)
 
 # Procedural skeletal gait for clip-less species (DIFF ⚑ #1 local pass):
@@ -255,8 +263,14 @@ const OUTLINE_COLOR := Color(0.05, 0.08, 0.04)
 static var _hull_cache: Dictionary = {}
 
 func _add_outlines() -> void:
+	if _shared_hull_mat == null:
+		_shared_hull_mat = StandardMaterial3D.new()
+		_shared_hull_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		_shared_hull_mat.albedo_color = OUTLINE_COLOR
+		_shared_hull_mat.cull_mode = BaseMaterial3D.CULL_FRONT
 	var meshes: Array = []
 	_collect_meshes(model, meshes)
+	_body_meshes = meshes
 	for mi in meshes:
 		var hull := _closed_hull_mesh(mi.mesh)
 		if hull == null:
@@ -269,14 +283,16 @@ func _add_outlines() -> void:
 		var skin_res = mi.get("skin")
 		if skin_res != null:
 			ol.set("skin", skin_res)
-		var om := StandardMaterial3D.new()
-		om.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		om.albedo_color = OUTLINE_COLOR
-		om.cull_mode = BaseMaterial3D.CULL_FRONT
-		ol.material_override = om
-		_hull_mats.append(om)  # cycle 9: hulls fade with the corpse
+		ol.material_override = _shared_hull_mat
 		ol.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		mi.get_parent().add_child(ol)
+		_hull_nodes.append(ol)
+
+func set_shadow_casting(on: bool) -> void:
+	var mode := GeometryInstance3D.SHADOW_CASTING_SETTING_ON if on else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	for mi in _body_meshes:
+		if is_instance_valid(mi):
+			(mi as MeshInstance3D).cast_shadow = mode
 
 ## Hull mesh built from CLOSED surfaces only (cycle 7 fix). An open
 ## sheet (petal disc, leaf, wing membrane) scaled about the mesh
@@ -392,7 +408,14 @@ func _resolve_gait_kind() -> String:
 func _auto_relax_tpose_arms(deg_down: float = 52.0) -> void:
 	if _skel == null:
 		return
-	var sk_b := (model.global_transform.basis.inverse() * _skel.global_transform.basis).orthonormalized()
+	# 从 _skel 沿局部父链累乘到 model，避免离屏预构建未入场景树时调用 global_transform 报错
+	var sk_b := Basis.IDENTITY
+	var cur: Node = _skel
+	while cur != null and cur != model:
+		if cur is Node3D:
+			sk_b = (cur as Node3D).transform.basis * sk_b
+		cur = cur.get_parent()
+	sk_b = sk_b.orthonormalized()
 	var sin_y := sin(deg_to_rad(deg_down))
 	var cos_x := cos(deg_to_rad(deg_down))
 	for pair in [["LArm", "LForeArm"], ["RArm", "RForeArm"], ["LArm2", "LForeArm2"], ["RArm2", "RForeArm2"]]:
@@ -861,6 +884,13 @@ func _apply_flash_fade(fade_k: float) -> void:
 			m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 		elif base.a >= 1.0:
 			m.transparency = BaseMaterial3D.TRANSPARENCY_DISABLED
+	if a < 1.0 and _hull_mats.is_empty() and not _hull_nodes.is_empty():
+		# 仅在死亡淡出 0.35s 时为描边分配独立透明材质，平时全员共享单一黑色材质
+		for ol in _hull_nodes:
+			if is_instance_valid(ol):
+				var om := _shared_hull_mat.duplicate() as StandardMaterial3D
+				(ol as MeshInstance3D).material_override = om
+				_hull_mats.append(om)
 	for hm in _hull_mats:
 		var h := hm as StandardMaterial3D
 		h.albedo_color = Color(OUTLINE_COLOR, OUTLINE_COLOR.a * a)
@@ -919,6 +949,22 @@ func _process(delta: float) -> void:
 	if _flash > 0.0 or fade_k > 0.0 or _fx_active:
 		_apply_flash_fade(fade_k)
 		_fx_active = _flash > 0.0 or fade_k > 0.0
+	var lod_step := 1
+	if lod_enabled and lod_target != null and is_instance_valid(lod_target) and _faint_t < 0.0:
+		var dx := global_position.x - lod_target.global_position.x
+		var dz := global_position.z - lod_target.global_position.z
+		var d2 := dx * dx + dz * dz
+		var want_hull := d2 <= 484.0  # 22m 内保持完整暗色描边
+		if want_hull != _hulls_vis:
+			_hulls_vis = want_hull
+			for ol in _hull_nodes:
+				if is_instance_valid(ol):
+					(ol as MeshInstance3D).visible = want_hull
+		if d2 > 1024.0:
+			lod_step = 4
+		elif d2 > 324.0:
+			lod_step = 2
+	_lod_tick += 1
 	# Clip state by movement (only for models with real clips).
 	# Cycle 13: the ult pose holds the fight clip for ultPoseT —
 	# the locomotion selector must not stomp it mid-window.
@@ -926,7 +972,10 @@ func _process(delta: float) -> void:
 		if _lunge_t <= 0.0 and _ult_pose_t <= 0.0 and _faint_t < 0.0:
 			_play_clip("walk" if _move_speed > 0.3 else "idle")
 	elif _faint_t < 0.0:
-		_update_gait(delta)
+		_gait_accum += delta
+		if lod_step <= 1 or (_lod_tick % lod_step) == 0:
+			_update_gait(_gait_accum)
+			_gait_accum = 0.0
 	# --- Segment Z body life -------------------------------------
 	# Yaw rate for hover banking (smoothed angle delta of the rig).
 	var yr := 0.0

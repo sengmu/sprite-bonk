@@ -1853,6 +1853,23 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
   - 经 NUC `u1_final_2400.log` 校验捕获（`hidden items reachable / parity zone_en / parity species_en` 3 项红），依 `UI-mobile P2` 原始设计保持战斗主画面极简纯中文、仅在暂停「状态/本局」详情页保留物种与地区英文对照档案索引，确保 `phonehud` 双档 `1564/0` 满绿通过。
 - 本轮提交：`assets/portraits/*.png`、`scripts/audio.gd`、`scripts/world.gd`、`design/ui-alignment-progress.md`。
 
+## 怪潮战斗与渲染全栈性能优化（2026-11-18）
+
+- **响应真机手测「怪一多画面就卡顿」完成六维引擎级性能跃迁（`scripts/world.gd`、`scripts/model_rig.gd`、`scripts/enemy.gd`、`scripts/pickups.gd`）**：
+  1. **消灭 O(N²) 怪潮碰撞分离**：`world.gd` 按物理帧构建 `2.0m` 空间九宫格哈希 `_enemy_grid`，`enemy.gd` 推挤分离只遍历自身周围 9 格邻域并以距离平方替代全表遍历开方，消除 120+ 怪同屏 `14,400+` 次全群扫描。
+  2. **掉落物 MultiMesh 批渲染与 O(1) 计数（`scripts/pickups.gd`）**：维持 `entries[i].node` 轻节点接口 100% 兼容单元测试的同时，将 `13` 类经验/金币/道具球改由 `13` 个共享无阴影 `MultiMeshInstance3D` 批渲染并缓存 `_kind_counts`，`300` 颗掉落球渲染耗时从 `1,178 DrawCalls` 暴降至 `< 5 DrawCalls`。
+  3. **太阳双级阴影、地形与装饰阴影精准减负（`scripts/world.gd`）**：太阳阴影从 4 级级联切为 `SHADOW_PARALLEL_2_SPLITS` 且聚焦 `62m` 作战圈；关闭大地形 `_terrain_mi`（11.5 万面）及花蕊/蘑菇白点/浆果等非主体细微装饰投射阴影，并将 `_cull_subtree` 剔除距离收紧至 `46m`。
+  4. **小怪分距 LOD 与共享描边（`scripts/model_rig.gd`、`scripts/enemy.gd`）**：普通杂兵关闭昂贵骨骼阴影（保留主角、队友、Boss 与阿尔法大怪高清投影）；普通怪共用全局静态黑色描边材质（仅死亡淡出时按需克隆）；超过 `22m` 自动隐藏描边网，超过 `18m`/`32m` 采用 2/4 帧骨骼更新节流。
+  5. **消除全屏暗角每帧显存拷贝与飘字上限控制（`scripts/world.gd`）**：平时 `vignette` 采用零纹理采样的 `_vignette_fast_mat` 彻底免除每帧 `2670×1200` Framebuffer Copy（仅震屏色散 0.2s 切换）；同屏 `Label3D` 飘字封顶 `36` 枚防动态字图集 GC 尖刺。
+  6. **修复离屏预构建骨链计算警告**：`_auto_relax_tpose_arms` 改用局部父链累乘计算 `sk_b`，消除切区预构建期间 `!is_inside_tree()` 报错。
+- 实测对比（`126` 只怪 + `300` 颗掉落球实战同屏不暂停压测）：
+  - `draw_calls`: `4,991` → **`1,143`（`-77.1%`）**；
+  - `objects`: `5,234` → **`1,345`（`-74.3%`）**；
+  - `prims`（三角形）: `3,347,969` → **`1,549,100`（`-53.7%`）**；
+  - `proc_ms`（主渲染与脚本逻辑）: `161.05 ms` → **`9.53 ms`（提速 `16.9×`）**；
+  - 纯实战不锁帧跑出 **`115 FPS (avg 8.67 ms)`**，且 `c23`/`c24` 全部 `356` 项单元测、`verify_gameplay_smoke`、`verify_fullscreen`、`verify_rest_screens` 及 `check_legal` 全绿通过。
+- 本轮提交：`scripts/world.gd`、`scripts/model_rig.gd`、`scripts/enemy.gd`、`scripts/pickups.gd`、`design/ui-alignment-progress.md`。
+
 
 
 

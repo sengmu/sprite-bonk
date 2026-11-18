@@ -281,6 +281,11 @@ var _dmg_flash := 0.0
 var _dmg_flash_rect: ColorRect = null
 var _hud_root: Control = null  # cycle 17: hidden while in menu
 var _vignette_mat: ShaderMaterial = null
+var _vignette_fast_mat: ShaderMaterial = null
+var _vignette_quad: MeshInstance3D = null
+var _vignette_uses_chroma := false
+var _enemy_grid: Dictionary = {}
+var _enemy_grid_frame := -1
 var _floaters: Array = []  # {node: Label3D, t: float}
 var _chests: Array = []     # {node: Node3D, opened: bool}
 var _evo_fx_t := 0.0
@@ -315,7 +320,7 @@ func _cull_subtree(n: Node) -> void:
 		return  # cycle 11: map-wide instanced fields must never range-cull
 	if n is GeometryInstance3D:
 		var g := n as GeometryInstance3D
-		g.visibility_range_end = 100.0
+		g.visibility_range_end = 46.0
 		g.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_DISABLED
 	for c in n.get_children():
 		_cull_subtree(c)
@@ -1120,9 +1125,10 @@ func _build_environment() -> void:
 	sun.light_color = Color(1.0, 0.945, 0.839)  # #fff1d6
 	sun.light_energy = 1.65
 	sun.shadow_enabled = true
+	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
 	sun.shadow_bias = 0.15
 	sun.shadow_normal_bias = 2.5
-	sun.directional_shadow_max_distance = 160.0
+	sun.directional_shadow_max_distance = 62.0
 	add_child(sun)
 	sun.look_at_from_position(Vector3(60, 120, 40), Vector3.ZERO, Vector3.UP)
 
@@ -1172,13 +1178,34 @@ void fragment() {
 	vmat.shader = vsh
 	vmat.render_priority = 100
 	_vignette_mat = vmat
+	var fsh := Shader.new()
+	fsh.code = """
+shader_type spatial;
+render_mode unshaded, depth_test_disabled, depth_draw_never, fog_disabled, blend_mix;
+varying vec2 q;
+void vertex() {
+	q = VERTEX.xy;
+	POSITION = vec4(VERTEX.xy, 0.0, 1.0);
+}
+void fragment() {
+	float d = length(vec2(q.x * 1.25, q.y));
+	float v = smoothstep(1.02, 1.68, d);
+	ALBEDO = vec3(0.02, 0.05, 0.02);
+	ALPHA = v * 0.40;
+}
+"""
+	var fmat := ShaderMaterial.new()
+	fmat.shader = fsh
+	fmat.render_priority = 100
+	_vignette_fast_mat = fmat
 	var quad := QuadMesh.new()
 	quad.size = Vector2(2, 2)
 	var vq := MeshInstance3D.new()
 	vq.mesh = quad
-	vq.material_override = vmat
+	vq.material_override = fmat
 	vq.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	vq.custom_aabb = AABB(Vector3(-50, -50, -50), Vector3(100, 100, 100))
+	_vignette_quad = vq
 	_cam.add_child(vq)
 
 func _build_terrain() -> void:
@@ -1323,6 +1350,7 @@ void fragment() {
 	var mi := MeshInstance3D.new()
 	mi.mesh = mesh
 	mi.material_override = sm
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(mi)
 	_terrain_mi = mi
 
@@ -1904,6 +1932,7 @@ func _pk_part(parent: Node3D, mesh: Mesh, mat: Material, pos: Vector3, scl: Vect
 	mi.material_override = mat
 	mi.position = pos
 	mi.scale = scl
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if hull else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	parent.add_child(mi)
 	if hull:
 		_pk_hull(mi)
@@ -13514,7 +13543,45 @@ func damage_flash() -> void:
 
 ## Floating combat text (bundle vfx.text): a rising, fading
 ## Label3D. Used for the dodge "-" and reward notices.
+func _ensure_enemy_grid() -> void:
+	var pf := Engine.get_physics_frames()
+	if _enemy_grid_frame == pf:
+		return
+	_enemy_grid_frame = pf
+	_enemy_grid.clear()
+	for e in get_tree().get_nodes_in_group("enemies"):
+		if not is_instance_valid(e):
+			continue
+		var gp: Vector3 = (e as Node3D).global_position
+		var cx := int(floor(gp.x * 0.5))
+		var cz := int(floor(gp.z * 0.5))
+		var key := (cx << 16) ^ (cz & 0xFFFF)
+		var arr = _enemy_grid.get(key)
+		if arr == null:
+			_enemy_grid[key] = [e]
+		else:
+			(arr as Array).append(e)
+
+func nearby_enemies_sep(pos: Vector3) -> Array:
+	_ensure_enemy_grid()
+	var cx := int(floor(pos.x * 0.5))
+	var cz := int(floor(pos.z * 0.5))
+	var out: Array = []
+	for dx in range(-1, 2):
+		for dz in range(-1, 2):
+			var key := ((cx + dx) << 16) ^ ((cz + dz) & 0xFFFF)
+			var arr = _enemy_grid.get(key)
+			if arr != null:
+				out.append_array(arr as Array)
+	return out
+
 func spawn_floater(pos: Vector3, text: String, color: Color) -> void:
+	while _floaters.size() >= 36:
+		var old: Dictionary = _floaters[0]
+		_floaters.remove_at(0)
+		var onode = old.get("node")
+		if onode and is_instance_valid(onode):
+			onode.queue_free()
 	var l := Label3D.new()
 	l.text = text
 	# Cycle 17: floaters take the display face and the
@@ -14853,6 +14920,10 @@ func _process(delta: float) -> void:
 			_chroma = 0.0
 		if _vignette_mat:
 			_vignette_mat.set_shader_parameter("chroma", _chroma)
+	var want_chroma := _chroma > 0.0005
+	if _vignette_quad and _vignette_uses_chroma != want_chroma:
+		_vignette_uses_chroma = want_chroma
+		_vignette_quad.material_override = _vignette_mat if want_chroma else _vignette_fast_mat
 	# ui.damageFlash decay.
 	if _dmg_flash > 0.0:
 		_dmg_flash = maxf(0.0, _dmg_flash - delta * 2.2)
