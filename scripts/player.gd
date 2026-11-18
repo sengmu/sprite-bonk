@@ -889,7 +889,10 @@ func _physics_process(delta: float) -> void:
 						and world and world.has_method("photosynthesis_tick"):
 					world.photosynthesis_tick()
 
+var _last_crit := false
+
 func _roll_damage(mv: Dictionary) -> float:
+	_last_crit = false
 	var d := move_damage(mv)
 	# Passive hooks (bundle strike order): lowHp multiplier and
 	# per-type boost apply before the crit roll; pickup's critAdd
@@ -911,6 +914,7 @@ func _roll_damage(mv: Dictionary) -> float:
 		cc += minf(0.15, float(world.get("gold")) / 10000.0)
 	if randf() < cc:
 		d *= crit_dmg
+		_last_crit = true
 		# Cycle 9: crits were never counted anywhere — the roster's
 		# crits / best_crits challenges sat at 0 forever.
 		if world and world.has_method("count_run_event"):
@@ -951,7 +955,7 @@ func _try_fire(mv: Dictionary) -> bool:
 				var d: Vector3 = e.global_position - global_position
 				d.y = 0.0
 				if d.length() <= range_ and d.normalized().dot(to.normalized()) > 0.25:
-					dealt_total += e.take_damage(_roll_damage(mv), mtype, ailment, achance)
+					dealt_total += e.take_damage(_roll_damage(mv), mtype, ailment, achance, {"crit": _last_crit})
 			if world.has_method("add_damage"):
 				world.add_damage(dealt_total)
 			if world.has_method("add_move_damage"):
@@ -968,7 +972,7 @@ func _try_fire(mv: Dictionary) -> bool:
 			_attack_face_t = 0.24
 			if GameAudio.instance:
 				GameAudio.instance.shot(mtype)  # cycle 16: typed cast
-			world.spawn_projectile(global_position + Vector3(0, 1.0, 0), target, _roll_damage(mv), col, mtype, ailment, achance, key)
+			world.spawn_projectile(global_position + Vector3(0, 1.0, 0), target, _roll_damage(mv), col, mtype, ailment, achance, key, _last_crit)
 			return true
 		"nova":
 			var range_ := float(GameData.ARCH_RANGE["nova"]) * area_mult
@@ -1006,7 +1010,7 @@ func _try_fire(mv: Dictionary) -> bool:
 				rel.y = 0.0
 				var along := rel.dot(dir)
 				if along > 0.0 and along <= range_ and Vector3(rel.x - dir.x * along, 0, rel.z - dir.z * along).length() < 1.4:
-					dealt_total += e.take_damage(_roll_damage(mv), mtype, ailment, achance)
+					dealt_total += e.take_damage(_roll_damage(mv), mtype, ailment, achance, {"crit": _last_crit})
 			if world.has_method("add_damage"):
 				world.add_damage(dealt_total)
 			if world.has_method("add_move_damage"):

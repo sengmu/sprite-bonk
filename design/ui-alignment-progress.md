@@ -1888,6 +1888,16 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 验证：渲染五主力精灵侧前方跑动迈步与挥爪爆发帧条目检过关（波波高展双翅腾空、小火龙/杰尼龟挥爪重击＋脊柱前甩、小拉达扑咬、小拳石重拳俯冲）；全部脚本解析、`verify_gameplay_smoke`、`c23/c24` 全部 356 项核心单元测与双档全屏回归全绿通过。
 - 本轮提交：`scripts/model_rig.gd`、`scripts/player.gd`、`design/ui-alignment-progress.md`。
 
+## 全系列技能 VFX 视觉重造、打击火花与暴击飘字反馈升级（2026-11-18）
+
+- **响应「继续优化攻击效果和技能特效」升级全系战斗特效与打击感（`scripts/world.gd`、`scripts/player.gd`、`scripts/enemy.gd`）**：
+  1. **重铸无缝连续月牙弯刀剑气与三段藤鞭（`scripts/world.gd`）**：重构 `_beam_mesh` 为共享截面顶点的连续 16 段光滑丝带网格并改写 `_beam_shader` 为全路径 `UV.x` 渐隐发光，彻底消除原先分段独立矩形折断形成的“7 块百叶窗纸片”破绽，使近战挥砍呈首尾尖细、炽白核芯连贯飞舞的弧光剑气；同步将 `_spawn_vines` 升级为 3 道交叉飞舞曲线藤影配落叶与星爆。
+  2. **双层能量光柱替代方形棒并修复激光反射方向缺陷（`scripts/world.gd`）**：废除原先长方体 `BoxMesh` 激光棒，升级 `spawn_beam` 为外层元素透明光晕圆柱＋内层炽白高能核柱，加入发口星闪与平滑收束消散动画；同步定位并修复原 `look_at(from - dir)` 导致光束朝角色身后反方向射出的 Bug（改为 `from + dir` 笔直射穿目标）。
+  3. **复合双层炫光弹道、飞行尾迹与命中大爆发（`scripts/world.gd`）**：`spawn_projectile` 与 `ally_shoot` 升级为共享几何体的外层柔光元素球＋炽白高能核球，飞行途中每 `0.032s` 洒落星火尾迹，命中瞬间绽放炽白星闪与四向飞溅元素火花粒子；并让 `_spawn_particle` 复用共享 `QuadMesh` 与设置 `110` 颗总粒子预算上限保障满帧流畅。
+  4. **暴击/克制分层伤害数字飘字与受击火花（`scripts/player.gd`、`scripts/enemy.gd`、`scripts/world.gd`）**：在 `_roll_damage()` 记录暴击标识 `_last_crit`，通过 `spawn_hit_fx()` 于非静音命中时绽放受击火花并弹出差异化整数飘字（普通洁白、属性克制亮金、暴击炽橙红加 `"!"` 放大、微效淡蓝灰，严守同屏 36 枚上限防 GC 卡顿）。
+- 验证：实战特效抓拍 `vfx_showcase3.png` 亲检确认弯刀剑气连续犀利、双层光束精准贯穿目标、暴击 `64!` 与克制 `128` 清晰醒目；`player.gd`/`enemy.gd`/`world.gd` 解析全绿，`verify_gameplay_smoke` 及 `c23`/`c24` 全部 356 项单元单测 0 失败通过。
+- 本轮提交：`scripts/world.gd`、`scripts/player.gd`、`scripts/enemy.gd`、`design/ui-alignment-progress.md`。
+
 
 
 

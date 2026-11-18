@@ -356,6 +356,10 @@ var _swarm := false
 var _swarm_announced := false
 var _projectiles: Array = []
 var _proj_mats := {}
+var _proj_outer_mesh: SphereMesh = null
+var _proj_inner_mesh: SphereMesh = null
+var _proj_core_mat: StandardMaterial3D = null
+var _particle_quad: QuadMesh = null
 var _effects: Array = []
 var _particles: Array = []  # cycle 11 sprite particles {node, mat, vel, t, life, s0, s1, grav, drag, a0}
 var _ring_mesh: Mesh = null
@@ -13575,7 +13579,7 @@ func nearby_enemies_sep(pos: Vector3) -> Array:
 				out.append_array(arr as Array)
 	return out
 
-func spawn_floater(pos: Vector3, text: String, color: Color) -> void:
+func spawn_floater(pos: Vector3, text: String, color: Color, scale_mult: float = 1.0) -> void:
 	while _floaters.size() >= 36:
 		var old: Dictionary = _floaters[0]
 		_floaters.remove_at(0)
@@ -13588,15 +13592,45 @@ func spawn_floater(pos: Vector3, text: String, color: Color) -> void:
 	# original's #1a1030 stroke (UI_SPEC §1.1/§2.3); the tick
 	# below scales them with camera distance.
 	l.font = _font_display
-	l.font_size = 42
+	l.font_size = int(round(44.0 * scale_mult))
+	l.pixel_size = 0.0075
 	l.modulate = color
-	l.outline_size = 12
-	l.outline_modulate = Color(UiTheme.INK_DEEP.r, UiTheme.INK_DEEP.g, UiTheme.INK_DEEP.b, 0.95)
+	l.outline_size = 16
+	l.outline_modulate = Color(UiTheme.INK_DEEP.r, UiTheme.INK_DEEP.g, UiTheme.INK_DEEP.b, 0.96)
 	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	l.no_depth_test = true
 	add_child(l)
 	l.global_position = pos
 	_floaters.append({"node": l, "t": 0.0, "px": l.pixel_size})
+
+func spawn_hit_fx(pos: Vector3, move_type: String, dmg: float, type_eff: float = 1.0, is_crit: bool = false) -> void:
+	_fx_textures()
+	var col: Color = Player.TYPE_COLORS.get(move_type, Color(1.0, 0.88, 0.45))
+	# 受击瞬间数字飘字反馈（普通洁白 / 克制亮金 / 暴击炽红橙加感叹号 / 微效浅蓝灰）
+	var txt := str(int(round(dmg)))
+	var tcol := Color(0.98, 0.98, 0.96)
+	var tscl := 0.92
+	if is_crit:
+		txt += "!"
+		tcol = Color(1.0, 0.44, 0.16)
+		tscl = 1.32
+	elif type_eff >= 1.5:
+		tcol = Color(1.0, 0.86, 0.22)
+		tscl = 1.15
+	elif type_eff < 0.8:
+		tcol = Color(0.70, 0.80, 0.95)
+		tscl = 0.78
+	var jitter := Vector3(randf_range(-0.35, 0.35), randf_range(0.15, 0.55), randf_range(-0.35, 0.35))
+	spawn_floater(pos + jitter, txt, tcol, tscl)
+	# 粒子预算内释放受击爆闪高光与元素星芒火花
+	if _particles.size() < 90:
+		_spawn_particle(pos, Vector3.ZERO, 0.12, 0.85 if is_crit else 0.55, 1.45 if is_crit else 0.95, Color(1, 1, 1, 0.95), _tex_star)
+		var n_sparks := 4 if is_crit else 2
+		for i in range(n_sparks):
+			var a := randf() * TAU
+			var spd := randf_range(2.6, 5.2)
+			_spawn_particle(pos, Vector3(cos(a) * spd, randf_range(1.6, 3.8), sin(a) * spd),
+				0.26, 0.44 if is_crit else 0.32, 0.05, Color(col.r, col.g, col.b, 0.95), _tex_disc, true, 8.0, 2.5)
 
 func count_max_level() -> void:
 	if player and is_instance_valid(player):
@@ -13928,24 +13962,12 @@ func ally_shoot(ally: Enemy, foe: Enemy) -> void:
 	var atype := String(ally.types[0]) if not ally.types.is_empty() else "normal"
 	audio.shot(atype)  # cycle 16: ally cast
 	var col: Color = Player.TYPE_COLORS.get(atype, Color.WHITE)
-	if not _proj_mats.has(col):
-		var m := StandardMaterial3D.new()
-		m.albedo_color = col
-		m.emission_enabled = true
-		m.emission = col
-		m.emission_energy_multiplier = 2.0
-		_proj_mats[col] = m
-	var mi := MeshInstance3D.new()
-	var sm := SphereMesh.new()
-	sm.radius = 0.26
-	sm.height = 0.52
-	mi.mesh = sm
-	mi.material_override = _proj_mats[col]
-	add_child(mi)
-	mi.global_position = ally.global_position + Vector3(0, 1.0, 0)
-	_projectiles.append({"node": mi, "target": foe, "dmg": ally.ally_power_now(),
+	var pn := _make_proj_node(col, 1.05)
+	add_child(pn)
+	pn.global_position = ally.global_position + Vector3(0, 1.0, 0)
+	_projectiles.append({"node": pn, "target": foe, "dmg": ally.ally_power_now(),
 		"speed": 19.0, "mtype": atype, "ailment": "", "achance": 0.0,
-		"ally": ally, "explode_r": 2.2 * sqrt(player.area_mult)})
+		"ally": ally, "explode_r": 2.2 * sqrt(player.area_mult), "col": col, "trail_t": 0.0})
 
 ## §3 counter glue: additive lifetime counters go straight to the
 ## Profile; per-run events accumulate here and merge as best_* at
@@ -14123,26 +14145,61 @@ func player_slam(pos: Vector3, fall_h: float, can_slam: bool) -> void:
 	player._invuln_t = maxf(player._invuln_t, 0.3)  # original: iframes = max(iframes, 0.3)
 	count_event("slams")
 
-func spawn_projectile(from: Vector3, target: Node3D, dmg: float, color: Color, move_type: String = "", ailment: String = "", ailment_chance: float = 0.0, move_key: String = "") -> void:
-	if not _proj_mats.has(color):
+func _ensure_proj_assets() -> void:
+	if _proj_outer_mesh == null:
+		_proj_outer_mesh = SphereMesh.new()
+		_proj_outer_mesh.radius = 0.28
+		_proj_outer_mesh.height = 0.56
+		_proj_outer_mesh.radial_segments = 12
+		_proj_outer_mesh.rings = 6
+	if _proj_inner_mesh == null:
+		_proj_inner_mesh = SphereMesh.new()
+		_proj_inner_mesh.radius = 0.14
+		_proj_inner_mesh.height = 0.28
+		_proj_inner_mesh.radial_segments = 10
+		_proj_inner_mesh.rings = 5
+	if _proj_core_mat == null:
+		_proj_core_mat = StandardMaterial3D.new()
+		_proj_core_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		_proj_core_mat.albedo_color = Color(1, 1, 1, 0.98)
+		_proj_core_mat.emission_enabled = true
+		_proj_core_mat.emission = Color(1, 1, 1)
+		_proj_core_mat.emission_energy_multiplier = 2.6
+
+func _make_proj_node(col: Color, scale_k: float = 1.0) -> Node3D:
+	_ensure_proj_assets()
+	if not _proj_mats.has(col):
 		var m := StandardMaterial3D.new()
-		m.albedo_color = color
+		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		m.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+		m.albedo_color = Color(col.r, col.g, col.b, 0.85)
 		m.emission_enabled = true
-		m.emission = color
+		m.emission = col
 		m.emission_energy_multiplier = 2.0
-		_proj_mats[color] = m
-	var mi := MeshInstance3D.new()
-	var sm := SphereMesh.new()
-	sm.radius = 0.22
-	sm.height = 0.44
-	mi.mesh = sm
-	mi.material_override = _proj_mats[color]
-	mi.global_position = from
-	add_child(mi)
+		_proj_mats[col] = m
+	var root_p := Node3D.new()
+	var outer := MeshInstance3D.new()
+	outer.mesh = _proj_outer_mesh
+	outer.material_override = _proj_mats[col]
+	outer.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	root_p.add_child(outer)
+	var core := MeshInstance3D.new()
+	core.mesh = _proj_inner_mesh
+	core.material_override = _proj_core_mat
+	core.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	root_p.add_child(core)
+	root_p.scale = Vector3.ONE * scale_k
+	return root_p
+
+func spawn_projectile(from: Vector3, target: Node3D, dmg: float, color: Color, move_type: String = "", ailment: String = "", ailment_chance: float = 0.0, move_key: String = "", is_crit: bool = false) -> void:
+	var pn := _make_proj_node(color, 1.25 if is_crit else 1.0)
+	pn.global_position = from
+	add_child(pn)
 	# Only the player fires through here; tailwind's projSpeed
 	# passive scales the shot (bundle ay mods, cycle 9).
 	var spd := 24.0 * (player.proj_speed_mult if player and is_instance_valid(player) else 1.0)
-	_projectiles.append({"node": mi, "target": target, "dmg": dmg, "speed": spd, "mtype": move_type, "ailment": ailment, "achance": ailment_chance, "move": move_key})
+	_projectiles.append({"node": pn, "target": target, "dmg": dmg, "speed": spd, "mtype": move_type, "ailment": ailment, "achance": ailment_chance, "move": move_key, "col": color, "crit": is_crit, "trail_t": 0.0})
 
 ## Status-nova visual (sleep/poison powder): a flat expanding ring.
 func spawn_nova(pos: Vector3, radius_: float, color: Color) -> void:
@@ -14178,27 +14235,51 @@ func spawn_nova(pos: Vector3, radius_: float, color: Color) -> void:
 
 ## Beam visual (solar-beam): a stretched fading box along the shot.
 func spawn_beam(from: Vector3, dir: Vector3, len_: float, color: Color) -> void:
+	_fx_textures()
+	var holder := Node3D.new()
 	var mat := StandardMaterial3D.new()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.albedo_color = Color(color.r, color.g, color.b, 0.85)
+	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	mat.albedo_color = Color(color.r, color.g, color.b, 0.88)
 	mat.emission_enabled = true
 	mat.emission = color
-	mat.emission_energy_multiplier = 2.2
-	var holder := Node3D.new()
-	var mi := MeshInstance3D.new()
-	var bm := BoxMesh.new()
-	bm.size = Vector3(0.7, 0.7, len_)
-	mi.mesh = bm
-	mi.material_override = mat
-	mi.position = Vector3(0, 0, -len_ * 0.5)
-	holder.add_child(mi)
+	mat.emission_energy_multiplier = 2.4
+	var outer := MeshInstance3D.new()
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = 0.44
+	cyl.bottom_radius = 0.44
+	cyl.height = len_
+	cyl.radial_segments = 12
+	outer.mesh = cyl
+	outer.material_override = mat
+	outer.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	outer.rotation.x = PI * 0.5
+	outer.position = Vector3(0, 0, -len_ * 0.5)
+	holder.add_child(outer)
+	var core_mat := StandardMaterial3D.new()
+	core_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	core_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	core_mat.albedo_color = Color(1, 1, 1, 0.96)
+	var core := MeshInstance3D.new()
+	var ccyl := CylinderMesh.new()
+	ccyl.top_radius = 0.16
+	ccyl.bottom_radius = 0.16
+	ccyl.height = len_
+	ccyl.radial_segments = 8
+	core.mesh = ccyl
+	core.material_override = core_mat
+	core.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	core.rotation.x = PI * 0.5
+	core.position = Vector3(0, 0, -len_ * 0.5)
+	holder.add_child(core)
 	add_child(holder)
 	holder.global_position = from
-	var tgt := from - dir
+	var tgt := from + dir
 	if tgt.distance_to(from) > 0.01:
 		holder.look_at(tgt, Vector3.UP)
-	_effects.append({"node": holder, "mat": mat, "t": 0.0})
+	_spawn_particle(from + dir * 0.5, Vector3.ZERO, 0.24, 0.7, 2.1, Color(1, 1, 1, 0.95), _tex_star)
+	_effects.append({"node": holder, "mat": mat, "cmat": core_mat, "t": 0.0, "life": 0.28, "kind": "beam_cyl"})
 
 ## ------------------------------------------------------ cycle 11 strike FX
 ## Melee visuals ported from the bundle: the generic strike falls
@@ -14238,6 +14319,11 @@ func _fx_textures() -> void:
 	_tex_leaf = ImageTexture.create_from_image(img3)
 
 func _spawn_particle(pos: Vector3, vel: Vector3, life: float, s0: float, s1: float, color: Color, tex: Texture2D, add_blend := true, grav := 0.0, drag := 0.0) -> void:
+	if _particles.size() >= 110:
+		return
+	if _particle_quad == null:
+		_particle_quad = QuadMesh.new()
+		_particle_quad.size = Vector2.ONE
 	var m := StandardMaterial3D.new()
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
@@ -14247,9 +14333,7 @@ func _spawn_particle(pos: Vector3, vel: Vector3, life: float, s0: float, s1: flo
 	if add_blend:
 		m.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
 	var mi := MeshInstance3D.new()
-	var q := QuadMesh.new()
-	q.size = Vector2.ONE
-	mi.mesh = q
+	mi.mesh = _particle_quad
 	mi.material_override = m
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	mi.custom_aabb = AABB(Vector3(-8, -8, -8), Vector3(16, 16, 16))
@@ -14260,45 +14344,43 @@ func _spawn_particle(pos: Vector3, vel: Vector3, life: float, s0: float, s1: flo
 		"s0": s0, "s1": s1, "grav": grav, "drag": drag, "a0": color.a})
 
 func _beam_mesh(pts: Array, widths: Array, cam: Vector3) -> ArrayMesh:
-	# One camera-facing ribbon quad per segment (the bundle's Lu
-	# beams are view-aligned cylinders, @178238). The side offset is
-	# carried in NORMAL and scaled by the shrink uniform in the
-	# vertex shader, mirroring their (0.4 + 0.6 * frac) width curve.
+	# 连续共用边月牙丝带网格：相邻截面共享顶点偏移与全局进度 UV.x，彻底消灭分段断裂百叶窗锯齿
 	var verts := PackedVector3Array()
 	var normals := PackedVector3Array()
 	var uvs := PackedVector2Array()
 	var idx := PackedInt32Array()
-	var base := 0
-	for k in range(1, pts.size()):
-		var a: Vector3 = pts[k - 1]
-		var b: Vector3 = pts[k]
-		var mid := (a + b) * 0.5
-		var dirv := b - a
+	var n_pts := pts.size()
+	if n_pts < 2:
+		return ArrayMesh.new()
+	for k in range(n_pts):
+		var p: Vector3 = pts[k]
+		var dirv := Vector3.ZERO
+		if k == 0:
+			dirv = pts[1] - p
+		elif k == n_pts - 1:
+			dirv = p - pts[k - 1]
+		else:
+			dirv = pts[k + 1] - pts[k - 1]
 		dirv.y = 0.0
-		var side := dirv.cross(cam - mid)
+		var side := dirv.cross(cam - p)
 		if side.length() < 0.001:
 			side = Vector3.UP.cross(dirv)
+		if side.length() < 0.001:
+			side = Vector3.RIGHT
 		side = side.normalized()
-		var off := side * (float(widths[k - 1]) * 0.5)
-		verts.append(a - off)
+		var w := float(widths[mini(k, widths.size() - 1)])
+		var off := side * (w * 0.5)
+		var u := float(k) / float(n_pts - 1)
+		verts.append(p - off)
 		normals.append(-off)
-		uvs.append(Vector2(0, 0))
-		verts.append(a + off)
+		uvs.append(Vector2(u, 0.0))
+		verts.append(p + off)
 		normals.append(off)
-		uvs.append(Vector2(0, 1))
-		verts.append(b + off)
-		normals.append(off)
-		uvs.append(Vector2(1, 1))
-		verts.append(b - off)
-		normals.append(-off)
-		uvs.append(Vector2(1, 0))
-		idx.append(base)
-		idx.append(base + 1)
-		idx.append(base + 2)
-		idx.append(base)
-		idx.append(base + 2)
-		idx.append(base + 3)
-		base += 4
+		uvs.append(Vector2(u, 1.0))
+	for k in range(n_pts - 1):
+		var b := k * 2
+		idx.append(b); idx.append(b + 1); idx.append(b + 3)
+		idx.append(b); idx.append(b + 3); idx.append(b + 2)
 	var out := []
 	out.resize(Mesh.ARRAY_MAX)
 	out[Mesh.ARRAY_VERTEX] = verts
@@ -14314,7 +14396,7 @@ func _spawn_beam_fx(pts: Array, widths: Array, color: Color, life: float) -> voi
 		_beam_shader = Shader.new()
 		_beam_shader.code = """
 shader_type spatial;
-render_mode unshaded, cull_disabled;
+render_mode unshaded, cull_disabled, blend_add;
 uniform vec4 tint : source_color;
 uniform float fade = 1.0;
 uniform float shrink = 1.0;
@@ -14323,11 +14405,10 @@ void vertex() {
 }
 void fragment() {
 	float e = abs(UV.y * 2.0 - 1.0);
-	float tip = smoothstep(0.0, 0.06, UV.x) * smoothstep(1.0, 0.94, UV.x);
-	vec3 col = tint.rgb;
-	col *= mix(1.0, 0.6, smoothstep(0.7, 1.0, e));
-	col = mix(col, vec3(1.0), (1.0 - smoothstep(0.0, 0.26, e)) * 0.45);
-	float a = mix(1.0, 0.85, smoothstep(0.7, 1.0, e)) * tip * fade;
+	float tip = smoothstep(0.0, 0.14, UV.x) * smoothstep(1.0, 0.86, UV.x);
+	float core = 1.0 - smoothstep(0.0, 0.28, e);
+	vec3 col = mix(tint.rgb, vec3(1.0), core * 0.42);
+	float a = (1.0 - smoothstep(0.32, 1.0, e)) * tip * fade;
 	ALBEDO = col;
 	ALPHA = a;
 }
@@ -14369,20 +14450,23 @@ func spawn_strike_fx(from: Vector3, target_pos: Vector3, dir: Vector3, range_: f
 	var sweep := 1.0 if alt else -1.0
 	var base_ang := atan2(dir.z, dir.x)
 	var pts: Array = []
-	for k in range(8):
-		var fk := base_ang + sweep * (-1.1 + float(k) / 7.0 * 2.2)
-		pts.append(Vector3(
-			center.x + cos(fk) * l - dir.x * l * 0.5,
-			center.y + (float(k) / 7.0 - 0.5) * 0.6 * (-sweep),
-			center.z + sin(fk) * l - dir.z * l * 0.5))
 	var widths: Array = []
-	for k in range(1, 8):
-		widths.append(0.68 * (1.0 - absf(float(k) / 7.0 - 0.5)))
-	_spawn_beam_fx(pts, widths, color, 0.24)
-	for k in range(0, 8, 2):
-		var fk2 := base_ang + sweep * (-1.1 + float(k) / 7.0 * 2.2)
-		_spawn_particle(pts[k], Vector3(cos(fk2), 0.35, sin(fk2)) * 3.4, 0.30, 0.62, 0.0, color, _tex_disc)
-	_spawn_flash(center, range_ * 0.85, color)
+	var steps := 15
+	for k in range(steps + 1):
+		var t := float(k) / float(steps)
+		var fk := base_ang + sweep * (-1.15 + t * 2.30)
+		pts.append(Vector3(
+			center.x + cos(fk) * l - dir.x * l * 0.45,
+			center.y + (t - 0.5) * 0.65 * (-sweep),
+			center.z + sin(fk) * l - dir.z * l * 0.45))
+		widths.append(0.72 * sin(t * PI))
+	_spawn_beam_fx(pts, widths, color.lightened(0.25), 0.24)
+	for k in range(0, steps + 1, 3):
+		var t2 := float(k) / float(steps)
+		var fk2 := base_ang + sweep * (-1.15 + t2 * 2.30)
+		_spawn_particle(pts[k], Vector3(cos(fk2), 0.35, sin(fk2)) * 3.8, 0.28, 0.58, 0.0, color, _tex_disc)
+	_spawn_particle(center, Vector3.ZERO, 0.16, 0.45, 1.5, Color(1, 1, 1, 0.90), _tex_star)
+	_spawn_flash(center, range_ * 0.70, color)
 
 func _spawn_vines(from: Vector3, target_pos: Vector3, dir: Vector3, range_: float) -> void:
 	# Vine Whip's custom strike (@413916): two vm() vine chains
@@ -14393,8 +14477,8 @@ func _spawn_vines(from: Vector3, target_pos: Vector3, dir: Vector3, range_: floa
 	var origin := from + Vector3(0, 0.9, 0)
 	var end := target_pos + dir * (range_ * 0.3)
 	end.y = from.y + 1.0
-	var leaf_dark := Color(0.227, 0.604, 0.227)
-	var sweeps := [1.1, -0.66] if alt else [-1.1, 0.66]
+	var leaf_dark := Color(0.227, 0.684, 0.227)
+	var sweeps := [1.15, -0.68, 0.28] if alt else [-1.15, 0.68, -0.28]
 	for sw in sweeps:
 		var dx := end.x - origin.x
 		var dz := end.z - origin.z
@@ -14402,16 +14486,16 @@ func _spawn_vines(from: Vector3, target_pos: Vector3, dir: Vector3, range_: floa
 		var nx := -dz / maxf(len, 0.001)
 		var nz := dx / maxf(len, 0.001)
 		var pts: Array = [origin]
-		var widths: Array = []
-		for s_i in range(1, 9):
-			var s := float(s_i) / 8.0
+		var widths: Array = [0.06]
+		for s_i in range(1, 13):
+			var s := float(s_i) / 12.0
 			var wob := sin(s * PI) * float(sw)
 			pts.append(Vector3(
 				origin.x + dx * s + nx * wob,
-				origin.y + (end.y - origin.y) * s + sin(s * PI) * absf(float(sw)) * 0.4,
+				origin.y + (end.y - origin.y) * s + sin(s * PI) * absf(float(sw)) * 0.45,
 				origin.z + dz * s + nz * wob))
-			widths.append(0.22 * (1.0 - s * 0.4))
-		_spawn_beam_fx(pts, widths, leaf_dark, 0.2)
+			widths.append(0.24 * sin(s * PI * 0.85 + 0.15))
+		_spawn_beam_fx(pts, widths, leaf_dark, 0.22)
 	_spawn_particle(end + Vector3(0, 0.2, 0), Vector3.ZERO, 0.15, 0.4, 2.2, Color(1, 1, 1), _tex_star)
 	var leaf_col := Color(0.478, 0.875, 0.259)
 	for i in range(6):
@@ -15051,6 +15135,13 @@ func _process(delta: float) -> void:
 			node.scale = Vector3(rr, 1.0, rr)
 			var rm := fx["mat"] as StandardMaterial3D
 			rm.albedo_color.a = 0.55 * (1.0 - k)
+		elif kind == "beam_cyl":
+			var rad_s := (1.25 - 1.05 * k)
+			node.scale = Vector3(rad_s, rad_s, 1.0)
+			var m1 := fx["mat"] as StandardMaterial3D
+			m1.albedo_color.a = 0.88 * (1.0 - k * k)
+			var m2 := fx["cmat"] as StandardMaterial3D
+			m2.albedo_color.a = 0.96 * (1.0 - k)
 		else:
 			node.scale = Vector3.ONE * (0.7 + 0.45 * k)
 			var m := fx["mat"] as StandardMaterial3D
@@ -15388,14 +15479,28 @@ func _process(delta: float) -> void:
 								{"status": GameData.ally_status_for(mt), "status_chance": 20.0,
 								"knock": 1.0, "from": ally.global_position, "ally": ally})
 			else:
-				var dealt: float = tgt.take_damage(float(pr["dmg"]), String(pr.get("mtype", "")), String(pr.get("ailment", "")), float(pr.get("achance", 0.0)))
+				var dealt: float = tgt.take_damage(float(pr["dmg"]), String(pr.get("mtype", "")), String(pr.get("ailment", "")), float(pr.get("achance", 0.0)), {"crit": bool(pr.get("crit", false))})
 				add_damage(dealt)
 				if pr.has("move"):
 					add_move_damage(String(pr["move"]), dealt)
+			# 弹道命中爆裂：炽白星芒 + 四向火花
+			var hit_col: Color = pr.get("col", Color.WHITE)
+			_fx_textures()
+			_spawn_particle(aim, Vector3.ZERO, 0.14, 0.5, 1.5, Color(1, 1, 1, 0.95), _tex_star)
+			if _particles.size() < 95:
+				for k in range(3):
+					var a := randf() * TAU
+					_spawn_particle(aim, Vector3(cos(a) * 3.5, randf_range(1.2, 3.0), sin(a) * 3.5), 0.24, 0.42, 0.0, Color(hit_col.r, hit_col.g, hit_col.b, 0.95), _tex_disc, true, 7.0, 2.0)
 			node.queue_free()
 			_projectiles.remove_at(i)
 			continue
 		node.global_position += to.normalized() * float(pr["speed"]) * delta
+		pr["trail_t"] = float(pr.get("trail_t", 0.0)) + delta
+		if float(pr["trail_t"]) >= 0.032 and _particles.size() < 95:
+			pr["trail_t"] = 0.0
+			_fx_textures()
+			var tc: Color = pr.get("col", Color.WHITE)
+			_spawn_particle(node.global_position, Vector3(randf_range(-0.4, 0.4), 0.4, randf_range(-0.4, 0.4)), 0.16, 0.42, 0.05, Color(tc.r, tc.g, tc.b, 0.72), _tex_disc)
 	# HUD refresh tick.
 	_hud_t -= delta
 	if _hud_t <= 0.0:

@@ -715,9 +715,10 @@ func take_damage(d: float, move_type: String = "", ailment: String = "", ailment
 	last_meter_amount = -1.0
 	if hp <= 0.0 or is_weakened or is_downed or mode == MODE_ALLY:
 		return 0.0
+	var type_eff := GameData.type_mult(move_type, types) if move_type != "" else 1.0
 	var dealt := d
 	if move_type != "":
-		dealt *= GameData.type_mult(move_type, types)
+		dealt *= type_eff
 	# Elite damage stat (pressure / rivalry / mold-breaker passives,
 	# cycle 9): the player's own hits on guardians and alphas scale
 	# by the player's eliteDamage multiplier (bundle strike flags
@@ -810,6 +811,8 @@ func take_damage(d: float, move_type: String = "", ailment: String = "", ailment
 	# original's only reaction channels (audit §1).
 	if rig and hp > 0.0 and not is_weakened and not is_downed:
 		rig.play_hurt()
+	if dealt >= 1.0 and world and not bool(fx.get("silent", false)) and world.has_method("spawn_hit_fx"):
+		world.spawn_hit_fx(global_position + Vector3(0, body_height * 0.55, 0), move_type, dealt, type_eff, bool(fx.get("crit", false)))
 	# Cycle 22: the bundle's hit0 fires events.onHit for
 	# Treasure-flagged units on every landed hit, killing
 	# blows included (@727019).
