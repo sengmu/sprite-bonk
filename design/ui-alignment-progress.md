@@ -1910,6 +1910,15 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 验证：实景抓拍 `vfx_boss_level_showcase.png` 亲检确认半透斜纹冲锋警告带清晰透底、聚能圆阵轮廓锐利、Boss 三连双核弹幕饱满、小拳石屈肘挥拳威武生动；`c23`/`c24` 全部 356/0、`verify_gameplay_smoke` 三主角跨 4 区通关、`verify_rest_screens` 11 屏 100% `inside=true`、`Test/check_legal.py` 4/4 exact 全部绿灯通过。
 - 本轮提交：`scripts/world.gd`、`scripts/player.gd`、`scripts/model_rig.gd`、`store/portal-prep/listing-fields.md`、`design/ui-alignment-progress.md`。
 
+## 第 0 帧零延迟骨骼姿态拟合、垂直立体时空传送门及 1080P 商店实机图集升级（2026-11-18）
+
+- **解决实机截屏与高速刷新场景下的两大视觉盲区，并同步升级 dApp Store 商店宣发图集（`scripts/model_rig.gd`、`scripts/world.gd`、`store/screenshots/*.png`、`store/config.yaml`、`store/portal-prep/listing-fields.md`）**：
+  1. **第 0 帧零延迟尺寸拟合与去 T-Pose 落地（`scripts/model_rig.gd`）**：在 `setup()` 中，针对已精确测绘 `native` / `span` 的 50+ 物种模型，彻底移除原先两帧 `await get_tree().process_frame` 等待协程，直接基于本地骨架矩阵同步完成 `_fit()`、`anim_player.advance(0.0)`、`_collect_gait_bones()`、`_auto_relax_tpose_arms()` 及轮廓线生成。彻底消灭怪潮刷新瞬间“前 2 帧巨型横臂 T-Pose 鬼影闪现”以及大量冗余挂起协程开销。
+  2. **垂直立体炫紫时空传送门升级（`scripts/world.gd`）**：改写 `_open_portal()` 中原本平躺易被草坡遮挡且 `rotation.y` 自转无感知的水平紫环，使传送门环竖立面向战场并嵌入中心半透炫紫渐变光核平面（`_tele_disc_tex` 加成混合），确保击破守护者后玩家百米外即可清晰辨识旋转时空拱门指引。
+  3. **Solana dApp Store 1920×1080 实机宣传图集换代（`store/screenshots/01_spawn.png ~ 04_portal.png`、`store/config.yaml`、`store/portal-prep/listing-fields.md`）**：废除包含旧桌面 HUD 与小拳石断肢穿地的过时 720P 截图，实机重渲 4 张符合官方推荐 ≥1080 高度标准的 `1920×1080` 高清宣传截图（青苔林探索 / 月牙剑气激战 / 卡比兽双核弹幕与斜纹 Boss 预警阵 / 垂直紫光时空门），并同步对齐 `store/config.yaml` 与 `listing-fields.md` 尺寸记录。
+- 验证：本地 `c23`/`c24` 全部 356/0、`verify_gameplay_smoke` 三主角跨 4 区通关、`verify_rest_screens` 11 屏 100% `inside=true`、`Test/check_legal.py` 4/4 exact 全部绿灯；`vfinal16` 无 `debuggable` 纯 Release 构建经 `aapt2` 与 `DEX` 验证 MWA `WalletAdapterAndroid` / `ComposeWalletActivity` 全部完整并无损推装 Seeker 真机（`SM02G4061952376`）实机拉起无报错。
+- 本轮提交：`scripts/model_rig.gd`、`scripts/world.gd`、`store/screenshots/01_spawn.png`～`04_portal.png`、`store/config.yaml`、`store/portal-prep/listing-fields.md`、`design/ui-alignment-progress.md`。
+
 
 
 

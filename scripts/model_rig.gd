@@ -199,14 +199,18 @@ func setup(p_species: String, scale_mult: float = 1.0) -> void:
 	_play_clip("idle")
 	if anim_player == null:
 		_collect_gait_bones()
-	# Cycle 15: rigs built into a parked (out-of-tree) holder —
-	# the cage props inside prebuilt zone scenes — must wait
-	# for the tree before the frame awaits, or the coroutine
-	# dies on a null get_tree() and the rig never fits. Live
-	# rigs are always in-tree, so this is a no-op for them.
+	# 已测绘 native / span 的模型全部基于本地矩阵直接完成尺寸拟合与破除 T-Pose 屈肘姿态：
+	# 出生第 0 帧即完美落地，彻底消除怪潮刷新瞬间“前 2 帧巨型 T-Pose 闪现”以及协程挂起开销。
+	if cfg.has("native") or cfg.has("span"):
+		if anim_player != null:
+			anim_player.advance(0.0)
+		_fit(cfg, scale_mult)
+		if anim_player == null:
+			_auto_relax_tpose_arms(float(cfg.get("pose_arms_down", 52.0)))
+		_add_outlines()
+		return
 	if not is_inside_tree():
 		await tree_entered
-	# Two frames so the (possibly animated) pose settles before measuring.
 	await get_tree().process_frame
 	await get_tree().process_frame
 	_fit(cfg, scale_mult)

@@ -84,5 +84,4 @@ Guest play needs no account or wallet: launch the app, tap any starter, tap Star
 
 - Icon 512×512 不透明有底色：已合规（`store/media/icon-512.png`）。
 - Banner 1200×600：缺失，规格见 `banner-spec.md`（换皮后制作，M1）。
-- Screenshots：现有 4 张 1280×720，数量与同尺寸合规；高度未达 ≥1080 推荐值，
-且含 IP 内容，换皮后按 1920×1080 重渲（M1）。
+- Screenshots：已更新为 4 张最新实机渲染 1920×1080 宣传图（满足 ≥1080 推荐分辨率，全面呈现优化后 HUD、3D 战斗特效、守护者 Boss 阵与垂直发光传送门；换皮定名后可直接沿用渲染脚本复产无 IP 版本）。

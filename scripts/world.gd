@@ -2711,23 +2711,40 @@ func _open_portal() -> void:
 	var pxz := ALTAR_XZ + Vector2(0, 6.5)
 	var py := height_at(pxz.x, pxz.y)
 	portal_node = Node3D.new()
-	portal_node.position = Vector3(pxz.x, py + 1.9, pxz.y)
+	portal_node.position = Vector3(pxz.x, py + 2.15, pxz.y)
 	var ring := MeshInstance3D.new()
 	var tm := TorusMesh.new()
-	tm.inner_radius = 1.5
-	tm.outer_radius = 1.95
+	tm.inner_radius = 1.55
+	tm.outer_radius = 1.98
 	ring.mesh = tm
+	ring.rotation.x = PI * 0.5
 	var pm := StandardMaterial3D.new()
-	pm.albedo_color = Color(0.75, 0.4, 1.0)
+	pm.albedo_color = Color(0.78, 0.45, 1.0)
 	pm.emission_enabled = true
-	pm.emission = Color(0.7, 0.35, 1.0)
-	pm.emission_energy_multiplier = 2.2
+	pm.emission = Color(0.72, 0.38, 1.0)
+	pm.emission_energy_multiplier = 2.4
 	ring.material_override = pm
 	portal_node.add_child(ring)
+	# 传送门中央悬浮半透明能量光幕核心（竖立面对玩家，绕Y轴旋转产生空间立体感）
+	var core := MeshInstance3D.new()
+	var cm := PlaneMesh.new()
+	cm.size = Vector2(3.1, 3.1)
+	core.mesh = cm
+	core.rotation.x = PI * 0.5
+	var cmat := StandardMaterial3D.new()
+	cmat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	cmat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	cmat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	cmat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	cmat.albedo_texture = _tele_disc_tex()
+	cmat.albedo_color = Color(0.55, 0.35, 1.0, 0.85)
+	core.material_override = cmat
+	core.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	portal_node.add_child(core)
 	var light := OmniLight3D.new()
 	light.light_color = Color(0.7, 0.4, 1.0)
-	light.light_energy = 1.6
-	light.omni_range = 9.0
+	light.light_energy = 1.8
+	light.omni_range = 10.0
 	portal_node.add_child(light)
 	add_child(portal_node)
 

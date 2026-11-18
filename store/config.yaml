@@ -41,20 +41,20 @@ release:
   media:
     - purpose: screenshot
       uri: ./screenshots/01_spawn.png
-      width: 1280
-      height: 720
+      width: 1920
+      height: 1080
     - purpose: screenshot
       uri: ./screenshots/02_combat.png
-      width: 1280
-      height: 720
+      width: 1920
+      height: 1080
     - purpose: screenshot
       uri: ./screenshots/03_guardian.png
-      width: 1280
-      height: 720
+      width: 1920
+      height: 1080
     - purpose: screenshot
       uri: ./screenshots/04_portal.png
-      width: 1280
-      height: 720
+      width: 1920
+      height: 1080
   files:
     - purpose: install
       uri: ../build/android/SpriteBonk.apk
