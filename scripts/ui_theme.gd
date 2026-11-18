@@ -160,7 +160,7 @@ static func load_fonts() -> void:
 	var noto_heavy := _load_ttf("res://assets/fonts/NotoSC-Heavy-sub.ttf")
 	var noto := _load_ttf("res://assets/NotoSC-subset.ttf")
 	_display_font = _chain(fredoka, [smiley, noto_black, noto])
-	_body_font = _chain(nunito, [noto_heavy, noto])
+	_body_font = _chain(nunito, [noto_heavy, noto_black, smiley, noto])
 	if _display_font == null:
 		_display_font = noto
 	if _body_font == null:
@@ -733,3 +733,36 @@ static func text_color(color: Color) -> Color:
 	if color.r > 0.74 and color.g > 0.74 and color.b > 0.74:
 		return TEXT
 	return color.darkened(0.20) if luminance(color) > 0.6 else color
+
+## 全局统一定制纤细半透明暖棕滚动条样式，替代 Godot 默认粗灰滚动条
+static func apply_scrollbar_theme(ctrl: Control) -> void:
+	if ctrl == null:
+		return
+	var t := Theme.new()
+	var grab := flat_box(Color("b5976d", 0.52), 4)
+	grab.content_margin_left = 3
+	grab.content_margin_right = 3
+	grab.content_margin_top = 4
+	grab.content_margin_bottom = 4
+	var grab_hi := flat_box(Color("947448", 0.85), 4)
+	grab_hi.content_margin_left = 3
+	grab_hi.content_margin_right = 3
+	grab_hi.content_margin_top = 4
+	grab_hi.content_margin_bottom = 4
+	var grab_pr := flat_box(Color("7a5b32", 0.96), 4)
+	grab_pr.content_margin_left = 3
+	grab_pr.content_margin_right = 3
+	grab_pr.content_margin_top = 4
+	grab_pr.content_margin_bottom = 4
+	var track := flat_box(Color("e2cfa6", 0.14), 4)
+	track.content_margin_left = 3
+	track.content_margin_right = 3
+	track.content_margin_top = 4
+	track.content_margin_bottom = 4
+	for st in ["VScrollBar", "HScrollBar"]:
+		t.set_stylebox("grabber", st, grab)
+		t.set_stylebox("grabber_highlight", st, grab_hi)
+		t.set_stylebox("grabber_pressed", st, grab_pr)
+		t.set_stylebox("scroll", st, track)
+		t.set_stylebox("scroll_focus", st, StyleBoxEmpty.new())
+	ctrl.theme = t

@@ -2883,6 +2883,7 @@ func _build_hud() -> void:
 	_ui_root = Control.new()
 	_ui_root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_ui_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	UiTheme.apply_scrollbar_theme(_ui_root)
 	root.add_child(_ui_root)
 	var outer_root := root
 	root = _ui_root
@@ -5746,9 +5747,9 @@ func _refresh_shop() -> void:
 			name_vb.add_theme_constant_override("separation", 0)
 			name_vb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			name_vb.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-			var title_l := _mk_label(name_vb, _item_zh_name(id), 15, UiTheme.TEXT)
-			title_l.add_theme_font_override("font", UiTheme.display_font())
-			_mk_label(name_vb, "背包 %d/%d · 今日 %d/%d" % [in_bag, GameProfile.SHOP_BAG_CAP, bought, daily], 14, Color("6e502f"))
+			var title_l := _mk_label(name_vb, _item_zh_name(id), 17, UiTheme.TEXT)
+			title_l.add_theme_font_override("font", UiTheme.body_font())
+			_mk_label(name_vb, "背包 %d/%d · 今日 %d/%d" % [in_bag, GameProfile.SHOP_BAG_CAP, bought, daily], 13, Color("876b48"))
 			top_hb.add_child(name_vb)
 			var desc_l := _mk_label(cvb, String(it["desc"]), 14, Color("5e4427"))
 			desc_l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -5787,13 +5788,15 @@ func _refresh_shop() -> void:
 				b.text = "购买 ✦ %d" % price
 			b.disabled = is_dis
 			if is_dis:
-				var gray_sb := _style(Color(0.66, 0.67, 0.70, 0.94), 22, Color(0.52, 0.53, 0.56, 0.90), 1.5, true)
+				var gray_sb := _style(Color("a5a096", 0.92), 22, Color("857f74", 0.88), 1.5, true)
 				gray_sb.content_margin_left = 10
 				gray_sb.content_margin_right = 10
 				for st in ["normal", "hover", "pressed", "disabled"]:
 					b.add_theme_stylebox_override(st, gray_sb)
-				b.add_theme_color_override("font_disabled_color", Color(1.0, 1.0, 1.0, 0.95))
+				b.add_theme_color_override("font_disabled_color", Color(1.0, 1.0, 1.0, 0.96))
 				b.add_theme_color_override("font_color", Color.WHITE)
+				b.add_theme_color_override("font_outline_color", Color("666057"))
+				b.add_theme_constant_override("outline_size", 2)
 			else:
 				for st in ["font_color", "font_hover_color", "font_pressed_color"]:
 					b.add_theme_color_override(st, Color.WHITE)
@@ -7081,9 +7084,9 @@ func _draft_card(opt: Dictionary, idx: int) -> Button:
 	_draft_card_rars.append(rar)
 	var top := Panel.new()
 	top.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	top.offset_left = 13
-	top.offset_right = -13
-	top.offset_top = 14
+	top.offset_left = 15
+	top.offset_right = -15
+	top.offset_top = 15
 	top.offset_bottom = 150
 	var tc := top_c
 	tc.a = 0.85
@@ -7094,7 +7097,7 @@ func _draft_card(opt: Dictionary, idx: int) -> Button:
 	top.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card.add_child(top)
 	var ic := UiBadge.new(icon, top_c, 96)
-	ic.position = Vector2((csz.x - 96.0) * 0.5, 30)
+	ic.position = Vector2((csz.x - 96.0) * 0.5, 32)
 	card.add_child(ic)
 	# Icon order 2: the move-class mark (class_physical /
 	# class_special art) rides the top zone's lower right,
@@ -7110,44 +7113,37 @@ func _draft_card(opt: Dictionary, idx: int) -> Button:
 	# and the shine. Ours: 新 / 强化 and 招式.
 	var is_new := kind == "move_new" \
 		or (kind == "vitamin" and int(player.vit_levels.get(key, 0)) <= 0)
-	# U3: card-top pills are solid + white text in the
-	# reference (REF ~62x29 design px); the old ink chips
-	# read as pale cream + colored text because INK_DEEP
-	# is a light tan (#dac6a2), not ink — the constant is
-	# shared palette-wide, so the fix is local to these
-	# chips. White is forced on the labels (the readable_fg
-	# inside chip() would flip it back on the orange pill);
-	# the gold legendary pill keeps dark text.
 	var kchip := UiTheme.chip("新" if is_new else "强化",
 		UiTheme.ORANGE, 14)
 	kchip.set_anchors_preset(Control.PRESET_TOP_LEFT)
-	kchip.offset_left = 8
-	kchip.offset_right = 70
-	kchip.offset_top = 8
-	kchip.offset_bottom = 38
+	kchip.offset_left = 11
+	kchip.offset_right = 73
+	kchip.offset_top = 11
+	kchip.offset_bottom = 40
 	card.add_child(kchip)
 	var klabel := kchip.get_child(0) as Label
 	klabel.add_theme_color_override("font_color", UiTheme.WHITE)
+	klabel.add_theme_color_override("font_shadow_color", Color(0.25, 0.12, 0.0, 0.45))
+	klabel.add_theme_constant_override("shadow_offset_y", 1)
 	klabel.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	var rchip: PanelContainer
+	var rchip_col := rar_c.darkened(0.14) if UiTheme.luminance(rar_c) < 0.72 else rar_c
 	if kind == "move_new":
-		rchip = UiTheme.chip("招式", rar_c, 14)
+		rchip = UiTheme.chip("招式", rchip_col, 14)
 	else:
-		# Cycle 19 (audit punch #11) chose ink chips here
-		# because the top zone IS the rarity color — but the
-		# zone is that color lightened 0.62 (pale), so a
-		# saturated solid pill still reads, as in the REF.
 		rchip = UiTheme.chip(String(GameData.RARITY_NAMES[rar]),
-			rar_c, 14)
+			rchip_col, 14)
 	rchip.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	rchip.offset_left = -70
-	rchip.offset_right = -8
-	rchip.offset_top = 8
-	rchip.offset_bottom = 38
+	rchip.offset_left = -73
+	rchip.offset_right = -11
+	rchip.offset_top = 11
+	rchip.offset_bottom = 40
 	card.add_child(rchip)
 	var rlabel := rchip.get_child(0) as Label
 	if UiTheme.luminance(rar_c) < 0.75:
 		rlabel.add_theme_color_override("font_color", UiTheme.WHITE)
+		rlabel.add_theme_color_override("font_shadow_color", Color(0.08, 0.08, 0.16, 0.45))
+		rlabel.add_theme_constant_override("shadow_offset_y", 1)
 	rlabel.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	# Cycle 19 (audit punch #12): title / description /
 	# footer FLOW in a column under the top zone — the
@@ -7287,6 +7283,9 @@ func _draft_card(opt: Dictionary, idx: int) -> Button:
 			st.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			fx.add_child(st)
 		card.add_child(fx)
+		# 确保顶部「新/强化」与品阶胶囊始终浮于金色边框光效之上不被吞字
+		kchip.move_to_front()
+		rchip.move_to_front()
 		_draft_featured_fx = fx
 	card.pressed.connect(func() -> void:
 		if _draft_banish_mode:
@@ -9589,7 +9588,7 @@ const ITEM_NAME_ZH := {
 	"stick": "芦苇杖", "razor-fang": "锐牙", "shed-shell": "蜕壳", "cell-battery": "电池", "lum-berry": "青葡果",
 	"poke-doll": "布偶玩偶", "dowsing-machine": "寻宝探测器", "bicycle": "自行车", "iron-ball": "铁球", "fresh-water": "清水瓶",
 	"full-heal": "全能药", "guard-spec": "护卫喷剂", "coin-case": "零钱包", "focus-sash": "不屈腰带", "pp-max": "技能精华",
-	"max-elixir": "全能灵药", "shiny-stone": "曦光晶", "dusk-stone": "暮色晶", "comet-shard": "彗星碎片", "thunder-stone": "雷晶",
+	"max-elixir": "全能灵药", "shiny-stone": "耀光晶", "dusk-stone": "暮色晶", "comet-shard": "彗星碎片", "thunder-stone": "雷晶",
 	"fire-stone": "火晶", "protector": "护甲板", "griseous-orb": "灰金宝珠", "reaper-cloth": "幽影布", "electirizer": "电能匣",
 	"ice-stone": "冰晶", "leaf-stone": "叶晶", "revive": "复苏晶", "ss-ticket": "船票", "max-ether": "能量灵液",
 	"thick-club": "粗木棒", "rage-candy-bar": "怒气糖棒", "silph-scope": "显影镜", "max-revive": "大复苏晶", "rare-candy": "成长星糖",
@@ -12990,15 +12989,15 @@ func _render_blessing() -> void:
 		var card := UiTheme.make_card(rar_c, bsz, rar)
 		var top := Panel.new()
 		top.set_anchors_preset(Control.PRESET_TOP_WIDE)
-		top.offset_left = 14
-		top.offset_right = -14
-		top.offset_top = 15
+		top.offset_left = 17
+		top.offset_right = -17
+		top.offset_top = 17
 		top.offset_bottom = 148
 		var tc := rar_c
 		tc.a = 0.88
-		var top_sb := UiTheme.flat_box(tc, 10)
-		top_sb.corner_radius_top_left = 16
-		top_sb.corner_radius_top_right = 16
+		var top_sb := UiTheme.flat_box(tc, 8)
+		top_sb.corner_radius_top_left = 20
+		top_sb.corner_radius_top_right = 20
 		top.add_theme_stylebox_override("panel", top_sb)
 		top.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		card.add_child(top)
@@ -13014,7 +13013,7 @@ func _render_blessing() -> void:
 		if _p5_on and glyph_k != "":
 			var halo := Panel.new()
 			halo.size = Vector2(88, 88)
-			halo.position = Vector2((bsz.x - 88.0) * 0.5, 38)
+			halo.position = Vector2((bsz.x - 88.0) * 0.5, 40)
 			halo.add_theme_stylebox_override("panel", _style(Color(1.0, 1.0, 1.0, 0.24), 28, Color(1.0, 1.0, 1.0, 0.55), 2.0, false))
 			halo.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			card.add_child(halo)
@@ -18986,7 +18985,8 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 				var coins := UiIcon.new("result_coins", UiTheme.GOLD, 48)
 				coins.custom_minimum_size = Vector2(46, 61)
 				segment.add_child(coins)
-			var text: String = ["萤尘 +%d" % dust, "金币 %d" % int(gold), "得分 %s" % str(score)][part]
+			var score_txt := "得分 %d" % int(round(score)) if is_equal_approx(score, roundf(score)) else "得分 %.1f" % score
+			var text: String = ["萤尘 +%d" % dust, "金币 %d" % int(gold), score_txt][part]
 			var caption := _mk_label(segment, text, 32, UiTheme.TEXT)
 			caption.add_theme_font_override("font", payout_bold)
 			if part < 2:
@@ -19010,7 +19010,8 @@ func _fill_result(victory: bool, score: float, dust: int) -> void:
 		prow.add_child(UiBadge.new("tile_coin", UiTheme.GOLD, 24))
 		_mk_label(prow, "金币 %d" % int(gold), 32 if _p5_on else 18, UiTheme.TEXT)
 		_mk_label(prow, "|", 32 if _p5_on else 18, UiTheme.MUTED)
-		_mk_label(prow, "得分 %s" % str(score), 32 if _p5_on else 18, UiTheme.TEXT)
+		var score_txt2 := "得分 %d" % int(round(score)) if is_equal_approx(score, roundf(score)) else "得分 %.1f" % score
+		_mk_label(prow, score_txt2, 32 if _p5_on else 18, UiTheme.TEXT)
 	if _p5_on:
 		# U5 fix6: phone shows the reference card only (rows +
 		# payout). The extended statistics lived in the scroll,
@@ -19474,10 +19475,10 @@ func _pause_fill_status() -> void:
 	# lists what it will do).
 	_mk_label(box_left, "大招：%s（充能 %.0f%%）" % [
 		Ult.display_name(player.ult_name), (ult.charge * 100.0 if ult else 0.0)], 14 if _p5_on else 13, Color("a35e08") if _p5_on else UiTheme.GOLD)
-	# 3. 维生素 (the draft buildMini's vitamin chips)
-	_mk_sky_banner(box_left, "维生素", 16, false)
+	# 3. 属性强化 (the draft buildMini's vitamin chips)
+	_mk_sky_banner(box_left, "属性强化", 16, false)
 	if player.vit_levels.is_empty():
-		_mk_label(box_left, "（无）", 14 if _p5_on else 13, UiTheme.MUTED)
+		_mk_label(box_left, "（暂未获取）", 14 if _p5_on else 13, UiTheme.MUTED)
 	else:
 		var vf := HFlowContainer.new()
 		vf.add_theme_constant_override("h_separation", 6)
@@ -19533,25 +19534,25 @@ func _pause_fill_status() -> void:
 	# full values live here.
 	var hinfo: Dictionary = _hud_info_for(String(player.species_id))
 	if _p5_on:
-		_mk_label(box_right, "伙伴：%s %s · %s" % [String(hinfo["name"]), String(hinfo["en"]),
-			String(hinfo["evo"]).trim_prefix("› ")], 14)
-		_mk_label(box_right, "区域：%s %s · 第 %d/%d 区" % [String(zrow["cn"]), String(zrow["en"]), zone, ZONES.size()], 14)
+		var evo_s := String(hinfo["evo"]).trim_prefix("› ").strip_edges()
+		_mk_label(box_right, "伙伴：%s %s" % [String(hinfo["name"]), String(hinfo["en"])], 13)
+		_mk_label(box_right, "区域：%s %s" % [String(zrow["cn"]), String(zrow["en"])], 13)
+		_mk_label(box_right, "%s · %s" % [_weather_explain(), evo_s if evo_s != "" else "已终态"], 13)
 		var run_grid := GridContainer.new()
 		run_grid.columns = 2
 		run_grid.add_theme_constant_override("h_separation", 10)
-		run_grid.add_theme_constant_override("v_separation", 2)
+		run_grid.add_theme_constant_override("v_separation", 1)
 		run_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		box_right.add_child(run_grid)
 		for line in [
-				_weather_explain(),
+				"进度：第 %d/%d 区" % [zone, ZONES.size()],
 				"难度：普通",
 				"用时：%s" % _fmt_elapsed(elapsed),
 				"萤尘：%d" % GameProfile.stardust(),
 				"金币：%d" % int(gold),
 				"击杀：%d · 咆哮 ×%d" % [kills, run_roars]]:
-			var rl := _mk_label(run_grid, String(line), 14)
+			var rl := _mk_label(run_grid, String(line), 13)
 			rl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			rl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	else:
 		for line in [
 				"伙伴：%s %s · %s" % [String(hinfo["name"]), String(hinfo["en"]),
@@ -20622,10 +20623,10 @@ func _loadout_fill_detail() -> void:
 			int(pwv) if pwv != null else 0], 13 if _p5_on else 12)
 		if _p5_on:
 			ml.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	# Matchups（手机端前留 22px 呼吸缓冲，首屏完整止步于初始四招不腰斩半根蓝色横幅）
+	# Matchups（手机端前留 48px 呼吸缓冲，确保 16:9 与 20:9 长屏首屏均完整止步于初始四招不腰斩半根蓝色横幅）
 	if _p5_on:
 		var msp := Control.new()
-		msp.custom_minimum_size.y = 22
+		msp.custom_minimum_size.y = 48
 		_ls_detail.add_child(msp)
 	_mk_sky_banner(_ls_detail, "相性", 15, false)
 	var weak: Array = []
