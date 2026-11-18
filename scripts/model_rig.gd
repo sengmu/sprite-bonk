@@ -138,6 +138,12 @@ const FLASH_TINT := Color(1.2, 0.36, 0.30)
 var _skel: Skeleton3D
 var _gait_bones := {}  # suffix -> bone index
 var _gait_rest := {}  # suffix -> rest rotation (Quaternion)
+var _axis_pitch := {} # suffix -> 模型左右(+X)轴折算至该骨骼局部的单位旋转轴（迈步/点头/弯腰）
+var _axis_yaw := {}   # suffix -> 模型竖直(+Y)轴折算至该骨骼局部的单位旋转轴（转头/摇尾/扭腰）
+var _axis_roll := {}  # suffix -> 模型前后(+Z)轴折算至该骨骼局部的单位旋转轴（展翅/侧倾）
+var _target_yaw := 0.0
+var _has_facing := false
+var _atk_hand := 1.0
 # --- Segment Z (de-stiffening): springs, phase-locked stride,
 # idle life. See DIFF "Segment Z".
 var _gait_kind := ""
@@ -371,7 +377,7 @@ func _find_skeleton(n: Node) -> Skeleton3D:
 
 const GAIT_SUFFIXES := ["LThigh", "RThigh", "LLeg", "RLeg", "LFoot", "RFoot",
 	"LForeArm", "RForeArm", "LArm", "RArm", "LArm2", "RArm2", "LForeArm2", "RForeArm2",
-	"Tail1", "Tail2", "Tail3", "Tail4"]
+	"Spine", "Spine1", "Spine2", "Waist", "Jaw", "Tail1", "Tail2", "Tail3", "Tail4"]
 const LIFE_SUFFIXES := ["Head", "Neck"]
 ## Gait archetypes for the species whose SPECIES entry predates the
 ## cfg "gait" key (Segment Z). Body-plan calls: quadruped walkers,
@@ -448,13 +454,42 @@ func _collect_gait_bones() -> void:
 	_skel = _find_skeleton(model)
 	if _skel == null:
 		return
+	var sk_b := Basis.IDENTITY
+	var cur: Node = _skel
+	while cur != null and cur != model:
+		if cur is Node3D:
+			sk_b = (cur as Node3D).transform.basis * sk_b
+		cur = cur.get_parent()
+	sk_b = sk_b.orthonormalized()
 	for i in range(_skel.get_bone_count()):
 		var bname := _skel.get_bone_name(i)
 		for suf in GAIT_SUFFIXES + LIFE_SUFFIXES:
 			if bname.ends_with(suf) and not _gait_bones.has(suf):
 				_gait_bones[suf] = i
 				_gait_rest[suf] = _skel.get_bone_rest(i).basis.get_rotation_quaternion()
+				var bw := (sk_b * _skel.get_bone_global_rest(i).basis).orthonormalized()
+				var inv_bw := bw.inverse()
+				_axis_pitch[suf] = (inv_bw * Vector3(1, 0, 0)).normalized()
+				_axis_yaw[suf] = (inv_bw * Vector3(0, 1, 0)).normalized()
+				_axis_roll[suf] = (inv_bw * Vector3(0, 0, 1)).normalized()
 				break
+
+## 将在骨骼本地算好的多轴欧拉目标合成单次四元数写回，确保模型空间各个关节自然联动不拧麻花
+func _pose_bone(suf: String, pitch: float, yaw: float = 0.0, roll: float = 0.0) -> void:
+	if not _gait_bones.has(suf):
+		return
+	var idx: int = _gait_bones[suf]
+	if idx in _stance_bones:
+		return
+	var rest_q: Quaternion = _gait_rest.get(suf, Quaternion.IDENTITY)
+	var q := rest_q
+	if absf(pitch) > 0.0005:
+		q = q * Quaternion(_axis_pitch.get(suf, Vector3(1, 0, 0)), pitch)
+	if absf(yaw) > 0.0005:
+		q = q * Quaternion(_axis_yaw.get(suf, Vector3(0, 1, 0)), yaw)
+	if absf(roll) > 0.0005:
+		q = q * Quaternion(_axis_roll.get(suf, Vector3(0, 0, 1)), roll)
+	_skel.set_bone_pose_rotation(idx, q)
 
 ## Spring-damper follow (Segment Z): secondary bones chase their
 ## target with lag + overshoot instead of tracking a sine exactly.
@@ -511,59 +546,100 @@ func _update_gait(delta: float) -> void:
 	_last_sin = s
 	match kind:
 		"quad", "biped":
-			# Legs: thighs swing anti-phase around local X; shins
-			# bend with a lag (one-directional), feet counter-
-			# rotate to stay level-ish. (Diagonal pairing falls
-			# out of the shared rest-pose axes on quads.)
-			_gait_rot("LThigh", Vector3(1, 0, 0), s * 0.55 * amp)
-			_gait_rot("RThigh", Vector3(1, 0, 0), -s * 0.55 * amp)
-			_gait_rot("LLeg", Vector3(1, 0, 0), -(0.5 + 0.5 * sin(_gait_phase - 1.1)) * 0.6 * amp)
-			_gait_rot("RLeg", Vector3(1, 0, 0), -(0.5 + 0.5 * sin(_gait_phase + PI - 1.1)) * 0.6 * amp)
-			_gait_rot("LFoot", Vector3(1, 0, 0), -s * 0.28 * amp)
-			_gait_rot("RFoot", Vector3(1, 0, 0), s * 0.28 * amp)
-			# Arms swing opposite to the same-side leg, with gentle idle breathing.
-			var idle_sw := sin(_breath_t * 2.1) * 0.045 * (1.0 - amp)
-			var cast_sw := -0.45 * sin(clampf(_lunge_t / 0.38, 0.0, 1.0) * PI) if _lunge_t > 0.0 else 0.0
-			_gait_rot("LArm", Vector3(1, 0, 0), -s * 0.42 * amp + idle_sw + cast_sw)
-			_gait_rot("RArm", Vector3(1, 0, 0), s * 0.42 * amp - idle_sw + cast_sw)
-			_gait_rot("LForeArm", Vector3(1, 0, 0), (-s * 0.2 - 0.18) * amp)
-			_gait_rot("RForeArm", Vector3(1, 0, 0), (s * 0.2 - 0.18) * amp)
+			# 使用预算出的真实正交模型空间横轴迈步，彻底解决各模型骨骼轴向混乱导致的横扯拧扭
+			_pose_bone("LThigh", -s * 0.65 * amp)
+			_pose_bone("RThigh", s * 0.65 * amp)
+			_pose_bone("LLeg", (0.5 + 0.5 * sin(_gait_phase - 1.1)) * 0.72 * amp)
+			_pose_bone("RLeg", (0.5 + 0.5 * sin(_gait_phase + PI - 1.1)) * 0.72 * amp)
+			_pose_bone("LFoot", s * 0.28 * amp)
+			_pose_bone("RFoot", -s * 0.28 * amp)
+			# 躯干随奔跑自然前倾并配合跨步微扭腰，彻底摆脱木桩感
+			var atk_spine_p := 0.0
+			var atk_arm_l := 0.0
+			var atk_arm_r := 0.0
+			var atk_fore := 0.0
+			var atk_jaw := 0.0
+			var atk_head_p := 0.0
+			if _ult_pose_t > 0.0:
+				var up := sin(clampf(_ult_pose_t / 0.6, 0.0, 1.0) * PI)
+				atk_spine_p = -0.34 * up
+				atk_head_p = -0.28 * up
+				atk_jaw = 0.55 * up
+				atk_arm_l = -1.15 * up
+				atk_arm_r = -1.15 * up
+			elif _lunge_t > 0.0:
+				var e := 1.0 - maxf(_lunge_t, 0.0) / 0.42
+				if e < 0.25:
+					var bk := e / 0.25
+					atk_spine_p = -0.28 * bk
+					atk_head_p = -0.18 * bk
+					atk_jaw = 0.35 * bk
+					if _atk_hand > 0.0:
+						atk_arm_l = 0.55 * bk; atk_arm_r = -0.22 * bk
+					else:
+						atk_arm_r = 0.55 * bk; atk_arm_l = -0.22 * bk
+				else:
+					var arc := sin(((e - 0.25) / 0.75) * PI)
+					atk_spine_p = 0.44 * arc
+					atk_head_p = -0.18 * arc
+					atk_jaw = 0.52 * arc
+					atk_fore = -0.68 * arc
+					if _atk_hand > 0.0:
+						atk_arm_l = -1.18 * arc; atk_arm_r = 0.38 * arc
+					else:
+						atk_arm_r = -1.18 * arc; atk_arm_l = 0.38 * arc
+			var idle_sw := sin(_breath_t * 2.2) * 0.055 * (1.0 - amp)
+			_pose_bone("LArm", s * 0.54 * amp + idle_sw + atk_arm_l, 0.0, -0.06 - absf(idle_sw))
+			_pose_bone("RArm", -s * 0.54 * amp - idle_sw + atk_arm_r, 0.0, 0.06 + absf(idle_sw))
+			_pose_bone("LForeArm", (-0.28 + s * 0.25) * amp + atk_fore)
+			_pose_bone("RForeArm", (-0.28 - s * 0.25) * amp + atk_fore)
+			var run_lean := 0.14 * amp + sin(_breath_t * 2.2) * 0.03 * (1.0 - amp)
+			if _gait_bones.has("Spine1"):
+				_pose_bone("Spine1", run_lean + atk_spine_p, s * 0.10 * amp, -s * 0.04 * amp)
+			elif _gait_bones.has("Spine"):
+				_pose_bone("Spine", run_lean + atk_spine_p, s * 0.10 * amp, -s * 0.04 * amp)
+			if _gait_bones.has("Jaw"):
+				_pose_bone("Jaw", atk_jaw)
+			if _gait_bones.has("Head"):
+				_pose_bone("Head", -0.06 * amp + atk_head_p, _spring("Head", _head_turn_yaw, delta))
 			_hop_y = 0.0
 			_sway_yaw = 0.0
 		"hopper":
-			# Both legs together; the body arc lives in _process
-			# (_hop_y), landing squash fires above.
-			_gait_rot("LThigh", Vector3(1, 0, 0), s * 0.5 * amp)
-			_gait_rot("RThigh", Vector3(1, 0, 0), s * 0.5 * amp)
-			_gait_rot("LLeg", Vector3(1, 0, 0), -(0.5 + 0.5 * sin(_gait_phase - 1.1)) * 0.6 * amp)
-			_gait_rot("RLeg", Vector3(1, 0, 0), -(0.5 + 0.5 * sin(_gait_phase - 1.1)) * 0.6 * amp)
-			_gait_rot("LArm", Vector3(1, 0, 0), s * 0.25 * amp)
-			_gait_rot("RArm", Vector3(1, 0, 0), s * 0.25 * amp)
+			# 跳跃与飞禽双翼（如波波/烈雀）绕正交模型前后轴对称上下展翅扑腾，跳跃双腿协调微曲
+			var atk_p := 0.0
+			if _lunge_t > 0.0:
+				var e2 := 1.0 - maxf(_lunge_t, 0.0) / 0.42
+				atk_p = -0.3 * (e2 / 0.25) if e2 < 0.25 else 0.55 * sin(((e2 - 0.25) / 0.75) * PI)
+			_pose_bone("LThigh", -s * 0.45 * amp)
+			_pose_bone("RThigh", -s * 0.45 * amp)
+			_pose_bone("LLeg", (0.5 + 0.5 * sin(_gait_phase - 1.1)) * 0.55 * amp)
+			_pose_bone("RLeg", (0.5 + 0.5 * sin(_gait_phase - 1.1)) * 0.55 * amp)
+			var flap := sin(_bob_phase * 2.4 if amp > 0.2 else _breath_t * 3.5) * (0.18 + 0.48 * amp)
+			_pose_bone("LArm", atk_p * 0.5, 0.0, -flap)
+			_pose_bone("RArm", atk_p * 0.5, 0.0, flap)
+			if _gait_bones.has("Spine1"):
+				_pose_bone("Spine1", 0.12 * amp + atk_p)
+			if _gait_bones.has("Head"):
+				_pose_bone("Head", -0.05 * amp + atk_p * 0.5, _spring("Head", _head_turn_yaw, delta))
 			_hop_y = maxf(0.0, s) * 0.16 * amp
 			_sway_yaw = 0.0
 		"hover":
-			# Near-still limbs; life comes from bob + turn banking.
-			_gait_rot("LThigh", Vector3(1, 0, 0), s * 0.15 * amp)
-			_gait_rot("RThigh", Vector3(1, 0, 0), -s * 0.15 * amp)
+			_pose_bone("LThigh", -s * 0.15 * amp)
+			_pose_bone("RThigh", s * 0.15 * amp)
 			_hop_y = 0.0
 			_sway_yaw = 0.0
 		"serpent":
-			# No leg swing at all: the root sways (applied in
-			# _process as model yaw) and the tail springs along.
 			_hop_y = 0.0
-			_sway_yaw = s * 0.10 * amp
-	# Tail: spring-damper chase of the wag target (lag + overshoot
-	# instead of a rigid sine).
-	var wag := 0.16 + 0.35 * amp
+			_sway_yaw = s * 0.12 * amp
+	# Tail: spring-damper chase along true vertical yaw axis
+	var wag := 0.18 + 0.38 * amp
 	for ti in range(4):
 		var suf := "Tail" + str(ti + 1)
 		if _gait_bones.has(suf):
-			var tgt := sin(_gait_phase * 0.55 - float(ti) * 0.8) * wag * 0.4
-			_gait_rot(suf, Vector3(0, 1, 0), _spring(suf, tgt, delta))
-	# Head: spring toward the idle look-around target (scheduled
-	# in _process); a touch of lag while running.
-	if _gait_bones.has("Head"):
-		_gait_rot("Head", Vector3(0, 1, 0), _spring("Head", _head_turn_yaw, delta))
+			var tgt := sin(_gait_phase * 0.55 + _breath_t * (1.8 if amp < 0.1 else 0.0) - float(ti) * 0.8) * wag * 0.45
+			_pose_bone(suf, sin(_breath_t * 2.2 - float(ti) * 0.6) * 0.05, _spring(suf, tgt, delta))
+	if kind != "quad" and kind != "biped" and kind != "hopper" and _gait_bones.has("Head"):
+		_pose_bone("Head", 0.0, _spring("Head", _head_turn_yaw, delta))
 
 func _merged_aabb(n: Node) -> AABB:
 	var out := AABB()
@@ -647,14 +723,18 @@ func set_facing(dir: Vector3) -> void:
 	if dir.length() < 0.01:
 		return
 	var cfg: Dictionary = SPECIES[species_id]
-	rotation.y = atan2(dir.x, dir.z) + float(cfg["yaw"])
+	_target_yaw = atan2(dir.x, dir.z) + float(cfg["yaw"])
+	if not _has_facing:
+		_has_facing = true
+		rotation.y = _target_yaw
 
 func set_move_speed(s: float) -> void:
 	_move_speed = s
 
 func play_lunge() -> void:
-	_lunge_t = 0.38  # 延长至 0.38 s 完整挥击表现窗口（含蓄力、前扑与收招）
-	_cast_t = 0.38
+	_lunge_t = 0.42
+	_cast_t = 0.42
+	_atk_hand = -_atk_hand
 	if anim_player:
 		_clip_state = ""  # 每次出招均强制从头重播，确保连击时动作不漏播
 		_play_clip("fight")
@@ -915,14 +995,14 @@ func _play_clip(kind: String) -> void:
 			pick = n
 			break
 	if pick != "":
-		# 针对长骨骼攻击剪辑（如妙蛙种子 1.75 s）按窗口自适应倍速播放，避免前摇没结束就被切回走路
+		# 针对长骨骼攻击剪辑（如妙蛙种子 1.75 s）按自然力度倍速播放并使用 0.10 s 交叉淡变，告别硬切僵硬
 		if kind == "fight":
 			var alen := anim_player.get_animation(pick).length
-			var target_dur := 0.55 if _ult_pose_t > 0.0 else 0.36
-			anim_player.speed_scale = clampf(alen / target_dur, 1.8, 5.5)
+			var target_dur := 0.55 if _ult_pose_t > 0.0 else 0.40
+			anim_player.speed_scale = clampf(alen / target_dur, 1.2, 3.6)
 		else:
 			anim_player.speed_scale = 1.0
-		anim_player.play(pick)
+		anim_player.play(pick, 0.10)
 		anim_player.seek(0.0)
 		_clip_state = kind
 
@@ -976,6 +1056,8 @@ func _process(delta: float) -> void:
 		if lod_step <= 1 or (_lod_tick % lod_step) == 0:
 			_update_gait(_gait_accum)
 			_gait_accum = 0.0
+	if _has_facing:
+		rotation.y = lerp_angle(rotation.y, _target_yaw, 1.0 - exp(-20.0 * delta))
 	# --- Segment Z body life -------------------------------------
 	# Yaw rate for hover banking (smoothed angle delta of the rig).
 	var yr := 0.0
@@ -1062,20 +1144,21 @@ func _process(delta: float) -> void:
 		_lunge_t -= delta
 		if _lunge_t <= 0.0 and _ult_pose_t <= 0.0 and _clip_state == "fight":
 			_clip_state = ""  # 攻击窗口结束：自动恢复待机/移动动画并还原播放速度
-		var e: float = 1.0 - maxf(_lunge_t, 0.0) / 0.38
+		var e: float = 1.0 - maxf(_lunge_t, 0.0) / 0.42
 		var lo := 0.0
+		var thrust_k := 0.55 if anim_player != null else (0.36 if _skel != null else 0.72)
 		if e < 0.25:
 			var bk: float = e / 0.25
 			lo = -0.14 * bk
-			lunge_rot = -0.18 * bk
+			lunge_rot = -0.14 * bk
 		else:
 			var pp: float = (e - 0.25) / 0.75
 			var arc := sin(pp * PI)
-			lo = 0.72 * pow(arc, 0.72)
-			lunge_rot = 0.36 * arc
-			off.y += arc * 0.22
+			lo = thrust_k * pow(arc, 0.72)
+			lunge_rot = 0.22 * arc
+			off.y += arc * 0.16
 		var fwd := transform.basis.z
-		off += Vector3(fwd.x, 0, fwd.z) * (lo * (0.55 if anim_player != null else 1.0))
+		off += Vector3(fwd.x, 0, fwd.z) * lo
 	if _faint_t >= 0.0 and is_player and not _faint_clip:
 		model.rotation.x = -1.25 * (1.0 - (1.0 - faint_k) * (1.0 - faint_k))
 	elif anim_player == null:

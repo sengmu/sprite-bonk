@@ -980,6 +980,7 @@ func _try_fire(mv: Dictionary) -> bool:
 					e.take_damage(0.0, "", ailment, achance)
 					any = true
 			if any and world.has_method("spawn_nova"):
+				rig.play_lunge()
 				world.spawn_nova(global_position + Vector3(0, 0.4, 0), range_, col)
 				if GameAudio.instance:
 					GameAudio.instance.nova(false)  # cycle 16

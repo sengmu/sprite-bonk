@@ -1879,6 +1879,15 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
 - 实测：全部音轨 `format=1 (16-bit)`, `peak=0.740`, `clips=0`, `dc<=0.0001`, `edge=0.0`，单曲渲染耗时压降至 `~120–290 ms`。
 - 本轮提交：`scripts/audio.gd`、`design/ui-alignment-progress.md`。
 
+## 重构全身正交骨骼步态、三段式出招挥击与平滑转向（2026-11-18）
+
+- **彻底解决「怪物和主角走路及攻击动作都很僵硬」（`scripts/model_rig.gd`、`scripts/player.gd`）**：
+  1. **预算真实正交模型空间旋转轴，告别拧麻花搓地（`scripts/model_rig.gd`）**：在 `_collect_gait_bones()` 中扩展收集 `Spine`/`Spine1`/`Spine2`/`Waist`/`Jaw` 等躯干与下颚骨，通过 `sk_b` 矩阵转换计算并缓存每根骨头对应的模型空间前后（`_axis_pitch`）、左右转头摇尾（`_axis_yaw`）、展翅侧倾（`_axis_roll`）局部单位轴，保证全系 50+ 精灵双腿严格正前后迈步、双臂反相自然摆臂、躯干跑步前倾并随步伐扭腰，同时让 `hopper` 飞禽（波波/烈雀）对称上下展翅振翼飞跃。
+  2. **升级三段式骨骼攻击与大招咆哮动作（`scripts/model_rig.gd`、`scripts/player.gd`）**：废除以往僵硬“棋子硬推滑步”式出招，在 `play_lunge()` 与 `play_ult_pose()` 注入「后仰张嘴拉弓蓄力 → 猛甩脊柱＋左右臂交替前劈重击（仰头盯敌＋张颚撕咬）→ 阻尼柔收」完整骨骼联动；为 `bulbasaur` 等带剪辑模型开启 `0.10s` 动画交叉融合（`play(pick, 0.10)`）消除硬切换顿挫，并补全 `player.gd` `"nova"` 范围技能出招动作触发。
+  3. **丝滑指数转向（`scripts/model_rig.gd`）**：`set_facing()` 改为目标朝向角 `_target_yaw` 结合 `lerp_angle(..., 20.0 * delta)` 阻尼转向，彻底消除角色 180° 瞬间僵直跳转。
+- 验证：渲染五主力精灵侧前方跑动迈步与挥爪爆发帧条目检过关（波波高展双翅腾空、小火龙/杰尼龟挥爪重击＋脊柱前甩、小拉达扑咬、小拳石重拳俯冲）；全部脚本解析、`verify_gameplay_smoke`、`c23/c24` 全部 356 项核心单元测与双档全屏回归全绿通过。
+- 本轮提交：`scripts/model_rig.gd`、`scripts/player.gd`、`design/ui-alignment-progress.md`。
+
 
 
 
