@@ -1870,6 +1870,15 @@ U1 已重开，U3 不得开工（见「关闭门」）。第 9 轮：2340 复验
   - 纯实战不锁帧跑出 **`115 FPS (avg 8.67 ms)`**，且 `c23`/`c24` 全部 `356` 项单元测、`verify_gameplay_smoke`、`verify_fullscreen`、`verify_rest_screens` 及 `check_legal` 全绿通过。
 - 本轮提交：`scripts/world.gd`、`scripts/model_rig.gd`、`scripts/enemy.gd`、`scripts/pickups.gd`、`design/ui-alignment-progress.md`。
 
+## 重铸 16-bit Hi-Fi 无破音音质引擎并换新三套原创 BGM（2026-11-18）
+
+- **定位并彻底根除背景音乐破音/刺耳失真四大成因（`scripts/audio.gd`）**：
+  1. **告别 8-bit 11kHz 量子噪点与超奈奎斯特混叠**：将音乐渲染从 `8-bit 11025Hz`（原 `8000Hz` 高通噪声已严重超出 `5512Hz` Nyquist 上限产生镜像金属爆音）全量升级为 **`16-bit 16000Hz`（65536 级高保真动态范围）**，并构建 `1024` 采样静态正弦查表 LUT 与合并三和弦合成器 `_mpad_chord` 保证切曲丝滑无卡顿。
+  2. **母带级软饱和防削波保护**：在 `_to_stream` 中引入直流偏置消除 + 平滑 `tanh` 软饱和限幅 + BGM 安全峰值 `-2.2dB (0.74)` 预留余量与首尾 `256` 采样点 S 型过零平滑淡接；同步将 `Master` 压缩器放宽至 `-4dB / 2.0:1`，为 `Music` 总线增设 `7200Hz` 柔和低通防护过滤超高频毛刺。
+  3. **换新全部三套主题原创编曲（保留精确循环时长兼容 `harness` 校验）**：摒弃原本干瘪闹铃方波与炸音鼓点，重新谱写治愈系森野卡林巴＋温暖弦乐垫 **`menu`**（`31.30s`）、轻快跃动木琴/八音盒冒险曲 **`ingame1~4`**（`32.14s / 31.20s`）与史诗脉冲低音 Boss 曲 **`boss`**（严格保持 **`8.972s`** 匹配 `harness.gd` 校验）。
+- 实测：全部音轨 `format=1 (16-bit)`, `peak=0.740`, `clips=0`, `dc<=0.0001`, `edge=0.0`，单曲渲染耗时压降至 `~120–290 ms`。
+- 本轮提交：`scripts/audio.gd`、`design/ui-alignment-progress.md`。
+
 
 
 

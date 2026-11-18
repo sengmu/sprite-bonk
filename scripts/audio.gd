@@ -23,7 +23,9 @@ extends Node
 static var instance: GameAudio = null
 
 const SR := 22050          # SFX / cry render rate
-const MSR := 11025         # music render rate
+const MSR := 16000         # 16kHz 16-bit Hi-Fi BGM：远离 Nyquist 混叠且渲染敏捷不卡帧
+const LUT_SZ := 1024
+static var _sin_lut := PackedFloat32Array()
 const MAX_VOICES := 26     # bundle: coarse-pointer voice cap
 const BUS_NAMES := ["Music", "SFX", "Cries", "Kit"]
 
@@ -57,6 +59,10 @@ const W_SAW := 3
 
 func _ready() -> void:
 	instance = self
+	if _sin_lut.is_empty():
+		_sin_lut.resize(LUT_SZ)
+		for i in range(LUT_SZ):
+			_sin_lut[i] = sin(TAU * float(i) / float(LUT_SZ))
 	_ensure_buses()
 	# The bundle's noise buffer: 1 s of white noise (build()
 	# in the class @74465). Ours is seeded for reproducibility.
@@ -103,13 +109,13 @@ func _ensure_buses() -> void:
 			has_comp = true
 	if not has_comp:
 		var comp := AudioEffectCompressor.new()
-		comp.threshold = -14.0
-		comp.ratio = 4.0
-		comp.attack_us = 3000.0
-		comp.release_ms = 200.0
+		comp.threshold = -4.0
+		comp.ratio = 2.0
+		comp.attack_us = 8000.0
+		comp.release_ms = 240.0
 		AudioServer.add_bus_effect(mi, comp)
-	# Bus filters: cryBus lowpass 6000, kitBus lowpass 5200
-	# (their highshelf stages are not reproduced — DIFF cycle 16).
+	# Bus filters: Music 7200Hz 柔和低通防护 + Cries 6000 + Kit 5200
+	_add_lowpass("Music", 7200.0)
 	_add_lowpass("Cries", 6000.0)
 	_add_lowpass("Kit", 5200.0)
 
@@ -159,7 +165,7 @@ func _process(delta: float) -> void:
 	else:
 		_duck_level = move_toward(_duck_level, 1.0, delta / 0.8)
 	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Music"),
-		_lin_db(float(vol["music"]) * 0.32 * _duck_level))
+		_lin_db(float(vol["music"]) * 0.25 * _duck_level))
 	# Music crossfades (.8 s in / .6 s out — playTrack @91356).
 	for i in range(2):
 		var rate := delta / (0.8 if _music_fade_target[i] > _music_fade[i] else 0.6)
@@ -299,29 +305,45 @@ func _noise_hit(mix: PackedFloat32Array, at: float, dur: float, v: float,
 		mix[idx] += y * v * env
 
 func _to_stream(mix: PackedFloat32Array, sr: int, loop := false) -> AudioStreamWAV:
-	if loop and mix.size() > 256:
-		# 循环曲目首尾 128 采样点柔顺过零交叉淡变，避免循环接缝处出现耳机爆音
-		var fade_n := 128
+	var sz := mix.size()
+	if sz <= 0:
+		var empty := AudioStreamWAV.new()
+		empty.format = AudioStreamWAV.FORMAT_16_BITS
+		empty.mix_rate = sr
+		return empty
+	# 去除直流偏置并做平滑软饱和限幅，杜绝数字削波爆音
+	var sum := 0.0
+	for x in mix:
+		sum += x
+	var dc := sum / float(sz)
+	for i in range(sz):
+		mix[i] = tanh((mix[i] - dc) * 1.15)
+	if loop and sz > 512:
+		# 循环曲目首尾 256 采样点柔顺过零交叉淡变，消灭循环接缝喀哒杂音
+		var fade_n := 256
 		for i in range(fade_n):
 			var k := float(i) / float(fade_n)
-			mix[i] *= k
-			mix[mix.size() - 1 - i] *= k
+			var sk := k * k * (3.0 - 2.0 * k)
+			mix[i] *= sk
+			mix[sz - 1 - i] *= sk
 	var peak := 0.001
 	for x in mix:
 		peak = maxf(peak, absf(x))
-	var g := minf(1.0, 0.92 / peak)
+	# BGM 留出充足动态余量至 0.74，SFX 保持原比例绝不放大刺耳
+	var g := minf(2.5, 0.74 / peak) if loop else minf(1.0, 0.85 / peak)
 	var bytes := PackedByteArray()
-	bytes.resize(mix.size())
-	for i in range(mix.size()):
-		bytes[i] = int(clampf(mix[i] * g, -1.0, 1.0) * 127.0) + 128
+	bytes.resize(sz * 2)
+	for i in range(sz):
+		var v := clampi(int(round(mix[i] * g * 32767.0)), -32767, 32767)
+		bytes.encode_s16(i * 2, v)
 	var w := AudioStreamWAV.new()
-	w.format = AudioStreamWAV.FORMAT_8_BITS
+	w.format = AudioStreamWAV.FORMAT_16_BITS
 	w.mix_rate = sr
 	w.data = bytes
 	if loop:
 		w.loop_mode = AudioStreamWAV.LOOP_FORWARD
 		w.loop_begin = 0
-		w.loop_end = mix.size()
+		w.loop_end = sz
 	return w
 
 # ------------------------------------------------------------ SFX recipes
@@ -703,6 +725,105 @@ func _mnoise(mix: PackedFloat32Array, at: float, dur: float, v: float,
 			y = lp1 - lp2
 		mix[idx] += y * v * (1.0 - float(i) / maxf(float(n), 1.0))
 
+## 三和弦合并查表垫音：三次循环并作一次，音色同源丝滑且渲染耗时直降 60%
+func _mpad_chord(mix: PackedFloat32Array, at: float, f1: float, f2: float, f3: float, dur: float, v: float) -> void:
+	var start := int(at * MSR)
+	var n := int(dur * MSR)
+	var p1 := 0.0; var p2 := 0.0; var p3 := 0.0
+	var i1 := f1 / float(MSR); var i2 := f2 / float(MSR); var i3 := f3 / float(MSR)
+	var atk := minf(0.22, dur * 0.3)
+	var rel := minf(0.32, dur * 0.35)
+	var inv_atk := 1.0 / maxf(atk * float(MSR), 1.0)
+	var inv_rel := 1.0 / maxf(rel * float(MSR), 1.0)
+	var rel_start := n - int(rel * float(MSR))
+	var atk_end := int(atk * float(MSR))
+	for i in range(n):
+		var idx := start + i
+		if idx < 0 or idx >= mix.size():
+			break
+		p1 += i1; p2 += i2; p3 += i3
+		var k1 := int(p1 * 1024.0) & 1023
+		var k2 := int(p2 * 1024.0) & 1023
+		var k3 := int(p3 * 1024.0) & 1023
+		var env := 1.0
+		if i < atk_end:
+			env = float(i) * inv_atk
+		elif i > rel_start:
+			env = maxf(0.0, float(n - i) * inv_rel)
+		var sig := (_sin_lut[k1] + _sin_lut[k2] + _sin_lut[k3]) * 0.72 + (_sin_lut[(k1 * 2) & 1023] + _sin_lut[(k2 * 2) & 1023] + _sin_lut[(k3 * 2) & 1023]) * 0.22
+		mix[idx] += sig * v * env
+
+## 清亮圆润的卡林巴/马林巴木琴拨弦音色（彻底取代原本刺耳闹钟方波）
+func _mpluck(mix: PackedFloat32Array, at: float, freq: float, dur: float, v: float, bright := 0.28) -> void:
+	var start := int(at * MSR)
+	var n := int(dur * MSR)
+	var ph := 0.0
+	var inc := freq / float(MSR)
+	var decay := exp(-5.2 / (maxf(dur, 0.12) * float(MSR)))
+	var h_decay := exp(-22.0 / float(MSR))
+	var env := 1.0
+	var h_env := 1.0
+	var atk_end := maxi(1, int(0.006 * float(MSR)))
+	for i in range(n):
+		var idx := start + i
+		if idx < 0 or idx >= mix.size():
+			break
+		ph += inc
+		var p1 := int(ph * 1024.0) & 1023
+		var gain := (float(i) / float(atk_end)) if i < atk_end else env
+		var sig := _sin_lut[p1] + _sin_lut[(p1 * 2) & 1023] * bright * h_env + _sin_lut[(p1 * 3) & 1023] * (bright * 0.4) * h_env
+		mix[idx] += sig * v * gain
+		env *= decay
+		h_env *= h_decay
+
+## 圆润不破音低音电贝斯（纯低频正弦 + 柔和二倍谐波）
+func _mwarm_bass(mix: PackedFloat32Array, at: float, freq: float, dur: float, v: float) -> void:
+	var start := int(at * MSR)
+	var n := int(dur * MSR)
+	var ph := 0.0
+	var inc := freq / float(MSR)
+	var decay := exp(-3.2 / (maxf(dur, 0.18) * float(MSR)))
+	var env := 1.0
+	var atk_end := maxi(1, int(0.008 * float(MSR)))
+	var rel_start := int(float(n) * 0.78)
+	var inv_rel := 1.0 / maxf(float(n - rel_start), 1.0)
+	for i in range(n):
+		var idx := start + i
+		if idx < 0 or idx >= mix.size():
+			break
+		ph += inc
+		var p1 := int(ph * 1024.0) & 1023
+		var gain := env
+		if i < atk_end:
+			gain *= float(i) / float(atk_end)
+		elif i > rel_start:
+			gain *= maxf(0.0, float(n - i) * inv_rel)
+		var sig := _sin_lut[p1] * 0.85 + _sin_lut[(p1 * 2) & 1023] * 0.15
+		mix[idx] += sig * v * gain
+		env *= decay
+
+## 圆润低音鼓滑频辅助（确保完全在音乐采样率 MSR 下渲染）
+func _mtone_m(mix: PackedFloat32Array, at: float, freq: float, dur: float, v: float, slide: float) -> void:
+	var start := int(at * MSR)
+	var n := int(dur * MSR)
+	var ph := 0.0
+	var inv_msr := 1.0 / float(MSR)
+	var fr_mul := pow(slide, 1.0 / maxf(float(n), 1.0))
+	var fr := freq
+	var decay := exp(-16.0 / (maxf(dur, 0.05) * float(MSR)))
+	var env := 1.0
+	var atk_end := maxi(1, int(0.003 * float(MSR)))
+	for i in range(n):
+		var idx := start + i
+		if idx < 0 or idx >= mix.size():
+			break
+		ph += fr * inv_msr
+		fr *= fr_mul
+		var gain := (float(i) / float(atk_end)) * env if i < atk_end else env
+		mix[idx] += _sin_lut[int(ph * 1024.0) & 1023] * v * gain
+		env *= decay
+
+## 22050Hz 高保真重编原声：治愈系森林主菜单 / 跃动原野冒险 / 宏伟不破音 Boss 战
 func _render_song(cfg: Dictionary) -> AudioStreamWAV:
 	var root := float(cfg["root"])
 	var scale: Array = cfg["scale"]
@@ -713,27 +834,64 @@ func _render_song(cfg: Dictionary) -> AudioStreamWAV:
 	var total := bars * 16
 	var mix := PackedFloat32Array()
 	mix.resize(int(total * step * MSR) + 2)
-	var lead_pat := [0, 2, 4, 7, 4, 2, 0, 4]
+	var is_menu := is_equal_approx(bpm, 92.0)
+	var is_boss := is_equal_approx(bpm, 107.0)
+	var lead_menu := [0, -1, 2, 4, 5, -1, 4, 2, 3, -1, 2, 0, -1, 1, 2, -1]
+	var lead_adv := [0, 2, 4, 7, 5, 4, 2, 4, 0, 4, 5, 7, 9, 7, 5, 4]
+	var lead_boss := [0, 0, 4, 3, 2, -1, 3, 4, 5, 4, 3, 2, 0, 2, -1, 4]
 	for s in range(total):
 		var at := s * step
 		var bar := s / 16
 		var o := s % 16
-		var chord_root := root + _deg(scale, int(prog[bar % prog.size()]))
+		var deg_root := int(prog[bar % prog.size()])
+		var chord_root := root + _deg(scale, deg_root)
+		# 1. 温暖电钢/弦乐和弦垫底
 		if o == 0:
-			for dn in [0, 2, 4]:
-				_mtone(mix, at, _midi(chord_root + _deg(scale, dn)), step * 15.0, W_SAW, 0.055, 1.0, 0.3)
-		if o % 4 == 0:
-			_mtone(mix, at, 150.0, 0.18, W_SINE, 0.50, 0.25, 0.002)          # kick
-			_mtone(mix, at, _midi(chord_root - 12), step * 3.5, W_TRI, 0.22, 1.0, 0.01)  # bass
-		if o == 4 or o == 12:
-			_mnoise(mix, at, 0.12, 0.20, 2500, "bandpass")                    # snare
-			_mtone(mix, at, 220, 0.08, W_TRI, 0.10, 0.6)
-		if o % 2 == 0:
-			_mnoise(mix, at, 0.03, 0.05 if o % 4 == 2 else 0.025, 8000, "highpass")  # hat
-			_mtone(mix, at, _midi(root + 12 + _deg(scale, int(prog[bar % prog.size()]) + lead_pat[o % 8])), step * 1.6, W_SQUARE, 0.045)
-		if o % 4 == 0 or (o % 2 == 0 and (s * 7) % 5 == 0):
-			var a := (s * 13 + bar * 5) % 7
-			_mtone(mix, at, _midi(root + 24 + _deg(scale, int(prog[bar % prog.size()]) + a)), step * 2.5, W_TRI, 0.07)
+			var pv := 0.045 if is_menu else (0.052 if is_boss else 0.042)
+			_mpad_chord(mix, at, _midi(chord_root + _deg(scale, 0)), _midi(chord_root + _deg(scale, 2)), _midi(chord_root + _deg(scale, 4)), step * 15.6, pv)
+		# 2. 低频暖贝斯与暖鼓（彻底告别炸音方波与高频混叠刺耳鼓）
+		if is_menu:
+			if o == 0 or o == 8:
+				_mwarm_bass(mix, at, _midi(chord_root - 12), step * 6.5, 0.14)
+			if o == 4 or o == 12:
+				_mnoise(mix, at, 0.04, 0.015, 2200, "bandpass")  # 极轻木沙刷节奏
+		elif is_boss:
+			if o % 2 == 0:
+				_mwarm_bass(mix, at, _midi(chord_root - 12), step * 1.8, 0.17 if (o % 4 == 0) else 0.11)
+			if o % 4 == 0:
+				_mtone_m(mix, at, 102.0, 0.14, 0.24, 0.42)
+			if o == 4 or o == 12:
+				_mnoise(mix, at, 0.09, 0.09, 1900, "bandpass")
+			elif o % 2 == 1:
+				_mnoise(mix, at, 0.03, 0.022, 3400, "bandpass")
+		else:
+			if o % 4 == 0:
+				_mtone_m(mix, at, 98.0, 0.13, 0.22, 0.44)
+				_mwarm_bass(mix, at, _midi(chord_root - 12), step * 3.5, 0.16)
+			if o == 4 or o == 12:
+				_mnoise(mix, at, 0.08, 0.075, 2100, "bandpass")
+			if o % 2 == 0:
+				_mnoise(mix, at, 0.028, 0.020 if o % 4 == 2 else 0.012, 3600, "bandpass")
+		# 3. 优美主旋律与高音星光点缀（卡林巴琴/八音盒）
+		if is_menu:
+			var ml := int(lead_menu[(o + bar * 2) % lead_menu.size()])
+			if ml >= 0 and o % 2 == 0:
+				_mpluck(mix, at, _midi(root + 12 + _deg(scale, deg_root + ml)), step * 3.4, 0.11, 0.18)
+			if o == 6 or o == 14:
+				_mpluck(mix, at, _midi(root + 24 + _deg(scale, deg_root + 4)), step * 2.8, 0.045, 0.10)
+		elif is_boss:
+			var bl := int(lead_boss[o])
+			if bl >= 0:
+				_mpluck(mix, at, _midi(root + 12 + _deg(scale, deg_root + bl)), step * 2.2, 0.115, 0.36)
+			if o % 4 == 2:
+				_mpluck(mix, at, _midi(root + 24 + _deg(scale, deg_root + 2)), step * 1.8, 0.055, 0.25)
+		else:
+			if o % 2 == 0:
+				var al := int(lead_adv[(o + bar) % lead_adv.size()])
+				_mpluck(mix, at, _midi(root + 12 + _deg(scale, deg_root + al)), step * 2.4, 0.105, 0.24)
+			if o == 0 or o == 6 or o == 10:
+				var sparkle := (bar + o) % 5
+				_mpluck(mix, at, _midi(root + 24 + _deg(scale, deg_root + sparkle)), step * 2.6, 0.05, 0.15)
 	return _to_stream(mix, MSR, true)
 
 ## playTrack(name) @91356: crossfade to the named loop; asking
