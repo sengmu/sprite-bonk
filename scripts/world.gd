@@ -177,6 +177,67 @@ const MOVE_ZH := {
 	"water-gun": "水枪", "bubble": "泡沫", "rapid-spin": "高速旋转",
 	"hydro-pump": "水炮", "bite": "咬住", "water-pulse": "水之波动",
 	"aqua-tail": "水流尾", "wave-crash": "波涛冲锋",
+	# 补全全登场108物种习得表招式官方简体中文译名（全面消除非初始角色英文残留）
+	"absorb": "吸取", "acid": "溶解液", "acid-armor": "溶化", "acid-spray": "酸液炸弹",
+	"acupressure": "点穴", "aerial-ace": "燕返", "agility": "高速移动", "air-cutter": "空气利刃",
+	"air-slash": "空气斩", "amnesia": "瞬间失忆", "assurance": "恶意追击", "astonish": "惊吓",
+	"belch": "酸液喷吐", "belly-drum": "腹鼓", "bind": "绑紧", "block": "挡路",
+	"body-slam": "泰山压顶", "bone-rush": "骨棒乱打", "bonemerang": "骨棒回旋", "brave-bird": "勇鸟猛攻",
+	"bubble-beam": "泡沫光线", "bug-bite": "虫咬", "bug-buzz": "虫鸣", "bulk-up": "健美",
+	"bulldoze": "重踏", "bullet-punch": "子弹拳", "charm": "撒娇", "clear-smog": "清除之烟",
+	"close-combat": "近身战", "coil": "盘卷", "confuse-ray": "奇异之光", "confusion": "念力",
+	"copycat": "仿效", "covet": "渴望", "cross-chop": "十字劈", "cross-poison": "十字毒刃",
+	"crunch": "咬碎", "crush-claw": "撕裂爪", "curse": "诅咒", "cut": "居合斩",
+	"dark-pulse": "恶之波动", "defense-curl": "变圆", "destiny-bond": "同命", "dig": "挖洞",
+	"disable": "定身法", "disarming-voice": "迷人之声", "double-edge": "舍身冲撞", "double-hit": "二连击",
+	"double-kick": "二连踢", "double-team": "影子分身", "dragon-claw": "龙爪", "dragon-dance": "龙之舞",
+	"dragon-rush": "龙之俯冲", "dragon-tail": "龙尾", "dream-eater": "食梦", "drill-peck": "啄钻",
+	"drill-run": "直冲钻", "earth-power": "大地之力", "earthquake": "地震", "echoed-voice": "回声",
+	"endeavor": "蛮干", "energy-ball": "能量球", "explosion": "大爆炸", "extrasensory": "神通力",
+	"extreme-speed": "神速", "fake-out": "击掌奇袭", "false-swipe": "点到为止", "feather-dance": "羽毛舞",
+	"feint": "佯攻", "final-gambit": "搏命", "fire-punch": "火焰拳", "fissure": "地裂",
+	"flail": "抓狂", "flame-wheel": "火焰轮", "flash-cannon": "加农光炮", "flatter": "吹捧",
+	"fling": "投掷", "focus-energy": "聚气", "fury-attack": "乱击", "fury-cutter": "连斩",
+	"fury-swipes": "乱抓", "gastro-acid": "胃液", "giga-drain": "终极吸取", "giga-impact": "终极冲击",
+	"glare": "大蛇瞪眼", "grassy-terrain": "青草场地", "growl": "叫声", "growth": "生长",
+	"guillotine": "断头钳", "gunk-shot": "垃圾射击", "gust": "起风", "gyro-ball": "陀螺球",
+	"hammer-arm": "臂锤", "harden": "变硬", "haze": "黑雾", "headbutt": "头锤",
+	"heal-pulse": "治愈波动", "heat-wave": "热风", "heavy-slam": "重磅冲撞", "helping-hand": "帮助",
+	"hex": "祸不单行", "high-horsepower": "十万马力", "horn-attack": "角撞", "horn-drill": "角钻",
+	"howl": "长嚎", "hurricane": "暴风", "hyper-beam": "破坏光线", "hyper-voice": "巨声",
+	"hypnosis": "催眠术", "imprison": "封印", "incinerate": "烧尽", "iron-defense": "铁壁",
+	"knock-off": "拍落", "laser-focus": "锐利聚焦", "last-resort": "珍藏", "lava-plume": "喷烟",
+	"leaf-blade": "叶刃", "leech-life": "吸血", "leech-seed": "寄生种子", "leer": "瞪眼",
+	"lick": "舌舔", "low-kick": "踢倒", "mach-punch": "音速拳", "mean-look": "黑色目光",
+	"mega-drain": "超级吸取", "megahorn": "超级角击", "metronome": "挥指", "mimic": "模仿",
+	"moonblast": "月亮之力", "moonlight": "月光", "mud-shot": "泥巴射击", "mud-slap": "掷泥",
+	"nasty-plot": "诡计", "night-shade": "黑夜魔影", "night-slash": "暗袭要害", "outrage": "逆鳞",
+	"pay-day": "聚宝功", "payback": "以牙还牙", "peck": "啄", "perish-song": "灭亡之歌",
+	"petal-blizzard": "花瓣暴雪", "petal-dance": "花瓣舞", "play-rough": "狂闹", "pluck": "啄食",
+	"poison-fang": "剧毒牙", "poison-jab": "毒击", "poison-sting": "毒针", "pound": "拍击",
+	"protect": "守住", "psybeam": "幻象光线", "psych-up": "自我暗示", "psychic": "精神强念",
+	"quick-attack": "电光一闪", "rain-dance": "求雨", "recycle": "回收利用", "reflect-type": "镜面属性",
+	"rest": "睡觉", "retaliate": "报仇", "reversal": "起死回生", "roar": "吼叫",
+	"rock-blast": "岩石爆击", "rock-polish": "岩石打磨", "rock-smash": "碎岩", "rock-throw": "落石",
+	"rollout": "滚动", "roost": "羽栖", "round": "轮唱", "safeguard": "神秘守护",
+	"sand-attack": "泼沙", "sand-tomb": "流沙地狱", "sandstorm": "沙暴", "scary-face": "鬼面",
+	"screech": "刺耳声", "seismic-toss": "地球上投", "self-destruct": "自爆", "shadow-ball": "暗影球",
+	"shadow-punch": "暗影拳", "shell-smash": "破壳", "sing": "唱歌", "slack-off": "偷懒",
+	"slam": "摔打", "sleep-talk": "梦话", "sludge-bomb": "污泥炸弹", "sludge-wave": "污泥波",
+	"smack-down": "击落", "smog": "浊雾", "smokescreen": "烟幕", "snore": "沉睡呼啸",
+	"spit-up": "喷出", "spite": "怨恨", "splash": "水溅跃", "spore": "蘑菇毒粉",
+	"stealth-rock": "隐形岩", "stockpile": "蓄力", "stomp": "踩踏", "stomping-tantrum": "跺脚",
+	"stone-edge": "尖石攻击", "storm-throw": "狂风投摔", "strength": "怪力", "string-shot": "吐丝",
+	"stun-spore": "麻痹粉", "submission": "地狱翻滚", "sucker-punch": "突袭", "sunny-day": "大晴天",
+	"super-fang": "愤怒门牙", "superpower": "蛮力", "supersonic": "超音波", "surf": "冲浪",
+	"swagger": "虚张声势", "swallow": "吞下", "sweet-kiss": "天使之吻", "sweet-scent": "甜甜香气",
+	"swift": "高速星星", "swords-dance": "剑舞", "synthesis": "光合作用", "tail-whip": "摇尾巴",
+	"tailwind": "顺风", "taunt": "挑衅", "teleport": "瞬间移动", "thrash": "大闹一番",
+	"thunder-punch": "雷电拳", "thunder-wave": "电磁波", "toxic": "剧毒", "toxic-spikes": "毒菱",
+	"tri-attack": "三重攻击", "twister": "龙卷风", "uproar": "吵闹", "venoshock": "毒液冲击",
+	"vice-grip": "夹住", "vital-throw": "借力摔", "whirlwind": "吹飞", "will-o-wisp": "鬼火",
+	"wing-attack": "翅膀攻击", "withdraw": "缩入壳中", "worry-seed": "烦恼种子", "wrap": "紧束",
+	"x-scissor": "十字剪", "yawn": "哈欠", "zen-headbutt": "意念头锤",
 }
 
 # Ground palette: Ld values from the bundle's forest shader, rescaled x0.32
@@ -327,6 +388,9 @@ func _cull_subtree(n: Node) -> void:
 var _crystal: Node3D
 var _crystal_base_y := 0.0
 var _ring: MeshInstance3D
+var _altar_beacon: MeshInstance3D
+var _altar_beacon_mat: StandardMaterial3D
+var _crit_fx_t := 0.0
 var _spawn_t := 0.0
 var _e_prev := false
 var _banner_t := 0.0
@@ -2695,6 +2759,22 @@ func _build_altar() -> void:
 	_ring.rotation_degrees.x = 90.0
 	_ring.position = altar_pos + Vector3(0, 0.07, 0)
 	add_child(_ring)
+
+	# 祭坛远景天际召唤光柱：方便在广阔3D地形中远眺寻路，靠近或召唤守护者后淡出隐藏
+	_altar_beacon = MeshInstance3D.new()
+	var bm := CylinderMesh.new()
+	bm.top_radius = 0.28
+	bm.bottom_radius = 0.92
+	bm.height = 18.0
+	_altar_beacon.mesh = bm
+	_altar_beacon_mat = StandardMaterial3D.new()
+	_altar_beacon_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	_altar_beacon_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	_altar_beacon_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	_altar_beacon_mat.albedo_color = Color(0.32, 0.92, 0.96, 0.16)
+	_altar_beacon.material_override = _altar_beacon_mat
+	_altar_beacon.position = altar_pos + Vector3(0, 10.5, 0)
+	add_child(_altar_beacon)
 
 	_altar_label = Label3D.new()
 	_altar_label.text = "Boss 祭坛 · " + _ik() + " 召唤守护者"  # P1.1: _touch_text_sync
@@ -10475,41 +10555,71 @@ func _choice_show(title: String, sub: String, options: Array, foot_text: String,
 				ptr.mouse_filter = Control.MOUSE_FILTER_IGNORE
 				cvb.add_child(ptr)
 		if _p5_on and title == "流光队友":
+			# 重塑流光队友双区抉择卡：头像/徽标圆托 + 奶油白说明区 + 宽舒不破框行动胶囊
 			if i == 0:
-				var st_l := TextureRect.new()
-				st_l.texture = load("res://assets/ui/decorations/star_filled.png") as Texture2D
-				st_l.set_anchors_preset(Control.PRESET_TOP_LEFT)
-				st_l.offset_left = 14; st_l.offset_top = 14; st_l.offset_right = 34; st_l.offset_bottom = 34
-				st_l.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-				st_l.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-				st_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-				b.add_child(st_l)
-				var st_r := TextureRect.new()
-				st_r.texture = st_l.texture
-				st_r.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-				st_r.offset_left = -34; st_r.offset_top = 14; st_r.offset_right = -14; st_r.offset_bottom = 34
-				st_r.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-				st_r.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-				st_r.mouse_filter = Control.MOUSE_FILTER_IGNORE
-				b.add_child(st_r)
+				for side_x in [14, -34]:
+					var st_m := TextureRect.new()
+					st_m.texture = load("res://assets/ui/decorations/star_filled.png") as Texture2D
+					st_m.set_anchors_preset(Control.PRESET_TOP_LEFT if side_x > 0 else Control.PRESET_TOP_RIGHT)
+					st_m.offset_left = side_x; st_m.offset_top = 12
+					st_m.offset_right = side_x + 20; st_m.offset_bottom = 32
+					st_m.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+					st_m.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+					st_m.mouse_filter = Control.MOUSE_FILTER_IGNORE
+					b.add_child(st_m)
+			if not is_instance_valid(_pending_shiny_ally) and not is_instance_valid(_shiny_ally):
+				var fb_glow := PanelContainer.new()
+				fb_glow.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+				var fg_sb := _style(Color(1.0, 1.0, 1.0, 0.24), 22, Color(1.0, 1.0, 1.0, 0.56), 1.5, true)
+				fg_sb.set_content_margin_all(10)
+				fb_glow.add_theme_stylebox_override("panel", fg_sb)
+				fb_glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				var fbu := UiIcon.new("spark" if i == 0 else "shield", Color("ffe059") if i == 0 else Color.WHITE, 42)
+				fbu.custom_minimum_size = Vector2(42, 42)
+				fbu.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				fb_glow.add_child(fbu)
+				cvb.add_child(fb_glow)
+			var scard := PanelContainer.new()
+			scard.size_flags_vertical = Control.SIZE_EXPAND_FILL
+			scard.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			scard.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			var sc_sb := _style(Color(1.0, 0.99, 0.955, 0.98), 12, Color("e6d0a4"), 1, true)
+			sc_sb.content_margin_left = 10
+			sc_sb.content_margin_right = 10
+			sc_sb.content_margin_top = 8
+			sc_sb.content_margin_bottom = 8
+			scard.add_theme_stylebox_override("panel", sc_sb)
+			cvb.add_child(scard)
+			var svb := VBoxContainer.new()
+			svb.alignment = BoxContainer.ALIGNMENT_CENTER
+			svb.add_theme_constant_override("separation", 5)
+			svb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			scard.add_child(svb)
+			var sparts := opt_text.split("\n", false)
+			var s_main := _mk_label(svb, String(sparts[0]) if sparts.size() > 0 else opt_text, 16, UiTheme.TEXT)
+			s_main.add_theme_font_override("font", UiTheme.body_font())
+			s_main.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			s_main.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			if sparts.size() >= 2:
+				var s_sub := _mk_label(svb, String(sparts[1]), 14, Color("7d5f3c"))
+				s_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+				s_sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			var act_pill := PanelContainer.new()
 			act_pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			act_pill.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-			if i == 0:
-				act_pill.add_theme_stylebox_override("panel", UiTheme._btn_box(UiTheme.SKY, 16, Color(0, 0, 0, 0.15), 1, 16))
-			else:
-				var pur_sb := _style(Color("884ad8"), 20, Color("dcbfff"), 2, true)
-				pur_sb.content_margin_left = 18
-				pur_sb.content_margin_right = 18
-				pur_sb.content_margin_top = 6
-				pur_sb.content_margin_bottom = 6
-				act_pill.add_theme_stylebox_override("panel", pur_sb)
-			cvb.add_child(act_pill)
-			var l := _mk_label(act_pill, opt_text, 15, Color.WHITE, true)
-			l.add_theme_font_override("font", UiTheme.display_font())
-			l.add_theme_color_override("font_shadow_color", Color("144e7d") if i == 0 else Color("3b1270"))
-			l.add_theme_constant_override("shadow_offset_y", 2)
-			l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			var ap_bg := Color("2498e6") if i == 0 else Color("884ad8")
+			var ap_bd := Color("aee2ff") if i == 0 else Color("dcbfff")
+			var ap_sb := _style(ap_bg, 16, ap_bd, 1.5, true)
+			ap_sb.content_margin_left = 20
+			ap_sb.content_margin_right = 20
+			ap_sb.content_margin_top = 5
+			ap_sb.content_margin_bottom = 5
+			act_pill.add_theme_stylebox_override("panel", ap_sb)
+			svb.add_child(act_pill)
+			var al_lbl := _mk_label(act_pill, "换上新伙伴" if i == 0 else "保留当前队", 14, Color.WHITE, true)
+			al_lbl.add_theme_color_override("font_shadow_color", Color("124c78") if i == 0 else Color("3b1270"))
+			al_lbl.add_theme_constant_override("shadow_offset_y", 2)
+			al_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		else:
 			var parts := opt_text.split("\n", false)
 			if _p5_on and parts.size() >= 2:
@@ -13510,6 +13620,7 @@ func _grant_vitamin(key: String, pe: float) -> void:
 	player.vit[acc] = float(player.vit.get(acc, 0.0)) + float(vd["per"]) * pe
 	player.vit_levels[key] = int(player.vit_levels.get(key, 0)) + 1
 	player.recalc()
+	_refresh_hud()
 
 func chests_positions() -> Array:
 	var out: Array = []
@@ -14375,6 +14486,16 @@ func combat_hit(target: Enemy, base: float, move_type: String, cls: String, atta
 		s *= player.crit_dmg
 		count_run_event("crits")
 		audio.hit_mega()  # cycle 16: crits prepend the mega jingle
+		# 暴击高光打击感：0.22s 节流并发4枚金星爆裂粒子与轻柔瞬态微震
+		if run_time - _crit_fx_t >= 0.22 and is_instance_valid(target):
+			_crit_fx_t = run_time
+			add_trauma(0.055, target.global_position)
+			_fx_textures()
+			for ck in range(4):
+				var ca := TAU * float(ck) / 4.0 + randf() * 0.4
+				_spawn_particle(target.global_position + Vector3(0, 0.85, 0),
+					Vector3(cos(ca) * 2.8, randf_range(2.2, 3.8), sin(ca) * 2.8),
+					0.32, 0.44, 0.07, Color(1.0, 0.90, 0.28, 0.95), _tex_star, true, 5.0, 1.3)
 	var fx: Dictionary = {}
 	if opts.has("knock"):
 		fx["knock"] = float(opts["knock"])
@@ -15711,6 +15832,14 @@ func _process(delta: float) -> void:
 	if _ring and state == "playing":
 		var p := 1.0 + sin(Time.get_ticks_msec() * 0.005) * 0.05
 		_ring.scale = Vector3.ONE * p
+	if _altar_beacon and _altar_beacon_mat:
+		var show_beacon := (not boss_spawned) and state == "playing"
+		_altar_beacon.visible = show_beacon
+		if show_beacon and player and is_instance_valid(player):
+			var dist_a := player.global_position.distance_to(altar_pos)
+			var far_k := clampf((dist_a - 7.0) / 14.0, 0.15, 1.0)
+			var pulse_a := 0.22 + sin(Time.get_ticks_msec() * 0.004) * 0.05
+			_altar_beacon_mat.albedo_color.a = pulse_a * far_k
 	if portal_node:
 		portal_node.rotation.y += delta * 1.4
 	# UI-mobile P1.4: the banner clock FREEZES while a modal

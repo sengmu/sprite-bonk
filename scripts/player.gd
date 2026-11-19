@@ -518,12 +518,16 @@ func has_move(key: String) -> bool:
 
 func learn_move(key: String) -> void:
 	moves.append({"key": key, "level": 1, "mult": 1.0, "cd_t": 0.0})
+	if world and world.has_method("_refresh_hud"):
+		world.call("_refresh_hud")
 
 func upgrade_move(key: String, pe: float) -> void:
 	for m in moves:
 		if String(m["key"]) == key:
 			m["level"] = int(m["level"]) + 1
 			m["mult"] = float(m["mult"]) + 0.10 * pe  # +10%/level x rarity (INFERRED amplitude, §2.3)
+			if world and world.has_method("_refresh_hud"):
+				world.call("_refresh_hud")
 			return
 
 func move_level(key: String) -> int:
