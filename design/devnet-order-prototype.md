@@ -35,3 +35,5 @@
 2026-11-20，Seeker 完成订单 `11aa984e0e2e3bbd56e030133daefcb3`，支付 1 枚 Devnet 测试代币。交易 `4y1zFiH4n2sksMcuK28A6k7D84yGJHVLs8JeRCy9MzH4mghqfy5R42u6PX74o4UdavgJQGnhuMpdeHmJnMQS1Nf5` 已最终确认且无链上错误。同一回执连续结算两次均返回 fulfilled，数据库中只有一条外观权益。手机查验显示「已到账，外观已发放」。装备界面暂未接入。
 
 钱包负责签名，服务端比对签名者、账户权限、付款指令和区块哈希，再向 Devnet 提交。仅允许两种合法计算预算指令，优先费上限 10,000 lamports。测试中发生过区块哈希过期，旧单先核对未到账再重新下单。
+
+装备续验：Seeker 登录原付款钱包后库存显示已解锁 1 件。点击「装备雷铃狐外观」后，首页预览切换成蓝紫配色。冷启动后外观继续生效，见 [实拍局部](ui-reference/compare/Devnet-fox-equipped.png)。这是调试版首页预览，战斗内显示尚未接入。
