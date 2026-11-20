@@ -457,9 +457,9 @@ private fun StageCycleButton(
 }
 
 @Composable
-private fun OpenSpritePedestalCanvas(
+internal fun OpenSpritePedestalCanvas(
     node: EvolutionNode,
-    onCycleForm: () -> Unit,
+    onCycleForm: (() -> Unit)?,
     modifier: Modifier = Modifier
 ) {
     val style = node.visualStyle
@@ -495,13 +495,13 @@ private fun OpenSpritePedestalCanvas(
         modifier = modifier
             .testTag("menu_live_hero_stage")
             .scale(bounceScale.value)
-            .clickable(
+            .then(if (onCycleForm == null) Modifier else Modifier.clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
             ) {
                 tapCount++
                 onCycleForm()
-            },
+            }),
         contentAlignment = Alignment.Center
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
