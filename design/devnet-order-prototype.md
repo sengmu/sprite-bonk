@@ -13,7 +13,7 @@
 
 ## 本地 HTTP API
 
-安装 Python 的 `cryptography`（本轮使用 50.0.0），运行 `python tools/devnet_api.py --db <db>`。仅监听 127.0.0.1:8765，供本机开发。正式部署需要 HTTPS、独立鉴权限流及运维方案。
+安装 `tools/devnet-requirements.txt` 的 Python 依赖后，运行 `python tools/devnet_api.py --db <db>`。仅监听 127.0.0.1:8765，供本机开发。正式部署需要 HTTPS、独立鉴权限流及运维方案。
 
 | POST 路由 | JSON 请求 |
 | --- | --- |
@@ -21,6 +21,7 @@
 | /auth/session | `{"nonce":"<服务端返回值>","signature":"<原文 UTF-8 的 Ed25519 签名，以 Base64 编码>"}` |
 | /orders/create | `{}` |
 | /orders/list | `{}` |
+| /orders/payment | `{"orderId":"<订单号>"}`，返回 Base64 未签名交易、最后有效区块高度及 lamports 手续费 |
 | /orders/settle | `{"orderId":"<订单号>","signature":"<链上交易签名>"}` |
 | /inventory | `{}` |
 

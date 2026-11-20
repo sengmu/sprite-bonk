@@ -14,6 +14,7 @@ from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
 from devnet_orders import create_order, open_database, settle
+from devnet_payment import prepare_payment
 
 BASE58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 AUTH_SCHEMA = """
@@ -22,6 +23,9 @@ CREATE TABLE IF NOT EXISTS challenges (
 );
 CREATE TABLE IF NOT EXISTS sessions (
     digest TEXT PRIMARY KEY, payer TEXT NOT NULL, expires INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS payment_attempts (
+    order_id TEXT PRIMARY KEY, payload TEXT NOT NULL, last_height INTEGER NOT NULL, fee INTEGER NOT NULL
 );
 """
 
@@ -114,6 +118,12 @@ class ApiHandler(BaseHTTPRequestHandler):
         if self.path == "/orders/list":
             rows = db.execute("SELECT * FROM orders WHERE payer=? ORDER BY created DESC, id DESC", (payer,))
             return 200, {"orders": [dict(row) for row in rows]}
+        if self.path == "/orders/payment":
+            order = db.execute("SELECT * FROM orders WHERE id=? AND payer=?",
+                               (body["orderId"], payer)).fetchone()
+            if order is None:
+                return 404, {"error": "Unknown order"}
+            return 200, prepare_payment(db, order)
         if self.path == "/orders/settle":
             order_id = body["orderId"]
             if db.execute("SELECT 1 FROM orders WHERE id=? AND payer=?", (order_id, payer)).fetchone() is None:

@@ -1,0 +1,2 @@
+cryptography==50.0.0
+solders==0.27.1
