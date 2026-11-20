@@ -128,7 +128,7 @@ fun SpriteBonkApp(
                 onOpenSettings = viewModel::openSettings,
                 walletLabel = if (walletState.isConnected) walletState.shortAddress() else "连接钱包",
                 onOpenWallet = { showWalletDialog = true },
-                shopEntry = { com.example.wallet.DevnetShopEntry(walletActivityResultSender) }
+                shopEntry = { com.example.wallet.DevnetShopEntry(walletActivityResultSender, meta.profile.selectedBiomeId) }
             )
 
             AppScreen.ROAM -> SpriteRoamScreen(

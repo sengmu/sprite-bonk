@@ -17,6 +17,10 @@ import com.solana.mobilewalletadapter.clientlib.ConnectionIdentity
 import com.solana.mobilewalletadapter.clientlib.MobileWalletAdapter
 import com.solana.mobilewalletadapter.clientlib.Solana
 import com.solana.mobilewalletadapter.clientlib.TransactionResult
+import com.example.ui.theme.CreamSurface
+import com.example.ui.theme.EspressoInk
+import com.example.ui.theme.HudDimText
+import com.example.ui.theme.HudInkDeep
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,10 +43,10 @@ internal fun devnetFoxSkinEquipped(): Boolean {
 }
 
 @Composable
-internal fun DevnetShopEntry(sender: ActivityResultSender) {
+internal fun DevnetShopEntry(sender: ActivityResultSender, biomeId: String) {
     var opened by rememberSaveable { mutableStateOf(false) }
-    TextButton(onClick = { opened = true }) { Text("商店", color = androidx.compose.ui.graphics.Color(0xFF241B35)) }
-    if (opened) DevnetCatalog(onClose = { opened = false }) { back ->
+    TextButton(onClick = { opened = true }) { Text("商店", color = EspressoInk) }
+    if (opened) DevnetCatalog(biomeId, onClose = { opened = false }) { back ->
         DevnetShopDialog(sender, back)
     }
 }
@@ -114,6 +118,9 @@ private fun DevnetShopDialog(sender: ActivityResultSender, onClose: () -> Unit) 
 
     AlertDialog(
         onDismissRequest = { if (!busy) onClose() },
+        containerColor = HudInkDeep,
+        titleContentColor = CreamSurface,
+        textContentColor = HudDimText,
         title = { Text("购买雷铃狐外观") },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
@@ -155,7 +162,7 @@ private fun DevnetShopDialog(sender: ActivityResultSender, onClose: () -> Unit) 
                             is TransactionResult.NoWalletFound -> status = "未找到兼容钱包"
                         }
                     }
-                }) { Text(if (token == null) "连接钱包" else "切换钱包") }
+                }) { Text(if (token == null) "连接钱包" else "切换钱包", color = CreamSurface) }
                 token?.let { session ->
                     TextButton(enabled = !busy && order == null && !ownsFox, onClick = {
                         runAction {
@@ -169,14 +176,14 @@ private fun DevnetShopDialog(sender: ActivityResultSender, onClose: () -> Unit) 
                             selectOrder(pending ?: client.createOrder(session))
                             status = if (pending == null) "测试订单已创建" else "已恢复原订单"
                         }
-                    }) { Text("继续购买") }
+                    }) { Text("继续购买", color = CreamSurface) }
                     TextButton(enabled = !busy, onClick = {
                         runAction {
                             val orders = client.orders(session)
                             val count = refreshInventory(session, checkNotNull(walletAddress))
                             orderSummary = "订单 ${orders.length()} 笔 · 已解锁 $count 件"
                         }
-                    }) { Text("查看订单和库存") }
+                    }) { Text("查看订单和库存", color = CreamSurface) }
                     if (ownsFox) {
                         val equipped = devnetFoxSkinEquipped()
                         Text("已拥有 · 雷铃狐外观")
@@ -186,7 +193,7 @@ private fun DevnetShopDialog(sender: ActivityResultSender, onClose: () -> Unit) 
                                 .putString("equipped_fox_wallet", if (next) walletAddress else null).apply()
                             equippedFox.value = next
                             status = if (next) "已装备，回首页选择雷铃狐查看" else "已恢复默认外观"
-                        }) { Text(if (equipped) "恢复默认外观" else "装备雷铃狐外观") }
+                        }) { Text(if (equipped) "恢复默认外观" else "装备雷铃狐外观", color = CreamSurface) }
                     }
                     order?.let { selected ->
                         val id = selected.getString("id")
@@ -195,7 +202,7 @@ private fun DevnetShopDialog(sender: ActivityResultSender, onClose: () -> Unit) 
                         if (signature == null) {
                             TextButton(enabled = !busy && !paymentRequested, onClick = {
                                 runAction { quote = client.preparePayment(session, id) }
-                            }) { Text("查看付款金额和费用") }
+                            }) { Text("查看付款金额和费用", color = CreamSurface) }
                             quote?.let { prepared ->
                                 Text("支付 ${displayUnits(selected.getLong("amount"), prepared.getInt("tokenDecimals"))} 枚测试代币")
                                 Text("预计网络费 ${displayUnits(prepared.getLong("feeLamports"), 9)} Devnet SOL")
@@ -229,7 +236,7 @@ private fun DevnetShopDialog(sender: ActivityResultSender, onClose: () -> Unit) 
                                             is TransactionResult.NoWalletFound -> status = "未找到兼容钱包"
                                         }
                                     }
-                                }) { Text("打开钱包确认付款") }
+                                }) { Text("打开钱包确认付款", color = CreamSurface) }
                             }
                             if (paymentRequested) {
                                 Text("结果待核对，请先查验原订单。")
@@ -249,7 +256,7 @@ private fun DevnetShopDialog(sender: ActivityResultSender, onClose: () -> Unit) 
                                             else -> "暂未找到已确认的付款，请稍后再次查验"
                                         }
                                     }
-                                }) { Text("查找原订单付款") }
+                                }) { Text("查找原订单付款", color = CreamSurface) }
                             }
                         }
                         signature?.let { saved ->
@@ -264,7 +271,7 @@ private fun DevnetShopDialog(sender: ActivityResultSender, onClose: () -> Unit) 
                                         "链上确认中，请稍后查验"
                                     }
                                 }
-                            }) { Text("查验到账") }
+                            }) { Text("查验到账", color = CreamSurface) }
                         }
                     }
                 }

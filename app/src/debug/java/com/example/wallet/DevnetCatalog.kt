@@ -1,6 +1,10 @@
 package com.example.wallet
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -28,7 +32,16 @@ import androidx.core.view.WindowInsetsControllerCompat
 import android.view.WindowManager
 import com.example.R
 import com.example.game.evolution.EvolutionRegistry
+import com.example.ui.components.ChunkyButton
+import com.example.ui.components.ScreenScenicBackdrop
 import com.example.ui.components.withFoxCosmetic
+import com.example.ui.theme.CreamSurface
+import com.example.ui.theme.EspressoDark
+import com.example.ui.theme.GoldAccent
+import com.example.ui.theme.HudDimText
+import com.example.ui.theme.HudInkDark
+import com.example.ui.theme.HudInkDeep
+import com.example.ui.theme.SkyBlue
 import com.example.ui.screens.OpenSpritePedestalCanvas
 
 private data class ShopCard(val name: String, val category: String, val icon: String, val available: Boolean = false, val portrait: Int? = null)
@@ -44,7 +57,7 @@ private val shopCards = listOf(
 
 @Composable
 private fun ProductArt(item: ShopCard, modifier: Modifier) {
-    Box(modifier.clip(RoundedCornerShape(10.dp)).background(Color(0xFF251B38)), contentAlignment = Alignment.Center) {
+    Box(modifier.clip(RoundedCornerShape(10.dp)).background(HudInkDeep), contentAlignment = Alignment.Center) {
         val portrait = item.portrait
         when {
             item.available -> {
@@ -55,7 +68,7 @@ private fun ProductArt(item: ShopCard, modifier: Modifier) {
                 OpenSpritePedestalCanvas(fox, null, Modifier.fillMaxSize())
             }
             portrait != null -> Image(painterResource(portrait), item.name, Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
-            else -> Text(item.icon, style = MaterialTheme.typography.headlineMedium, color = Color(0xFFBBA5FF))
+            else -> Text(item.icon, style = MaterialTheme.typography.headlineMedium, color = GoldAccent)
         }
     }
 }
@@ -69,12 +82,12 @@ private fun ProductLabels(item: ShopCard) {
             item.name == "创世头像框" -> "赛季奖励预览"
             else -> "预览"
         }
-        Text(status, color = Color(0xFFE0CAFF), style = MaterialTheme.typography.bodySmall)
+        Text(status, color = HudDimText, style = MaterialTheme.typography.bodySmall)
     }
 }
 
 @Composable
-internal fun DevnetCatalog(onClose: () -> Unit, checkout: @Composable (() -> Unit) -> Unit) {
+internal fun DevnetCatalog(biomeId: String, onClose: () -> Unit, checkout: @Composable (() -> Unit) -> Unit) {
     var category by rememberSaveable { mutableStateOf("全部") }
     var selected by rememberSaveable { mutableStateOf<String?>(null) }
     val current = shopCards.firstOrNull { it.name == selected }
@@ -97,44 +110,57 @@ internal fun DevnetCatalog(onClose: () -> Unit, checkout: @Composable (() -> Uni
                 hide(WindowInsetsCompat.Type.systemBars())
             }
         }
-        BoxWithConstraints(
-            Modifier.fillMaxSize()
-                .background(Color(0xFF20172F))
-                .windowInsetsPadding(WindowInsets.displayCutout)
-                .padding(12.dp)
-        ) {
-            val wide = maxWidth >= 660.dp
-            val columns = if (wide) 3 else if (maxWidth >= 340.dp) 2 else 1
-            Column(Modifier.fillMaxSize().padding(12.dp)) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("商店 · DEVNET", color = Color(0xFFFFE9BC), style = MaterialTheme.typography.titleLarge)
-                    TextButton(onClick = onClose) { Text("返回", color = Color.White) }
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    listOf("全部", "外观", "特效", "头像框").forEach { name ->
-                        FilterChip(selected = category == name, onClick = { category = name }, label = { Text(name) }, colors = FilterChipDefaults.filterChipColors(labelColor = Color(0xFFE0CAFF), selectedLabelColor = Color(0xFF302342), selectedContainerColor = Color(0xFFFFE9BC)))
+        Box(Modifier.fillMaxSize().background(HudInkDeep)) {
+            ScreenScenicBackdrop(biomeId, SkyBlue)
+            BoxWithConstraints(
+                Modifier.fillMaxSize()
+                    .windowInsetsPadding(WindowInsets.displayCutout)
+                    .padding(12.dp)
+            ) {
+                val wide = maxWidth >= 660.dp
+                val columns = if (wide) 3 else if (maxWidth >= 340.dp) 2 else 1
+                Column(Modifier.fillMaxSize().padding(12.dp)) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(
+                            onClick = onClose,
+                            modifier = Modifier.background(HudInkDark, CircleShape)
+                                .border(1.dp, CreamSurface.copy(alpha = 0.24f), CircleShape)
+                        ) {
+                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "返回", tint = CreamSurface)
+                        }
+                        Column {
+                            Text("商店", color = CreamSurface, style = MaterialTheme.typography.titleLarge)
+                            Text("DEVNET 测试网", color = HudDimText, style = MaterialTheme.typography.labelSmall)
+                        }
                     }
-                }
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(columns),
-                    modifier = Modifier.weight(1f),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(shopCards.filter { category == "全部" || it.category == category }, key = { it.name }) { item ->
-                        val cardModifier = Modifier.fillMaxWidth()
-                            .background(Color(0xFF35274A), RoundedCornerShape(14.dp))
-                            .clickable { selected = item.name }
-                            .padding(8.dp)
-                        if (wide) {
-                            Row(cardModifier, horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                                ProductArt(item, Modifier.size(76.dp))
-                                ProductLabels(item)
-                            }
-                        } else {
-                            Column(cardModifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                ProductArt(item, Modifier.fillMaxWidth().height(88.dp))
-                                ProductLabels(item)
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        listOf("全部", "外观", "特效", "头像框").forEach { name ->
+                            FilterChip(selected = category == name, onClick = { category = name }, label = { Text(name) }, colors = FilterChipDefaults.filterChipColors(labelColor = HudDimText, containerColor = HudInkDark, selectedLabelColor = EspressoDark, selectedContainerColor = GoldAccent))
+                        }
+                    }
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(columns),
+                        modifier = Modifier.weight(1f),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(shopCards.filter { category == "全部" || it.category == category }, key = { it.name }) { item ->
+                            val cardModifier = Modifier.fillMaxWidth()
+                                .clip(MaterialTheme.shapes.medium)
+                                .background(HudInkDark.copy(alpha = 0.94f))
+                                .border(1.dp, CreamSurface.copy(alpha = 0.24f), MaterialTheme.shapes.medium)
+                                .clickable { selected = item.name }
+                                .padding(8.dp)
+                            if (wide) {
+                                Row(cardModifier, horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    ProductArt(item, Modifier.size(76.dp))
+                                    ProductLabels(item)
+                                }
+                            } else {
+                                Column(cardModifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    ProductArt(item, Modifier.fillMaxWidth().height(88.dp))
+                                    ProductLabels(item)
+                                }
                             }
                         }
                     }
@@ -145,6 +171,9 @@ internal fun DevnetCatalog(onClose: () -> Unit, checkout: @Composable (() -> Uni
     if (current != null) {
         AlertDialog(
             onDismissRequest = { selected = null },
+            containerColor = HudInkDeep,
+            titleContentColor = CreamSurface,
+            textContentColor = HudDimText,
             title = { Text(current.name) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -157,11 +186,11 @@ internal fun DevnetCatalog(onClose: () -> Unit, checkout: @Composable (() -> Uni
                 }
             },
             confirmButton = {
-                if (current.available) Button(onClick = { checkoutOpen = true }) { Text("前往购买") }
-                else TextButton(onClick = { selected = null }) { Text("返回商店") }
+                if (current.available) ChunkyButton("前往购买", onClick = { checkoutOpen = true }, height = 44.dp)
+                else TextButton(onClick = { selected = null }) { Text("返回商店", color = CreamSurface) }
             },
             dismissButton = {
-                if (current.available) TextButton(onClick = { selected = null }) { Text("返回商店") }
+                if (current.available) TextButton(onClick = { selected = null }) { Text("返回商店", color = CreamSurface) }
             }
         )
     }
