@@ -213,6 +213,7 @@ fun SpriteBonkApp(
                     Toast.makeText(context, "地址已复制", Toast.LENGTH_SHORT).show()
                 },
                 onRetryBalance = viewModel::refreshWalletBalance,
+                extraContent = { com.example.wallet.DevnetShopEntry(walletActivityResultSender) },
                 onDismiss = { showWalletDialog = false }
             )
         }

@@ -47,7 +47,8 @@ fun WalletDialog(
     onDisconnect: () -> Unit,
     onCopyAddress: (String) -> Unit,
     onRetryBalance: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    extraContent: @Composable () -> Unit = {}
 ) {
     val copyValue = state.address
 
@@ -73,6 +74,7 @@ fun WalletDialog(
                 modifier = Modifier.widthIn(max = 520.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                extraContent()
                 if (state.isConnected) {
                     Text("钱包地址", color = HudDimText, fontSize = 12.sp)
                     Text(state.address, color = CreamSurface, fontSize = 14.sp)
