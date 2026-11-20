@@ -38,17 +38,37 @@ def open_database(path):
             payer TEXT NOT NULL, product TEXT NOT NULL, order_id TEXT NOT NULL,
             PRIMARY KEY (payer, product)
         );
+        CREATE TABLE IF NOT EXISTS closed_unpaid_orders (order_id TEXT PRIMARY KEY);
+        CREATE TABLE IF NOT EXISTS payment_attempts (
+            order_id TEXT PRIMARY KEY, payload TEXT NOT NULL, last_height INTEGER NOT NULL, fee INTEGER NOT NULL
+        );
     """)
     return db
 
 
 def create_order(db, payer):
-    if db.execute("SELECT 1 FROM inventory WHERE payer=? AND product=?", (payer, PRODUCT)).fetchone():
-        raise ValueError("This wallet already owns the item")
+    def existing_order():
+        if db.execute("SELECT 1 FROM inventory WHERE payer=? AND product=?", (payer, PRODUCT)).fetchone():
+            raise ValueError("This wallet already owns the item")
+        return db.execute("""
+            SELECT o.* FROM orders o
+            WHERE o.payer=? AND o.product=? AND o.signature IS NULL
+            AND NOT EXISTS (SELECT 1 FROM closed_unpaid_orders c WHERE c.order_id=o.id)
+            AND (o.expires>? OR EXISTS (SELECT 1 FROM payment_attempts p WHERE p.order_id=o.id))
+            ORDER BY o.created DESC, o.rowid DESC LIMIT 1
+        """, (payer, PRODUCT, int(time.time()))).fetchone()
+
+    existing = existing_order()
+    if existing is not None:
+        return dict(existing)
     mint, destination, amount = validate_shop_config()
     now = int(time.time())
     order = (secrets.token_hex(16), payer, PRODUCT, mint, destination, amount, now, now + 900)
     with db:
+        db.execute("BEGIN IMMEDIATE")
+        existing = existing_order()
+        if existing is not None:
+            return dict(existing)
         db.execute("INSERT INTO orders VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL)", order)
     return dict(db.execute("SELECT * FROM orders WHERE id=?", (order[0],)).fetchone())
 

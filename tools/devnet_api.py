@@ -24,10 +24,6 @@ CREATE TABLE IF NOT EXISTS challenges (
 CREATE TABLE IF NOT EXISTS sessions (
     digest TEXT PRIMARY KEY, payer TEXT NOT NULL, expires INTEGER NOT NULL
 );
-CREATE TABLE IF NOT EXISTS payment_attempts (
-    order_id TEXT PRIMARY KEY, payload TEXT NOT NULL, last_height INTEGER NOT NULL, fee INTEGER NOT NULL
-);
-CREATE TABLE IF NOT EXISTS closed_unpaid_orders (order_id TEXT PRIMARY KEY);
 """
 
 
@@ -119,7 +115,10 @@ class ApiHandler(BaseHTTPRequestHandler):
         if self.path == "/orders/list":
             rows = db.execute("""SELECT orders.*, EXISTS(
                 SELECT 1 FROM closed_unpaid_orders WHERE order_id=orders.id
-                ) AS closed_unpaid FROM orders WHERE payer=? ORDER BY created DESC, id DESC""", (payer,))
+                ) AS closed_unpaid, (orders.expires <= ? AND NOT EXISTS(
+                SELECT 1 FROM payment_attempts WHERE order_id=orders.id
+                )) AS expired_without_payment
+                FROM orders WHERE payer=? ORDER BY created DESC, id DESC""", (now, payer))
             return 200, {"orders": [dict(row) for row in rows]}
         if self.path == "/orders/payment":
             order = db.execute("SELECT * FROM orders WHERE id=? AND payer=?",

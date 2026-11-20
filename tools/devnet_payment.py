@@ -175,6 +175,9 @@ def prepare_payment(db, order):
         raise ValueError("当前钱包没有足够的 Devnet SOL 支付手续费")
     payload = base64.b64encode(bytes(Transaction.new_unsigned(message))).decode("ascii")
     with db:
+        db.execute("BEGIN IMMEDIATE")
+        if order["expires"] <= int(time.time()):
+            raise ValueError("订单已过期，请重新下单")
         db.execute("INSERT OR IGNORE INTO payment_attempts VALUES (?, ?, ?, ?)",
                    (order["id"], payload, block["lastValidBlockHeight"], fee))
     return response(existing())

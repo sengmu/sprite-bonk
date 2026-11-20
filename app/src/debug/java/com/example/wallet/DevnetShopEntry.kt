@@ -156,7 +156,10 @@ private fun DevnetShopDialog(sender: ActivityResultSender, onClose: () -> Unit) 
                             val orders = client.orders(session)
                             val pending = (0 until orders.length()).asSequence()
                                 .map { orders.getJSONObject(it) }
-                                .firstOrNull { it.isNull("signature") && it.optInt("closed_unpaid") == 0 }
+                                .firstOrNull {
+                                    it.isNull("signature") && it.optInt("closed_unpaid") == 0 &&
+                                        it.optInt("expired_without_payment") == 0
+                                }
                             selectOrder(pending ?: client.createOrder(session))
                             status = if (pending == null) "测试订单已创建" else "已恢复原订单"
                         }
