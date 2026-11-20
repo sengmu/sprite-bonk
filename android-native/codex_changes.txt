@@ -1,0 +1,1856 @@
+diff --git a/app/src/debug/AndroidManifest.xml b/app/src/debug/AndroidManifest.xml
+new file mode 100644
+index 0000000000000000000000000000000000000000..378659ce0c6f9f23eef864a4ea8f4afbe2e42853
+--- /dev/null
++++ b/app/src/debug/AndroidManifest.xml
+@@ -0,0 +1,4 @@
++<?xml version="1.0" encoding="utf-8"?>
++<manifest xmlns:android="http://schemas.android.com/apk/res/android">
++    <application android:networkSecurityConfig="@xml/devnet_debug_network" />
++</manifest>
+diff --git a/app/src/debug/java/com/example/wallet/DevnetCatalog.kt b/app/src/debug/java/com/example/wallet/DevnetCatalog.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..21ce24663ea0592cc01a0e7a43e5dab30aa82272
+--- /dev/null
++++ b/app/src/debug/java/com/example/wallet/DevnetCatalog.kt
+@@ -0,0 +1,197 @@
++package com.example.wallet
++
++import androidx.compose.foundation.background
++import androidx.compose.foundation.border
++import androidx.compose.foundation.shape.CircleShape
++import androidx.compose.material.icons.Icons
++import androidx.compose.material.icons.automirrored.rounded.ArrowBack
++import androidx.compose.foundation.Image
++import androidx.compose.foundation.clickable
++import androidx.compose.foundation.layout.*
++import androidx.compose.foundation.lazy.grid.GridCells
++import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
++import androidx.compose.foundation.lazy.grid.items
++import androidx.compose.foundation.shape.RoundedCornerShape
++import androidx.compose.material3.*
++import androidx.compose.runtime.*
++import androidx.compose.runtime.saveable.rememberSaveable
++import androidx.compose.ui.Modifier
++import androidx.compose.ui.Alignment
++import androidx.compose.ui.draw.clip
++import androidx.compose.ui.graphics.Color
++import androidx.compose.ui.layout.ContentScale
++import androidx.compose.ui.res.painterResource
++import androidx.compose.ui.text.font.FontWeight
++import androidx.compose.ui.unit.dp
++import androidx.compose.ui.window.Dialog
++import androidx.compose.ui.window.DialogProperties
++import androidx.compose.ui.window.DialogWindowProvider
++import androidx.compose.ui.platform.LocalView
++import androidx.core.view.WindowInsetsCompat
++import androidx.core.view.WindowInsetsControllerCompat
++import android.view.WindowManager
++import com.example.R
++import com.example.game.evolution.EvolutionRegistry
++import com.example.ui.components.ChunkyButton
++import com.example.ui.components.ScreenScenicBackdrop
++import com.example.ui.components.withFoxCosmetic
++import com.example.ui.theme.CreamSurface
++import com.example.ui.theme.EspressoDark
++import com.example.ui.theme.GoldAccent
++import com.example.ui.theme.HudDimText
++import com.example.ui.theme.HudInkDark
++import com.example.ui.theme.HudInkDeep
++import com.example.ui.theme.SkyBlue
++import com.example.ui.screens.OpenSpritePedestalCanvas
++
++private data class ShopCard(val name: String, val category: String, val icon: String, val available: Boolean = false, val portrait: Int? = null)
++
++private val shopCards = listOf(
++    ShopCard("蓝紫雷铃狐", "外观", "⚡", true),
++    ShopCard("青绒林语", "外观", "🌿", portrait = R.drawable.img_starter_stump),
++    ShopCard("赤焰伙伴", "外观", "🔥", portrait = R.drawable.img_starter_char),
++    ShopCard("星光出场", "特效", "✦"),
++    ShopCard("森林名牌", "头像框", "❖"),
++    ShopCard("创世头像框", "头像框", "♛")
++)
++
++@Composable
++private fun ProductArt(item: ShopCard, modifier: Modifier) {
++    Box(modifier.clip(RoundedCornerShape(10.dp)).background(HudInkDeep), contentAlignment = Alignment.Center) {
++        val portrait = item.portrait
++        when {
++            item.available -> {
++                val fox = remember {
++                    val base = EvolutionRegistry.baseNodeForStarter("spark")
++                    base.copy(visualStyle = base.visualStyle.withFoxCosmetic(true))
++                }
++                OpenSpritePedestalCanvas(fox, null, Modifier.fillMaxSize())
++            }
++            portrait != null -> Image(painterResource(portrait), item.name, Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
++            else -> Text(item.icon, style = MaterialTheme.typography.headlineMedium, color = GoldAccent)
++        }
++    }
++}
++
++@Composable
++private fun ProductLabels(item: ShopCard) {
++    Column {
++        Text(item.name, fontWeight = FontWeight.Bold, color = Color.White)
++        val status = when {
++            item.available -> "1 枚测试代币"
++            item.name == "创世头像框" -> "赛季奖励预览"
++            else -> "预览"
++        }
++        Text(status, color = HudDimText, style = MaterialTheme.typography.bodySmall)
++    }
++}
++
++@Composable
++internal fun DevnetCatalog(biomeId: String, onClose: () -> Unit, checkout: @Composable (() -> Unit) -> Unit) {
++    var category by rememberSaveable { mutableStateOf("全部") }
++    var selected by rememberSaveable { mutableStateOf<String?>(null) }
++    val current = shopCards.firstOrNull { it.name == selected }
++    var checkoutOpen by rememberSaveable { mutableStateOf(false) }
++    if (checkoutOpen && current?.available == true) {
++        checkout { checkoutOpen = false }
++        return
++    }
++    if (current == null) Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
++        val view = LocalView.current
++        SideEffect {
++            val window = (view.parent as DialogWindowProvider).window
++            if (android.os.Build.VERSION.SDK_INT >= 28) {
++                window.attributes = window.attributes.apply {
++                    layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
++                }
++            }
++            WindowInsetsControllerCompat(window, window.decorView).apply {
++                systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
++                hide(WindowInsetsCompat.Type.systemBars())
++            }
++        }
++        Box(Modifier.fillMaxSize().background(HudInkDeep)) {
++            ScreenScenicBackdrop(biomeId, SkyBlue)
++            BoxWithConstraints(
++                Modifier.fillMaxSize()
++                    .windowInsetsPadding(WindowInsets.displayCutout)
++                    .padding(12.dp)
++            ) {
++                val wide = maxWidth >= 660.dp
++                val columns = if (wide) 3 else if (maxWidth >= 340.dp) 2 else 1
++                Column(Modifier.fillMaxSize().padding(12.dp)) {
++                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
++                        IconButton(
++                            onClick = onClose,
++                            modifier = Modifier.background(HudInkDark, CircleShape)
++                                .border(1.dp, CreamSurface.copy(alpha = 0.24f), CircleShape)
++                        ) {
++                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "返回", tint = CreamSurface)
++                        }
++                        Column {
++                            Text("商店", color = CreamSurface, style = MaterialTheme.typography.titleLarge)
++                            Text("DEVNET 测试网", color = HudDimText, style = MaterialTheme.typography.labelSmall)
++                        }
++                    }
++                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
++                        listOf("全部", "外观", "特效", "头像框").forEach { name ->
++                            FilterChip(selected = category == name, onClick = { category = name }, label = { Text(name) }, colors = FilterChipDefaults.filterChipColors(labelColor = HudDimText, containerColor = HudInkDark, selectedLabelColor = EspressoDark, selectedContainerColor = GoldAccent))
++                        }
++                    }
++                    LazyVerticalGrid(
++                        columns = GridCells.Fixed(columns),
++                        modifier = Modifier.weight(1f),
++                        horizontalArrangement = Arrangement.spacedBy(8.dp),
++                        verticalArrangement = Arrangement.spacedBy(8.dp)
++                    ) {
++                        items(shopCards.filter { category == "全部" || it.category == category }, key = { it.name }) { item ->
++                            val cardModifier = Modifier.fillMaxWidth()
++                                .clip(MaterialTheme.shapes.medium)
++                                .background(HudInkDark.copy(alpha = 0.94f))
++                                .border(1.dp, CreamSurface.copy(alpha = 0.24f), MaterialTheme.shapes.medium)
++                                .clickable { selected = item.name }
++                                .padding(8.dp)
++                            if (wide) {
++                                Row(cardModifier, horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
++                                    ProductArt(item, Modifier.size(76.dp))
++                                    ProductLabels(item)
++                                }
++                            } else {
++                                Column(cardModifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
++                                    ProductArt(item, Modifier.fillMaxWidth().height(88.dp))
++                                    ProductLabels(item)
++                                }
++                            }
++                        }
++                    }
++                }
++            }
++        }
++    }
++    if (current != null) {
++        AlertDialog(
++            onDismissRequest = { selected = null },
++            containerColor = HudInkDeep,
++            titleContentColor = CreamSurface,
++            textContentColor = HudDimText,
++            title = { Text(current.name) },
++            text = {
++                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
++                    ProductArt(current, Modifier.fillMaxWidth().height(110.dp))
++                    Text(when {
++                        current.available -> "1 枚测试代币 · Devnet"
++                        current.name == "创世头像框" -> "创世赛季奖励预览"
++                        else -> "商品预览，暂未开放购买"
++                    })
++                }
++            },
++            confirmButton = {
++                if (current.available) ChunkyButton("前往购买", onClick = { checkoutOpen = true }, height = 44.dp)
++                else TextButton(onClick = { selected = null }) { Text("返回商店", color = CreamSurface) }
++            },
++            dismissButton = {
++                if (current.available) TextButton(onClick = { selected = null }) { Text("返回商店", color = CreamSurface) }
++            }
++        )
++    }
++}
+diff --git a/app/src/debug/java/com/example/wallet/DevnetShopClient.kt b/app/src/debug/java/com/example/wallet/DevnetShopClient.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..63e10dc3f81b8100ea87748a4576090985fb8076
+--- /dev/null
++++ b/app/src/debug/java/com/example/wallet/DevnetShopClient.kt
+@@ -0,0 +1,73 @@
++package com.example.wallet
++
++import android.util.Base64
++import kotlinx.coroutines.Dispatchers
++import kotlinx.coroutines.withContext
++import org.json.JSONArray
++import org.json.JSONObject
++import java.io.IOException
++import java.net.HttpURLConnection
++import java.net.URL
++
++/** Transport for the loopback Devnet API exposed to the device by adb reverse. */
++internal class DevnetShopClient {
++    data class Challenge(val nonce: String, val message: String)
++
++    suspend fun challenge(wallet: String): Challenge {
++        val response = post("/auth/challenge", JSONObject().put("wallet", wallet))
++        return Challenge(response.getString("nonce"), response.getString("message"))
++    }
++
++    suspend fun authenticate(challenge: Challenge, signature: ByteArray): String =
++        post(
++            "/auth/session",
++            JSONObject().put("nonce", challenge.nonce)
++                .put("signature", Base64.encodeToString(signature, Base64.NO_WRAP))
++        ).getString("token")
++
++    suspend fun createOrder(token: String): JSONObject = post("/orders/create", token = token)
++
++    suspend fun orders(token: String): JSONArray =
++        post("/orders/list", token = token).getJSONArray("orders")
++
++    suspend fun preparePayment(token: String, orderId: String): JSONObject =
++        post("/orders/payment", JSONObject().put("orderId", orderId), token)
++
++    suspend fun recover(token: String, orderId: String): JSONObject =
++        post("/orders/recover", JSONObject().put("orderId", orderId), token)
++
++    suspend fun broadcast(token: String, orderId: String, signedTransaction: String): String =
++        post("/orders/broadcast", JSONObject().put("orderId", orderId)
++            .put("transaction", signedTransaction), token).getString("signature")
++
++    suspend fun settle(token: String, orderId: String, signature: String): JSONObject =
++        post("/orders/settle", JSONObject().put("orderId", orderId).put("signature", signature), token)
++
++    suspend fun inventory(token: String): JSONArray =
++        post("/inventory", token = token).getJSONArray("items")
++
++    private suspend fun post(path: String, body: JSONObject = JSONObject(), token: String? = null): JSONObject =
++        withContext(Dispatchers.IO) {
++            val connection = (URL("http://localhost:8765$path").openConnection() as HttpURLConnection).apply {
++                requestMethod = "POST"
++                instanceFollowRedirects = false
++                connectTimeout = 5_000
++                readTimeout = 20_000
++                doOutput = true
++                setRequestProperty("Content-Type", "application/json; charset=utf-8")
++                if (token != null) setRequestProperty("Authorization", "Bearer $token")
++            }
++            try {
++                connection.outputStream.use { it.write(body.toString().toByteArray(Charsets.UTF_8)) }
++                val status = connection.responseCode
++                if (status !in 200..299) {
++                    val detail = connection.errorStream?.bufferedReader()?.use { it.readText() }
++                    val message = detail?.let { runCatching { JSONObject(it).optString("error") }.getOrNull() }
++                    throw IOException(message?.takeIf(String::isNotBlank) ?: "Devnet shop HTTP $status")
++                }
++                connection.inputStream.bufferedReader().use { JSONObject(it.readText()) }
++            } finally {
++                connection.disconnect()
++            }
++        }
++}
+diff --git a/app/src/debug/java/com/example/wallet/DevnetShopEntry.kt b/app/src/debug/java/com/example/wallet/DevnetShopEntry.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..aaa05b68331c864cf06019c0ae48ada25881c846
+--- /dev/null
++++ b/app/src/debug/java/com/example/wallet/DevnetShopEntry.kt
+@@ -0,0 +1,285 @@
++package com.example.wallet
++
++import android.net.Uri
++import android.util.Base64
++import androidx.compose.foundation.layout.Column
++import androidx.compose.foundation.rememberScrollState
++import androidx.compose.foundation.verticalScroll
++import androidx.compose.material3.AlertDialog
++import androidx.compose.material3.Text
++import androidx.compose.material3.TextButton
++import androidx.compose.runtime.*
++import androidx.compose.runtime.saveable.rememberSaveable
++import androidx.compose.ui.Modifier
++import androidx.compose.ui.platform.LocalContext
++import com.solana.mobilewalletadapter.clientlib.ActivityResultSender
++import com.solana.mobilewalletadapter.clientlib.ConnectionIdentity
++import com.solana.mobilewalletadapter.clientlib.MobileWalletAdapter
++import com.solana.mobilewalletadapter.clientlib.Solana
++import com.solana.mobilewalletadapter.clientlib.TransactionResult
++import com.example.ui.theme.CreamSurface
++import com.example.ui.theme.EspressoInk
++import com.example.ui.theme.HudDimText
++import com.example.ui.theme.HudInkDeep
++import kotlinx.coroutines.CancellationException
++import kotlinx.coroutines.launch
++import kotlinx.coroutines.flow.MutableStateFlow
++import java.math.BigDecimal
++
++private fun displayUnits(amount: Long, decimals: Int): String =
++    BigDecimal.valueOf(amount, decimals).stripTrailingZeros().toPlainString()
++
++private const val FOX_SKIN = "railing-fox-shop-skin"
++private val equippedFox = MutableStateFlow<Boolean?>(null)
++
++@Composable
++internal fun devnetFoxSkinEquipped(): Boolean {
++    val context = LocalContext.current
++    val saved = remember(context) {
++        context.getSharedPreferences("devnet_shop_receipts", android.content.Context.MODE_PRIVATE)
++            .getBoolean("equipped_fox_skin", false)
++    }
++    return equippedFox.collectAsState().value ?: saved
++}
++
++@Composable
++internal fun DevnetShopEntry(sender: ActivityResultSender, biomeId: String) {
++    var opened by rememberSaveable { mutableStateOf(false) }
++    TextButton(onClick = { opened = true }) { Text("商店", color = EspressoInk) }
++    if (opened) DevnetCatalog(biomeId, onClose = { opened = false }) { back ->
++        DevnetShopDialog(sender, back)
++    }
++}
++
++@Composable
++private fun DevnetShopDialog(sender: ActivityResultSender, onClose: () -> Unit) {
++    val client = remember { DevnetShopClient() }
++    val adapter = remember {
++        MobileWalletAdapter(
++            ConnectionIdentity(
++                Uri.parse("https://github.com/sengmu/sprite-bonk"),
++                Uri.parse("icon.png"),
++                "Sprite Bonk Devnet"
++            )
++        ).apply { blockchain = Solana.Devnet }
++    }
++    val scope = rememberCoroutineScope()
++    var token by remember { mutableStateOf<String?>(null) }
++    var busy by remember { mutableStateOf(false) }
++    var status by remember { mutableStateOf("") }
++    var orderSummary by remember { mutableStateOf("") }
++    var order by remember { mutableStateOf<org.json.JSONObject?>(null) }
++    var quote by remember { mutableStateOf<org.json.JSONObject?>(null) }
++    var signature by remember { mutableStateOf<String?>(null) }
++    var paymentRequested by remember { mutableStateOf(false) }
++    var ownsFox by remember { mutableStateOf(false) }
++    var walletAddress by remember { mutableStateOf<String?>(null) }
++    val context = LocalContext.current
++    val receipts = remember(context) {
++        context.getSharedPreferences("devnet_shop_receipts", android.content.Context.MODE_PRIVATE)
++    }
++
++    suspend fun refreshInventory(session: String, payer: String): Int {
++        val items = client.inventory(session)
++        ownsFox = (0 until items.length()).any { items.getJSONObject(it).optString("product") == FOX_SKIN }
++        val owner = receipts.getString("equipped_fox_wallet", null)
++        val keepEquipped = ownsFox && (owner == null || owner == payer) &&
++            receipts.getBoolean("equipped_fox_skin", false)
++        receipts.edit().putBoolean("equipped_fox_skin", keepEquipped)
++            .putString("equipped_fox_wallet", if (keepEquipped) payer else null).apply()
++        equippedFox.value = keepEquipped
++        return items.length()
++    }
++
++    fun selectOrder(value: org.json.JSONObject?) {
++        order = value
++        quote = null
++        val id = value?.getString("id")
++        signature = id?.let { receipts.getString("signature:$it", null) }
++        paymentRequested = id?.let { receipts.getBoolean("requested:$it", false) } ?: false
++    }
++
++    fun runAction(action: suspend () -> Unit) {
++        if (busy) return
++        busy = true
++        status = ""
++        scope.launch {
++            try {
++                action()
++            } catch (cancelled: CancellationException) {
++                throw cancelled
++            } catch (error: Exception) {
++                status = error.message ?: "操作失败，请重试"
++            } finally {
++                busy = false
++            }
++        }
++    }
++
++    AlertDialog(
++        onDismissRequest = { if (!busy) onClose() },
++        containerColor = HudInkDeep,
++        titleContentColor = CreamSurface,
++        textContentColor = HudDimText,
++        title = { Text("购买雷铃狐外观") },
++        text = {
++            Column(Modifier.verticalScroll(rememberScrollState())) {
++                Text("DEVNET 测试网")
++                TextButton(enabled = !busy, onClick = {
++                    runAction {
++                        token = null
++                        walletAddress = null
++                        ownsFox = false
++                        selectOrder(null)
++                        orderSummary = ""
++                        when (val result = adapter.transact(sender) { authorization ->
++                            val key = authorization.accounts.firstOrNull()?.publicKey
++                                ?: error("钱包未返回账户")
++                            val payer = SolanaAddress.encode(key)
++                            val challenge = client.challenge(payer)
++                            val signed = signMessagesDetached(
++                                arrayOf(challenge.message.toByteArray(Charsets.UTF_8)),
++                                arrayOf(key)
++                            )
++                            val signature = signed.messages.single().signatures.single()
++                            payer to client.authenticate(challenge, signature)
++                        }) {
++                            is TransactionResult.Success -> {
++                                val (payer, session) = result.payload
++                                walletAddress = payer
++                                token = session
++                                val equippedOwner = receipts.getString("equipped_fox_wallet", null)
++                                if (equippedOwner != null && equippedOwner != payer) {
++                                    receipts.edit().remove("equipped_fox_wallet")
++                                        .putBoolean("equipped_fox_skin", false).apply()
++                                    equippedFox.value = false
++                                }
++                                val count = refreshInventory(session, payer)
++                                orderSummary = "已解锁 $count 件"
++                                status = "钱包登录成功"
++                            }
++                            is TransactionResult.Failure -> status = "登录未完成：${result.message}"
++                            is TransactionResult.NoWalletFound -> status = "未找到兼容钱包"
++                        }
++                    }
++                }) { Text(if (token == null) "连接钱包" else "切换钱包", color = CreamSurface) }
++                token?.let { session ->
++                    TextButton(enabled = !busy && order == null && !ownsFox, onClick = {
++                        runAction {
++                            val orders = client.orders(session)
++                            val pending = (0 until orders.length()).asSequence()
++                                .map { orders.getJSONObject(it) }
++                                .firstOrNull {
++                                    it.isNull("signature") && it.optInt("closed_unpaid") == 0 &&
++                                        it.optInt("expired_without_payment") == 0
++                                }
++                            selectOrder(pending ?: client.createOrder(session))
++                            status = if (pending == null) "测试订单已创建" else "已恢复原订单"
++                        }
++                    }) { Text("继续购买", color = CreamSurface) }
++                    TextButton(enabled = !busy, onClick = {
++                        runAction {
++                            val orders = client.orders(session)
++                            val count = refreshInventory(session, checkNotNull(walletAddress))
++                            orderSummary = "订单 ${orders.length()} 笔 · 已解锁 $count 件"
++                        }
++                    }) { Text("查看订单和库存", color = CreamSurface) }
++                    if (ownsFox) {
++                        val equipped = devnetFoxSkinEquipped()
++                        Text("已拥有 · 雷铃狐外观")
++                        TextButton(enabled = !busy, onClick = {
++                            val next = !equipped
++                            receipts.edit().putBoolean("equipped_fox_skin", next)
++                                .putString("equipped_fox_wallet", if (next) walletAddress else null).apply()
++                            equippedFox.value = next
++                            status = if (next) "已装备，回首页选择雷铃狐查看" else "已恢复默认外观"
++                        }) { Text(if (equipped) "恢复默认外观" else "装备雷铃狐外观", color = CreamSurface) }
++                    }
++                    order?.let { selected ->
++                        val id = selected.getString("id")
++                        Text("订单号 $id")
++                        Text("收款账户 ${selected.getString("destination")}")
++                        if (signature == null) {
++                            TextButton(enabled = !busy && !paymentRequested, onClick = {
++                                runAction { quote = client.preparePayment(session, id) }
++                            }) { Text("查看付款金额和费用", color = CreamSurface) }
++                            quote?.let { prepared ->
++                                Text("支付 ${displayUnits(selected.getLong("amount"), prepared.getInt("tokenDecimals"))} 枚测试代币")
++                                Text("预计网络费 ${displayUnits(prepared.getLong("feeLamports"), 9)} Devnet SOL")
++                                Text("最高网络费 ${displayUnits(prepared.getLong("maxFeeLamports"), 9)} Devnet SOL")
++                                TextButton(enabled = !busy && !paymentRequested, onClick = {
++                                    runAction {
++                                        val transaction = Base64.decode(prepared.getString("transaction"), Base64.DEFAULT)
++                                        when (val result = adapter.transact(sender) { authorization ->
++                                            val key = authorization.accounts.firstOrNull()?.publicKey
++                                                ?: error("钱包未返回账户")
++                                            check(SolanaAddress.encode(key) == selected.getString("payer")) {
++                                                "请使用下单时的钱包账号"
++                                            }
++                                            check(receipts.edit().putBoolean("requested:$id", true).commit()) {
++                                                "无法保存付款状态"
++                                            }
++                                            paymentRequested = true
++                                            @Suppress("DEPRECATION")
++                                            val signed = signTransactions(arrayOf(transaction)).signedPayloads.single()
++                                            val encoded = client.broadcast(session, id, Base64.encodeToString(signed, Base64.NO_WRAP))
++                                            check(receipts.edit().putString("signature:$id", encoded).commit()) {
++                                                "付款回执保存失败，请核对钱包交易记录"
++                                            }
++                                            encoded
++                                        }) {
++                                            is TransactionResult.Success -> {
++                                                signature = result.payload
++                                                status = "已提交，请查验到账"
++                                            }
++                                            is TransactionResult.Failure -> status = "付款未确认：${result.message}"
++                                            is TransactionResult.NoWalletFound -> status = "未找到兼容钱包"
++                                        }
++                                    }
++                                }) { Text("打开钱包确认付款", color = CreamSurface) }
++                            }
++                            if (paymentRequested) {
++                                Text("结果待核对，请先查验原订单。")
++                                TextButton(enabled = !busy, onClick = {
++                                    runAction {
++                                        val result = client.recover(session, id)
++                                        status = when (result.getString("status")) {
++                                            "fulfilled" -> {
++                                                selectOrder(null)
++                                                refreshInventory(session, checkNotNull(walletAddress))
++                                                "已到账，外观已发放"
++                                            }
++                                            "closed_unpaid" -> {
++                                                selectOrder(null)
++                                                "原付款已失效且未到账，可以重新下单"
++                                            }
++                                            else -> "暂未找到已确认的付款，请稍后再次查验"
++                                        }
++                                    }
++                                }) { Text("查找原订单付款", color = CreamSurface) }
++                            }
++                        }
++                        signature?.let { saved ->
++                            TextButton(enabled = !busy, onClick = {
++                                runAction {
++                                    val result = client.settle(session, id, saved)
++                                    status = if (result.getString("status") == "fulfilled") {
++                                        selectOrder(null)
++                                        refreshInventory(session, checkNotNull(walletAddress))
++                                        "已到账，外观已发放"
++                                    } else {
++                                        "链上确认中，请稍后查验"
++                                    }
++                                }
++                            }) { Text("查验到账", color = CreamSurface) }
++                        }
++                    }
++                }
++                if (busy) Text("处理中…")
++                if (status.isNotBlank()) Text(status)
++                if (orderSummary.isNotBlank()) Text(orderSummary)
++            }
++        },
++        confirmButton = { TextButton(enabled = !busy, onClick = onClose) { Text("关闭") } }
++    )
++}
+diff --git a/app/src/debug/res/xml/devnet_debug_network.xml b/app/src/debug/res/xml/devnet_debug_network.xml
+new file mode 100644
+index 0000000000000000000000000000000000000000..88c6595dd8ebfebcdb7dc4b390c2625ccc078513
+--- /dev/null
++++ b/app/src/debug/res/xml/devnet_debug_network.xml
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="utf-8"?>
++<network-security-config>
++    <domain-config cleartextTrafficPermitted="true">
++        <domain includeSubdomains="false">localhost</domain>
++    </domain-config>
++</network-security-config>
+diff --git a/app/src/main/java/com/example/MainActivity.kt b/app/src/main/java/com/example/MainActivity.kt
+index 8765b944b77ebcc5d0b6d270b3aa0f45327d15ba..691929930e91d4fabce9525fd12b82ec963b7181 100644
+--- a/app/src/main/java/com/example/MainActivity.kt
++++ b/app/src/main/java/com/example/MainActivity.kt
+@@ -1,6 +1,11 @@
+ package com.example
+ 
++import android.content.ClipData
++import android.content.ClipboardManager
++import android.content.Context
++import android.net.Uri
+ import android.os.Bundle
++import android.widget.Toast
+ import androidx.activity.ComponentActivity
+ import androidx.activity.compose.setContent
+ import androidx.activity.enableEdgeToEdge
+@@ -8,9 +13,15 @@ import androidx.compose.foundation.layout.Box
+ import androidx.compose.foundation.layout.fillMaxSize
+ import androidx.compose.runtime.Composable
+ import androidx.compose.runtime.getValue
++import androidx.compose.runtime.mutableStateOf
++import androidx.compose.runtime.remember
++import androidx.compose.runtime.rememberCoroutineScope
++import androidx.compose.runtime.setValue
+ import androidx.compose.ui.Modifier
++import androidx.compose.ui.platform.LocalContext
+ import androidx.lifecycle.compose.collectAsStateWithLifecycle
+ import androidx.lifecycle.viewmodel.compose.viewModel
++import com.example.ui.WalletSource
+ import com.example.ui.AppScreen
+ import com.example.ui.SpriteBonkViewModel
+ import com.example.ui.components.EvolutionTreeOverlay
+@@ -21,27 +32,83 @@ import com.example.ui.screens.MainMenuScreen
+ import com.example.ui.screens.ProfileScreen
+ import com.example.ui.screens.SettingsDialogModal
+ import com.example.ui.screens.SpriteRoamScreen
++import com.example.ui.screens.WalletDialog
+ import com.example.ui.theme.SpriteBonkTheme
++import com.example.wallet.SolanaAddress
++import com.solana.mobilewalletadapter.clientlib.ActivityResultSender
++import com.solana.mobilewalletadapter.clientlib.ConnectionIdentity
++import com.solana.mobilewalletadapter.clientlib.MobileWalletAdapter
++import com.solana.mobilewalletadapter.clientlib.Solana
++import com.solana.mobilewalletadapter.clientlib.TransactionResult
++import kotlinx.coroutines.launch
+ 
+ class MainActivity : ComponentActivity() {
++    private lateinit var walletAdapter: MobileWalletAdapter
++    private lateinit var walletActivityResultSender: ActivityResultSender
++
+     override fun onCreate(savedInstanceState: Bundle?) {
+         super.onCreate(savedInstanceState)
++        walletAdapter = MobileWalletAdapter(
++            connectionIdentity = ConnectionIdentity(
++                identityUri = Uri.parse("https://github.com/sengmu/sprite-bonk"),
++                iconUri = Uri.parse("icon.png"),
++                identityName = "Sprite Bonk"
++            )
++        ).apply {
++            blockchain = Solana.Mainnet
++        }
++        // Register the MWA activity-result launcher before the Activity reaches STARTED.
++        walletActivityResultSender = ActivityResultSender(this)
+         enableEdgeToEdge()
+         setContent {
+             SpriteBonkTheme {
+-                SpriteBonkApp()
++                SpriteBonkApp(walletAdapter, walletActivityResultSender)
+             }
+         }
+     }
+ }
+ 
+ @Composable
+-fun SpriteBonkApp(viewModel: SpriteBonkViewModel = viewModel()) {
++fun SpriteBonkApp(
++    walletAdapter: MobileWalletAdapter,
++    walletActivityResultSender: ActivityResultSender,
++    viewModel: SpriteBonkViewModel = viewModel()
++) {
+     val meta by viewModel.metaState.collectAsStateWithLifecycle()
+     val currentScreen by viewModel.currentScreen.collectAsStateWithLifecycle()
+     val showSettings by viewModel.showSettingsDialog.collectAsStateWithLifecycle()
+     val showMenuEvoPreview by viewModel.showMenuEvolutionPreview.collectAsStateWithLifecycle()
+     val selectedChallenges by viewModel.selectedChallengeModifiers.collectAsStateWithLifecycle()
++    val walletState by viewModel.walletState.collectAsStateWithLifecycle()
++    val context = LocalContext.current
++    val coroutineScope = rememberCoroutineScope()
++    var showWalletDialog by remember { mutableStateOf(false) }
++
++    val connectWallet: () -> Unit = {
++        viewModel.beginWalletConnection()
++        coroutineScope.launch {
++            try {
++                when (val result = walletAdapter.connect(walletActivityResultSender)) {
++                    is TransactionResult.Success -> {
++                        val publicKey = result.authResult.accounts.firstOrNull()?.publicKey
++                        if (publicKey == null || publicKey.size != 32) {
++                            viewModel.walletConnectionFailed("钱包没有返回有效的 Solana 地址")
++                        } else {
++                            viewModel.connectWalletAddress(SolanaAddress.encode(publicKey))
++                        }
++                    }
++                    is TransactionResult.NoWalletFound -> {
++                        viewModel.walletConnectionFailed("未找到兼容的钱包")
++                    }
++                    is TransactionResult.Failure -> {
++                        viewModel.walletConnectionFailed("授权未完成：${result.message}")
++                    }
++                }
++            } catch (error: Exception) {
++                viewModel.walletConnectionFailed("钱包连接失败：${error.message ?: "请重试"}")
++            }
++        }
++    }
+ 
+     Box(modifier = Modifier.fillMaxSize()) {
+         when (currentScreen) {
+@@ -58,7 +125,10 @@ fun SpriteBonkApp(viewModel: SpriteBonkViewModel = viewModel()) {
+                 onOpenLab = { viewModel.navigateTo(AppScreen.LAB) },
+                 onOpenDex = { viewModel.navigateTo(AppScreen.DEX) },
+                 onOpenProfile = { viewModel.navigateTo(AppScreen.PROFILE) },
+-                onOpenSettings = viewModel::openSettings
++                onOpenSettings = viewModel::openSettings,
++                walletLabel = if (walletState.isConnected) walletState.shortAddress() else "连接钱包",
++                onOpenWallet = { showWalletDialog = true },
++                shopEntry = { com.example.wallet.DevnetShopEntry(walletActivityResultSender, meta.profile.selectedBiomeId) }
+             )
+ 
+             AppScreen.ROAM -> SpriteRoamScreen(
+@@ -114,6 +184,39 @@ fun SpriteBonkApp(viewModel: SpriteBonkViewModel = viewModel()) {
+                 onDismiss = viewModel::closeSettings
+             )
+         }
++
++        if (showWalletDialog) {
++            WalletDialog(
++                state = walletState,
++                onConnect = connectWallet,
++                onDisconnect = {
++                    if (walletState.source != WalletSource.AUTHORIZED) {
++                        viewModel.disconnectWallet()
++                    } else {
++                        viewModel.beginWalletConnection()
++                        coroutineScope.launch {
++                            try {
++                                when (walletAdapter.disconnect(walletActivityResultSender)) {
++                                    is TransactionResult.Success -> viewModel.disconnectWallet()
++                                    else -> viewModel.walletConnectionFailed("未能撤销钱包授权，请重试")
++                                }
++                            } catch (cancelled: kotlinx.coroutines.CancellationException) {
++                                throw cancelled
++                            } catch (_: Exception) {
++                                viewModel.walletConnectionFailed("未能撤销钱包授权，请重试")
++                            }
++                        }
++                    }
++                },
++                onCopyAddress = { address ->
++                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
++                    clipboard.setPrimaryClip(ClipData.newPlainText("Solana wallet address", address))
++                    Toast.makeText(context, "地址已复制", Toast.LENGTH_SHORT).show()
++                },
++                onRetryBalance = viewModel::refreshWalletBalance,
++                onDismiss = { showWalletDialog = false }
++            )
++        }
+     }
+ }
+ 
+diff --git a/app/src/main/java/com/example/ui/components/BattleCanvas.kt b/app/src/main/java/com/example/ui/components/BattleCanvas.kt
+index facaeded5499d2bcdb08ed3df5b7c70939822cd5..b1ac1547394c54fd8b0b135806f4803d0f3978d8 100644
+--- a/app/src/main/java/com/example/ui/components/BattleCanvas.kt
++++ b/app/src/main/java/com/example/ui/components/BattleCanvas.kt
+@@ -120,6 +120,7 @@ fun BattleCanvas(
+     stateProvider: () -> BattleRenderState,
+     modifier: Modifier = Modifier
+ ) {
++    val foxSkinEquipped = com.example.wallet.devnetFoxSkinEquipped()
+     val fillPaint = remember {
+         Paint(Paint.ANTI_ALIAS_FLAG).apply {
+             textAlign = Paint.Align.CENTER
+@@ -161,7 +162,7 @@ fun BattleCanvas(
+         drawWorldPickups(state, camX, camY, cache)
+         drawCombatRingsAndArcs(state, camX, camY)
+         drawDashGhosts(state, camX, camY)
+-        drawSortedWorldEntities(biome, state, camX, camY, cache)
++        drawSortedWorldEntities(biome, state, camX, camY, cache, foxSkinEquipped)
+         drawForegroundHeroGrass(biome, state, camX, camY, cache.terrainCache)
+         drawProjectilesAndBeams(state, camX, camY)
+         drawCombatParticles(state, camX, camY)
+@@ -643,7 +644,8 @@ private fun DrawScope.drawSortedWorldEntities(
+     state: BattleRenderState,
+     camX: Float,
+     camY: Float,
+-    cache: BattleCanvasCache
++    cache: BattleCanvasCache,
++    foxSkinEquipped: Boolean
+ ) {
+     val sortPool = cache.sortPool
+     var sortCount = 0
+@@ -716,7 +718,7 @@ private fun DrawScope.drawSortedWorldEntities(
+                 )
+             }
+             SORT_KIND_HERO -> {
+-                drawHeroComposite(state, camX, camY, cache)
++                drawHeroComposite(state, camX, camY, cache, foxSkinEquipped)
+             }
+         }
+     }
+@@ -726,7 +728,8 @@ private fun DrawScope.drawHeroComposite(
+     state: BattleRenderState,
+     camX: Float,
+     camY: Float,
+-    cache: BattleCanvasCache
++    cache: BattleCanvasCache,
++    foxSkinEquipped: Boolean
+ ) {
+     val groundPos = Offset(state.playerX - camX, state.playerY - state.playerGroundZ - camY)
+     val heroPos = Offset(state.playerX - camX, state.playerY - state.playerZ - camY)
+@@ -857,7 +860,7 @@ private fun DrawScope.drawHeroComposite(
+     // Evolved Hero Sprite lifted by playerZ
+     val jumpScale = 1f + (jumpAlt * 0.0024f).coerceAtMost(0.22f)
+     drawEvolvedHeroSprite(
+-        style = state.evolutionState.currentNode.visualStyle,
++        style = state.evolutionState.currentNode.visualStyle.withFoxCosmetic(foxSkinEquipped),
+         center = heroPos,
+         baseRadius = (if (isHyperActive) 36f else 30f) * jumpScale,
+         animTime = if (state.moveSpeedRatio > 0.1f) state.walkAnimTime else state.elapsedSec * 3.4f,
+diff --git a/app/src/main/java/com/example/ui/components/FoxCosmetic.kt b/app/src/main/java/com/example/ui/components/FoxCosmetic.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..1605a78ca0978af69abe1000a0af69767af47c30
+--- /dev/null
++++ b/app/src/main/java/com/example/ui/components/FoxCosmetic.kt
+@@ -0,0 +1,12 @@
++package com.example.ui.components
++
++import androidx.compose.ui.graphics.Color
++import com.example.game.evolution.EvolutionVisualStyle
++
++internal fun EvolutionVisualStyle.withFoxCosmetic(equipped: Boolean): EvolutionVisualStyle =
++    if (equipped && starterId == "spark") copy(
++        primaryColor = Color(0xFF697AE6),
++        secondaryColor = Color(0xFFBDC8FF),
++        accentColor = Color(0xFF78EDFF),
++        auraColor = Color(0xFF8E9BFF)
++    ) else this
+diff --git a/app/src/main/java/com/example/ui/screens/MainMenuHeroComponents.kt b/app/src/main/java/com/example/ui/screens/MainMenuHeroComponents.kt
+index d17f866d863db647985e834168f57e10d35b5ffc..ad47f77a4d933e82a5c1bbe1e10a5dbbc9708c74 100644
+--- a/app/src/main/java/com/example/ui/screens/MainMenuHeroComponents.kt
++++ b/app/src/main/java/com/example/ui/screens/MainMenuHeroComponents.kt
+@@ -79,6 +79,7 @@ import com.example.game.model.StarterLine
+ import com.example.ui.components.AsyncDrawableImage
+ import com.example.ui.components.biomeBackdropRes
+ import com.example.ui.components.drawEvolvedHeroSprite
++import com.example.ui.components.withFoxCosmetic
+ import com.example.ui.theme.CreamSurface
+ import com.example.ui.theme.CrimsonRed
+ import com.example.ui.theme.DarkButtonRim
+@@ -244,9 +245,12 @@ internal fun MinimalHeroShowcaseStage(
+         listOf(base) + extra
+     }
+     var previewFormIdx by remember(selected.id) { mutableIntStateOf(0) }
+-    val activeNode: EvolutionNode = unlockedForms.getOrElse(previewFormIdx % unlockedForms.size) {
++    val previewNode: EvolutionNode = unlockedForms.getOrElse(previewFormIdx % unlockedForms.size) {
+         EvolutionRegistry.baseNodeForStarter(selected.id)
+     }
++    val activeNode = previewNode.copy(
++        visualStyle = previewNode.visualStyle.withFoxCosmetic(com.example.wallet.devnetFoxSkinEquipped())
++    )
+     val selectedIndex = remember(selected.id) {
+         GameCatalog.starters.indexOfFirst { it.id == selected.id }.coerceAtLeast(0)
+     }
+@@ -453,9 +457,9 @@ private fun StageCycleButton(
+ }
+ 
+ @Composable
+-private fun OpenSpritePedestalCanvas(
++internal fun OpenSpritePedestalCanvas(
+     node: EvolutionNode,
+-    onCycleForm: () -> Unit,
++    onCycleForm: (() -> Unit)?,
+     modifier: Modifier = Modifier
+ ) {
+     val style = node.visualStyle
+@@ -491,13 +495,13 @@ private fun OpenSpritePedestalCanvas(
+         modifier = modifier
+             .testTag("menu_live_hero_stage")
+             .scale(bounceScale.value)
+-            .clickable(
++            .then(if (onCycleForm == null) Modifier else Modifier.clickable(
+                 interactionSource = remember { MutableInteractionSource() },
+                 indication = null
+             ) {
+                 tapCount++
+                 onCycleForm()
+-            },
++            }),
+         contentAlignment = Alignment.Center
+     ) {
+         Canvas(modifier = Modifier.fillMaxSize()) {
+diff --git a/app/src/main/java/com/example/ui/screens/MainMenuScreen.kt b/app/src/main/java/com/example/ui/screens/MainMenuScreen.kt
+index 672048aee1439586386e75a48340d4e8158925a6..c5989bdbe896f0fcef30859604e9a1ed36fa373e 100644
+--- a/app/src/main/java/com/example/ui/screens/MainMenuScreen.kt
++++ b/app/src/main/java/com/example/ui/screens/MainMenuScreen.kt
+@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
+ import androidx.compose.material.icons.Icons
+ import androidx.compose.material.icons.rounded.AutoAwesome
+ import androidx.compose.material.icons.rounded.AutoStories
++import androidx.compose.material.icons.rounded.AccountBalanceWallet
+ import androidx.compose.material.icons.rounded.EmojiEvents
+ import androidx.compose.material.icons.rounded.Explore
+ import androidx.compose.material.icons.rounded.PlayArrow
+@@ -36,6 +37,8 @@ import androidx.compose.material3.minimumInteractiveComponentSize
+ import androidx.compose.runtime.Composable
+ import androidx.compose.runtime.getValue
+ import androidx.compose.runtime.mutableStateOf
++import androidx.compose.runtime.movableContentOf
++import androidx.compose.runtime.rememberUpdatedState
+ import androidx.compose.runtime.remember
+ import androidx.compose.runtime.setValue
+ import androidx.compose.ui.Alignment
+@@ -90,7 +93,10 @@ fun MainMenuScreen(
+     onOpenLab: () -> Unit,
+     onOpenDex: () -> Unit,
+     onOpenProfile: () -> Unit,
+-    onOpenSettings: () -> Unit
++    onOpenSettings: () -> Unit,
++    walletLabel: String = "钱包",
++    onOpenWallet: () -> Unit = {},
++    shopEntry: @Composable () -> Unit = {}
+ ) {
+     val selectedStarter = GameCatalog.starterById(meta.profile.selectedStarterId)
+     val selectedBiome = GameCatalog.biomeById(meta.profile.selectedBiomeId)
+@@ -139,6 +145,8 @@ fun MainMenuScreen(
+     Box(modifier = Modifier.fillMaxSize()) {
+         BiomeAtmosphereBackdrop(biome = selectedBiome)
+ 
++        val currentShopEntry by rememberUpdatedState(shopEntry)
++        val movableShopEntry = remember { movableContentOf { currentShopEntry() } }
+         BoxWithConstraints(
+             modifier = Modifier
+                 .fillMaxSize()
+@@ -162,7 +170,10 @@ fun MainMenuScreen(
+                         hasAffordableLabUpgrade = hasAffordableLabUpgrade,
+                         compact = isCompactH,
+                         onOpenLab = onOpenLab,
+-                        onOpenSettings = onOpenSettings
++                        onOpenSettings = onOpenSettings,
++                        walletLabel = walletLabel,
++                        onOpenWallet = onOpenWallet,
++                        shopEntry = movableShopEntry
+                     )
+ 
+                     Row(
+@@ -247,7 +258,10 @@ fun MainMenuScreen(
+                         hasAffordableLabUpgrade = hasAffordableLabUpgrade,
+                         compact = isCompactPortrait,
+                         onOpenLab = onOpenLab,
+-                        onOpenSettings = onOpenSettings
++                        onOpenSettings = onOpenSettings,
++                        walletLabel = walletLabel,
++                        onOpenWallet = onOpenWallet,
++                        shopEntry = movableShopEntry
+                     )
+ 
+                     // Centerpiece Open-Air Hero Stage (breathes generously in the open sky!)
+@@ -344,7 +358,10 @@ private fun LobbyTopBar(
+     hasAffordableLabUpgrade: Boolean,
+     compact: Boolean,
+     onOpenLab: () -> Unit,
+-    onOpenSettings: () -> Unit
++    onOpenSettings: () -> Unit,
++    walletLabel: String,
++    onOpenWallet: () -> Unit,
++    shopEntry: @Composable () -> Unit
+ ) {
+     Row(
+         modifier = Modifier.fillMaxWidth(),
+@@ -398,6 +415,36 @@ private fun LobbyTopBar(
+                 }
+             }
+ 
++            shopEntry()
++            Row(
++                modifier = Modifier
++                    .testTag("menu_wallet_pill")
++                    .minimumInteractiveComponentSize()
++                    .clip(RoundedCornerShape(50))
++                    .background(HudInkDark.copy(alpha = 0.78f))
++                    .border(1.4.dp, SkyBlue.copy(alpha = 0.72f), RoundedCornerShape(50))
++                    .clickable(onClick = onOpenWallet)
++                    .padding(horizontal = if (compact) 9.dp else 12.dp, vertical = if (compact) 6.dp else 7.dp),
++                verticalAlignment = Alignment.CenterVertically,
++                horizontalArrangement = Arrangement.spacedBy(5.dp)
++            ) {
++                Icon(
++                    imageVector = Icons.Rounded.AccountBalanceWallet,
++                    contentDescription = "钱包",
++                    tint = SkyBlue,
++                    modifier = Modifier.size(if (compact) 15.dp else 17.dp)
++                )
++                Text(
++                    text = walletLabel,
++                    style = MaterialTheme.typography.titleSmall.copy(
++                        fontSize = if (compact) 11.5.sp else 13.sp,
++                        fontWeight = FontWeight.Bold
++                    ),
++                    color = Color.White,
++                    maxLines = 1
++                )
++            }
++
+             Box(
+                 modifier = Modifier
+                     .testTag("menu_settings_icon_btn")
+diff --git a/app/src/main/java/com/example/ui/screens/WalletDialog.kt b/app/src/main/java/com/example/ui/screens/WalletDialog.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..dbb991447145ddb27ed65f7842e35cb00c54cf15
+--- /dev/null
++++ b/app/src/main/java/com/example/ui/screens/WalletDialog.kt
+@@ -0,0 +1,178 @@
++package com.example.ui.screens
++
++import androidx.compose.foundation.background
++import androidx.compose.foundation.layout.Arrangement
++import androidx.compose.foundation.layout.Column
++import androidx.compose.foundation.layout.Row
++import androidx.compose.foundation.layout.Spacer
++import androidx.compose.foundation.layout.fillMaxWidth
++import androidx.compose.foundation.layout.height
++import androidx.compose.foundation.layout.padding
++import androidx.compose.foundation.layout.widthIn
++import androidx.compose.foundation.shape.RoundedCornerShape
++import androidx.compose.material.icons.Icons
++import androidx.compose.material.icons.rounded.AccountBalanceWallet
++import androidx.compose.material3.AlertDialog
++import androidx.compose.material3.Button
++import androidx.compose.material3.ButtonDefaults
++import androidx.compose.material3.Icon
++import androidx.compose.material3.OutlinedButton
++import androidx.compose.material3.Text
++import androidx.compose.material3.TextButton
++import androidx.compose.runtime.Composable
++import androidx.compose.ui.Alignment
++import androidx.compose.ui.Modifier
++import androidx.compose.ui.graphics.Color
++import androidx.compose.ui.text.font.FontWeight
++import androidx.compose.ui.text.style.TextAlign
++import androidx.compose.ui.unit.dp
++import androidx.compose.ui.unit.sp
++import com.example.ui.WalletUiState
++import com.example.ui.WalletSource
++import com.example.ui.theme.CreamSurface
++import com.example.ui.theme.DarkButtonRim
++import com.example.ui.theme.EspressoDark
++import com.example.ui.theme.GrassGreen
++import com.example.ui.theme.HudDimText
++import com.example.ui.theme.HudInkDark
++import com.example.ui.theme.HudInkDeep
++import com.example.ui.theme.SkyBlue
++import com.example.ui.theme.WarmOrange
++import java.util.Locale
++
++@Composable
++fun WalletDialog(
++    state: WalletUiState,
++    onConnect: () -> Unit,
++    onDisconnect: () -> Unit,
++    onCopyAddress: (String) -> Unit,
++    onRetryBalance: () -> Unit,
++    onDismiss: () -> Unit,
++    extraContent: @Composable () -> Unit = {}
++) {
++    val copyValue = state.address
++
++    AlertDialog(
++        onDismissRequest = onDismiss,
++        containerColor = HudInkDeep,
++        titleContentColor = CreamSurface,
++        textContentColor = HudDimText,
++        title = {
++            Row(
++                verticalAlignment = Alignment.CenterVertically,
++                horizontalArrangement = Arrangement.spacedBy(10.dp)
++            ) {
++                Icon(Icons.Rounded.AccountBalanceWallet, contentDescription = null, tint = SkyBlue)
++                Column {
++                    Text("钱包", fontWeight = FontWeight.ExtraBold, fontSize = 22.sp)
++                    Text("Solana 主网 · ${state.source.label}", color = HudDimText, fontSize = 12.sp)
++                }
++            }
++        },
++        text = {
++            Column(
++                modifier = Modifier.widthIn(max = 520.dp),
++                verticalArrangement = Arrangement.spacedBy(12.dp)
++            ) {
++                extraContent()
++                if (state.isConnected) {
++                    Text("钱包地址", color = HudDimText, fontSize = 12.sp)
++                    Text(state.address, color = CreamSurface, fontSize = 14.sp)
++                }
++
++                Row(
++                    modifier = Modifier
++                        .fillMaxWidth()
++                        .background(HudInkDark, RoundedCornerShape(16.dp))
++                        .padding(horizontal = 16.dp, vertical = 13.dp),
++                    horizontalArrangement = Arrangement.SpaceBetween,
++                    verticalAlignment = Alignment.CenterVertically
++                ) {
++                    Column {
++                        Text("SOL 余额", color = HudDimText, fontSize = 13.sp)
++                        Spacer(Modifier.height(3.dp))
++                        val balanceText = when {
++                            state.isLoadingBalance -> "读取中…"
++                            state.balanceSol != null -> String.format(Locale.US, "%.4f SOL", state.balanceSol)
++                            state.isConnected -> "余额暂不可用"
++                            else -> "尚未连接"
++                        }
++                        Text(
++                            balanceText,
++                            color = CreamSurface,
++                            fontSize = 24.sp,
++                            fontWeight = FontWeight.ExtraBold
++                        )
++                    }
++                    if (state.isLoadingBalance) {
++                        Text("查询中", color = SkyBlue, fontSize = 12.sp)
++                    }
++                }
++
++                state.errorMessage?.let {
++                    Text(it, color = WarmOrange, fontSize = 13.sp)
++                }
++                state.balanceError?.let {
++                    Row(
++                        modifier = Modifier.fillMaxWidth(),
++                        horizontalArrangement = Arrangement.SpaceBetween,
++                        verticalAlignment = Alignment.CenterVertically
++                    ) {
++                        Text("余额读取失败：$it", color = WarmOrange, fontSize = 12.sp, modifier = Modifier.weight(1f))
++                        TextButton(onClick = onRetryBalance) { Text("重试", color = SkyBlue) }
++                    }
++                }
++                if (state.isConnecting) {
++                    Text(if (state.isConnected) "正在撤销钱包授权…" else "正在打开钱包授权…", color = SkyBlue, fontSize = 13.sp)
++                }
++                Text(
++                    "可选 · 仅查看公开余额，不签名、不交易。断开连接会清除保存的地址。",
++                    color = HudDimText,
++                    fontSize = 12.sp,
++                    lineHeight = 17.sp
++                )
++            }
++        },
++        confirmButton = {
++            Row(
++                modifier = Modifier.fillMaxWidth(),
++                horizontalArrangement = Arrangement.spacedBy(6.dp),
++                verticalAlignment = Alignment.CenterVertically
++            ) {
++                Button(
++                    onClick = { if (state.isConnected) onDisconnect() else onConnect() },
++                    enabled = !state.isConnecting,
++                    modifier = Modifier.weight(1.15f),
++                    colors = ButtonDefaults.buttonColors(
++                        containerColor = if (state.isConnected) WarmOrange else GrassGreen,
++                        contentColor = EspressoDark,
++                        disabledContainerColor = HudDimText.copy(alpha = 0.35f)
++                    )
++                ) {
++                    Text(
++                        when {
++                            state.isConnecting -> "处理中"
++                            state.source == WalletSource.AUTHORIZED -> "撤销授权"
++                            state.isConnected -> "移除地址"
++                            else -> "连接钱包"
++                        },
++                        maxLines = 1,
++                        fontWeight = FontWeight.Bold
++                    )
++                }
++                OutlinedButton(
++                    onClick = { onCopyAddress(copyValue) },
++                    enabled = copyValue.isNotEmpty(),
++                    modifier = Modifier.weight(0.92f)
++                ) {
++                    Text("复制地址", maxLines = 1, color = if (copyValue.isEmpty()) HudDimText else SkyBlue)
++                }
++                TextButton(onClick = onDismiss, modifier = Modifier.weight(0.62f)) {
++                    Text("关闭", maxLines = 1, textAlign = TextAlign.Center, color = CreamSurface)
++                }
++            }
++        },
++        dismissButton = {},
++        icon = null
++    )
++}
+diff --git a/app/src/main/java/com/example/wallet/SolanaAddress.kt b/app/src/main/java/com/example/wallet/SolanaAddress.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..8003b549c639fd8b4da57c10181bcb81663cd719
+--- /dev/null
++++ b/app/src/main/java/com/example/wallet/SolanaAddress.kt
+@@ -0,0 +1,48 @@
++package com.example.wallet
++
++import java.math.BigInteger
++
++object SolanaAddress {
++    private const val ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
++
++    fun isValid(address: String): Boolean {
++        val value = address.trim()
++        if (value.length !in 32..44 || value.any { ALPHABET.indexOf(it) < 0 }) return false
++
++        var number = BigInteger.ZERO
++        for (char in value) {
++            number = number.multiply(BigInteger.valueOf(58L))
++                .add(BigInteger.valueOf(ALPHABET.indexOf(char).toLong()))
++        }
++
++        val leadingZeroes = value.takeWhile { it == '1' }.length
++        val encodedNumber = if (number == BigInteger.ZERO) {
++            0
++        } else {
++            number.toByteArray().let { bytes ->
++                if (bytes.firstOrNull() == 0.toByte()) bytes.size - 1 else bytes.size
++            }
++        }
++        return leadingZeroes + encodedNumber == 32
++    }
++
++    fun encode(publicKey: ByteArray): String {
++        require(publicKey.size == 32) { "Solana public keys must be 32 bytes" }
++        return encodeBytes(publicKey)
++    }
++
++    internal fun encodeBytes(publicKey: ByteArray): String {
++
++        val leadingZeroes = publicKey.takeWhile { it == 0.toByte() }.size
++        var number = BigInteger(1, publicKey)
++        val base = BigInteger.valueOf(58L)
++        val encoded = StringBuilder()
++        while (number > BigInteger.ZERO) {
++            val division = number.divideAndRemainder(base)
++            encoded.append(ALPHABET[division[1].toInt()])
++            number = division[0]
++        }
++        repeat(leadingZeroes) { encoded.append('1') }
++        return encoded.reverse().toString()
++    }
++}
+diff --git a/app/src/release/java/com/example/wallet/DevnetShopEntry.kt b/app/src/release/java/com/example/wallet/DevnetShopEntry.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..6afb0e4a07480b19a8bf54552b6d81bc7bba3e7a
+--- /dev/null
++++ b/app/src/release/java/com/example/wallet/DevnetShopEntry.kt
+@@ -0,0 +1,10 @@
++package com.example.wallet
++
++import androidx.compose.runtime.Composable
++import com.solana.mobilewalletadapter.clientlib.ActivityResultSender
++
++@Composable
++internal fun DevnetShopEntry(sender: ActivityResultSender, biomeId: String) = Unit
++
++@Composable
++internal fun devnetFoxSkinEquipped(): Boolean = false
+diff --git a/tools/devnet-requirements.txt b/tools/devnet-requirements.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..4306cba8624c7105cd8c055e2d0e3e5f3ee1ef06
+--- /dev/null
++++ b/tools/devnet-requirements.txt
+@@ -0,0 +1,2 @@
++cryptography==50.0.0
++solders==0.27.1
+diff --git a/tools/devnet_api.py b/tools/devnet_api.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..89b25de7a98555eaa8c10362e122a48d1154f80e
+--- /dev/null
++++ b/tools/devnet_api.py
+@@ -0,0 +1,193 @@
++"""Loopback-only HTTP adapter for the Devnet shop prototype."""
++
++import argparse
++import base64
++import hashlib
++import json
++import secrets
++import sqlite3
++import time
++from contextlib import closing
++from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
++
++from cryptography.exceptions import InvalidSignature
++from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
++
++from devnet_orders import create_order, open_database, rpc, settle
++from devnet_payment import broadcast_payment, prepare_payment
++
++BASE58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
++AUTH_SCHEMA = """
++CREATE TABLE IF NOT EXISTS challenges (
++    nonce TEXT PRIMARY KEY, payer TEXT NOT NULL, message TEXT NOT NULL, expires INTEGER NOT NULL
++);
++CREATE TABLE IF NOT EXISTS sessions (
++    digest TEXT PRIMARY KEY, payer TEXT NOT NULL, expires INTEGER NOT NULL
++);
++"""
++
++
++def wallet_key(address):
++    if not isinstance(address, str) or not 32 <= len(address) <= 44:
++        raise ValueError("Invalid wallet address")
++    number = 0
++    for char in address:
++        number = number * 58 + BASE58.index(char)
++    key = bytes(len(address) - len(address.lstrip("1")))
++    key += number.to_bytes((number.bit_length() + 7) // 8, "big")
++    return Ed25519PublicKey.from_public_bytes(key)
++
++
++def digest(token):
++    return hashlib.sha256(token.encode()).hexdigest()
++
++
++class ApiHandler(BaseHTTPRequestHandler):
++    def respond(self, status, data):
++        output = json.dumps(data).encode()
++        self.send_response(status)
++        self.send_header("Content-Type", "application/json")
++        self.send_header("Cache-Control", "no-store")
++        self.send_header("Content-Length", str(len(output)))
++        self.end_headers()
++        self.wfile.write(output)
++
++    def do_POST(self):
++        try:
++            length = int(self.headers.get("Content-Length", "0"))
++            if not 0 < length <= 4096:
++                raise ValueError("Expected a JSON object up to 4096 bytes")
++            body = json.loads(self.rfile.read(length))
++            if not isinstance(body, dict):
++                raise ValueError("Expected a JSON object")
++            with closing(open_database(self.server.database)) as db:
++                status, result = self.dispatch(db, body)
++            self.respond(status, result)
++        except (ValueError, KeyError, TypeError, InvalidSignature) as error:
++            self.respond(400, {"error": str(error) or "Invalid signature"})
++        except sqlite3.IntegrityError:
++            self.respond(409, {"error": "Payment or entitlement already recorded"})
++        except (OSError, sqlite3.Error):
++            self.respond(503, {"error": "Devnet verification temporarily unavailable"})
++
++    def dispatch(self, db, body):
++        now = int(time.time())
++        if self.path == "/auth/challenge":
++            payer = body["wallet"]
++            wallet_key(payer)
++            nonce = secrets.token_urlsafe(24)
++            expires = now + 300
++            message = (
++                "Sprite Bonk Devnet shop login\n"
++                "Scope: local Devnet orders and inventory. No transaction approval.\n"
++                f"Wallet: {payer}\nNonce: {nonce}\nExpires (Unix UTC): {expires}"
++            )
++            with db:
++                db.execute("DELETE FROM challenges WHERE expires <= ?", (now,))
++                db.execute("INSERT INTO challenges VALUES (?, ?, ?, ?)", (nonce, payer, message, expires))
++            return 200, {"nonce": nonce, "message": message, "expires": expires}
++
++        if self.path == "/auth/session":
++            challenge = db.execute("SELECT * FROM challenges WHERE nonce=? AND expires>?",
++                                   (body["nonce"], now)).fetchone()
++            if challenge is None:
++                return 401, {"error": "Challenge expired or already used"}
++            signature = base64.b64decode(body["signature"], validate=True)
++            wallet_key(challenge["payer"]).verify(signature, challenge["message"].encode())
++            token = secrets.token_urlsafe(32)
++            with db:
++                consumed = db.execute("DELETE FROM challenges WHERE nonce=? AND expires>?",
++                                      (challenge["nonce"], int(time.time())))
++                if consumed.rowcount != 1:
++                    return 401, {"error": "Challenge expired or already used"}
++                db.execute("DELETE FROM sessions WHERE expires <= ?", (now,))
++                db.execute("INSERT INTO sessions VALUES (?, ?, ?)", (digest(token), challenge["payer"], now + 3600))
++            return 200, {"token": token, "expires": now + 3600}
++
++        scheme, _, token = self.headers.get("Authorization", "").partition(" ")
++        session = db.execute("SELECT payer FROM sessions WHERE digest=? AND expires>?",
++                             (digest(token), now)).fetchone()
++        if scheme != "Bearer" or session is None:
++            return 401, {"error": "Wallet login required"}
++        payer = session["payer"]
++        if self.path == "/orders/create":
++            return 201, create_order(db, payer)
++        if self.path == "/orders/list":
++            rows = db.execute("""SELECT orders.*, EXISTS(
++                SELECT 1 FROM closed_unpaid_orders WHERE order_id=orders.id
++                ) AS closed_unpaid, (orders.expires <= ? AND NOT EXISTS(
++                SELECT 1 FROM payment_attempts WHERE order_id=orders.id
++                )) AS expired_without_payment
++                FROM orders WHERE payer=? ORDER BY created DESC, id DESC""", (now, payer))
++            return 200, {"orders": [dict(row) for row in rows]}
++        if self.path == "/orders/payment":
++            order = db.execute("SELECT * FROM orders WHERE id=? AND payer=?",
++                               (body["orderId"], payer)).fetchone()
++            if order is None:
++                return 404, {"error": "Unknown order"}
++            if db.execute("SELECT 1 FROM closed_unpaid_orders WHERE order_id=?", (order["id"],)).fetchone():
++                return 409, {"error": "订单已关闭"}
++            return 200, prepare_payment(db, order)
++        if self.path == "/orders/settle":
++            order_id = body["orderId"]
++            if db.execute("SELECT 1 FROM orders WHERE id=? AND payer=?", (order_id, payer)).fetchone() is None:
++                return 404, {"error": "Unknown order"}
++            return 200, settle(db, order_id, body["signature"])
++        if self.path == "/orders/broadcast":
++            order = db.execute("SELECT * FROM orders WHERE id=? AND payer=?",
++                               (body["orderId"], payer)).fetchone()
++            if order is None:
++                return 404, {"error": "Unknown order"}
++            if db.execute("SELECT 1 FROM closed_unpaid_orders WHERE order_id=?", (order["id"],)).fetchone():
++                return 409, {"error": "订单已关闭"}
++            return 200, broadcast_payment(db, order, body["transaction"])
++        if self.path == "/orders/recover":
++            order_id = body["orderId"]
++            order = db.execute("SELECT * FROM orders WHERE id=? AND payer=?", (order_id, payer)).fetchone()
++            if order is None:
++                return 404, {"error": "Unknown order"}
++            if order["signature"]:
++                return 200, {"status": "fulfilled", "order": order_id}
++            attempt = db.execute("SELECT last_height FROM payment_attempts WHERE order_id=?",
++                                 (order_id,)).fetchone()
++            expired = attempt is not None and rpc("getBlockHeight", [
++                {"commitment": "finalized"},
++            ]) > attempt["last_height"]
++            entries = rpc("getSignaturesForAddress", [
++                order["destination"], {"limit": 100, "commitment": "finalized"},
++            ])
++            for entry in entries:
++                memo = entry.get("memo") or ""
++                # RPC prefixes displayed memos with their length, e.g. "[32] …".
++                if entry["err"] is None and order_id in memo:
++                    try:
++                        return 200, settle(db, order_id, entry["signature"])
++                    except ValueError:
++                        continue
++            if expired and len(entries) < 100 and not any(
++                entry["err"] is None and order_id in (entry.get("memo") or "") for entry in entries
++            ):
++                with db:
++                    db.execute("INSERT OR IGNORE INTO closed_unpaid_orders VALUES (?)", (order_id,))
++                return 200, {"status": "closed_unpaid", "order": order_id}
++            return 200, {"status": "not_found", "order": order_id}
++        if self.path == "/inventory":
++            rows = db.execute("SELECT product, order_id FROM inventory WHERE payer=?", (payer,))
++            return 200, {"items": [dict(row) for row in rows]}
++        return 404, {"error": "Unknown endpoint"}
++
++
++def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--db", required=True)
++    parser.add_argument("--port", default=8765, type=int)
++    args = parser.parse_args()
++    with closing(open_database(args.db)) as db:
++        db.executescript(AUTH_SCHEMA)
++    with ThreadingHTTPServer(("127.0.0.1", args.port), ApiHandler) as server:
++        server.database = args.db
++        server.serve_forever()
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/tools/devnet_orders.py b/tools/devnet_orders.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..8a9a3bd8a22c5f0b1edac0a04fc4ef4d2584875b
+--- /dev/null
++++ b/tools/devnet_orders.py
+@@ -0,0 +1,185 @@
++"""Local Devnet operator CLI for the first Sprite Bonk shop item."""
++
++import argparse
++import json
++import os
++import secrets
++import sqlite3
++import time
++from pathlib import Path
++from urllib.request import Request, urlopen
++
++RPC = "https://api.devnet.solana.com"
++PRODUCT = "railing-fox-shop-skin"
++MEMO_PROGRAM = "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"
++TOKEN_PROGRAM = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
++
++
++def rpc(method, params):
++    body = json.dumps(dict(jsonrpc="2.0", id=1, method=method, params=params))
++    request = Request(RPC, body.encode(), {"Content-Type": "application/json"})
++    with urlopen(request, timeout=15) as response:
++        result = json.load(response)
++    if "error" in result:
++        raise ValueError("Devnet RPC: " + str(result["error"].get("message", "request rejected")))
++    return result["result"]
++
++
++def open_database(path):
++    db = sqlite3.connect(path)
++    db.row_factory = sqlite3.Row
++    db.executescript("""
++        CREATE TABLE IF NOT EXISTS orders (
++            id TEXT PRIMARY KEY, payer TEXT NOT NULL, product TEXT NOT NULL,
++            mint TEXT NOT NULL, destination TEXT NOT NULL, amount INTEGER NOT NULL,
++            created INTEGER NOT NULL, expires INTEGER NOT NULL, signature TEXT UNIQUE
++        );
++        CREATE TABLE IF NOT EXISTS inventory (
++            payer TEXT NOT NULL, product TEXT NOT NULL, order_id TEXT NOT NULL,
++            PRIMARY KEY (payer, product)
++        );
++        CREATE TABLE IF NOT EXISTS closed_unpaid_orders (order_id TEXT PRIMARY KEY);
++        CREATE TABLE IF NOT EXISTS payment_attempts (
++            order_id TEXT PRIMARY KEY, payload TEXT NOT NULL, last_height INTEGER NOT NULL, fee INTEGER NOT NULL
++        );
++    """)
++    return db
++
++
++def create_order(db, payer):
++    def existing_order():
++        if db.execute("SELECT 1 FROM inventory WHERE payer=? AND product=?", (payer, PRODUCT)).fetchone():
++            raise ValueError("This wallet already owns the item")
++        return db.execute("""
++            SELECT o.* FROM orders o
++            WHERE o.payer=? AND o.product=? AND o.signature IS NULL
++            AND NOT EXISTS (SELECT 1 FROM closed_unpaid_orders c WHERE c.order_id=o.id)
++            AND (o.expires>? OR EXISTS (SELECT 1 FROM payment_attempts p WHERE p.order_id=o.id))
++            ORDER BY o.created DESC, o.rowid DESC LIMIT 1
++        """, (payer, PRODUCT, int(time.time()))).fetchone()
++
++    existing = existing_order()
++    if existing is not None:
++        return dict(existing)
++    mint, destination, amount = validate_shop_config()
++    now = int(time.time())
++    order = (secrets.token_hex(16), payer, PRODUCT, mint, destination, amount, now, now + 900)
++    with db:
++        db.execute("BEGIN IMMEDIATE")
++        existing = existing_order()
++        if existing is not None:
++            return dict(existing)
++        db.execute("INSERT INTO orders VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL)", order)
++    return dict(db.execute("SELECT * FROM orders WHERE id=?", (order[0],)).fetchone())
++
++
++def validate_shop_config():
++    mint = os.getenv("SPRITEBONK_DEVNET_MINT")
++    destination = os.getenv("SPRITEBONK_DEVNET_TOKEN_ACCOUNT")
++    raw_amount = os.getenv("SPRITEBONK_DEVNET_AMOUNT")
++    if not all((mint, destination, raw_amount)):
++        raise ValueError("Devnet 测试商店尚未配置收款，请联系测试管理员")
++    amount = int(raw_amount)
++    if not 0 < amount <= 2**63 - 1:
++        raise ValueError("Amount must be a positive integer in token base units")
++    account = rpc("getAccountInfo", [destination, {
++        "encoding": "jsonParsed", "commitment": "finalized",
++    }])["value"]
++    if account is None or account["owner"] != TOKEN_PROGRAM:
++        raise ValueError("Devnet recipient must be an existing SPL Token account")
++    parsed = account["data"]["parsed"]
++    info = parsed["info"]
++    if parsed["type"] != "account" or info["mint"] != mint or info["state"] != "initialized":
++        raise ValueError("Devnet recipient does not accept the configured test mint")
++    return mint, destination, amount
++
++
++def verify_payment(order, tx):
++    meta = tx["meta"]
++    message = tx["transaction"]["message"]
++    keys = message["accountKeys"]
++    if meta is None or meta["err"] is not None:
++        raise ValueError("Transaction failed")
++    if not order["created"] <= (tx.get("blockTime") or 0) <= order["expires"]:
++        raise ValueError("Payment landed outside the order window")
++    if not any(key["signer"] and key["pubkey"] == order["payer"] for key in keys):
++        raise ValueError("Expected payer did not sign")
++
++    instructions = message["instructions"]
++    if not any(ix.get("programId") == MEMO_PROGRAM and ix.get("parsed") == order["id"]
++               for ix in instructions):
++        raise ValueError("Order memo does not match")
++    transfers = []
++    for ix in instructions:
++        parsed = ix.get("parsed")
++        if not isinstance(parsed, dict) or parsed.get("type") != "transferChecked":
++            continue
++        info = parsed["info"]
++        if ix.get("program") in ("spl-token", "spl-token-2022") and info.get("destination") == order["destination"]:
++            transfers.append(info)
++    if len(transfers) != 1:
++        raise ValueError("Expected exactly one checked token transfer to the merchant")
++    transfer = transfers[0]
++    if (transfer["mint"] != order["mint"] or transfer["authority"] != order["payer"]
++            or int(transfer["tokenAmount"]["amount"]) != order["amount"]):
++        raise ValueError("Invalid mint, transfer authority, or amount")
++
++    def balance(entries):
++        return sum(int(entry["uiTokenAmount"]["amount"]) for entry in entries
++                   if entry["mint"] == order["mint"]
++                   and keys[entry["accountIndex"]]["pubkey"] == order["destination"])
++
++    if balance(meta.get("postTokenBalances", [])) - balance(meta.get("preTokenBalances", [])) != order["amount"]:
++        raise ValueError("Merchant balance change does not match the order")
++
++
++def settle(db, order_id, signature):
++    order = db.execute("SELECT * FROM orders WHERE id=?", (order_id,)).fetchone()
++    if order is None:
++        raise ValueError("Unknown order")
++    if order["signature"] == signature:
++        return {"status": "fulfilled", "order": order_id}
++    tx = rpc("getTransaction", [signature, {
++        "encoding": "jsonParsed", "commitment": "finalized", "maxSupportedTransactionVersion": 0,
++    }])
++    if tx is None:
++        return {"status": "awaiting_finality", "order": order_id}
++    verify_payment(order, tx)
++    with db:
++        updated = db.execute("UPDATE orders SET signature=? WHERE id=? AND signature IS NULL",
++                             (signature, order_id))
++        if updated.rowcount == 0:
++            existing = db.execute("SELECT signature FROM orders WHERE id=?", (order_id,)).fetchone()
++            if existing["signature"] != signature:
++                raise ValueError("Order already paid with a different transaction")
++        else:
++            db.execute("INSERT INTO inventory VALUES (?, ?, ?)",
++                       (order["payer"], order["product"], order_id))
++    return {"status": "fulfilled", "order": order_id}
++
++
++def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--db", type=Path, required=True)
++    commands = parser.add_subparsers(dest="command", required=True)
++    commands.add_parser("create").add_argument("payer")
++    payment = commands.add_parser("settle")
++    payment.add_argument("order_id")
++    payment.add_argument("signature")
++    commands.add_parser("inventory").add_argument("payer")
++    args = parser.parse_args()
++    with open_database(args.db) as db:
++        if args.command == "create":
++            result = create_order(db, args.payer)
++        elif args.command == "settle":
++            result = settle(db, args.order_id, args.signature)
++        else:
++            result = [dict(row) for row in db.execute("SELECT * FROM inventory WHERE payer=?", (args.payer,))]
++    print(json.dumps(result))
++
++
++if __name__ == "__main__":
++    try:
++        main()
++    except (ValueError, OSError, KeyError, sqlite3.Error) as error:
++        raise SystemExit(str(error)) from None
+diff --git a/tools/devnet_payment.py b/tools/devnet_payment.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..8e027f9852a1316daaa04e0abcb0c06f2f4c61a5
+--- /dev/null
++++ b/tools/devnet_payment.py
+@@ -0,0 +1,187 @@
++"""Build a single, reusable unsigned payment attempt for a Devnet order."""
++
++import base64
++import logging
++import struct
++import time
++
++from devnet_orders import MEMO_PROGRAM, TOKEN_PROGRAM, rpc
++
++logger = logging.getLogger(__name__)
++COMPUTE_BUDGET = "ComputeBudget111111111111111111111111111111"
++MAX_PRIORITY_FEE = 10_000
++
++
++def account_permissions(message):
++    header = message.header
++    keys = message.account_keys
++    signers = header.num_required_signatures
++    if len(set(keys)) != len(keys):
++        raise ValueError("付款交易含重复账户")
++    return {
++        key: (
++            index < signers,
++            index < signers - header.num_readonly_signed_accounts
++            if index < signers else index < len(keys) - header.num_readonly_unsigned_accounts,
++        )
++        for index, key in enumerate(keys)
++    }
++
++
++def resolved_instructions(message):
++    keys = message.account_keys
++    return [
++        (keys[ix.program_id_index], tuple(keys[index] for index in ix.accounts), bytes(ix.data))
++        for ix in message.instructions
++    ]
++
++
++def broadcast_payment(db, order, payload):
++    from solders.pubkey import Pubkey
++    from solders.transaction import Transaction
++
++    if order["signature"]:
++        return {"signature": order["signature"]}
++    attempt = db.execute("SELECT payload FROM payment_attempts WHERE order_id=?", (order["id"],)).fetchone()
++    if attempt is None:
++        raise ValueError("订单没有付款请求")
++    try:
++        signed = Transaction.from_bytes(base64.b64decode(payload, validate=True))
++        expected = Transaction.from_bytes(base64.b64decode(attempt["payload"]))
++    except (ValueError, TypeError) as error:
++        raise ValueError("钱包返回无效交易") from error
++    signed.sanitize()
++    if signed.verify_with_results() != [True]:
++        raise ValueError("钱包返回的付款签名无法通过验证")
++    actual = signed.message
++    quoted = expected.message
++    if actual.account_keys[0] != quoted.account_keys[0]:
++        raise ValueError("钱包更换了付款账户")
++    actual_permissions = account_permissions(actual)
++    quoted_permissions = account_permissions(quoted)
++    actual_instructions = resolved_instructions(actual)
++    budget = {}
++    payment_instructions = []
++    for program, accounts, data in actual_instructions:
++        if str(program) != COMPUTE_BUDGET:
++            payment_instructions.append((program, accounts, data))
++            continue
++        # Only SetComputeUnitLimit and SetComputeUnitPrice are accepted.
++        if accounts or not data or (data[0], len(data)) not in ((2, 5), (3, 9)) or data[0] in budget:
++            raise ValueError("钱包添加了不支持的计算预算指令")
++        budget[data[0]] = int.from_bytes(data[1:], "little")
++        if actual_permissions.get(program) != (False, False):
++            raise ValueError("计算预算程序的账户权限不正确")
++    if budget:
++        del actual_permissions[Pubkey.from_string(COMPUTE_BUDGET)]
++    limit = budget.get(2, 1_400_000)
++    priority_fee = (limit * budget.get(3, 0) + 999_999) // 1_000_000
++    if not 0 < limit <= 1_400_000 or priority_fee > MAX_PRIORITY_FEE:
++        raise ValueError(f"钱包请求的优先费为 {priority_fee} lamports，超过 {MAX_PRIORITY_FEE} 上限")
++    quoted_permissions.pop(Pubkey.from_string(COMPUTE_BUDGET), None)
++    if actual_permissions != quoted_permissions:
++        actual_programs = {program for program, _, _ in resolved_instructions(actual)}
++        quoted_programs = {program for program, _, _ in resolved_instructions(quoted)}
++        logger.warning(
++            "Payment %s account mismatch: added=%d removed=%d permission_changes=%s "
++            "programs_added=%s programs_removed=%s instructions=%d vs %d blockhash_changed=%s",
++            order["id"],
++            len(actual_permissions.keys() - quoted_permissions.keys()),
++            len(quoted_permissions.keys() - actual_permissions.keys()),
++            [
++                (quoted_permissions[key], actual_permissions[key])
++                for key in quoted_permissions.keys() & actual_permissions.keys()
++                if quoted_permissions[key] != actual_permissions[key]
++            ],
++            sorted(map(str, actual_programs - quoted_programs)),
++            sorted(map(str, quoted_programs - actual_programs)),
++            len(actual.instructions), len(quoted.instructions),
++            actual.recent_blockhash != quoted.recent_blockhash,
++        )
++        raise ValueError("钱包更改了付款交易的账户配置")
++    if payment_instructions != [
++        ix for ix in resolved_instructions(quoted) if str(ix[0]) != COMPUTE_BUDGET
++    ]:
++        raise ValueError("钱包更改了付款交易的指令")
++    if actual.recent_blockhash != quoted.recent_blockhash:
++        raise ValueError("钱包更换了付款交易的区块哈希")
++    signature = str(signed.signatures[0])
++    rpc("sendTransaction", [payload, {"encoding": "base64", "preflightCommitment": "confirmed"}])
++    return {"signature": signature}
++
++
++def prepare_payment(db, order):
++    from solders.hash import Hash
++    from solders.instruction import AccountMeta, Instruction
++    from solders.message import Message
++    from solders.pubkey import Pubkey
++    from solders.transaction import Transaction
++
++    if order["signature"] or order["expires"] <= int(time.time()):
++        raise ValueError("订单已结算或已过期")
++
++    def existing():
++        return db.execute("SELECT * FROM payment_attempts WHERE order_id=?", (order["id"],)).fetchone()
++
++    def response(attempt):
++        transaction = Transaction.from_bytes(base64.b64decode(attempt["payload"]))
++        # The final instruction is the server-generated TransferChecked.
++        decimals = transaction.message.instructions[-1].data[-1]
++        return {
++            "transaction": attempt["payload"], "lastValidBlockHeight": attempt["last_height"],
++            "feeLamports": attempt["fee"], "maxFeeLamports": attempt["fee"] + MAX_PRIORITY_FEE,
++            "tokenDecimals": decimals,
++        }
++
++    attempt = existing()
++    if attempt:
++        height = rpc("getBlockHeight", [{"commitment": "confirmed"}])
++        if height > attempt["last_height"]:
++            raise ValueError("付款请求已失效，请核对原订单后再创建新订单")
++        return response(attempt)
++
++    payer = Pubkey.from_string(order["payer"])
++    mint = Pubkey.from_string(order["mint"])
++    destination = Pubkey.from_string(order["destination"])
++    accounts = rpc("getTokenAccountsByOwner", [
++        str(payer), {"mint": str(mint)}, {"encoding": "jsonParsed", "commitment": "confirmed"},
++    ])["value"]
++    source = None
++    for entry in accounts:
++        account = entry["account"]
++        info = account["data"]["parsed"]["info"]
++        amount = info["tokenAmount"]
++        if (account["owner"] == TOKEN_PROGRAM and info["state"] == "initialized"
++                and entry["pubkey"] != str(destination) and int(amount["amount"]) >= order["amount"]):
++            source = Pubkey.from_string(entry["pubkey"])
++            decimals = amount["decimals"]
++            break
++    if source is None:
++        raise ValueError("当前钱包没有足够的 Devnet 测试代币")
++
++    transfer = Instruction(Pubkey.from_string(TOKEN_PROGRAM), struct.pack("<BQB", 12, order["amount"], decimals), [
++        AccountMeta(source, False, True), AccountMeta(mint, False, False),
++        AccountMeta(destination, False, True), AccountMeta(payer, True, False),
++    ])
++    memo = Instruction(Pubkey.from_string(MEMO_PROGRAM), order["id"].encode("ascii"), [])
++    block = rpc("getLatestBlockhash", [{"commitment": "confirmed"}])["value"]
++    from solders.compute_budget import set_compute_unit_limit, set_compute_unit_price
++
++    message = Message.new_with_blockhash(
++        [set_compute_unit_limit(25_000), set_compute_unit_price(0), memo, transfer],
++        payer, Hash.from_string(block["blockhash"]),
++    )
++    message_payload = base64.b64encode(bytes(message)).decode("ascii")
++    fee = rpc("getFeeForMessage", [message_payload, {"commitment": "confirmed"}])["value"]
++    if fee is None:
++        raise ValueError("无法读取交易手续费，请重试")
++    if rpc("getBalance", [str(payer), {"commitment": "confirmed"}])["value"] < fee:
++        raise ValueError("当前钱包没有足够的 Devnet SOL 支付手续费")
++    payload = base64.b64encode(bytes(Transaction.new_unsigned(message))).decode("ascii")
++    with db:
++        db.execute("BEGIN IMMEDIATE")
++        if order["expires"] <= int(time.time()):
++            raise ValueError("订单已过期，请重新下单")
++        db.execute("INSERT OR IGNORE INTO payment_attempts VALUES (?, ?, ?, ?)",
++                   (order["id"], payload, block["lastValidBlockHeight"], fee))
++    return response(existing())
