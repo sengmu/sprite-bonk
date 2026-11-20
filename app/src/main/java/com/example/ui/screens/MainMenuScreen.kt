@@ -37,6 +37,8 @@ import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.movableContentOf
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -143,6 +145,8 @@ fun MainMenuScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         BiomeAtmosphereBackdrop(biome = selectedBiome)
 
+        val currentShopEntry by rememberUpdatedState(shopEntry)
+        val movableShopEntry = remember { movableContentOf { currentShopEntry() } }
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
@@ -169,7 +173,7 @@ fun MainMenuScreen(
                         onOpenSettings = onOpenSettings,
                         walletLabel = walletLabel,
                         onOpenWallet = onOpenWallet,
-                        shopEntry = shopEntry
+                        shopEntry = movableShopEntry
                     )
 
                     Row(
@@ -257,7 +261,7 @@ fun MainMenuScreen(
                         onOpenSettings = onOpenSettings,
                         walletLabel = walletLabel,
                         onOpenWallet = onOpenWallet,
-                        shopEntry = shopEntry
+                        shopEntry = movableShopEntry
                     )
 
                     // Centerpiece Open-Air Hero Stage (breathes generously in the open sky!)
