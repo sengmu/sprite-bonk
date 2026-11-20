@@ -9,4 +9,17 @@
 - `python tools/devnet_orders.py --db <db> settle <order-id> <signature>` 校验 Devnet 最终确认的交易。重复提交同一签名和订单返回同一结果。只有交易通过后才在一个数据库事务中写入付款与库存。
 - `python tools/devnet_orders.py --db <db> inventory <payer>` 本地查看权益。
 
-这是交易验证与持久化的第一段。面向设备的 API、钱包身份挑战、Compose 结账、异常付款对账和真实 Devnet 交易验收仍待接入。本地工具的付款人参数由操作者提供，不能直接暴露为玩家鉴权。
+## 本地 HTTP API
+
+安装 Python 的 `cryptography`（本轮使用 50.0.0），运行 `python tools/devnet_api.py --db <db>`。仅监听 127.0.0.1:8765，供本机开发。正式部署需要 HTTPS、独立鉴权限流及运维方案。
+
+| POST 路由 | JSON 请求 |
+| --- | --- |
+| /auth/challenge | `{"wallet":"<base58 公钥>"}` |
+| /auth/session | `{"nonce":"<服务端返回值>","signature":"<原文 UTF-8 的 Ed25519 签名，以 Base64 编码>"}` |
+| /orders/create | `{}` |
+| /orders/list | `{}` |
+| /orders/settle | `{"orderId":"<订单号>","signature":"<链上交易签名>"}` |
+| /inventory | `{}` |
+
+订单和库存请求带 `Authorization: Bearer <token>`。钱包挑战有效五分钟且只能使用一次，服务器保存令牌哈希，有效一小时。重复登录同一钱包可恢复订单和库存。测试手机可经 ADB reverse 接本机 API，Compose 结账、异常付款对账和真实 Devnet 交易仍待接入。
