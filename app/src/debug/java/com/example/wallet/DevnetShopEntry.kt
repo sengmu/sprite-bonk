@@ -36,8 +36,10 @@ internal fun devnetFoxSkinEquipped(): Boolean {
 @Composable
 internal fun DevnetShopEntry(sender: ActivityResultSender) {
     var opened by remember { mutableStateOf(false) }
-    TextButton(onClick = { opened = true }) { Text("Devnet 测试商店") }
-    if (opened) DevnetShopDialog(sender) { opened = false }
+    TextButton(onClick = { opened = true }) { Text("商店", color = androidx.compose.ui.graphics.Color(0xFF241B35)) }
+    if (opened) DevnetCatalog(onClose = { opened = false }) { back ->
+        DevnetShopDialog(sender, back)
+    }
 }
 
 @Composable

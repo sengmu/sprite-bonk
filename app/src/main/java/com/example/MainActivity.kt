@@ -127,7 +127,8 @@ fun SpriteBonkApp(
                 onOpenProfile = { viewModel.navigateTo(AppScreen.PROFILE) },
                 onOpenSettings = viewModel::openSettings,
                 walletLabel = if (walletState.isConnected) walletState.shortAddress() else "连接钱包",
-                onOpenWallet = { showWalletDialog = true }
+                onOpenWallet = { showWalletDialog = true },
+                shopEntry = { com.example.wallet.DevnetShopEntry(walletActivityResultSender) }
             )
 
             AppScreen.ROAM -> SpriteRoamScreen(
@@ -213,7 +214,6 @@ fun SpriteBonkApp(
                     Toast.makeText(context, "地址已复制", Toast.LENGTH_SHORT).show()
                 },
                 onRetryBalance = viewModel::refreshWalletBalance,
-                extraContent = { com.example.wallet.DevnetShopEntry(walletActivityResultSender) },
                 onDismiss = { showWalletDialog = false }
             )
         }

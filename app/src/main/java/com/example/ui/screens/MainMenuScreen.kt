@@ -93,7 +93,8 @@ fun MainMenuScreen(
     onOpenProfile: () -> Unit,
     onOpenSettings: () -> Unit,
     walletLabel: String = "钱包",
-    onOpenWallet: () -> Unit = {}
+    onOpenWallet: () -> Unit = {},
+    shopEntry: @Composable () -> Unit = {}
 ) {
     val selectedStarter = GameCatalog.starterById(meta.profile.selectedStarterId)
     val selectedBiome = GameCatalog.biomeById(meta.profile.selectedBiomeId)
@@ -167,7 +168,8 @@ fun MainMenuScreen(
                         onOpenLab = onOpenLab,
                         onOpenSettings = onOpenSettings,
                         walletLabel = walletLabel,
-                        onOpenWallet = onOpenWallet
+                        onOpenWallet = onOpenWallet,
+                        shopEntry = shopEntry
                     )
 
                     Row(
@@ -254,7 +256,8 @@ fun MainMenuScreen(
                         onOpenLab = onOpenLab,
                         onOpenSettings = onOpenSettings,
                         walletLabel = walletLabel,
-                        onOpenWallet = onOpenWallet
+                        onOpenWallet = onOpenWallet,
+                        shopEntry = shopEntry
                     )
 
                     // Centerpiece Open-Air Hero Stage (breathes generously in the open sky!)
@@ -353,7 +356,8 @@ private fun LobbyTopBar(
     onOpenLab: () -> Unit,
     onOpenSettings: () -> Unit,
     walletLabel: String,
-    onOpenWallet: () -> Unit
+    onOpenWallet: () -> Unit,
+    shopEntry: @Composable () -> Unit
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -407,6 +411,7 @@ private fun LobbyTopBar(
                 }
             }
 
+            shopEntry()
             Row(
                 modifier = Modifier
                     .testTag("menu_wallet_pill")
