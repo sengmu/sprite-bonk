@@ -12,6 +12,7 @@ from urllib.request import Request, urlopen
 RPC = "https://api.devnet.solana.com"
 PRODUCT = "railing-fox-shop-skin"
 MEMO_PROGRAM = "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"
+TOKEN_PROGRAM = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
 
 
 def rpc(method, params):
@@ -44,16 +45,33 @@ def open_database(path):
 def create_order(db, payer):
     if db.execute("SELECT 1 FROM inventory WHERE payer=? AND product=?", (payer, PRODUCT)).fetchone():
         raise ValueError("This wallet already owns the item")
-    mint = os.environ["SPRITEBONK_DEVNET_MINT"]
-    destination = os.environ["SPRITEBONK_DEVNET_TOKEN_ACCOUNT"]
-    amount = int(os.environ["SPRITEBONK_DEVNET_AMOUNT"])
-    if amount <= 0:
-        raise ValueError("Amount must be a positive integer in token base units")
+    mint, destination, amount = validate_shop_config()
     now = int(time.time())
     order = (secrets.token_hex(16), payer, PRODUCT, mint, destination, amount, now, now + 900)
     with db:
         db.execute("INSERT INTO orders VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL)", order)
     return dict(db.execute("SELECT * FROM orders WHERE id=?", (order[0],)).fetchone())
+
+
+def validate_shop_config():
+    mint = os.getenv("SPRITEBONK_DEVNET_MINT")
+    destination = os.getenv("SPRITEBONK_DEVNET_TOKEN_ACCOUNT")
+    raw_amount = os.getenv("SPRITEBONK_DEVNET_AMOUNT")
+    if not all((mint, destination, raw_amount)):
+        raise ValueError("Devnet 测试商店尚未配置收款，请联系测试管理员")
+    amount = int(raw_amount)
+    if not 0 < amount <= 2**63 - 1:
+        raise ValueError("Amount must be a positive integer in token base units")
+    account = rpc("getAccountInfo", [destination, {
+        "encoding": "jsonParsed", "commitment": "finalized",
+    }])["value"]
+    if account is None or account["owner"] != TOKEN_PROGRAM:
+        raise ValueError("Devnet recipient must be an existing SPL Token account")
+    parsed = account["data"]["parsed"]
+    info = parsed["info"]
+    if parsed["type"] != "account" or info["mint"] != mint or info["state"] != "initialized":
+        raise ValueError("Devnet recipient does not accept the configured test mint")
+    return mint, destination, amount
 
 
 def verify_payment(order, tx):
