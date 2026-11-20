@@ -124,9 +124,13 @@ def prepare_payment(db, order):
         return db.execute("SELECT * FROM payment_attempts WHERE order_id=?", (order["id"],)).fetchone()
 
     def response(attempt):
+        transaction = Transaction.from_bytes(base64.b64decode(attempt["payload"]))
+        # The final instruction is the server-generated TransferChecked.
+        decimals = transaction.message.instructions[-1].data[-1]
         return {
             "transaction": attempt["payload"], "lastValidBlockHeight": attempt["last_height"],
             "feeLamports": attempt["fee"], "maxFeeLamports": attempt["fee"] + MAX_PRIORITY_FEE,
+            "tokenDecimals": decimals,
         }
 
     attempt = existing()

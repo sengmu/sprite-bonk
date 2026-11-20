@@ -19,6 +19,10 @@ import com.solana.mobilewalletadapter.clientlib.TransactionResult
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
+import java.math.BigDecimal
+
+private fun displayUnits(amount: Long, decimals: Int): String =
+    BigDecimal.valueOf(amount, decimals).stripTrailingZeros().toPlainString()
 
 private const val FOX_SKIN = "railing-fox-shop-skin"
 private val equippedFox = MutableStateFlow<Boolean?>(null)
@@ -109,11 +113,10 @@ private fun DevnetShopDialog(sender: ActivityResultSender, onClose: () -> Unit) 
 
     AlertDialog(
         onDismissRequest = { if (!busy) onClose() },
-        title = { Text("Devnet 测试商店") },
+        title = { Text("购买雷铃狐外观") },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
-                Text("雷铃狐外观")
-                Text("仅使用 Devnet 测试代币。")
+                Text("DEVNET 测试网")
                 TextButton(enabled = !busy, onClick = {
                     runAction {
                         token = null
@@ -151,9 +154,9 @@ private fun DevnetShopDialog(sender: ActivityResultSender, onClose: () -> Unit) 
                             is TransactionResult.NoWalletFound -> status = "未找到兼容钱包"
                         }
                     }
-                }) { Text("签名登录") }
+                }) { Text(if (token == null) "连接钱包" else "切换钱包") }
                 token?.let { session ->
-                    TextButton(enabled = !busy && order == null, onClick = {
+                    TextButton(enabled = !busy && order == null && !ownsFox, onClick = {
                         runAction {
                             val orders = client.orders(session)
                             val pending = (0 until orders.length()).asSequence()
@@ -165,7 +168,7 @@ private fun DevnetShopDialog(sender: ActivityResultSender, onClose: () -> Unit) 
                             selectOrder(pending ?: client.createOrder(session))
                             status = if (pending == null) "测试订单已创建" else "已恢复原订单"
                         }
-                    }) { Text("创建测试订单") }
+                    }) { Text("继续购买") }
                     TextButton(enabled = !busy, onClick = {
                         runAction {
                             val orders = client.orders(session)
@@ -186,15 +189,16 @@ private fun DevnetShopDialog(sender: ActivityResultSender, onClose: () -> Unit) 
                     }
                     order?.let { selected ->
                         val id = selected.getString("id")
-                        Text("订单 $id\n测试代币 ${selected.getLong("amount")} 最小单位")
+                        Text("订单号 $id")
                         Text("收款账户 ${selected.getString("destination")}")
                         if (signature == null) {
                             TextButton(enabled = !busy && !paymentRequested, onClick = {
                                 runAction { quote = client.preparePayment(session, id) }
-                            }) { Text("准备付款") }
+                            }) { Text("查看付款金额和费用") }
                             quote?.let { prepared ->
-                                Text("预计网络费 ${prepared.getLong("feeLamports")} lamports")
-                                Text("最高网络费 ${prepared.getLong("maxFeeLamports")} lamports")
+                                Text("支付 ${displayUnits(selected.getLong("amount"), prepared.getInt("tokenDecimals"))} 枚测试代币")
+                                Text("预计网络费 ${displayUnits(prepared.getLong("feeLamports"), 9)} Devnet SOL")
+                                Text("最高网络费 ${displayUnits(prepared.getLong("maxFeeLamports"), 9)} Devnet SOL")
                                 TextButton(enabled = !busy && !paymentRequested, onClick = {
                                     runAction {
                                         val transaction = Base64.decode(prepared.getString("transaction"), Base64.DEFAULT)
