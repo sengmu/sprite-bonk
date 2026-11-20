@@ -28,6 +28,10 @@ object SolanaAddress {
 
     fun encode(publicKey: ByteArray): String {
         require(publicKey.size == 32) { "Solana public keys must be 32 bytes" }
+        return encodeBytes(publicKey)
+    }
+
+    internal fun encodeBytes(publicKey: ByteArray): String {
 
         val leadingZeroes = publicKey.takeWhile { it == 0.toByte() }.size
         var number = BigInteger(1, publicKey)

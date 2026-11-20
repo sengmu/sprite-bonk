@@ -30,6 +30,9 @@ internal class DevnetShopClient {
     suspend fun orders(token: String): JSONArray =
         post("/orders/list", token = token).getJSONArray("orders")
 
+    suspend fun preparePayment(token: String, orderId: String): JSONObject =
+        post("/orders/payment", JSONObject().put("orderId", orderId), token)
+
     suspend fun settle(token: String, orderId: String, signature: String): JSONObject =
         post("/orders/settle", JSONObject().put("orderId", orderId).put("signature", signature), token)
 
