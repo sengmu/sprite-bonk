@@ -22,6 +22,7 @@
 | /orders/create | `{}` |
 | /orders/list | `{}` |
 | /orders/payment | `{"orderId":"<订单号>"}`，返回 Base64 未签名交易、最后有效区块高度及 lamports 手续费 |
+| /orders/broadcast | `{"orderId":"<订单号>","transaction":"<Base64 已签名交易>"}` |
 | /orders/settle | `{"orderId":"<订单号>","signature":"<链上交易签名>"}` |
 | /inventory | `{}` |
 
@@ -30,3 +31,7 @@
 ## Seeker 联调记录
 
 2026-11-20，安装提交 `ae0b3d8` 对应的调试包，通过 ADB reverse 连接本机 API。用户完成钱包签名，游戏显示「钱包登录成功」，本机数据库存在有效会话，游戏成功查询并显示「订单 0 笔 · 已解锁 0 件」。尚未配置实链测试 mint 和收款账户，未创建链上付款。
+
+2026-11-20，Seeker 完成订单 `11aa984e0e2e3bbd56e030133daefcb3`，支付 1 枚 Devnet 测试代币。交易 `4y1zFiH4n2sksMcuK28A6k7D84yGJHVLs8JeRCy9MzH4mghqfy5R42u6PX74o4UdavgJQGnhuMpdeHmJnMQS1Nf5` 已最终确认且无链上错误。同一回执连续结算两次均返回 fulfilled，数据库中只有一条外观权益。手机查验显示「已到账，外观已发放」。装备界面暂未接入。
+
+钱包负责签名，服务端比对签名者、账户权限、付款指令和区块哈希，再向 Devnet 提交。仅允许两种合法计算预算指令，优先费上限 10,000 lamports。测试中发生过区块哈希过期，旧单先核对未到账再重新下单。

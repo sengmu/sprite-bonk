@@ -14,7 +14,7 @@ from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
 from devnet_orders import create_order, open_database, rpc, settle
-from devnet_payment import prepare_payment
+from devnet_payment import broadcast_payment, prepare_payment
 
 BASE58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 AUTH_SCHEMA = """
@@ -134,6 +134,14 @@ class ApiHandler(BaseHTTPRequestHandler):
             if db.execute("SELECT 1 FROM orders WHERE id=? AND payer=?", (order_id, payer)).fetchone() is None:
                 return 404, {"error": "Unknown order"}
             return 200, settle(db, order_id, body["signature"])
+        if self.path == "/orders/broadcast":
+            order = db.execute("SELECT * FROM orders WHERE id=? AND payer=?",
+                               (body["orderId"], payer)).fetchone()
+            if order is None:
+                return 404, {"error": "Unknown order"}
+            if db.execute("SELECT 1 FROM closed_unpaid_orders WHERE order_id=?", (order["id"],)).fetchone():
+                return 409, {"error": "订单已关闭"}
+            return 200, broadcast_payment(db, order, body["transaction"])
         if self.path == "/orders/recover":
             order_id = body["orderId"]
             order = db.execute("SELECT * FROM orders WHERE id=? AND payer=?", (order_id, payer)).fetchone()

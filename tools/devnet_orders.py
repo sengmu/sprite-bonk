@@ -21,7 +21,7 @@ def rpc(method, params):
     with urlopen(request, timeout=15) as response:
         result = json.load(response)
     if "error" in result:
-        raise ValueError("Devnet RPC rejected the request")
+        raise ValueError("Devnet RPC: " + str(result["error"].get("message", "request rejected")))
     return result["result"]
 
 

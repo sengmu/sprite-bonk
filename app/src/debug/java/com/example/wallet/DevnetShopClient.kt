@@ -36,6 +36,10 @@ internal class DevnetShopClient {
     suspend fun recover(token: String, orderId: String): JSONObject =
         post("/orders/recover", JSONObject().put("orderId", orderId), token)
 
+    suspend fun broadcast(token: String, orderId: String, signedTransaction: String): String =
+        post("/orders/broadcast", JSONObject().put("orderId", orderId)
+            .put("transaction", signedTransaction), token).getString("signature")
+
     suspend fun settle(token: String, orderId: String, signature: String): JSONObject =
         post("/orders/settle", JSONObject().put("orderId", orderId).put("signature", signature), token)
 

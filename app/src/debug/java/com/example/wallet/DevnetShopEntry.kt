@@ -137,6 +137,7 @@ private fun DevnetShopDialog(sender: ActivityResultSender, onClose: () -> Unit) 
                             }) { Text("准备付款") }
                             quote?.let { prepared ->
                                 Text("预计网络费 ${prepared.getLong("feeLamports")} lamports")
+                                Text("最高网络费 ${prepared.getLong("maxFeeLamports")} lamports")
                                 TextButton(enabled = !busy && !paymentRequested, onClick = {
                                     runAction {
                                         val transaction = Base64.decode(prepared.getString("transaction"), Base64.DEFAULT)
@@ -150,8 +151,9 @@ private fun DevnetShopDialog(sender: ActivityResultSender, onClose: () -> Unit) 
                                                 "无法保存付款状态"
                                             }
                                             paymentRequested = true
-                                            val sent = signAndSendTransactions(arrayOf(transaction))
-                                            val encoded = SolanaAddress.encodeBytes(sent.signatures.single())
+                                            @Suppress("DEPRECATION")
+                                            val signed = signTransactions(arrayOf(transaction)).signedPayloads.single()
+                                            val encoded = client.broadcast(session, id, Base64.encodeToString(signed, Base64.NO_WRAP))
                                             check(receipts.edit().putString("signature:$id", encoded).commit()) {
                                                 "付款回执保存失败，请核对钱包交易记录"
                                             }
@@ -161,7 +163,7 @@ private fun DevnetShopDialog(sender: ActivityResultSender, onClose: () -> Unit) 
                                                 signature = result.payload
                                                 status = "已提交，请查验到账"
                                             }
-                                            is TransactionResult.Failure -> status = "付款未确认，请核对钱包交易记录"
+                                            is TransactionResult.Failure -> status = "付款未确认：${result.message}"
                                             is TransactionResult.NoWalletFound -> status = "未找到兼容钱包"
                                         }
                                     }
