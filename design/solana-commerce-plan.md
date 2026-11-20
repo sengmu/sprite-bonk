@@ -5,7 +5,9 @@
 ## 首版决定
 
 - 游客照常开战，星尘继续由游玩获得并服务现有成长。商店第一件商品用「雷铃狐外观」验证固定价购买，价格待定。
-- 先用 Solana Devnet USDC 跑通逐单支付和发货。付费权益存于玩家账户，可换设备恢复。正式上架前确认发行地区、渠道、定价、收款与退款规则。
+- Seeker 版商店规划以 SKR 为主要付款币种。先用 Solana Devnet 模拟 SPL 代币跑通逐单支付和发货，测试币与官方 SKR 分开配置和标示。付费权益存于玩家账户，可换设备恢复。
+- 服务端按参考价生成限时 SKR 报价，订单锁定实际扣款数量。主网只接受 [Solana Mobile 公布的 SKR mint](https://solanamobile.com/skr)。钱包分别展示可用 SKR 与用于支付网络费的 SOL。正式上架前确认地区、渠道、定价、收款与退款规则。
+- SKR 消费不增加赛季成绩或未来空投资格。首季任务、奖励和发行评审见 [创世赛季规格](genesis-season-plan.md)。
 - 将外观购买与战斗经验、实验室成长和竞技成绩分开。发币、质押、交易加成、付费抽奖及现金奖池留待另案评估。
 
 MattleFun 的官方更新显示它有 SOL Shop 和 MATTLE Shop，第 19 季把综合榜和技巧榜分开，联名活动还使用固定 USDC 奖池。这些例子适合参考商品入口和赛事分层，公开材料未确认它的实际结账步骤或是否需要先充值。[官方更新](https://www.blog.mattle.fun/) · [赛季规则](https://www.blog.mattle.fun/activities/mattle-run-season-19) · [联名活动](https://www.blog.mattle.fun/collabs/solana-gaming-has-enter-mattlefun-party)
