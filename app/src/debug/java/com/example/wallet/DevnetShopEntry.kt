@@ -115,7 +115,7 @@ private fun DevnetShopDialog(sender: ActivityResultSender, onClose: () -> Unit) 
                             val orders = client.orders(session)
                             val pending = (0 until orders.length()).asSequence()
                                 .map { orders.getJSONObject(it) }
-                                .firstOrNull { it.isNull("signature") }
+                                .firstOrNull { it.isNull("signature") && it.optInt("closed_unpaid") == 0 }
                             selectOrder(pending ?: client.createOrder(session))
                             status = if (pending == null) "测试订单已创建" else "已恢复原订单"
                         }
@@ -172,11 +172,16 @@ private fun DevnetShopDialog(sender: ActivityResultSender, onClose: () -> Unit) 
                                 TextButton(enabled = !busy, onClick = {
                                     runAction {
                                         val result = client.recover(session, id)
-                                        status = if (result.getString("status") == "fulfilled") {
-                                            selectOrder(null)
-                                            "已到账，外观已发放"
-                                        } else {
-                                            "暂未找到已确认的付款，请稍后再次查验"
+                                        status = when (result.getString("status")) {
+                                            "fulfilled" -> {
+                                                selectOrder(null)
+                                                "已到账，外观已发放"
+                                            }
+                                            "closed_unpaid" -> {
+                                                selectOrder(null)
+                                                "原付款已失效且未到账，可以重新下单"
+                                            }
+                                            else -> "暂未找到已确认的付款，请稍后再次查验"
                                         }
                                     }
                                 }) { Text("查找原订单付款") }

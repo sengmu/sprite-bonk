@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS sessions (
 CREATE TABLE IF NOT EXISTS payment_attempts (
     order_id TEXT PRIMARY KEY, payload TEXT NOT NULL, last_height INTEGER NOT NULL, fee INTEGER NOT NULL
 );
+CREATE TABLE IF NOT EXISTS closed_unpaid_orders (order_id TEXT PRIMARY KEY);
 """
 
 
@@ -116,13 +117,17 @@ class ApiHandler(BaseHTTPRequestHandler):
         if self.path == "/orders/create":
             return 201, create_order(db, payer)
         if self.path == "/orders/list":
-            rows = db.execute("SELECT * FROM orders WHERE payer=? ORDER BY created DESC, id DESC", (payer,))
+            rows = db.execute("""SELECT orders.*, EXISTS(
+                SELECT 1 FROM closed_unpaid_orders WHERE order_id=orders.id
+                ) AS closed_unpaid FROM orders WHERE payer=? ORDER BY created DESC, id DESC""", (payer,))
             return 200, {"orders": [dict(row) for row in rows]}
         if self.path == "/orders/payment":
             order = db.execute("SELECT * FROM orders WHERE id=? AND payer=?",
                                (body["orderId"], payer)).fetchone()
             if order is None:
                 return 404, {"error": "Unknown order"}
+            if db.execute("SELECT 1 FROM closed_unpaid_orders WHERE order_id=?", (order["id"],)).fetchone():
+                return 409, {"error": "订单已关闭"}
             return 200, prepare_payment(db, order)
         if self.path == "/orders/settle":
             order_id = body["orderId"]
@@ -136,17 +141,28 @@ class ApiHandler(BaseHTTPRequestHandler):
                 return 404, {"error": "Unknown order"}
             if order["signature"]:
                 return 200, {"status": "fulfilled", "order": order_id}
+            attempt = db.execute("SELECT last_height FROM payment_attempts WHERE order_id=?",
+                                 (order_id,)).fetchone()
+            expired = attempt is not None and rpc("getBlockHeight", [
+                {"commitment": "finalized"},
+            ]) > attempt["last_height"]
             entries = rpc("getSignaturesForAddress", [
                 order["destination"], {"limit": 100, "commitment": "finalized"},
             ])
             for entry in entries:
                 memo = entry.get("memo") or ""
                 # RPC prefixes displayed memos with their length, e.g. "[32] …".
-                if entry["err"] is None and memo in (order_id, f"[{len(order_id)}] {order_id}"):
+                if entry["err"] is None and order_id in memo:
                     try:
                         return 200, settle(db, order_id, entry["signature"])
                     except ValueError:
                         continue
+            if expired and len(entries) < 100 and not any(
+                entry["err"] is None and order_id in (entry.get("memo") or "") for entry in entries
+            ):
+                with db:
+                    db.execute("INSERT OR IGNORE INTO closed_unpaid_orders VALUES (?)", (order_id,))
+                return 200, {"status": "closed_unpaid", "order": order_id}
             return 200, {"status": "not_found", "order": order_id}
         if self.path == "/inventory":
             rows = db.execute("SELECT product, order_id FROM inventory WHERE payer=?", (payer,))
