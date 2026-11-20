@@ -220,15 +220,17 @@ fun RunSettlementOverlay(
     ) {
         // Animated ambient celebration / twilight backdrop (full-bleed edge-to-edge)
         Canvas(modifier = Modifier.fillMaxSize()) {
+            if (size.minDimension <= 1f) return@Canvas
             val center = Offset(size.width * 0.5f, size.height * 0.42f)
             val glowColor = if (summary.victory) GoldAccent else starter.element.color
+            val glowRadius = (size.maxDimension * 0.62f).coerceAtLeast(1f)
             drawCircle(
                 brush = Brush.radialGradient(
                     colors = listOf(glowColor.copy(alpha = 0.22f), Color.Transparent),
                     center = center,
-                    radius = size.maxDimension * 0.62f
+                    radius = glowRadius
                 ),
-                radius = size.maxDimension * 0.62f,
+                radius = glowRadius,
                 center = center
             )
             if (summary.victory) {

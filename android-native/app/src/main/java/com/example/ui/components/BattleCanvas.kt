@@ -99,12 +99,12 @@ private class BattleCanvasCache {
         vignetteBrush = Brush.radialGradient(
             colors = listOf(Color.Transparent, Color(0x28100A22)),
             center = Offset(cx, cy),
-            radius = maxOf(w, h) * 0.78f
+            radius = (maxOf(w, h) * 0.78f).coerceAtLeast(1f)
         )
         sunGlowBrush = Brush.radialGradient(
             colors = listOf(Color(0x22FFF3B8), Color.Transparent),
             center = Offset(w * 0.14f, h * 0.12f),
-            radius = w * 0.55f
+            radius = (w * 0.55f).coerceAtLeast(1f)
         )
     }
 }
@@ -148,6 +148,7 @@ fun BattleCanvas(
     val cache = remember { BattleCanvasCache() }
 
     Canvas(modifier = modifier.fillMaxSize()) {
+        if (size.minDimension <= 1f) return@Canvas
         val state = stateProvider()
         val biome = cache.resolveBiome(state.biomeId)
         val cx = size.width * 0.5f
@@ -1028,6 +1029,7 @@ private fun DrawScope.drawOffScreenWaypoints(
     val marginX = 48f
     val marginTop = 96f
     val marginBottom = 92f
+    if (size.width <= marginX * 2f + 2f || size.height <= marginTop + marginBottom + 2f) return
     val arrow = cache.scratchPath
 
     fun drawPointer(wx: Float, wy: Float, color: Color, isBoss: Boolean) {

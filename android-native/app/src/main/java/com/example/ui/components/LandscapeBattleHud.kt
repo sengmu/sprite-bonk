@@ -292,6 +292,7 @@ fun LandscapeBattleHud(
                                 )
                                 if (animatedXpFrac > 0.02f) {
                                     Canvas(modifier = Modifier.fillMaxSize()) {
+                                        if (size.width <= 6f || size.height <= 1f) return@Canvas
                                         val tipX = (size.width * animatedXpFrac).coerceIn(3f, size.width - 3f)
                                         drawCircle(
                                             color = Color.White.copy(alpha = 0.92f),

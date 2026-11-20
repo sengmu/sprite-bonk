@@ -63,6 +63,16 @@ fun DrawScope.drawEvolvedHeroSprite(
     hpRatio: Float = 1f,
     quirkProgress: Float = 0f
 ) {
+    if (!baseRadius.isFinite() || baseRadius <= 0.5f ||
+        !center.x.isFinite() || !center.y.isFinite() ||
+        size.minDimension <= 1f
+    ) {
+        return
+    }
+    val safeAnimTime = if (animTime.isFinite()) animTime else 0f
+    val safeOrbitAngle = if (orbitAngle.isFinite()) orbitAngle else 0f
+    val safeFacingAngle = if (facingAngle.isFinite()) facingAngle else 0.25f
+    val safeWalkCycle = if (walkCycle.isFinite()) walkCycle else safeAnimTime
     val normAttack = if (isAttacking || attackProgress > 0f) attackProgress.coerceIn(0f, 1f) else 0f
     val normHurt = if (isHurt || hurtProgress > 0f) hurtProgress.coerceIn(0f, 1f) else 0f
     val normEvoFx = evolutionFxProgress.coerceIn(0f, 1f)
@@ -73,13 +83,13 @@ fun DrawScope.drawEvolvedHeroSprite(
 
     // Smooth blend between grounded idle breathing (0f) and lively walk hop (1f) — zero snapping on stop/start
     val moveBlend = ((moveSpeedRatio - 0.06f) / 0.24f).coerceIn(0f, 1f)
-    val hopWave = sin(walkCycle)
+    val hopWave = sin(safeWalkCycle)
     // Harmonic 1.5x frequency = exact 3 full breath cycles per 4*PI loop (100% seamless);
     // Low-HP adds a harmonic 3.0x anxious chest heave while keeping exact loop continuity!
     val criticalAmp = if (isLowHp) 1.45f else 1f
-    val idleBreath = (sin(animTime * 1.5f) + if (isLowHp) sin(animTime * 3.0f) * 0.28f else 0f) * criticalAmp
-    val scale = style.scaleFactor
-    val baseRy = baseRadius * scale
+    val idleBreath = (sin(safeAnimTime * 1.5f) + if (isLowHp) sin(safeAnimTime * 3.0f) * 0.28f else 0f) * criticalAmp
+    val scale = style.scaleFactor.coerceAtLeast(0.5f)
+    val baseRy = (baseRadius * scale).coerceAtLeast(1f)
 
     // Grounded breathing: inhaling stretches taller (+3.0%) & lifts center UP so feet stay planted on the ground!
     val idleBob = -idleBreath * (baseRy * 0.030f)
@@ -96,7 +106,7 @@ fun DrawScope.drawEvolvedHeroSprite(
     val hurtShudderX = if (normHurt > 0.01f) sin(normHurt * 46f) * baseRadius * 0.22f * normHurt else 0f
     val hurtLiftY = if (normHurt > 0.01f) -hurtWave * baseRadius * 0.10f else 0f
 
-    val turnX = cos(facingAngle)
+    val turnX = cos(safeFacingAngle)
     val lungeScale = when (style.starterId) {
         "char" -> 0.28f
         "stump" -> 0.24f
@@ -106,7 +116,7 @@ fun DrawScope.drawEvolvedHeroSprite(
         else -> 0.22f
     }
     val lungeX = turnX * baseRadius * lungeScale * attackPunch
-    val lungeY = sin(facingAngle) * baseRadius * (lungeScale * 0.72f) * attackPunch
+    val lungeY = sin(safeFacingAngle) * baseRadius * (lungeScale * 0.72f) * attackPunch
 
     val idleStretchX = 1f - idleBreath * 0.024f
     val idleStretchY = 1f + idleBreath * 0.030f
@@ -137,8 +147,8 @@ fun DrawScope.drawEvolvedHeroSprite(
     val hurtSquashY = 1f - hurtWave * 0.16f
     val evoPopScale = 1f + sin(normEvoFx * 3.1415927f) * 0.14f
 
-    val rx = baseRadius * scale * baseStretchX * attackStretchX * dashStretchX * hurtSquashX * evoPopScale
-    val ry = baseRadius * scale * baseStretchY * attackStretchY * dashStretchY * hurtSquashY * evoPopScale
+    val rx = (baseRadius * scale * baseStretchX * attackStretchX * dashStretchX * hurtSquashX * evoPopScale).coerceAtLeast(1f)
+    val ry = (baseRadius * scale * baseStretchY * attackStretchY * dashStretchY * hurtSquashY * evoPopScale).coerceAtLeast(1f)
     val bodyCenter = Offset(
         center.x + lungeX + hurtShudderX,
         center.y + bob + lungeY + hurtLiftY
@@ -146,7 +156,7 @@ fun DrawScope.drawEvolvedHeroSprite(
 
     // Natural periodic blink aligned to exact 4*PI period so UI loops & battle timers never glitch on wrap
     val blinkPeriod = 12.566371f
-    val blinkCycle = (animTime % blinkPeriod).let { if (it < 0f) it + blinkPeriod else it }
+    val blinkCycle = (safeAnimTime % blinkPeriod).let { if (it < 0f) it + blinkPeriod else it }
     val blinkFactor = if (effectiveAttacking || effectiveHurt || isUltActive || isDashing) {
         0f
     } else if (blinkCycle > 11.35f && blinkCycle < 11.77f) {
@@ -163,7 +173,7 @@ fun DrawScope.drawEvolvedHeroSprite(
             rx = rx,
             ry = ry,
             evolutionFxProgress = normEvoFx,
-            animTime = animTime
+            animTime = safeAnimTime
         )
     }
 
@@ -173,7 +183,7 @@ fun DrawScope.drawEvolvedHeroSprite(
         center = bodyCenter,
         rx = rx,
         ry = ry,
-        orbitAngle = orbitAngle,
+        orbitAngle = safeOrbitAngle,
         isUltActive = isUltActive
     )
 
@@ -181,9 +191,9 @@ fun DrawScope.drawEvolvedHeroSprite(
     val showAura = scale > 1.05f || isUltActive || normEvoFx > 0.05f
     if (showAura) {
         val auraCol = if (isUltActive) GoldAccent else style.auraColor
-        val auraR = if (isUltActive) rx * 2.60f else rx * (1.78f + normEvoFx * 0.65f)
+        val auraR = (if (isUltActive) rx * 2.60f else rx * (1.78f + normEvoFx * 0.65f)).coerceAtLeast(1f)
         drawCircle(
-            Brush.radialGradient(listOf(auraCol.copy(alpha = 0.42f + normEvoFx * 0.22f), Color.Transparent), center, auraR),
+            Brush.radialGradient(listOf(auraCol.copy(alpha = (0.42f + normEvoFx * 0.22f).coerceIn(0f, 1f)), Color.Transparent), center, auraR),
             radius = auraR,
             center = center
         )
@@ -233,7 +243,7 @@ fun DrawScope.drawEvolvedHeroSprite(
             center = bodyCenter,
             rx = rx,
             ry = ry,
-            facingAngle = facingAngle
+            facingAngle = safeFacingAngle
         )
     }
 
@@ -244,14 +254,14 @@ fun DrawScope.drawEvolvedHeroSprite(
             center = bodyCenter,
             rx = rx,
             ry = ry,
-            animTime = animTime,
-            orbitAngle = orbitAngle
+            animTime = safeAnimTime,
+            orbitAngle = safeOrbitAngle
         )
     }
 
     val lookX = turnX * (baseRadius * 0.20f)
-    val lookY = sin(facingAngle) * (baseRadius * 0.12f)
-    val footSwing = sin(walkCycle) * (baseRadius * 0.25f) * moveBlend
+    val lookY = sin(safeFacingAngle) * (baseRadius * 0.12f)
+    val footSwing = sin(safeWalkCycle) * (baseRadius * 0.25f) * moveBlend
     // Two-stage hurt color feedback (incandescent white-peach flash -> crimson pulse)
     val primary = if (effectiveHurt) blendHurtTint(style.primaryColor, normHurt) else style.primaryColor
     val secondary = if (effectiveHurt) blendHurtTint(style.secondaryColor, normHurt) else style.secondaryColor
@@ -261,8 +271,8 @@ fun DrawScope.drawEvolvedHeroSprite(
         bodyCenter = bodyCenter,
         rx = rx,
         ry = ry,
-        animTime = animTime,
-        orbitAngle = orbitAngle,
+        animTime = safeAnimTime,
+        orbitAngle = safeOrbitAngle,
         lookX = lookX,
         lookY = lookY,
         footSwing = footSwing,
@@ -272,7 +282,7 @@ fun DrawScope.drawEvolvedHeroSprite(
         isAttacking = effectiveAttacking,
         isUltActive = isUltActive,
         blinkFactor = blinkFactor,
-        facingAngle = facingAngle,
+        facingAngle = safeFacingAngle,
         isHurt = effectiveHurt,
         attackProgress = normAttack,
         hurtProgress = normHurt,
@@ -284,7 +294,7 @@ fun DrawScope.drawEvolvedHeroSprite(
         quirkProgress = normQuirk
     )
 
-    val idleSwayTilt = sin(animTime * 0.5f) * 2.0f * (1f - moveBlend)
+    val idleSwayTilt = sin(safeAnimTime * 0.5f) * 2.0f * (1f - moveBlend)
     val attackLean = turnX * 14f * attackPunch
     val dashLean = if (isDashing) turnX * 16f else 0f
     val hurtRecoilTilt = -hurtWave * 13f * (if (turnX >= 0f) 1f else -1f)
@@ -392,16 +402,18 @@ fun LiveEvolutionPreviewStage(
         contentAlignment = Alignment.Center
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
+            if (size.minDimension <= 1f) return@Canvas
             val c = Offset(size.width / 2f, size.height * 0.56f)
 
             // Soft overhead showcase spotlight cone
+            val spotRadius = (size.minDimension * 0.58f).coerceAtLeast(1f)
             drawCircle(
                 brush = Brush.radialGradient(
                     colors = listOf(Color.White.copy(alpha = 0.14f), Color.Transparent),
                     center = Offset(size.width * 0.5f, size.height * 0.18f),
-                    radius = size.minDimension * 0.58f
+                    radius = spotRadius
                 ),
-                radius = size.minDimension * 0.58f,
+                radius = spotRadius,
                 center = Offset(size.width * 0.5f, size.height * 0.18f)
             )
 

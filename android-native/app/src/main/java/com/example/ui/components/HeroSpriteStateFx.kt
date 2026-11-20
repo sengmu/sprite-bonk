@@ -49,14 +49,15 @@ internal fun DrawScope.drawElementalRimAndUltSheen(
     isUltActive: Boolean
 ) {
     val rimCol = evolutionPrimaryFxColor(style)
+    val rimRadius = (rx * (if (isUltActive) 1.72f else 1.42f)).coerceAtLeast(1f)
     // Subtle dark-biome figure-ground separation rim behind the silhouette
     drawCircle(
         brush = Brush.radialGradient(
             listOf(rimCol.copy(alpha = if (isUltActive) 0.34f else 0.16f), Color.Transparent),
             center = center,
-            radius = rx * (if (isUltActive) 1.72f else 1.42f)
+            radius = rimRadius
         ),
-        radius = rx * (if (isUltActive) 1.72f else 1.42f),
+        radius = rimRadius,
         center = center
     )
     if (isUltActive) {
@@ -233,21 +234,26 @@ internal fun DrawScope.drawLowHpAndPassiveOverlay(
 ) {
     // Char's gameplay passive: <50% HP triggers +30% Fire Damage -> continuous Overdrive heat aura!
     if (style.starterId == "char" && hpRatio < 0.50f && hpRatio > 0f) {
-        val overdrivePulse = 0.65f + 0.35f * sin(animTime * 6.0f)
+        val overdrivePulse = (0.65f + 0.35f * sin(animTime * 6.0f)).coerceIn(0f, 1f)
+        val odRadius = (rx * 1.65f).coerceAtLeast(1f)
         drawCircle(
             brush = Brush.radialGradient(
-                listOf(Color(0xFFFFF2B0).copy(alpha = 0.28f * overdrivePulse), Color(0xFFFF6E24).copy(alpha = 0.22f * overdrivePulse), Color.Transparent),
+                listOf(
+                    Color(0xFFFFF2B0).copy(alpha = (0.28f * overdrivePulse).coerceIn(0f, 1f)),
+                    Color(0xFFFF6E24).copy(alpha = (0.22f * overdrivePulse).coerceIn(0f, 1f)),
+                    Color.Transparent
+                ),
                 center = center,
-                radius = rx * 1.65f
+                radius = odRadius
             ),
-            radius = rx * 1.65f,
+            radius = odRadius,
             center = center
         )
         for (i in 0 until 3) {
-            val phase = ((animTime * 0.8f + i * 0.333f) % 1f).let { if (it < 0f) it + 1f else it }
+            val phase = ((animTime * 0.8f + i * 0.333f) % 1f).let { if (it < 0f) it + 1f else it }.coerceIn(0f, 1f)
             val sx = center.x + (i - 1) * rx * 0.65f + sin(animTime * 4f + i) * rx * 0.12f
             val sy = center.y + ry * 0.2f - phase * ry * 1.55f
-            drawCircle(Color(0xFFFFF4B8).copy(alpha = (1f - phase) * 0.9f), rx * 0.09f, Offset(sx, sy))
+            drawCircle(Color(0xFFFFF4B8).copy(alpha = ((1f - phase) * 0.9f).coerceIn(0f, 1f)), rx * 0.09f, Offset(sx, sy))
         }
     }
 
@@ -417,6 +423,7 @@ internal fun DrawScope.drawEvolutionBurstBackLayer(
 
     if (p > 0.62f) {
         val flashT = ((p - 0.62f) / 0.38f).coerceIn(0f, 1f)
+        val flashR = (rx * (2.4f + flashT * 0.8f)).coerceAtLeast(1f)
         drawCircle(
             brush = Brush.radialGradient(
                 listOf(
@@ -425,9 +432,9 @@ internal fun DrawScope.drawEvolutionBurstBackLayer(
                     Color.Transparent
                 ),
                 center = center,
-                radius = rx * (2.4f + flashT * 0.8f)
+                radius = flashR
             ),
-            radius = rx * (2.4f + flashT * 0.8f),
+            radius = flashR,
             center = center
         )
     }
@@ -628,6 +635,7 @@ internal fun DrawScope.drawHurtStateOverlay(
 
     if (p > 0.55f) {
         val flashAlpha = ((p - 0.55f) / 0.45f).coerceIn(0f, 1f)
+        val hurtR = (rx * 1.55f).coerceAtLeast(1f)
         drawCircle(
             brush = Brush.radialGradient(
                 listOf(
@@ -636,9 +644,9 @@ internal fun DrawScope.drawHurtStateOverlay(
                     Color.Transparent
                 ),
                 center = center,
-                radius = rx * 1.55f
+                radius = hurtR
             ),
-            radius = rx * 1.55f,
+            radius = hurtR,
             center = center
         )
     }

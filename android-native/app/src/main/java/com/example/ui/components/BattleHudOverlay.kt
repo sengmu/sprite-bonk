@@ -981,6 +981,7 @@ private fun LowHpHeartbeatVignette() {
         }
     }
     Canvas(modifier = Modifier.fillMaxSize()) {
+        if (size.minDimension <= 1f) return@Canvas
         val alpha = alphaState.value
         if (size.width != brushCache.w || size.height != brushCache.h) {
             brushCache.w = size.width
@@ -988,7 +989,7 @@ private fun LowHpHeartbeatVignette() {
             brushCache.brush = Brush.radialGradient(
                 colors = LOW_HP_VIGNETTE_COLORS,
                 center = Offset(size.width / 2f, size.height / 2f),
-                radius = maxOf(size.width, size.height) * 0.65f
+                radius = (maxOf(size.width, size.height) * 0.65f).coerceAtLeast(1f)
             )
         }
         brushCache.brush?.let { drawRect(brush = it, size = size, alpha = alpha) }

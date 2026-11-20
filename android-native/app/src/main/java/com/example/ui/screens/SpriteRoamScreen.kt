@@ -1336,9 +1336,10 @@ private fun DrawScope.drawRoamObstacle(obs: MapObstacle, pos: Offset, time: Floa
     when (obs.kind) {
         MapObstacleKind.SPEED_PAD -> {
             val pulse = 0.88f + 0.14f * sin(time * 6f + obs.id)
+            val padRadius = (obs.radius * 1.45f * pulse).coerceAtLeast(1f)
             drawCircle(
-                Brush.radialGradient(listOf(GoldAccent.copy(alpha = 0.52f), Color.Transparent), pos, obs.radius * 1.45f * pulse),
-                radius = obs.radius * 1.45f * pulse,
+                Brush.radialGradient(listOf(GoldAccent.copy(alpha = 0.52f), Color.Transparent), pos, padRadius),
+                radius = padRadius,
                 center = pos
             )
             drawCircle(Color(0xFF283A4E).copy(alpha = 0.85f), obs.radius, pos)

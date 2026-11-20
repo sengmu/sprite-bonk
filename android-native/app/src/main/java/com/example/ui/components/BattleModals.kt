@@ -155,8 +155,9 @@ fun LevelUpDraftModal(
     ) {
         // Celebratory starlight & aura glow behind cards
         Canvas(modifier = Modifier.fillMaxSize()) {
+            if (size.minDimension <= 1f) return@Canvas
             val center = Offset(size.width * 0.5f, size.height * 0.44f)
-            val rayRadius = maxOf(size.width, size.height) * 0.65f
+            val rayRadius = (maxOf(size.width, size.height) * 0.65f).coerceAtLeast(1f)
             val glowColor = when {
                 banishModeArmed -> CrimsonRed
                 hasEvolutionChoice -> GoldAccent

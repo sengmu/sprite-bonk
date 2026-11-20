@@ -174,18 +174,20 @@ internal fun BiomeAtmosphereBackdrop(
                 .background(Brush.verticalGradient(listOf(topTint, midTint, bottomTint)))
         )
         Canvas(modifier = Modifier.fillMaxSize()) {
+            if (size.minDimension <= 1f) return@Canvas
             val bloomCenter = when (biome.id) {
                 "volcano" -> Offset(size.width * 0.45f, size.height * 0.80f)
                 "graveyard" -> Offset(size.width * 0.35f, size.height * 0.24f)
                 else -> Offset(size.width * 0.38f, size.height * 0.22f)
             }
+            val bloomRadius = (size.maxDimension * 0.56f).coerceAtLeast(1f)
             drawCircle(
                 brush = Brush.radialGradient(
                     listOf(glowColor, Color.Transparent),
                     center = bloomCenter,
-                    radius = size.maxDimension * 0.56f
+                    radius = bloomRadius
                 ),
-                radius = size.maxDimension * 0.56f,
+                radius = bloomRadius,
                 center = bloomCenter
             )
 
@@ -541,6 +543,7 @@ internal fun OpenSpritePedestalCanvas(
         contentAlignment = Alignment.Center
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
+            if (size.minDimension <= 1f) return@Canvas
             val cx = size.width * 0.5f
 
             // Density-independent coupled sizing: sprite feet anchor directly at pedestal top center!

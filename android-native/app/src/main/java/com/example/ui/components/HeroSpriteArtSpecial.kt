@@ -180,7 +180,7 @@ internal fun DrawScope.drawSparkHeroArt(ctx: HeroArtContext) {
     for (side in listOf(-1f, 1f)) {
         val cx = faceX + side * rx * 0.54f + ctx.lookX * 0.35f
         val cy = c.y + ry * 0.20f + ctx.lookY * 0.3f
-        drawCircle(Color(0xFFFF7A5C).copy(alpha = 0.68f + attackPulse * 0.28f), rx * (0.14f + attackPulse * 0.04f), Offset(cx, cy))
+        drawCircle(Color(0xFFFF7A5C).copy(alpha = (0.68f + attackPulse * 0.28f).coerceIn(0f, 1f)), rx * (0.14f + attackPulse * 0.04f), Offset(cx, cy))
         drawLine(
             Color(0xFFD93B3B),
             Offset(cx - side * rx * 0.08f, cy - ry * 0.05f),
@@ -224,10 +224,10 @@ internal fun DrawScope.drawSparkHeroArt(ctx: HeroArtContext) {
     val bellCenter = Offset(faceX + bellJitter, c.y + ry * 0.62f)
     if (attackPulse > 0.12f || ctx.quirkProgress > 0.1f) {
         val bellGlow = maxOf(attackPulse, ctx.quirkProgress)
-        drawCircle(GoldAccent.copy(alpha = bellGlow * 0.52f), rx * (0.46f + bellGlow * 0.18f), bellCenter)
+        drawCircle(GoldAccent.copy(alpha = (bellGlow * 0.52f).coerceIn(0f, 1f)), rx * (0.46f + bellGlow * 0.18f), bellCenter)
     }
     drawCircle(
-        Brush.radialGradient(listOf(Color(0xFFFFF5B8), GoldAccent, Color(0xFFC28212)), Offset(bellCenter.x - rx * 0.07f, bellCenter.y - ry * 0.08f), rx * 0.30f),
+        Brush.radialGradient(listOf(Color(0xFFFFF5B8), GoldAccent, Color(0xFFC28212)), Offset(bellCenter.x - rx * 0.07f, bellCenter.y - ry * 0.08f), (rx * 0.30f).coerceAtLeast(1f)),
         rx * (0.25f + attackPulse * 0.04f),
         bellCenter
     )
@@ -304,8 +304,8 @@ internal fun DrawScope.drawWispHeroArt(ctx: HeroArtContext) {
         val trailA = a - 0.32f
         val op = Offset(c.x + cos(a) * rx * 1.48f * orbExpand, c.y + sin(a) * ry * 0.86f * orbExpand)
         val tp = Offset(c.x + cos(trailA) * rx * 1.40f * orbExpand, c.y + sin(trailA) * ry * 0.82f * orbExpand)
-        drawLine(style.accentColor.copy(alpha = 0.48f + attackPulse * 0.34f), tp, op, rx * (0.19f + attackPulse * 0.06f), StrokeCap.Round)
-        drawCircle(style.accentColor.copy(alpha = 0.38f + attackPulse * 0.34f), rx * (0.32f + attackPulse * 0.08f), op)
+        drawLine(style.accentColor.copy(alpha = (0.48f + attackPulse * 0.34f).coerceIn(0f, 1f)), tp, op, rx * (0.19f + attackPulse * 0.06f), StrokeCap.Round)
+        drawCircle(style.accentColor.copy(alpha = (0.38f + attackPulse * 0.34f).coerceIn(0f, 1f)), rx * (0.32f + attackPulse * 0.08f), op)
         drawCircle(style.accentColor, rx * 0.17f, op)
         drawCircle(Color.White, rx * 0.075f, op)
     }
@@ -398,7 +398,7 @@ internal fun DrawScope.drawWispHeroArt(ctx: HeroArtContext) {
     }
     drawPath(
         spiritFlame,
-        Brush.radialGradient(listOf(Color.White, style.accentColor, ctx.primary.copy(alpha = 0.35f)), c, rx * 0.84f * flameBreath)
+        Brush.radialGradient(listOf(Color.White, style.accentColor, ctx.primary.copy(alpha = 0.35f)), c, (rx * 0.84f * flameBreath).coerceAtLeast(1f))
     )
 
     // Ornamental antique bronze ribs + inner glass reflection (with 2.5D shift)
@@ -577,7 +577,7 @@ internal fun DrawScope.drawDrakeHeroArt(ctx: HeroArtContext) {
             )
         )
         drawLine(
-            Color.White.copy(alpha = 0.78f + attackPulse * 0.20f),
+            Color.White.copy(alpha = (0.78f + attackPulse * 0.20f).coerceIn(0f, 1f)),
             Offset(c.x + side * rx * 0.52f + wingOffX * 0.4f, c.y - ry * 0.08f),
             Offset(c.x + side * rx * (wingSpan * 0.88f) + wingOffX, c.y - ry * 0.68f + wingFlap * 0.85f),
             2.4f + attackPulse * 1.4f,

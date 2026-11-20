@@ -197,14 +197,15 @@ fun CosmeticArtEmblemPreview(
         when (item.id) {
             CosmeticCatalog.ID_STARLIGHT_ENTRANCE -> {
                 Canvas(modifier = Modifier.fillMaxSize()) {
+                    if (size.minDimension <= 1f) return@Canvas
                     val center = Offset(size.width * 0.5f, size.height * 0.52f)
-                    val baseR = minOf(size.width, size.height) * 0.24f
+                    val baseR = (minOf(size.width, size.height) * 0.24f).coerceAtLeast(1f)
                     drawStarlightEntranceAura(center, baseR, animTime, subtle = false)
                     drawCircle(
                         brush = Brush.radialGradient(
                             listOf(Color.White, GoldAccent, SkyBlue.copy(alpha = 0.2f)),
                             center = center,
-                            radius = baseR * 0.85f
+                            radius = (baseR * 0.85f).coerceAtLeast(1f)
                         ),
                         radius = baseR * 0.65f,
                         center = center

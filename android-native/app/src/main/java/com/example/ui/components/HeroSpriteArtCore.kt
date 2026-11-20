@@ -451,7 +451,7 @@ internal fun DrawScope.drawStumpHeroArt(ctx: HeroArtContext) {
         size = Size(rx * 1.32f, ry * 0.88f)
     )
     drawOval(
-        color = style.eyeColor.copy(alpha = 0.28f + attackPulse * 0.46f),
+        color = style.eyeColor.copy(alpha = (0.28f + attackPulse * 0.46f).coerceIn(0f, 1f)),
         topLeft = Offset(hollowCenter.x - rx * 0.60f, hollowCenter.y - ry * 0.38f),
         size = Size(rx * 1.20f, ry * 0.76f),
         style = Stroke(2.0f + attackPulse * 1.8f)
@@ -616,9 +616,9 @@ internal fun DrawScope.drawCharHeroArt(ctx: HeroArtContext) {
     // Track 4 Passive Visual: <50% HP triggers Char's +30% Fire Damage Furnace Overdrive continuously!
     val isOverdrive = ctx.hpRatio < 0.50f && ctx.hpRatio > 0f
     val isFiring = ctx.isAttacking || ctx.isUltActive || ctx.isApexTier || attackPulse > 0.08f || isOverdrive
-    val emberPulse = (0.76f + 0.24f * sin(ctx.animTime * 4.0f)) *
+    val emberPulse = ((0.76f + 0.24f * sin(ctx.animTime * 4.0f)) *
         (if (isOverdrive) 1.18f else 1f) *
-        (if (ctx.isHurt) (0.55f + 0.45f * abs(sin(ctx.hurtProgress * 30f))) else 1f)
+        (if (ctx.isHurt) (0.55f + 0.45f * abs(sin(ctx.hurtProgress * 30f))) else 1f)).coerceIn(0.35f, 1.25f)
     val pxTurn = ctx.turnX * rx * 0.14f
 
     // 1. Heavy obsidian feet
@@ -655,9 +655,13 @@ internal fun DrawScope.drawCharHeroArt(ctx: HeroArtContext) {
             // Molten power-slam fist halo
             drawCircle(
                 brush = Brush.radialGradient(
-                    listOf(Color(0xFFFFF4B8).copy(alpha = attackPulse * 0.72f), style.accentColor.copy(alpha = attackPulse * 0.45f), Color.Transparent),
+                    listOf(
+                        Color(0xFFFFF4B8).copy(alpha = (attackPulse * 0.72f).coerceIn(0f, 1f)),
+                        style.accentColor.copy(alpha = (attackPulse * 0.45f).coerceIn(0f, 1f)),
+                        Color.Transparent
+                    ),
                     center = fist,
-                    radius = rx * (0.72f + attackPulse * 0.28f)
+                    radius = (rx * (0.72f + attackPulse * 0.28f)).coerceAtLeast(1f)
                 ),
                 radius = rx * (0.72f + attackPulse * 0.28f),
                 center = fist
@@ -698,7 +702,7 @@ internal fun DrawScope.drawCharHeroArt(ctx: HeroArtContext) {
                     size = Size(rx * 0.48f, ry * 0.74f),
                     cornerRadius = CornerRadius(rx * 0.12f, rx * 0.12f)
                 )
-                drawCircle(style.accentColor.copy(alpha = 0.52f * emberPulse), rx * 0.36f, Offset(stackX, c.y - ry * 1.44f))
+                drawCircle(style.accentColor.copy(alpha = (0.52f * emberPulse).coerceIn(0f, 1f)), rx * 0.36f, Offset(stackX, c.y - ry * 1.44f))
                 drawCircle(style.eyeColor, rx * 0.19f, Offset(stackX, c.y - ry * 1.40f))
                 drawRoundRect(
                     EspressoDark,
@@ -781,7 +785,7 @@ internal fun DrawScope.drawCharHeroArt(ctx: HeroArtContext) {
                         size = Size(rx * 0.32f, ry * 0.46f),
                         cornerRadius = CornerRadius(rx * 0.08f, rx * 0.08f)
                     )
-                    drawCircle(style.accentColor.copy(alpha = 0.65f * emberPulse), rx * 0.15f, Offset(ex, topY))
+                    drawCircle(style.accentColor.copy(alpha = (0.65f * emberPulse).coerceIn(0f, 1f)), rx * 0.15f, Offset(ex, topY))
                     drawRoundRect(
                         EspressoDark,
                         topLeft = Offset(ex - rx * 0.16f, topY),
@@ -803,7 +807,7 @@ internal fun DrawScope.drawCharHeroArt(ctx: HeroArtContext) {
                     close()
                 }
                 drawPath(pauldron, Brush.linearGradient(listOf(ctx.secondary, ctx.primary)))
-                drawCircle(style.accentColor.copy(alpha = 0.90f * emberPulse), rx * 0.12f, Offset(px, py))
+                drawCircle(style.accentColor.copy(alpha = (0.90f * emberPulse).coerceIn(0f, 1f)), rx * 0.12f, Offset(px, py))
                 drawCircle(Color(0xFFFFF4C0), rx * 0.05f, Offset(px, py))
                 drawPath(pauldron, EspressoDark, style = Stroke(2.4f, join = StrokeJoin.Round))
             }
@@ -835,7 +839,7 @@ internal fun DrawScope.drawCharHeroArt(ctx: HeroArtContext) {
     // 5. Blazing branching magma furnace chest fissure with 2.5D forward parallax (splits wide on attack/Overdrive)
     val fx = c.x + pxTurn * 0.65f
     val furnaceCenter = Offset(fx, c.y + ry * 0.32f)
-    val glowRadius = rx * (if (isFiring) (0.98f + attackPulse * 0.42f) else 0.70f) * emberPulse
+    val glowRadius = (rx * (if (isFiring) (0.98f + attackPulse * 0.42f) else 0.70f) * emberPulse).coerceAtLeast(1f)
     drawCircle(
         brush = Brush.radialGradient(
             listOf(
@@ -1042,7 +1046,7 @@ internal fun DrawScope.drawShellHeroArt(ctx: HeroArtContext) {
         val topX = c.x + rib * rx * 0.62f + upperShift * 0.5f
         val botX = c.x + rib * rx * 0.90f + upperShift
         drawLine(
-            Color.White.copy(alpha = 0.48f + attackPulse * 0.38f),
+            Color.White.copy(alpha = (0.48f + attackPulse * 0.38f).coerceIn(0f, 1f)),
             Offset(topX, upperY - ry * 0.96f),
             Offset(botX, upperY - ry * 0.30f),
             2.6f + attackPulse * 1.4f,
@@ -1073,7 +1077,7 @@ internal fun DrawScope.drawShellHeroArt(ctx: HeroArtContext) {
     val lowerShift = -sin(spinPhase) * rx * (0.14f + attackPulse * 0.12f)
     for (rib in listOf(-0.44f, 0f, 0.44f)) {
         drawLine(
-            style.accentColor.copy(alpha = 0.50f + attackPulse * 0.36f),
+            style.accentColor.copy(alpha = (0.50f + attackPulse * 0.36f).coerceIn(0f, 1f)),
             Offset(c.x + rib * rx * 0.82f + lowerShift, lowerY + ry * 0.42f),
             Offset(c.x + rib * rx * 0.56f + lowerShift * 0.5f, lowerY + ry * 0.96f),
             2.4f + attackPulse * 1.4f,
@@ -1090,7 +1094,7 @@ internal fun DrawScope.drawShellHeroArt(ctx: HeroArtContext) {
         size = Size(rx * 1.56f, ry * 0.56f)
     )
     drawOval(
-        color = style.accentColor.copy(alpha = 0.42f + attackPulse * 0.42f),
+        color = style.accentColor.copy(alpha = (0.42f + attackPulse * 0.42f).coerceIn(0f, 1f)),
         topLeft = Offset(vx - rx * 0.76f, c.y - ry * 0.22f),
         size = Size(rx * 1.52f, ry * 0.52f),
         style = Stroke(1.8f + attackPulse * 1.4f)
@@ -1115,7 +1119,7 @@ internal fun DrawScope.drawShellHeroArt(ctx: HeroArtContext) {
     for (d in 0 until 4) {
         val da = ctx.orbitAngle + d * (PI.toFloat() / 2f) + attackPulse * 2.2f
         val dp = Offset(c.x + cos(da) * rx * (1.48f + attackPulse * 0.24f), c.y + sin(da) * ry * (0.88f + attackPulse * 0.16f))
-        drawCircle(style.accentColor.copy(alpha = 0.45f + attackPulse * 0.35f), rx * (0.14f + attackPulse * 0.05f), dp)
+        drawCircle(style.accentColor.copy(alpha = (0.45f + attackPulse * 0.35f).coerceIn(0f, 1f)), rx * (0.14f + attackPulse * 0.05f), dp)
         drawCircle(Color.White.copy(alpha = 0.94f), rx * 0.08f, dp)
     }
 }
