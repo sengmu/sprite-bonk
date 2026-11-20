@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
@@ -56,15 +57,15 @@ private fun ProductArt(item: ShopCard, modifier: Modifier) {
 
 @Composable
 internal fun DevnetCatalog(onClose: () -> Unit, checkout: @Composable (() -> Unit) -> Unit) {
-    var category by remember { mutableStateOf("全部") }
-    var selected by remember { mutableStateOf<ShopCard?>(null) }
-    val current = selected
-    var checkoutOpen by remember { mutableStateOf(false) }
-    if (checkoutOpen) {
+    var category by rememberSaveable { mutableStateOf("全部") }
+    var selected by rememberSaveable { mutableStateOf<String?>(null) }
+    val current = shopCards.firstOrNull { it.name == selected }
+    var checkoutOpen by rememberSaveable { mutableStateOf(false) }
+    if (checkoutOpen && current?.available == true) {
         checkout { checkoutOpen = false }
         return
     }
-    Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+    if (current == null) Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         BoxWithConstraints(Modifier.fillMaxSize().padding(16.dp)) {
             val columns = if (maxWidth > maxHeight) 3 else 2
             Column(Modifier.fillMaxSize().background(Color(0xFF20172F), RoundedCornerShape(20.dp)).padding(12.dp)) {
@@ -84,7 +85,7 @@ internal fun DevnetCatalog(onClose: () -> Unit, checkout: @Composable (() -> Uni
                 ) {
                     items(shopCards.filter { category == "全部" || it.category == category }, key = { it.name }) { item ->
                         Column(Modifier.fillMaxWidth().background(Color(0xFF35274A), RoundedCornerShape(14.dp))
-                            .clickable { selected = item }.padding(12.dp)) {
+                            .clickable { selected = item.name }.padding(12.dp)) {
                             ProductArt(item, Modifier.fillMaxWidth().height(52.dp))
                             Text(item.name, fontWeight = FontWeight.Bold, color = Color.White)
                             Text(

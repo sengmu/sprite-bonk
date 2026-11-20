@@ -9,6 +9,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.solana.mobilewalletadapter.clientlib.ActivityResultSender
@@ -39,7 +40,7 @@ internal fun devnetFoxSkinEquipped(): Boolean {
 
 @Composable
 internal fun DevnetShopEntry(sender: ActivityResultSender) {
-    var opened by remember { mutableStateOf(false) }
+    var opened by rememberSaveable { mutableStateOf(false) }
     TextButton(onClick = { opened = true }) { Text("商店", color = androidx.compose.ui.graphics.Color(0xFF241B35)) }
     if (opened) DevnetCatalog(onClose = { opened = false }) { back ->
         DevnetShopDialog(sender, back)
