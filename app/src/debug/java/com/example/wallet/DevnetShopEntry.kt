@@ -62,9 +62,22 @@ private fun DevnetShopDialog(sender: ActivityResultSender, onClose: () -> Unit) 
     var signature by remember { mutableStateOf<String?>(null) }
     var paymentRequested by remember { mutableStateOf(false) }
     var ownsFox by remember { mutableStateOf(false) }
+    var walletAddress by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
     val receipts = remember(context) {
         context.getSharedPreferences("devnet_shop_receipts", android.content.Context.MODE_PRIVATE)
+    }
+
+    suspend fun refreshInventory(session: String, payer: String): Int {
+        val items = client.inventory(session)
+        ownsFox = (0 until items.length()).any { items.getJSONObject(it).optString("product") == FOX_SKIN }
+        val owner = receipts.getString("equipped_fox_wallet", null)
+        val keepEquipped = ownsFox && (owner == null || owner == payer) &&
+            receipts.getBoolean("equipped_fox_skin", false)
+        receipts.edit().putBoolean("equipped_fox_skin", keepEquipped)
+            .putString("equipped_fox_wallet", if (keepEquipped) payer else null).apply()
+        equippedFox.value = keepEquipped
+        return items.length()
     }
 
     fun selectOrder(value: org.json.JSONObject?) {
@@ -102,22 +115,34 @@ private fun DevnetShopDialog(sender: ActivityResultSender, onClose: () -> Unit) 
                 TextButton(enabled = !busy, onClick = {
                     runAction {
                         token = null
+                        walletAddress = null
                         ownsFox = false
                         selectOrder(null)
                         orderSummary = ""
                         when (val result = adapter.transact(sender) { authorization ->
                             val key = authorization.accounts.firstOrNull()?.publicKey
                                 ?: error("钱包未返回账户")
-                            val challenge = client.challenge(SolanaAddress.encode(key))
+                            val payer = SolanaAddress.encode(key)
+                            val challenge = client.challenge(payer)
                             val signed = signMessagesDetached(
                                 arrayOf(challenge.message.toByteArray(Charsets.UTF_8)),
                                 arrayOf(key)
                             )
                             val signature = signed.messages.single().signatures.single()
-                            client.authenticate(challenge, signature)
+                            payer to client.authenticate(challenge, signature)
                         }) {
                             is TransactionResult.Success -> {
-                                token = result.payload
+                                val (payer, session) = result.payload
+                                walletAddress = payer
+                                token = session
+                                val equippedOwner = receipts.getString("equipped_fox_wallet", null)
+                                if (equippedOwner != null && equippedOwner != payer) {
+                                    receipts.edit().remove("equipped_fox_wallet")
+                                        .putBoolean("equipped_fox_skin", false).apply()
+                                    equippedFox.value = false
+                                }
+                                val count = refreshInventory(session, payer)
+                                orderSummary = "已解锁 $count 件"
                                 status = "钱包登录成功"
                             }
                             is TransactionResult.Failure -> status = "登录未完成：${result.message}"
@@ -139,9 +164,8 @@ private fun DevnetShopDialog(sender: ActivityResultSender, onClose: () -> Unit) 
                     TextButton(enabled = !busy, onClick = {
                         runAction {
                             val orders = client.orders(session)
-                            val items = client.inventory(session)
-                            ownsFox = (0 until items.length()).any { items.getJSONObject(it).optString("product") == FOX_SKIN }
-                            orderSummary = "订单 ${orders.length()} 笔 · 已解锁 ${items.length()} 件"
+                            val count = refreshInventory(session, checkNotNull(walletAddress))
+                            orderSummary = "订单 ${orders.length()} 笔 · 已解锁 $count 件"
                         }
                     }) { Text("查看订单和库存") }
                     if (ownsFox) {
@@ -149,7 +173,8 @@ private fun DevnetShopDialog(sender: ActivityResultSender, onClose: () -> Unit) 
                         Text("已拥有 · 雷铃狐外观")
                         TextButton(enabled = !busy, onClick = {
                             val next = !equipped
-                            receipts.edit().putBoolean("equipped_fox_skin", next).apply()
+                            receipts.edit().putBoolean("equipped_fox_skin", next)
+                                .putString("equipped_fox_wallet", if (next) walletAddress else null).apply()
                             equippedFox.value = next
                             status = if (next) "已装备，回首页选择雷铃狐查看" else "已恢复默认外观"
                         }) { Text(if (equipped) "恢复默认外观" else "装备雷铃狐外观") }
@@ -204,6 +229,7 @@ private fun DevnetShopDialog(sender: ActivityResultSender, onClose: () -> Unit) 
                                         status = when (result.getString("status")) {
                                             "fulfilled" -> {
                                                 selectOrder(null)
+                                                refreshInventory(session, checkNotNull(walletAddress))
                                                 "已到账，外观已发放"
                                             }
                                             "closed_unpaid" -> {
@@ -222,6 +248,7 @@ private fun DevnetShopDialog(sender: ActivityResultSender, onClose: () -> Unit) 
                                     val result = client.settle(session, id, saved)
                                     status = if (result.getString("status") == "fulfilled") {
                                         selectOrder(null)
+                                        refreshInventory(session, checkNotNull(walletAddress))
                                         "已到账，外观已发放"
                                     } else {
                                         "链上确认中，请稍后查验"
