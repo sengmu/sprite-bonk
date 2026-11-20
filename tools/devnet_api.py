@@ -13,7 +13,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
-from devnet_orders import create_order, open_database, settle
+from devnet_orders import create_order, open_database, rpc, settle
 from devnet_payment import prepare_payment
 
 BASE58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
@@ -129,6 +129,25 @@ class ApiHandler(BaseHTTPRequestHandler):
             if db.execute("SELECT 1 FROM orders WHERE id=? AND payer=?", (order_id, payer)).fetchone() is None:
                 return 404, {"error": "Unknown order"}
             return 200, settle(db, order_id, body["signature"])
+        if self.path == "/orders/recover":
+            order_id = body["orderId"]
+            order = db.execute("SELECT * FROM orders WHERE id=? AND payer=?", (order_id, payer)).fetchone()
+            if order is None:
+                return 404, {"error": "Unknown order"}
+            if order["signature"]:
+                return 200, {"status": "fulfilled", "order": order_id}
+            entries = rpc("getSignaturesForAddress", [
+                order["destination"], {"limit": 100, "commitment": "finalized"},
+            ])
+            for entry in entries:
+                memo = entry.get("memo") or ""
+                # RPC prefixes displayed memos with their length, e.g. "[32] …".
+                if entry["err"] is None and memo in (order_id, f"[{len(order_id)}] {order_id}"):
+                    try:
+                        return 200, settle(db, order_id, entry["signature"])
+                    except ValueError:
+                        continue
+            return 200, {"status": "not_found", "order": order_id}
         if self.path == "/inventory":
             rows = db.execute("SELECT product, order_id FROM inventory WHERE payer=?", (payer,))
             return 200, {"items": [dict(row) for row in rows]}

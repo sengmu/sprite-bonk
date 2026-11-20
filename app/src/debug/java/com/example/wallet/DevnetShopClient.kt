@@ -33,6 +33,9 @@ internal class DevnetShopClient {
     suspend fun preparePayment(token: String, orderId: String): JSONObject =
         post("/orders/payment", JSONObject().put("orderId", orderId), token)
 
+    suspend fun recover(token: String, orderId: String): JSONObject =
+        post("/orders/recover", JSONObject().put("orderId", orderId), token)
+
     suspend fun settle(token: String, orderId: String, signature: String): JSONObject =
         post("/orders/settle", JSONObject().put("orderId", orderId).put("signature", signature), token)
 

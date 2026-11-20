@@ -167,7 +167,20 @@ private fun DevnetShopDialog(sender: ActivityResultSender, onClose: () -> Unit) 
                                     }
                                 }) { Text("打开钱包确认付款") }
                             }
-                            if (paymentRequested) Text("结果待核对，请查看钱包交易记录，避免重复付款。")
+                            if (paymentRequested) {
+                                Text("结果待核对，请先查验原订单。")
+                                TextButton(enabled = !busy, onClick = {
+                                    runAction {
+                                        val result = client.recover(session, id)
+                                        status = if (result.getString("status") == "fulfilled") {
+                                            selectOrder(null)
+                                            "已到账，外观已发放"
+                                        } else {
+                                            "暂未找到已确认的付款，请稍后再次查验"
+                                        }
+                                    }
+                                }) { Text("查找原订单付款") }
+                            }
                         }
                         signature?.let { saved ->
                             TextButton(enabled = !busy, onClick = {
