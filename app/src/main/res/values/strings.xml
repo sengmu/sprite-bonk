@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">Sprite Bonk</string>
+    <string name="app_subtitle">精灵大乱斗</string>
+    <string name="btn_start_run">开始战斗</string>
+    <string name="btn_lab">实验室</string>
+    <string name="btn_dex">精灵图鉴</string>
+    <string name="btn_profile">档案战绩</string>
+    <string name="btn_settings">设置</string>
+    <string name="btn_play_again">再来一局</string>
+    <string name="btn_home">返回主页</string>
+    <string name="btn_resume">继续战斗</string>
+    <string name="btn_abandon">结束本局</string>
+    <string name="btn_reroll">重抽</string>
+    <string name="btn_skip">跳过</string>
+    <string name="btn_banish">放逐</string>
+    <string name="btn_upgrade">强化升级</string>
+    <string name="btn_close">关闭</string>
+    <string name="cd_starter_portrait">初始精灵立绘</string>
+    <string name="cd_meadow_bg">主菜单草原风景</string>
+    <string name="cd_hero_medallion">英雄头像</string>
+    <string name="cd_dodge">闪避冲刺</string>
+    <string name="cd_ult">释放必杀技</string>
+    <string name="cd_interact">互动</string>
+    <string name="cd_objective_drawer">展开目标抽屉</string>
+</resources>

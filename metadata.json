@@ -1,0 +1,6 @@
+{
+  "name": "Sprite Bonk",
+  "description": "原创精灵动作肉鸽幸存者：操控树桩洞傀、冷炭裂膛与对旋双壳征战四大群落，进化形态、释放必杀技并在实验室永久强化。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
