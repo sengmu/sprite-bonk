@@ -79,6 +79,7 @@ import com.example.game.model.StarterLine
 import com.example.ui.components.AsyncDrawableImage
 import com.example.ui.components.biomeBackdropRes
 import com.example.ui.components.drawEvolvedHeroSprite
+import com.example.ui.components.withFoxCosmetic
 import com.example.ui.theme.CreamSurface
 import com.example.ui.theme.CrimsonRed
 import com.example.ui.theme.DarkButtonRim
@@ -247,14 +248,9 @@ internal fun MinimalHeroShowcaseStage(
     val previewNode: EvolutionNode = unlockedForms.getOrElse(previewFormIdx % unlockedForms.size) {
         EvolutionRegistry.baseNodeForStarter(selected.id)
     }
-    val activeNode = if (selected.id == "spark" && com.example.wallet.devnetFoxSkinEquipped()) {
-        previewNode.copy(visualStyle = previewNode.visualStyle.copy(
-            primaryColor = Color(0xFF697AE6),
-            secondaryColor = Color(0xFFBDC8FF),
-            accentColor = Color(0xFF78EDFF),
-            auraColor = Color(0xFF8E9BFF)
-        ))
-    } else previewNode
+    val activeNode = previewNode.copy(
+        visualStyle = previewNode.visualStyle.withFoxCosmetic(com.example.wallet.devnetFoxSkinEquipped())
+    )
     val selectedIndex = remember(selected.id) {
         GameCatalog.starters.indexOfFirst { it.id == selected.id }.coerceAtLeast(0)
     }

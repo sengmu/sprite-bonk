@@ -120,6 +120,7 @@ fun BattleCanvas(
     stateProvider: () -> BattleRenderState,
     modifier: Modifier = Modifier
 ) {
+    val foxSkinEquipped = com.example.wallet.devnetFoxSkinEquipped()
     val fillPaint = remember {
         Paint(Paint.ANTI_ALIAS_FLAG).apply {
             textAlign = Paint.Align.CENTER
@@ -161,7 +162,7 @@ fun BattleCanvas(
         drawWorldPickups(state, camX, camY, cache)
         drawCombatRingsAndArcs(state, camX, camY)
         drawDashGhosts(state, camX, camY)
-        drawSortedWorldEntities(biome, state, camX, camY, cache)
+        drawSortedWorldEntities(biome, state, camX, camY, cache, foxSkinEquipped)
         drawForegroundHeroGrass(biome, state, camX, camY, cache.terrainCache)
         drawProjectilesAndBeams(state, camX, camY)
         drawCombatParticles(state, camX, camY)
@@ -643,7 +644,8 @@ private fun DrawScope.drawSortedWorldEntities(
     state: BattleRenderState,
     camX: Float,
     camY: Float,
-    cache: BattleCanvasCache
+    cache: BattleCanvasCache,
+    foxSkinEquipped: Boolean
 ) {
     val sortPool = cache.sortPool
     var sortCount = 0
@@ -716,7 +718,7 @@ private fun DrawScope.drawSortedWorldEntities(
                 )
             }
             SORT_KIND_HERO -> {
-                drawHeroComposite(state, camX, camY, cache)
+                drawHeroComposite(state, camX, camY, cache, foxSkinEquipped)
             }
         }
     }
@@ -726,7 +728,8 @@ private fun DrawScope.drawHeroComposite(
     state: BattleRenderState,
     camX: Float,
     camY: Float,
-    cache: BattleCanvasCache
+    cache: BattleCanvasCache,
+    foxSkinEquipped: Boolean
 ) {
     val groundPos = Offset(state.playerX - camX, state.playerY - state.playerGroundZ - camY)
     val heroPos = Offset(state.playerX - camX, state.playerY - state.playerZ - camY)
@@ -857,7 +860,7 @@ private fun DrawScope.drawHeroComposite(
     // Evolved Hero Sprite lifted by playerZ
     val jumpScale = 1f + (jumpAlt * 0.0024f).coerceAtMost(0.22f)
     drawEvolvedHeroSprite(
-        style = state.evolutionState.currentNode.visualStyle,
+        style = state.evolutionState.currentNode.visualStyle.withFoxCosmetic(foxSkinEquipped),
         center = heroPos,
         baseRadius = (if (isHyperActive) 36f else 30f) * jumpScale,
         animTime = if (state.moveSpeedRatio > 0.1f) state.walkAnimTime else state.elapsedSec * 3.4f,

@@ -36,4 +36,4 @@
 
 钱包负责签名，服务端比对签名者、账户权限、付款指令和区块哈希，再向 Devnet 提交。仅允许两种合法计算预算指令，优先费上限 10,000 lamports。测试中发生过区块哈希过期，旧单先核对未到账再重新下单。
 
-装备续验：Seeker 登录原付款钱包后库存显示已解锁 1 件。点击「装备雷铃狐外观」后，首页预览切换成蓝紫配色。冷启动后外观继续生效，见 [实拍局部](ui-reference/compare/Devnet-fox-equipped.png)。这是调试版首页预览，战斗内显示尚未接入。
+装备续验：Seeker 登录原付款钱包后库存显示已解锁 1 件。点击「装备雷铃狐外观」后，首页预览切换成蓝紫配色。冷启动后外观继续生效，见 [首页实拍](ui-reference/compare/Devnet-fox-equipped.png)。从首页用雷铃狐开始冒险，战斗角色也使用同一外观，见 [战斗实拍](ui-reference/compare/Devnet-fox-battle.png)。
