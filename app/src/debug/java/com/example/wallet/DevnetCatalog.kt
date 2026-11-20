@@ -21,6 +21,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.DialogWindowProvider
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import android.view.WindowManager
 import com.example.R
 import com.example.game.evolution.EvolutionRegistry
 import com.example.ui.components.withFoxCosmetic
@@ -49,9 +54,22 @@ private fun ProductArt(item: ShopCard, modifier: Modifier) {
                 }
                 OpenSpritePedestalCanvas(fox, null, Modifier.fillMaxSize())
             }
-            portrait != null -> Image(painterResource(portrait), item.name, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            portrait != null -> Image(painterResource(portrait), item.name, Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
             else -> Text(item.icon, style = MaterialTheme.typography.headlineMedium, color = Color(0xFFBBA5FF))
         }
+    }
+}
+
+@Composable
+private fun ProductLabels(item: ShopCard) {
+    Column {
+        Text(item.name, fontWeight = FontWeight.Bold, color = Color.White)
+        val status = when {
+            item.available -> "1 枚测试代币"
+            item.name == "创世头像框" -> "赛季奖励预览"
+            else -> "预览"
+        }
+        Text(status, color = Color(0xFFE0CAFF), style = MaterialTheme.typography.bodySmall)
     }
 }
 
@@ -65,33 +83,59 @@ internal fun DevnetCatalog(onClose: () -> Unit, checkout: @Composable (() -> Uni
         checkout { checkoutOpen = false }
         return
     }
-    if (current == null) Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        BoxWithConstraints(Modifier.fillMaxSize().padding(16.dp)) {
-            val columns = if (maxWidth > maxHeight) 3 else 2
-            Column(Modifier.fillMaxSize().background(Color(0xFF20172F), RoundedCornerShape(20.dp)).padding(12.dp)) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+    if (current == null) Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+        val view = LocalView.current
+        SideEffect {
+            val window = (view.parent as DialogWindowProvider).window
+            if (android.os.Build.VERSION.SDK_INT >= 28) {
+                window.attributes = window.attributes.apply {
+                    layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                }
+            }
+            WindowInsetsControllerCompat(window, window.decorView).apply {
+                systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                hide(WindowInsetsCompat.Type.systemBars())
+            }
+        }
+        BoxWithConstraints(
+            Modifier.fillMaxSize()
+                .background(Color(0xFF20172F))
+                .windowInsetsPadding(WindowInsets.displayCutout)
+                .padding(12.dp)
+        ) {
+            val wide = maxWidth >= 660.dp
+            val columns = if (wide) 3 else if (maxWidth >= 340.dp) 2 else 1
+            Column(Modifier.fillMaxSize().padding(12.dp)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Text("商店 · DEVNET", color = Color(0xFFFFE9BC), style = MaterialTheme.typography.titleLarge)
                     TextButton(onClick = onClose) { Text("返回", color = Color.White) }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     listOf("全部", "外观", "特效", "头像框").forEach { name ->
-                        FilterChip(selected = category == name, onClick = { category = name }, label = { Text(name) })
+                        FilterChip(selected = category == name, onClick = { category = name }, label = { Text(name) }, colors = FilterChipDefaults.filterChipColors(labelColor = Color(0xFFE0CAFF), selectedLabelColor = Color(0xFF302342), selectedContainerColor = Color(0xFFFFE9BC)))
                     }
                 }
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(columns),
+                    modifier = Modifier.weight(1f),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(shopCards.filter { category == "全部" || it.category == category }, key = { it.name }) { item ->
-                        Column(Modifier.fillMaxWidth().background(Color(0xFF35274A), RoundedCornerShape(14.dp))
-                            .clickable { selected = item.name }.padding(12.dp)) {
-                            ProductArt(item, Modifier.fillMaxWidth().height(52.dp))
-                            Text(item.name, fontWeight = FontWeight.Bold, color = Color.White)
-                            Text(
-                                if (item.available) "1 枚测试代币" else if (item.name == "创世头像框") "赛季奖励预览" else "预览",
-                                color = Color(0xFFE0CAFF)
-                            )
+                        val cardModifier = Modifier.fillMaxWidth()
+                            .background(Color(0xFF35274A), RoundedCornerShape(14.dp))
+                            .clickable { selected = item.name }
+                            .padding(8.dp)
+                        if (wide) {
+                            Row(cardModifier, horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                ProductArt(item, Modifier.size(76.dp))
+                                ProductLabels(item)
+                            }
+                        } else {
+                            Column(cardModifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                ProductArt(item, Modifier.fillMaxWidth().height(88.dp))
+                                ProductLabels(item)
+                            }
                         }
                     }
                 }
