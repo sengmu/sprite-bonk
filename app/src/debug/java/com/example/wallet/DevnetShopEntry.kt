@@ -18,6 +18,20 @@ import com.solana.mobilewalletadapter.clientlib.Solana
 import com.solana.mobilewalletadapter.clientlib.TransactionResult
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableStateFlow
+
+private const val FOX_SKIN = "railing-fox-shop-skin"
+private val equippedFox = MutableStateFlow<Boolean?>(null)
+
+@Composable
+internal fun devnetFoxSkinEquipped(): Boolean {
+    val context = LocalContext.current
+    val saved = remember(context) {
+        context.getSharedPreferences("devnet_shop_receipts", android.content.Context.MODE_PRIVATE)
+            .getBoolean("equipped_fox_skin", false)
+    }
+    return equippedFox.collectAsState().value ?: saved
+}
 
 @Composable
 internal fun DevnetShopEntry(sender: ActivityResultSender) {
@@ -47,6 +61,7 @@ private fun DevnetShopDialog(sender: ActivityResultSender, onClose: () -> Unit) 
     var quote by remember { mutableStateOf<org.json.JSONObject?>(null) }
     var signature by remember { mutableStateOf<String?>(null) }
     var paymentRequested by remember { mutableStateOf(false) }
+    var ownsFox by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val receipts = remember(context) {
         context.getSharedPreferences("devnet_shop_receipts", android.content.Context.MODE_PRIVATE)
@@ -87,6 +102,7 @@ private fun DevnetShopDialog(sender: ActivityResultSender, onClose: () -> Unit) 
                 TextButton(enabled = !busy, onClick = {
                     runAction {
                         token = null
+                        ownsFox = false
                         selectOrder(null)
                         orderSummary = ""
                         when (val result = adapter.transact(sender) { authorization ->
@@ -124,9 +140,20 @@ private fun DevnetShopDialog(sender: ActivityResultSender, onClose: () -> Unit) 
                         runAction {
                             val orders = client.orders(session)
                             val items = client.inventory(session)
+                            ownsFox = (0 until items.length()).any { items.getJSONObject(it).optString("product") == FOX_SKIN }
                             orderSummary = "订单 ${orders.length()} 笔 · 已解锁 ${items.length()} 件"
                         }
                     }) { Text("查看订单和库存") }
+                    if (ownsFox) {
+                        val equipped = devnetFoxSkinEquipped()
+                        Text("已拥有 · 雷铃狐外观")
+                        TextButton(enabled = !busy, onClick = {
+                            val next = !equipped
+                            receipts.edit().putBoolean("equipped_fox_skin", next).apply()
+                            equippedFox.value = next
+                            status = if (next) "已装备，回首页选择雷铃狐查看" else "已恢复默认外观"
+                        }) { Text(if (equipped) "恢复默认外观" else "装备雷铃狐外观") }
+                    }
                     order?.let { selected ->
                         val id = selected.getString("id")
                         Text("订单 $id\n测试代币 ${selected.getLong("amount")} 最小单位")

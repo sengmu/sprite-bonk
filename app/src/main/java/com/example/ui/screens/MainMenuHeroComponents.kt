@@ -244,9 +244,17 @@ internal fun MinimalHeroShowcaseStage(
         listOf(base) + extra
     }
     var previewFormIdx by remember(selected.id) { mutableIntStateOf(0) }
-    val activeNode: EvolutionNode = unlockedForms.getOrElse(previewFormIdx % unlockedForms.size) {
+    val previewNode: EvolutionNode = unlockedForms.getOrElse(previewFormIdx % unlockedForms.size) {
         EvolutionRegistry.baseNodeForStarter(selected.id)
     }
+    val activeNode = if (selected.id == "spark" && com.example.wallet.devnetFoxSkinEquipped()) {
+        previewNode.copy(visualStyle = previewNode.visualStyle.copy(
+            primaryColor = Color(0xFF697AE6),
+            secondaryColor = Color(0xFFBDC8FF),
+            accentColor = Color(0xFF78EDFF),
+            auraColor = Color(0xFF8E9BFF)
+        ))
+    } else previewNode
     val selectedIndex = remember(selected.id) {
         GameCatalog.starters.indexOfFirst { it.id == selected.id }.coerceAtLeast(0)
     }
